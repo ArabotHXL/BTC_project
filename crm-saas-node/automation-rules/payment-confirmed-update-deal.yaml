@@ -1,0 +1,15 @@
+name: "Update Deal Status on Payment Confirmed"
+description: "Mark deal as fully paid when payment confirmed"
+trigger:
+  type: SCHEDULED
+  schedule: "0 */2 * * *"
+
+conditions:
+  - field: "payment.status"
+    operator: "equals"
+    value: "CONFIRMED"
+
+actions:
+  - type: "update_payment_invoice_deal"
+    params:
+      payment_id: "{{payment.id}}"

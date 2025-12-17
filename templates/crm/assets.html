@@ -1,0 +1,602 @@
+{% extends "crm/base.html" %}
+
+{% block title %}<span data-i18n="assets">{{ t('assets') }}</span> | BTC Mining CRM{% endblock %}
+
+{% block page_title %}<span data-i18n="assets">{{ t('assets') }}</span>{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page"><span data-i18n="assets">{{ t('assets') }}</span></li>
+{% endblock %}
+
+{% block action_buttons %}
+<a href="{{ url_for('crm.customers') }}" class="btn btn-primary">
+    <i class="bi bi-plus-circle me-1"></i> <span data-i18n="create_asset">{{ t('create_asset') }}</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- KPI Cards Section -->
+<div class="row mb-4">
+    <!-- Total Assets KPI -->
+    <div class="col-md-3 mb-3">
+        <div class="card bg-gradient-primary border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-white-50 mb-1 small"><span data-i18n="total_assets">{{ t('total_assets') }}</span></p>
+                        <h3 class="text-white mb-0" id="total-assets-kpi">0</h3>
+                    </div>
+                    <div class="text-white-50">
+                        <i class="bi bi-box-seam" style="font-size: 2.5rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Active Assets KPI -->
+    <div class="col-md-3 mb-3">
+        <div class="card bg-gradient-success border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-white-50 mb-1 small"><span data-i18n="active_assets">{{ t('active_assets') }}</span></p>
+                        <h3 class="text-white mb-0" id="active-assets-kpi">0</h3>
+                    </div>
+                    <div class="text-white-50">
+                        <i class="bi bi-check-circle" style="font-size: 2.5rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Maintenance Assets KPI -->
+    <div class="col-md-3 mb-3">
+        <div class="card bg-gradient-warning border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-dark mb-1 small"><span data-i18n="maintenance">{{ t('maintenance') }}</span></p>
+                        <h3 class="text-dark mb-0" id="maintenance-assets-kpi">0</h3>
+                    </div>
+                    <div class="text-dark opacity-50">
+                        <i class="bi bi-tools" style="font-size: 2.5rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Total Value KPI -->
+    <div class="col-md-3 mb-3">
+        <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #f7931a 0%, #ffa500 100%);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-white-50 mb-1 small"><span data-i18n="total_value">{{ t('total_value') }}</span></p>
+                        <h3 class="text-white mb-0">$<span id="total-value-kpi">0</span></h3>
+                    </div>
+                    <div class="text-white-50">
+                        <i class="bi bi-currency-dollar" style="font-size: 2.5rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Section -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <label class="form-label small text-muted"><span data-i18n="asset_type">{{ t('asset_type') }}</span></label>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{{ url_for('crm.assets') }}" class="btn btn-sm btn-dark">
+                        <span data-i18n="all_types">{{ t('all_types') }}</span>
+                    </a>
+                    <a href="{{ url_for('crm.assets', type='miner') }}" class="btn btn-sm btn-outline-info">
+                        <span data-i18n="miner">{{ t('miner') }}</span>
+                    </a>
+                    <a href="{{ url_for('crm.assets', type='hosting_slot') }}" class="btn btn-sm btn-outline-primary">
+                        <span data-i18n="hosting_slot">{{ t('hosting_slot') }}</span>
+                    </a>
+                    <a href="{{ url_for('crm.assets', type='equipment') }}" class="btn btn-sm btn-outline-warning">
+                        <span data-i18n="equipment">{{ t('equipment') }}</span>
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small text-muted"><span data-i18n="status">{{ t('status') }}</span></label>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{{ url_for('crm.assets', status='active') }}" class="btn btn-sm btn-outline-success">
+                        <span data-i18n="active">{{ t('active') }}</span>
+                    </a>
+                    <a href="{{ url_for('crm.assets', status='inactive') }}" class="btn btn-sm btn-outline-secondary">
+                        <span data-i18n="inactive">{{ t('inactive') }}</span>
+                    </a>
+                    <a href="{{ url_for('crm.assets', status='maintenance') }}" class="btn btn-sm btn-outline-warning">
+                        <span data-i18n="maintenance">{{ t('maintenance') }}</span>
+                    </a>
+                    <a href="{{ url_for('crm.assets', status='sold') }}" class="btn btn-sm btn-outline-danger">
+                        <span data-i18n="sold">{{ t('sold') }}</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content: Table + Charts -->
+<div class="row">
+    <!-- Left Column: Asset Table & Inventory Chart -->
+    <div class="col-lg-8 mb-4">
+        <!-- Assets Table -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><span data-i18n="asset_list">{{ t('asset_list') }}</span></h5>
+                    <span class="badge bg-info" id="asset-count">0</span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover mb-0" id="assets-table">
+                        <thead>
+                            <tr>
+                                <th><span data-i18n="asset_name">{{ t('asset_name') }}</span></th>
+                                <th><span data-i18n="type">{{ t('type') }}</span></th>
+                                <th><span data-i18n="customer">{{ t('customer') }}</span></th>
+                                <th><span data-i18n="status">{{ t('status') }}</span></th>
+                                <th><span data-i18n="current_value">{{ t('current_value') }}</span></th>
+                                <th><span data-i18n="actions">{{ t('actions') }}</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <div class="spinner-border text-info" role="status">
+                                        <span class="visually-hidden"><span data-i18n="loading">{{ t('loading') }}</span></span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory Distribution Chart -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><span data-i18n="inventory_distribution">{{ t('inventory_distribution') }}</span></h5>
+            </div>
+            <div class="card-body">
+                <canvas id="inventory-chart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Maintenance Alerts & Value Charts -->
+    <div class="col-lg-4">
+        <!-- Maintenance Alerts Card -->
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <span data-i18n="maintenance_alerts">{{ t('maintenance_alerts') }}</span>
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush" id="maintenance-alerts">
+                    <div class="list-group-item bg-dark text-center py-4">
+                        <div class="spinner-border spinner-border-sm text-warning" role="status">
+                            <span class="visually-hidden"><span data-i18n="loading">{{ t('loading') }}</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Asset Value by Type Chart -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><span data-i18n="value_by_type">{{ t('value_by_type') }}</span></h5>
+            </div>
+            <div class="card-body">
+                <canvas id="value-chart" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Status Distribution Chart -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><span data-i18n="status_distribution">{{ t('status_distribution') }}</span></h5>
+            </div>
+            <div class="card-body">
+                <canvas id="status-chart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Pre-define translation strings using data attributes for instant switching
+    const noAssetsText = '{{ t("no_assets") }}';
+    const noAlertsText = '{{ t("no_maintenance") }}';
+    const errorLoadingText = '{{ t("error_loading") }}';
+    const valueText = '{{ t("value") }}';
+    
+    // Initialize charts variables
+    let inventoryChart = null;
+    let valueChart = null;
+    let statusChart = null;
+    
+    // Load KPI data
+    loadKPIData();
+    
+    // Load asset table
+    loadAssetTable();
+    
+    // Load charts
+    loadInventoryChart();
+    loadValueChart();
+    loadStatusChart();
+    
+    // Load maintenance alerts
+    loadMaintenanceAlerts();
+    
+    /**
+     * Load KPI Statistics
+     */
+    function loadKPIData() {
+        fetch('/crm/api/assets/stats')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update KPI cards with NaN prevention
+                    const totalAssets = parseInt(data.total_assets) || 0;
+                    const activeAssets = parseInt(data.active_assets) || 0;
+                    const maintenanceAssets = parseInt(data.maintenance_assets) || 0;
+                    const totalValue = parseFloat(data.total_value) || 0;
+                    
+                    // Use initCountUp for animated counters
+                    if (typeof initCountUp === 'function') {
+                        initCountUp('total-assets-kpi', totalAssets);
+                        initCountUp('active-assets-kpi', activeAssets);
+                        initCountUp('maintenance-assets-kpi', maintenanceAssets);
+                        initCountUp('total-value-kpi', totalValue, { decimalPlaces: 0 });
+                    } else {
+                        // Fallback if initCountUp not available
+                        document.getElementById('total-assets-kpi').textContent = totalAssets;
+                        document.getElementById('active-assets-kpi').textContent = activeAssets;
+                        document.getElementById('maintenance-assets-kpi').textContent = maintenanceAssets;
+                        document.getElementById('total-value-kpi').textContent = totalValue.toFixed(0);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error loading KPI data:', error);
+            });
+    }
+    
+    /**
+     * Load Asset Table with filters
+     */
+    function loadAssetTable() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const type = urlParams.get('type') || '';
+        const status = urlParams.get('status') || '';
+        const url = `/crm/api/assets?type=${type}&status=${status}`;
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.data) {
+                    const tbody = document.querySelector('#assets-table tbody');
+                    const assetCount = document.getElementById('asset-count');
+                    
+                    assetCount.textContent = data.data.length;
+                    
+                    if (data.data.length === 0) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <i class="bi bi-box-seam text-secondary mb-3" style="font-size: 2rem;"></i>
+                                    <p class="text-muted mb-0"><span data-i18n="no_assets">${noAssetsText}</span></p>
+                                </td>
+                            </tr>
+                        `;
+                    } else {
+                        tbody.innerHTML = data.data.map(asset => {
+                            const statusClass = {
+                                'active': 'success',
+                                'inactive': 'secondary',
+                                'maintenance': 'warning',
+                                'sold': 'danger'
+                            }[asset.status] || 'secondary';
+                            
+                            const typeIcons = {
+                                'miner': 'cpu',
+                                'hosting_slot': 'hdd-stack',
+                                'equipment': 'tools'
+                            };
+                            
+                            return `
+                                <tr>
+                                    <td>
+                                        <i class="bi bi-${typeIcons[asset.asset_type] || 'box'} me-2"></i>
+                                        <strong>${asset.asset_name}</strong>
+                                    </td>
+                                    <td><span class="badge bg-info">${asset.asset_type}</span></td>
+                                    <td>${asset.customer_name || 'N/A'}</td>
+                                    <td><span class="badge bg-${statusClass}">${asset.status}</span></td>
+                                    <td>$${parseFloat(asset.current_value || 0).toFixed(2)}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-info" onclick="viewAsset(${asset.id})">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('');
+                    }
+                } else {
+                    console.error('Failed to load assets:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading assets:', error);
+                document.querySelector('#assets-table tbody').innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-danger py-4">
+                            <span data-i18n="error_loading">${errorLoadingText}</span>
+                        </td>
+                    </tr>
+                `;
+            });
+    }
+    
+    /**
+     * Load Inventory Distribution Chart
+     */
+    function loadInventoryChart() {
+        fetch('/crm/api/assets/inventory')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.status_stats) {
+                    const labels = Object.keys(data.status_stats);
+                    const values = Object.values(data.status_stats);
+                    
+                    if (labels.length > 0 && typeof initChart === 'function') {
+                        inventoryChart = initChart('inventory-chart', {
+                            type: 'pie',
+                            data: {
+                                labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
+                                datasets: [{
+                                    data: values,
+                                    backgroundColor: [
+                                        '#10b981', // active - green
+                                        '#6b7280', // inactive - gray
+                                        '#f59e0b', // maintenance - yellow
+                                        '#ef4444'  // sold - red
+                                    ],
+                                    borderWidth: 2,
+                                    borderColor: '#1a1d2e'
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: true,
+                                plugins: {
+                                    legend: {
+                                        position: 'bottom'
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error loading inventory chart:', error);
+            });
+    }
+    
+    /**
+     * Load Asset Value by Type Chart
+     */
+    function loadValueChart() {
+        fetch('/crm/api/assets/stats')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.type_stats) {
+                    const labels = Object.keys(data.type_stats);
+                    const values = labels.map(type => data.type_stats[type].value || 0);
+                    
+                    if (labels.length > 0 && typeof initChart === 'function') {
+                        valueChart = initChart('value-chart', {
+                            type: 'bar',
+                            data: {
+                                labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1).replace('_', ' ')),
+                                datasets: [{
+                                    label: valueText + ' ($)',
+                                    data: values,
+                                    backgroundColor: '#f7931a',
+                                    borderColor: '#ffa500',
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: true,
+                                plugins: {
+                                    legend: {
+                                        display: false
+                                    }
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        ticks: {
+                                            callback: function(value) {
+                                                return '$' + value.toLocaleString();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error loading value chart:', error);
+            });
+    }
+    
+    /**
+     * Load Status Distribution Chart
+     */
+    function loadStatusChart() {
+        fetch('/crm/api/assets/inventory')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.status_stats) {
+                    const labels = Object.keys(data.status_stats);
+                    const values = Object.values(data.status_stats);
+                    
+                    if (labels.length > 0 && typeof initChart === 'function') {
+                        statusChart = initChart('status-chart', {
+                            type: 'doughnut',
+                            data: {
+                                labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
+                                datasets: [{
+                                    data: values,
+                                    backgroundColor: [
+                                        '#10b981', // active
+                                        '#6b7280', // inactive
+                                        '#f59e0b', // maintenance
+                                        '#ef4444'  // sold
+                                    ],
+                                    borderWidth: 2,
+                                    borderColor: '#1a1d2e'
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: true,
+                                plugins: {
+                                    legend: {
+                                        position: 'bottom'
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error loading status chart:', error);
+            });
+    }
+    
+    /**
+     * Load Maintenance Alerts
+     */
+    function loadMaintenanceAlerts() {
+        fetch('/crm/api/assets/maintenance-alerts')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const alertsContainer = document.getElementById('maintenance-alerts');
+                    
+                    if (data.alerts && data.alerts.length > 0) {
+                        alertsContainer.innerHTML = data.alerts.map(alert => `
+                            <div class="list-group-item list-group-item-action bg-dark text-white border-${alert.priority_color}">
+                                <div class="d-flex w-100 justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">
+                                            <span class="badge bg-${alert.priority_color} me-2">${alert.priority.toUpperCase()}</span>
+                                            ${alert.asset_name}
+                                        </h6>
+                                        <p class="mb-1 small text-muted">
+                                            <i class="bi bi-person me-1"></i>${alert.customer_name}
+                                            <span class="ms-2"><i class="bi bi-hash"></i>${alert.serial_number}</span>
+                                        </p>
+                                        ${alert.maintenance_due ? `<p class="mb-0 small text-warning"><i class="bi bi-calendar-event me-1"></i>Due: ${alert.maintenance_due}</p>` : ''}
+                                    </div>
+                                    <small class="text-muted">$${parseFloat(alert.value || 0).toFixed(0)}</small>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        alertsContainer.innerHTML = `
+                            <div class="list-group-item bg-dark text-center py-4">
+                                <i class="bi bi-check-circle text-success mb-2" style="font-size: 2rem;"></i>
+                                <p class="text-muted mb-0">${noAlertsText}</p>
+                            </div>
+                        `;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error loading maintenance alerts:', error);
+            });
+    }
+});
+
+// Global function for viewing asset details
+function viewAsset(assetId) {
+    window.location.href = '/crm/asset/' + assetId;
+}
+</script>
+
+<style>
+/* Custom gradient backgrounds for KPI cards */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+/* Maintenance alert borders */
+.border-danger {
+    border-left: 4px solid #ef4444 !important;
+}
+
+.border-warning {
+    border-left: 4px solid #f59e0b !important;
+}
+
+.border-info {
+    border-left: 4px solid #3b82f6 !important;
+}
+
+/* Chart container improvements */
+canvas {
+    max-height: 300px;
+}
+
+/* Responsive table improvements */
+.table-responsive {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.table thead {
+    position: sticky;
+    top: 0;
+    background-color: #1a1d2e;
+    z-index: 10;
+}
+</style>
+{% endblock %}

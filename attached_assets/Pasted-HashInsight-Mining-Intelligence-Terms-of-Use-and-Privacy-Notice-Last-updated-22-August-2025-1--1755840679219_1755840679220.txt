@@ -1,0 +1,66 @@
+HashInsight Mining Intelligence – Terms of Use and Privacy Notice
+
+Last updated: 22 August 2025
+
+1. Acceptance of Terms
+
+By accessing or using the HashInsight Mining Intelligence platform ("Service") at calc.hashinsight.net, you agree to be bound by these Terms of Use ("Terms"). If you do not agree to these Terms, do not use the Service. HashInsight reserves the right to update or modify the Terms at any time; your continued use of the Service constitutes acceptance of any revised Terms.
+
+2. Service Description
+
+HashInsight provides tools for estimating cryptocurrency mining profitability, analysing bulk mining operations, managing mining customers and, for certain tiers, offering market analytics and treasury management features. All information provided is for informational and educational purposes only and does not constitute financial, investment or trading advice. HashInsight does not guarantee the accuracy, completeness or timeliness of any information provided and shall not be liable for any loss arising from reliance on the Service.
+
+3. User Accounts
+
+You must create an account to access certain features. You agree to provide accurate and complete registration information and to keep it up to date. You are responsible for maintaining the confidentiality of your login credentials and for all activities that occur under your account. HashInsight is not liable for any loss or damage arising from unauthorised use of your account.
+
+4. Data Sources and Disclaimer
+
+HashInsight obtains data from third‑party sources (including cryptocurrency exchanges, mining pools and network statistics) which it believes to be reliable. However, network difficulty, block rewards, cryptocurrency prices and electricity costs change rapidly. The Service’s calculations are estimates only. You should independently verify all information before making financial decisions. Use of the Service is at your own risk.
+
+5. User Conduct
+
+You agree not to:
+
+Use the Service in any manner that could disrupt, damage or impair the Service or interfere with any other party’s use of the Service;
+
+Upload or transmit any malicious code, viruses or harmful content;
+
+Attempt to gain unauthorised access to other accounts or computer systems;
+
+Use the Service for any unlawful purpose, including but not limited to laundering, fraud or violation of sanctions;
+
+Resell, redistribute or scrape data from the Service without HashInsight’s written permission.
+
+6. Paid Plans and Subscriptions
+
+Certain features (such as bulk mining analysis or treasury management) may require a paid subscription. Pricing, billing cycles and plan details will be presented at the time of purchase. Fees are non‑refundable except as required by law. HashInsight may change its fees or plans at any time; existing subscribers will be notified in advance.
+
+7. Intellectual Property
+
+All content, software and visuals on the Service are owned or licensed by HashInsight and are protected by intellectual property laws. You may use the Service and print or export results for personal or internal business use only. You may not reproduce, distribute, modify or create derivative works without HashInsight’s written consent.
+
+8. Privacy Notice
+
+Information collected – HashInsight collects information you provide during account creation (such as name, email address, company and phone number) and logs relating to your use of the Service (such as IP address, device type and pages visited). Payment information is processed by third‑party payment processors and is not stored by HashInsight.
+
+Use of information – HashInsight uses collected information to provide and improve the Service, communicate with you about your account, analyse usage patterns and comply with legal obligations.
+
+Sharing of information – HashInsight does not sell your personal data. Information may be shared with service providers who assist in operating the platform (e.g., hosting providers, payment processors), with your consent, or as required by law.
+
+Data retention – HashInsight retains personal data for as long as your account is active or as needed to provide the Service. You may request deletion of your account by contacting support; some information may be retained for legal or audit purposes.
+
+Security – HashInsight implements reasonable technical and organisational measures to protect your data. However, no system can guarantee absolute security.
+
+9. Limitation of Liability
+
+To the fullest extent permitted by law, HashInsight and its affiliates shall not be liable for any direct, indirect, incidental, consequential or punitive damages arising from or relating to your use of the Service, even if advised of the possibility of such damages. In no event shall HashInsight’s total liability exceed the amount paid by you for the Service in the twelve months preceding the claim.
+
+10. Governing Law and Dispute Resolution
+
+These Terms are governed by the laws of the jurisdiction where HashInsight operates, without regard to conflict of laws principles. Any disputes arising out of or relating to the Service shall be resolved through binding arbitration in that jurisdiction, except that either party may seek equitable relief in a court of competent jurisdiction.
+
+11. Contact Information
+
+If you have questions about these Terms or the Privacy Notice, please contact HashInsight at support@hashinsight.net
+.

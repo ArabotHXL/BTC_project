@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if current_lang == 'en' %}Settings - HashInsight{% else %}设置 - HashInsight{% endif %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #0d1421;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        .navbar-dark {
+            background-color: #1a2332 !important;
+            border-bottom: 1px solid #2d3748;
+        }
+        .gold-accent {
+            color: #f7931a;
+        }
+        .btn-gold {
+            background-color: #f7931a;
+            border-color: #f7931a;
+            color: #000;
+            font-weight: 600;
+        }
+        .btn-gold:hover {
+            background-color: #e8850f;
+            border-color: #e8850f;
+            color: #000;
+        }
+        .card {
+            background-color: #1a2332;
+            border: 1px solid #2d3748;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+            border-radius: 12px;
+        }
+        .card-header {
+            background-color: #2d3748;
+            border-bottom: 1px solid #4a5568;
+            font-weight: 600;
+            border-radius: 12px 12px 0 0 !important;
+        }
+        .section-title {
+            border-left: 4px solid #f7931a;
+            padding-left: 15px;
+            margin-bottom: 25px;
+        }
+        .form-label {
+            color: #f7931a;
+            font-weight: 500;
+        }
+        .form-control, .form-select {
+            background-color: #2d3748;
+            border-color: #4a5568;
+            color: #ffffff;
+        }
+        .form-control:focus, .form-select:focus {
+            background-color: #374151;
+            border-color: #f7931a;
+            color: #ffffff;
+            box-shadow: 0 0 0 0.25rem rgba(247, 147, 26, 0.25);
+        }
+        .form-control::placeholder {
+            color: #9ca3af;
+        }
+        .form-check-input {
+            background-color: #2d3748;
+            border-color: #4a5568;
+        }
+        .form-check-input:checked {
+            background-color: #f7931a;
+            border-color: #f7931a;
+        }
+        .form-check-input:focus {
+            box-shadow: 0 0 0 0.25rem rgba(247, 147, 26, 0.25);
+        }
+        .settings-section {
+            padding: 25px;
+            border-radius: 12px;
+            background-color: #1a2332;
+            margin-bottom: 20px;
+        }
+        .settings-icon {
+            font-size: 1.5rem;
+            margin-right: 10px;
+            color: #f7931a;
+        }
+        .form-text {
+            color: #9ca3af;
+        }
+        .btn-save {
+            background: linear-gradient(135deg, #f7931a 0%, #e8850f 100%);
+            border: none;
+            color: #000;
+            font-weight: 600;
+            padding: 12px 30px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .btn-save:hover {
+            background: linear-gradient(135deg, #e8850f 0%, #d4790d 100%);
+            transform: translateY(-2px);
+            color: #000;
+        }
+        .btn-reset {
+            background-color: transparent;
+            border: 2px solid #6b7280;
+            color: #9ca3af;
+            font-weight: 600;
+            padding: 12px 30px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .btn-reset:hover {
+            background-color: #374151;
+            border-color: #9ca3af;
+            color: #ffffff;
+        }
+        .language-option {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border: 2px solid #2d3748;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 10px;
+        }
+        .language-option:hover {
+            border-color: #f7931a;
+            background-color: #2d3748;
+        }
+        .language-option.selected {
+            border-color: #f7931a;
+            background-color: rgba(247, 147, 26, 0.1);
+        }
+        .language-option input {
+            display: none;
+        }
+        .language-flag {
+            font-size: 2rem;
+            margin-right: 15px;
+        }
+        .alert-settings {
+            background-color: #2d3748;
+            border: 1px solid #4a5568;
+            color: #e2e8f0;
+        }
+        .user-info-card {
+            background: linear-gradient(135deg, #1a2332 0%, #2d3748 100%);
+            border: 1px solid #f7931a;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark navbar-expand-lg mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="bi bi-currency-bitcoin gold-accent"></i>
+                <span class="gold-accent">HashInsight</span>
+            </a>
+            <div class="d-flex align-items-center">
+                <button type="button" data-lang-switch="zh" data-lang="zh" 
+                        class="btn btn-sm btn-outline-light {{ 'active' if current_lang == 'zh' else '' }} lang-switch-btn me-1">
+                    中文
+                </button>
+                <button type="button" data-lang-switch="en" data-lang="en" 
+                        class="btn btn-sm btn-outline-light {{ 'active' if current_lang == 'en' else '' }} lang-switch-btn me-3">
+                    EN
+                </button>
+                <a href="{{ url_for('analytics_dashboard') }}" class="btn btn-outline-light btn-sm me-2">
+                    <i class="bi bi-arrow-left me-1"></i>
+                    {% if current_lang == 'en' %}Back to Dashboard{% else %}返回仪表盘{% endif %}
+                </a>
+                <a href="{{ url_for('index') }}" class="btn btn-outline-warning btn-sm">
+                    <i class="bi bi-house-door me-1"></i>
+                    {% if current_lang == 'en' %}Home{% else %}主页{% endif %}
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="section-title">
+                    <i class="bi bi-gear gold-accent me-2"></i>
+                    {% if current_lang == 'en' %}Settings{% else %}设置{% endif %}
+                </h2>
+                <p class="text-muted">
+                    {% if current_lang == 'en' %}
+                    Customize your HashInsight experience with personalized preferences.
+                    {% else %}
+                    使用个性化偏好定制您的HashInsight体验。
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+        <form id="settingsForm">
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="bi bi-translate settings-icon"></i>
+                            {% if current_lang == 'en' %}Language Preference{% else %}语言偏好{% endif %}
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="language-option {% if user_settings.language == 'en' %}selected{% endif %}" id="langEn">
+                                        <input type="radio" name="language" value="en" {% if user_settings.language == 'en' %}checked{% endif %}>
+                                        <span class="language-flag">🇺🇸</span>
+                                        <div>
+                                            <strong>English</strong>
+                                            <div class="text-muted small">United States</div>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="language-option {% if user_settings.language == 'zh' %}selected{% endif %}" id="langZh">
+                                        <input type="radio" name="language" value="zh" {% if user_settings.language == 'zh' %}checked{% endif %}>
+                                        <span class="language-flag">🇨🇳</span>
+                                        <div>
+                                            <strong>中文</strong>
+                                            <div class="text-muted small">简体中文</div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="bi bi-bell settings-icon"></i>
+                            {% if current_lang == 'en' %}Notification Settings{% else %}通知设置{% endif %}
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-4">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="notificationsEnabled" name="notifications_enabled" {% if user_settings.notifications_enabled %}checked{% endif %}>
+                                    <label class="form-check-label" for="notificationsEnabled">
+                                        {% if current_lang == 'en' %}Enable Notifications{% else %}启用通知{% endif %}
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    {% if current_lang == 'en' %}
+                                    Receive alerts for price changes, mining updates, and important system events.
+                                    {% else %}
+                                    接收价格变动、挖矿更新和重要系统事件的提醒。
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="emailNotifications" name="email_notifications" {% if user_settings.email_notifications %}checked{% endif %}>
+                                    <label class="form-check-label" for="emailNotifications">
+                                        {% if current_lang == 'en' %}Email Notifications{% else %}邮件通知{% endif %}
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    {% if current_lang == 'en' %}
+                                    Receive daily summaries and critical alerts via email.
+                                    {% else %}
+                                    通过电子邮件接收每日摘要和重要提醒。
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="bi bi-display settings-icon"></i>
+                            {% if current_lang == 'en' %}Display Preferences{% else %}显示偏好{% endif %}
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="displayCurrency" class="form-label">
+                                        {% if current_lang == 'en' %}Display Currency{% else %}显示货币{% endif %}
+                                    </label>
+                                    <select class="form-select" id="displayCurrency" name="display_currency">
+                                        <option value="USD" {% if user_settings.display_currency == 'USD' %}selected{% endif %}>USD ($)</option>
+                                        <option value="CNY" {% if user_settings.display_currency == 'CNY' %}selected{% endif %}>CNY (¥)</option>
+                                        <option value="EUR" {% if user_settings.display_currency == 'EUR' %}selected{% endif %}>EUR (€)</option>
+                                        <option value="BTC" {% if user_settings.display_currency == 'BTC' %}selected{% endif %}>BTC (₿)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="timezone" class="form-label">
+                                        {% if current_lang == 'en' %}Timezone{% else %}时区{% endif %}
+                                    </label>
+                                    <select class="form-select" id="timezone" name="timezone">
+                                        <option value="UTC" {% if user_settings.timezone == 'UTC' %}selected{% endif %}>UTC</option>
+                                        <option value="Asia/Shanghai" {% if user_settings.timezone == 'Asia/Shanghai' %}selected{% endif %}>Asia/Shanghai (CST)</option>
+                                        <option value="America/New_York" {% if user_settings.timezone == 'America/New_York' %}selected{% endif %}>America/New_York (EST)</option>
+                                        <option value="America/Los_Angeles" {% if user_settings.timezone == 'America/Los_Angeles' %}selected{% endif %}>America/Los_Angeles (PST)</option>
+                                        <option value="Europe/London" {% if user_settings.timezone == 'Europe/London' %}selected{% endif %}>Europe/London (GMT)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="theme" class="form-label">
+                                    {% if current_lang == 'en' %}Theme{% else %}主题{% endif %}
+                                </label>
+                                <select class="form-select" id="theme" name="theme">
+                                    <option value="dark" {% if user_settings.theme == 'dark' %}selected{% endif %}>
+                                        {% if current_lang == 'en' %}Dark Mode{% else %}深色模式{% endif %}
+                                    </option>
+                                    <option value="light" {% if user_settings.theme == 'light' %}selected{% endif %}>
+                                        {% if current_lang == 'en' %}Light Mode{% else %}浅色模式{% endif %}
+                                    </option>
+                                    <option value="auto" {% if user_settings.theme == 'auto' %}selected{% endif %}>
+                                        {% if current_lang == 'en' %}System Default{% else %}跟随系统{% endif %}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3 mb-4">
+                        <button type="submit" class="btn btn-save">
+                            <i class="bi bi-check-lg me-2"></i>
+                            {% if current_lang == 'en' %}Save Settings{% else %}保存设置{% endif %}
+                        </button>
+                        <button type="button" class="btn btn-reset" onclick="resetSettings()">
+                            <i class="bi bi-arrow-counterclockwise me-2"></i>
+                            {% if current_lang == 'en' %}Reset to Default{% else %}重置为默认{% endif %}
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card user-info-card">
+                        <div class="card-header">
+                            <i class="bi bi-person-circle settings-icon"></i>
+                            {% if current_lang == 'en' %}Account Info{% else %}账户信息{% endif %}
+                        </div>
+                        <div class="card-body">
+                            <div class="text-center mb-4">
+                                <div class="rounded-circle bg-warning d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                    <i class="bi bi-person-fill" style="font-size: 2.5rem; color: #000;"></i>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small">
+                                    {% if current_lang == 'en' %}Email{% else %}邮箱{% endif %}
+                                </label>
+                                <div class="text-light">{{ user_email or 'Not available' }}</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small">
+                                    {% if current_lang == 'en' %}Role{% else %}角色{% endif %}
+                                </label>
+                                <div>
+                                    <span class="badge bg-warning text-dark">
+                                        {{ user_role|capitalize if user_role else 'User' }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="form-label small">
+                                    {% if current_lang == 'en' %}Subscription{% else %}订阅{% endif %}
+                                </label>
+                                <div class="text-success">
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    {% if current_lang == 'en' %}Active{% else %}有效{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="bi bi-shield-check settings-icon"></i>
+                            {% if current_lang == 'en' %}Security{% else %}安全{% endif %}
+                        </div>
+                        <div class="card-body">
+                            <a href="#" class="btn btn-outline-light w-100 mb-2">
+                                <i class="bi bi-key me-2"></i>
+                                {% if current_lang == 'en' %}Change Password{% else %}修改密码{% endif %}
+                            </a>
+                            <a href="#" class="btn btn-outline-light w-100 mb-2">
+                                <i class="bi bi-shield-lock me-2"></i>
+                                {% if current_lang == 'en' %}Two-Factor Auth{% else %}双重认证{% endif %}
+                            </a>
+                            <a href="#" class="btn btn-outline-light w-100">
+                                <i class="bi bi-clock-history me-2"></i>
+                                {% if current_lang == 'en' %}Login History{% else %}登录历史{% endif %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="settingsToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-dark">
+                <i class="bi bi-check-circle text-success me-2" id="toastIcon"></i>
+                <strong class="me-auto">{% if current_lang == 'en' %}Settings{% else %}设置{% endif %}</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body bg-dark" id="toastMessage">
+                {% if current_lang == 'en' %}Settings saved successfully!{% else %}设置已保存！{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const currentLang = '{{ current_lang }}';
+        
+        document.querySelectorAll('.language-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.language-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+                this.querySelector('input').checked = true;
+            });
+        });
+        
+        document.getElementById('settingsForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                language: document.querySelector('input[name="language"]:checked').value,
+                notifications_enabled: document.getElementById('notificationsEnabled').checked,
+                email_notifications: document.getElementById('emailNotifications').checked,
+                display_currency: document.getElementById('displayCurrency').value,
+                timezone: document.getElementById('timezone').value,
+                theme: document.getElementById('theme').value
+            };
+            
+            fetch('/settings/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    if (formData.language !== currentLang) {
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    }
+                } else {
+                    showToast(currentLang === 'en' ? 'Error saving settings' : '保存设置时出错', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast(currentLang === 'en' ? 'Error saving settings' : '保存设置时出错', 'error');
+            });
+        });
+        
+        function resetSettings() {
+            if (confirm(currentLang === 'en' ? 'Reset all settings to default?' : '将所有设置重置为默认值？')) {
+                document.querySelector('input[name="language"][value="zh"]').checked = true;
+                document.querySelectorAll('.language-option').forEach(o => o.classList.remove('selected'));
+                document.getElementById('langZh').classList.add('selected');
+                document.getElementById('notificationsEnabled').checked = true;
+                document.getElementById('emailNotifications').checked = true;
+                document.getElementById('displayCurrency').value = 'USD';
+                document.getElementById('timezone').value = 'UTC';
+                document.getElementById('theme').value = 'dark';
+                showToast(currentLang === 'en' ? 'Settings reset to default' : '设置已重置为默认值', 'success');
+            }
+        }
+        
+        function showToast(message, type = 'success') {
+            const toastEl = document.getElementById('settingsToast');
+            const toastMessage = document.getElementById('toastMessage');
+            const toastIcon = document.getElementById('toastIcon');
+            
+            toastMessage.textContent = message;
+            toastIcon.className = type === 'success' 
+                ? 'bi bi-check-circle text-success me-2' 
+                : 'bi bi-exclamation-circle text-danger me-2';
+            
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+        }
+    </script>
+    <script src="/static/js/i18n.js"></script>
+</body>
+</html>

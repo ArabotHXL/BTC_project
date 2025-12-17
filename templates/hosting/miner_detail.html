@@ -1,0 +1,1466 @@
+{% extends "hosting/hosting_base.html" %}
+
+{% block page_title %}<span data-i18n="hosting.miner_dashboard">Miner Dashboard</span>{% endblock %}
+{% block page_subtitle %}<span data-i18n="hosting.realtime_monitoring">Real-time monitoring and performance analytics</span>{% endblock %}
+
+{% block header_actions %}
+{{ super() }}
+<div class="btn-group ms-3" role="group">
+    <a href="{{ url_for('hosting_service_bp.host_view', subpath='devices') }}" class="btn btn-hosting-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i><span data-i18n="hosting.back_to_list">Back to List</span>
+    </a>
+    <button class="btn btn-hosting-primary btn-sm" onclick="refreshData()">
+        <i class="bi bi-arrow-clockwise me-1"></i><span data-i18n="common.refresh">Refresh</span>
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<!-- 1. Header Section - Miner Info Bar -->
+<div class="miner-header-bar mb-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+            <div class="miner-icon">
+                <i class="bi bi-cpu-fill"></i>
+            </div>
+            <div>
+                <h2 class="miner-name mb-1" id="miner-name">{{ miner.name or miner.serial_number }}</h2>
+                <div class="miner-meta d-flex flex-wrap align-items-center gap-2">
+                    <span id="status-badge" class="status-badge status-offline">
+                        <i class="bi bi-circle-fill me-1"></i>
+                        <span id="status-text" data-i18n="hosting.offline">Offline</span>
+                    </span>
+                    <span class="meta-divider">|</span>
+                    <span class="meta-item"><i class="bi bi-box me-1"></i><span id="miner-model">{{ miner.miner_model.model_name if miner.miner_model else '-' }}</span></span>
+                    <span class="meta-divider">|</span>
+                    <span class="meta-item"><i class="bi bi-geo-alt me-1"></i><span id="miner-site">{{ miner.site.name if miner.site else '-' }}</span></span>
+                    <span class="meta-divider">|</span>
+                    <span class="meta-item"><i class="bi bi-clock me-1"></i><span data-i18n="hosting.last_seen">Last seen</span>: <span id="last-seen">-</span></span>
+                </div>
+            </div>
+        </div>
+        <div class="miner-health-indicator d-none d-md-flex align-items-center gap-2" id="health-indicator">
+            <span class="health-label" data-i18n="hosting.health">Health</span>
+            <span class="health-badge" id="health-badge">-</span>
+        </div>
+    </div>
+</div>
+
+<!-- 2. KPI Cards Row -->
+<div class="row g-4 mb-4">
+    <!-- Hashrate Card -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="kpi-card kpi-hashrate">
+            <div class="kpi-icon"><i class="bi bi-speedometer2"></i></div>
+            <div class="kpi-content">
+                <div class="kpi-label" data-i18n="hosting.hashrate">Hashrate</div>
+                <div class="kpi-value"><span id="kpi-hashrate">-</span> <small>TH/s</small></div>
+                <div class="kpi-subtitle"><span data-i18n="hosting.expected">Expected</span>: <span id="kpi-hashrate-expected">-</span> TH/s</div>
+            </div>
+            <div class="kpi-deviation" id="kpi-hashrate-deviation">
+                <span class="deviation-value">-</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Temperature Card -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="kpi-card kpi-temperature">
+            <div class="kpi-icon"><i class="bi bi-thermometer-half"></i></div>
+            <div class="kpi-content">
+                <div class="kpi-label" data-i18n="hosting.temperature">Temperature</div>
+                <div class="kpi-value"><span id="kpi-temp-min">-</span> ~ <span id="kpi-temp-max">-</span> <small>°C</small></div>
+                <div class="kpi-subtitle"><span data-i18n="hosting.avg">Avg</span>: <span id="kpi-temp-avg">-</span>°C</div>
+            </div>
+            <div class="kpi-status-icon" id="kpi-temp-status">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Power Card -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="kpi-card kpi-power">
+            <div class="kpi-icon"><i class="bi bi-lightning-charge-fill"></i></div>
+            <div class="kpi-content">
+                <div class="kpi-label" data-i18n="hosting.power">Power</div>
+                <div class="kpi-value"><span id="kpi-power">-</span> <small>kW</small></div>
+                <div class="kpi-subtitle"><span data-i18n="hosting.efficiency">Efficiency</span>: <span id="kpi-efficiency">-</span> J/TH</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Daily Net Profit Card -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="kpi-card kpi-profit">
+            <div class="kpi-icon"><i class="bi bi-currency-bitcoin"></i></div>
+            <div class="kpi-content">
+                <div class="kpi-label" data-i18n="hosting.daily_net_profit">Daily Net Profit</div>
+                <div class="kpi-value profit-positive"><span id="kpi-net-profit">$-</span></div>
+                <div class="kpi-subtitle">
+                    <span data-i18n="hosting.revenue">Revenue</span> <span id="kpi-revenue">$-</span> - 
+                    <span data-i18n="hosting.power">Power</span> <span id="kpi-power-cost">$-</span>
+                </div>
+            </div>
+            <div class="kpi-margin" id="kpi-margin">
+                <span class="margin-value">-</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 3. 24h Performance Chart -->
+<div class="hosting-card mb-4">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-graph-up me-2"></i><span data-i18n="hosting.24h_performance">24h Performance</span>
+        </h5>
+        <div class="text-muted small">
+            <i class="bi bi-info-circle me-1"></i>
+            <span data-i18n="hosting.hashrate_efficiency">Hashrate (TH/s) and Power Efficiency (TH/kW)</span>
+        </div>
+    </div>
+    <div class="hosting-card-body">
+        <div id="performance-chart-container" style="position: relative; height: 350px;">
+            <canvas id="performanceChart"></canvas>
+        </div>
+        <div id="no-data-message" class="text-center text-muted py-5" style="display: none;">
+            <i class="bi bi-graph-down fs-1 mb-3 d-block opacity-50"></i>
+            <p class="mb-0">
+                <span data-i18n="hosting.no_telemetry_data">No telemetry data available for the last 24 hours.</span><br>
+                <span data-i18n="hosting.data_will_appear">Data will appear once the miner starts reporting.</span>
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- 4. Pool Info Block -->
+<div class="hosting-card mb-4">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-hdd-network me-2"></i><span data-i18n="hosting.pool_information">Pool Information</span>
+        </h5>
+    </div>
+    <div class="hosting-card-body">
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="pool-info-item">
+                    <div class="pool-info-label" data-i18n="hosting.pool_url">Pool URL</div>
+                    <div class="pool-info-value text-truncate" id="pool-url" title="">-</div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="pool-info-item">
+                    <div class="pool-info-label" data-i18n="hosting.worker_name">Worker Name</div>
+                    <div class="pool-info-value" id="pool-worker">-</div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-2">
+                <div class="pool-info-item">
+                    <div class="pool-info-label" data-i18n="hosting.latency">Latency</div>
+                    <div class="pool-info-value"><span id="pool-latency">-</span> ms</div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="pool-info-item">
+                    <div class="pool-info-label" data-i18n="hosting.24h_shares">24h Shares</div>
+                    <div class="pool-info-value shares-info">
+                        <span class="shares-accepted"><i class="bi bi-check-circle-fill"></i> <span id="shares-accepted">-</span></span>
+                        <span class="shares-divider">/</span>
+                        <span class="shares-rejected"><i class="bi bi-x-circle-fill"></i> <span id="shares-rejected">-</span></span>
+                        <span class="shares-rate">(<span id="rejected-rate">-</span>%)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 5. Board Health Collapsible Section -->
+<div class="hosting-card">
+    <div class="hosting-card-header" data-bs-toggle="collapse" data-bs-target="#boards-collapse" role="button" aria-expanded="false" aria-controls="boards-collapse">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-motherboard me-2"></i><span data-i18n="hosting.board_health">Board Health</span>
+            <span class="boards-summary ms-2">
+                (<span id="boards-healthy">-</span>/<span id="boards-total">-</span> <span data-i18n="hosting.healthy">healthy</span>)
+            </span>
+        </h5>
+        <div class="collapse-indicator">
+            <i class="bi bi-chevron-down"></i>
+        </div>
+    </div>
+    <div class="collapse" id="boards-collapse">
+        <div class="hosting-card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover boards-table mb-0">
+                    <thead>
+                        <tr>
+                            <th data-i18n="hosting.board">Board</th>
+                            <th data-i18n="hosting.hashrate">Hashrate</th>
+                            <th data-i18n="hosting.temperature">Temperature</th>
+                            <th data-i18n="hosting.chips">Chips</th>
+                            <th data-i18n="hosting.status">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="boards-table-body">
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4" data-i18n="hosting.loading_board_data">
+                                Loading board data...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 6. Remote Control Section -->
+<div class="hosting-card mt-4">
+    <div class="hosting-card-header" data-bs-toggle="collapse" data-bs-target="#remote-control-collapse" role="button" aria-expanded="false" aria-controls="remote-control-collapse">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-sliders me-2"></i><span data-i18n="hosting.remote_control">Remote Control</span>
+        </h5>
+        <div class="collapse-indicator">
+            <i class="bi bi-chevron-down"></i>
+        </div>
+    </div>
+    <div class="collapse" id="remote-control-collapse">
+        <div class="hosting-card-body">
+            <div class="row g-3">
+                <div class="col-6 col-md-4 col-lg-2">
+                    <button class="btn btn-control-action w-100" onclick="showControlModal('REBOOT')">
+                        <i class="bi bi-arrow-clockwise"></i>
+                        <span data-i18n="hosting.reboot">Reboot</span>
+                    </button>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <button class="btn btn-control-action w-100" onclick="showControlModal('POWER_MODE')">
+                        <i class="bi bi-lightning-charge"></i>
+                        <span data-i18n="hosting.power_mode">Power Mode</span>
+                    </button>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <button class="btn btn-control-action w-100" onclick="showControlModal('CHANGE_POOL')">
+                        <i class="bi bi-water"></i>
+                        <span data-i18n="hosting.change_pool">Change Pool</span>
+                    </button>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <button class="btn btn-control-action w-100" onclick="showControlModal('SET_FREQ')">
+                        <i class="bi bi-speedometer"></i>
+                        <span data-i18n="hosting.frequency">Frequency</span>
+                    </button>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <button class="btn btn-control-action w-100" onclick="showControlModal('THERMAL_POLICY')">
+                        <i class="bi bi-thermometer"></i>
+                        <span data-i18n="hosting.thermal">Thermal</span>
+                    </button>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <button class="btn btn-control-action w-100" onclick="showControlModal('LED')">
+                        <i class="bi bi-lightbulb"></i>
+                        <span data-i18n="hosting.led">LED</span>
+                    </button>
+                </div>
+            </div>
+            
+            <hr class="my-4 border-secondary">
+            
+            <h6 class="mb-3"><i class="bi bi-clock-history me-2"></i><span data-i18n="hosting.command_history">Command History</span></h6>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th data-i18n="hosting.time">Time</th>
+                            <th data-i18n="hosting.command">Command</th>
+                            <th data-i18n="hosting.status">Status</th>
+                            <th data-i18n="hosting.result">Result</th>
+                        </tr>
+                    </thead>
+                    <tbody id="command-history-body">
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-3" data-i18n="hosting.no_commands">No recent commands</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Remote Control Modal -->
+<div class="modal fade" id="controlModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title" id="controlModalTitle">
+                    <i class="bi bi-sliders me-2"></i><span data-i18n="hosting.remote_control">Remote Control</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="controlModalBody">
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="common.cancel">Cancel</button>
+                <button type="button" class="btn btn-warning" id="controlSubmitBtn" onclick="submitControlCommand()">
+                    <i class="bi bi-send me-1"></i><span data-i18n="common.execute">Execute</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="loading-overlay">
+    <div class="loading-spinner">
+        <div class="spinner-border text-warning" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <div class="mt-2" data-i18n="hosting.loading_data">Loading data...</div>
+    </div>
+</div>
+
+<!-- Custom CSS Styles -->
+<style>
+:root {
+    --btc-gold: #f7931a;
+    --btc-dark: #1a1d2e;
+    --btc-gradient: linear-gradient(135deg, #f7931a 0%, #ffb84d 100%);
+}
+
+.miner-header-bar {
+    background: linear-gradient(135deg, rgba(247, 147, 26, 0.15) 0%, rgba(247, 147, 26, 0.05) 100%);
+    border: 2px solid rgba(247, 147, 26, 0.3);
+    border-radius: 16px;
+    padding: 1.5rem 2rem;
+}
+
+.miner-icon {
+    width: 60px;
+    height: 60px;
+    background: var(--btc-gradient);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    color: #000;
+}
+
+.miner-name {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.miner-meta {
+    color: var(--hosting-text-secondary);
+    font-size: 0.9rem;
+}
+
+.meta-divider {
+    color: rgba(255, 255, 255, 0.2);
+    margin: 0 0.25rem;
+}
+
+.meta-item i {
+    color: var(--btc-gold);
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.status-badge i {
+    font-size: 0.5rem;
+}
+
+.status-online {
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.status-warning {
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.status-offline {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+.health-indicator {
+    text-align: right;
+}
+
+.health-label {
+    color: var(--hosting-text-secondary);
+    font-size: 0.85rem;
+}
+
+.health-badge {
+    padding: 0.35rem 0.75rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+    text-transform: capitalize;
+}
+
+.health-badge.unhealthy {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+}
+
+.health-badge.degraded {
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+}
+
+/* KPI Cards */
+.kpi-card {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    min-height: 140px;
+}
+
+.kpi-card:hover {
+    border-color: var(--btc-gold);
+    box-shadow: 0 8px 32px rgba(247, 147, 26, 0.15);
+    transform: translateY(-2px);
+}
+
+.kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--btc-gradient);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.kpi-card:hover::before {
+    opacity: 1;
+}
+
+.kpi-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(247, 147, 26, 0.15);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    color: var(--btc-gold);
+    flex-shrink: 0;
+}
+
+.kpi-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.kpi-label {
+    font-size: 0.85rem;
+    color: var(--hosting-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.kpi-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.2;
+}
+
+.kpi-value small {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--hosting-text-secondary);
+}
+
+.kpi-subtitle {
+    font-size: 0.85rem;
+    color: var(--hosting-text-secondary);
+    margin-top: 0.25rem;
+}
+
+.kpi-deviation {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.kpi-deviation.positive {
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+}
+
+.kpi-deviation.negative {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+}
+
+.kpi-status-icon {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 1.2rem;
+}
+
+.kpi-status-icon.good { color: #28a745; }
+.kpi-status-icon.warning { color: #ffc107; }
+.kpi-status-icon.danger { color: #dc3545; }
+
+.kpi-margin {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+}
+
+.kpi-margin.negative {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+}
+
+.profit-positive { color: #28a745; }
+.profit-negative { color: #dc3545; }
+
+.kpi-hashrate .kpi-icon { background: rgba(78, 205, 196, 0.15); color: #4ECDC4; }
+.kpi-temperature .kpi-icon { background: rgba(255, 107, 107, 0.15); color: #FF6B6B; }
+.kpi-power .kpi-icon { background: rgba(255, 181, 71, 0.15); color: #FFB547; }
+.kpi-profit .kpi-icon { background: rgba(247, 147, 26, 0.15); color: var(--btc-gold); }
+
+/* Pool Info */
+.pool-info-item {
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    height: 100%;
+}
+
+.pool-info-label {
+    font-size: 0.8rem;
+    color: var(--hosting-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.pool-info-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.shares-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.shares-accepted {
+    color: #28a745;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.shares-rejected {
+    color: #dc3545;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.shares-divider {
+    color: var(--hosting-text-secondary);
+}
+
+.shares-rate {
+    color: var(--hosting-text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Board Health Section */
+.boards-summary {
+    font-weight: 400;
+    color: var(--hosting-text-secondary);
+    font-size: 0.9rem;
+}
+
+.collapse-indicator {
+    transition: transform 0.3s ease;
+}
+
+[aria-expanded="true"] .collapse-indicator {
+    transform: rotate(180deg);
+}
+
+.boards-table {
+    background: transparent;
+}
+
+.boards-table thead th {
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 2px solid var(--btc-gold);
+    color: var(--hosting-text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+    padding: 1rem;
+}
+
+.boards-table tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.board-health-badge {
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: capitalize;
+}
+
+.board-health-badge.healthy {
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+}
+
+.board-health-badge.degraded {
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+}
+
+.board-health-badge.unhealthy {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+}
+
+/* Chart Container */
+#performance-chart-container {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 1rem;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(26, 29, 46, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.loading-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.loading-spinner {
+    text-align: center;
+    color: var(--hosting-text-secondary);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .miner-header-bar {
+        padding: 1rem;
+    }
+    
+    .miner-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+    
+    .miner-name {
+        font-size: 1.25rem;
+    }
+    
+    .meta-divider {
+        display: none;
+    }
+    
+    .meta-item {
+        display: block;
+        margin-top: 0.25rem;
+    }
+    
+    .kpi-card {
+        min-height: auto;
+        padding: 1rem;
+    }
+    
+    .kpi-value {
+        font-size: 1.4rem;
+    }
+    
+    .health-indicator {
+        display: none !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .kpi-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+}
+
+/* Remote Control Buttons */
+.btn-control-action {
+    background: rgba(247, 147, 26, 0.1);
+    border: 1px solid rgba(247, 147, 26, 0.3);
+    color: #f7931a;
+    padding: 1rem 0.5rem;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+}
+
+.btn-control-action i {
+    font-size: 1.5rem;
+}
+
+.btn-control-action:hover {
+    background: rgba(247, 147, 26, 0.2);
+    border-color: #f7931a;
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+.btn-control-action:active {
+    transform: translateY(0);
+}
+
+/* Command Status Badges */
+.cmd-status-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.cmd-status-badge.queued { background: rgba(78, 205, 196, 0.2); color: #4ECDC4; }
+.cmd-status-badge.running { background: rgba(255, 181, 71, 0.2); color: #FFB547; }
+.cmd-status-badge.succeeded { background: rgba(40, 167, 69, 0.2); color: #28a745; }
+.cmd-status-badge.failed { background: rgba(220, 53, 69, 0.2); color: #dc3545; }
+.cmd-status-badge.pending { background: rgba(108, 117, 125, 0.2); color: #6c757d; }
+
+/* Control Modal Form */
+.control-form-group {
+    margin-bottom: 1rem;
+}
+
+.control-form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #adb5bd;
+}
+
+.control-form-group select,
+.control-form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.3);
+    color: #fff;
+}
+
+.control-form-group select:focus,
+.control-form-group input:focus {
+    outline: none;
+    border-color: #f7931a;
+}
+
+.control-warning {
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    border-radius: 8px;
+    padding: 0.75rem;
+    color: #ffc107;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+}
+
+.control-warning i {
+    margin-right: 0.5rem;
+}
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+let performanceChart = null;
+const minerId = {{ miner.id }};
+
+function t(key) {
+    return window.I18n ? window.I18n.t(key) : key;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadMinerStatus();
+    
+    if (window.I18n && window.I18n.onLanguageChange) {
+        window.I18n.onLanguageChange.push(function() {
+            loadMinerStatus();
+        });
+    }
+});
+
+function refreshData() {
+    document.getElementById('loading-overlay').classList.remove('hidden');
+    loadMinerStatus();
+}
+
+function loadMinerStatus() {
+    fetch(`/api/collector/miners/${minerId}/status`)
+        .then(response => response.json())
+        .then(result => {
+            document.getElementById('loading-overlay').classList.add('hidden');
+            
+            if (result.success) {
+                updateMinerInfo(result.miner);
+                updateKPIs(result.performance, result.revenue);
+                updatePoolInfo(result.pool);
+                updateBoardsHealth(result.boards);
+                updatePerformanceChart(result.history_24h);
+            } else {
+                console.error('Failed to load miner status:', result.error);
+                showError();
+            }
+        })
+        .catch(error => {
+            document.getElementById('loading-overlay').classList.add('hidden');
+            console.error('Error loading miner status:', error);
+            showError();
+        });
+}
+
+function updateMinerInfo(miner) {
+    document.getElementById('miner-name').textContent = miner.name || '-';
+    document.getElementById('miner-model').textContent = miner.model || '-';
+    document.getElementById('miner-site').textContent = miner.site_name || '-';
+    document.getElementById('last-seen').textContent = miner.last_seen || '-';
+    
+    const statusBadge = document.getElementById('status-badge');
+    const statusText = document.getElementById('status-text');
+    
+    statusBadge.classList.remove('status-online', 'status-offline', 'status-warning');
+    
+    if (miner.online) {
+        if (miner.overall_health === 'degraded') {
+            statusBadge.classList.add('status-warning');
+            statusText.textContent = t('hosting.warning');
+        } else {
+            statusBadge.classList.add('status-online');
+            statusText.textContent = t('hosting.online');
+        }
+    } else {
+        statusBadge.classList.add('status-offline');
+        statusText.textContent = t('hosting.offline');
+    }
+    
+    const healthBadge = document.getElementById('health-badge');
+    healthBadge.textContent = miner.overall_health || 'offline';
+    healthBadge.classList.remove('unhealthy', 'degraded');
+    if (miner.overall_health === 'unhealthy') {
+        healthBadge.classList.add('unhealthy');
+    } else if (miner.overall_health === 'degraded') {
+        healthBadge.classList.add('degraded');
+    }
+}
+
+function updateKPIs(performance, revenue) {
+    document.getElementById('kpi-hashrate').textContent = performance.hashrate_ths?.toFixed(1) || '-';
+    document.getElementById('kpi-hashrate-expected').textContent = performance.hashrate_expected_ths?.toFixed(1) || '-';
+    
+    const deviationEl = document.getElementById('kpi-hashrate-deviation');
+    const deviation = performance.hashrate_deviation_pct || 0;
+    deviationEl.querySelector('.deviation-value').textContent = (deviation >= 0 ? '+' : '') + deviation.toFixed(1) + '%';
+    deviationEl.classList.remove('positive', 'negative');
+    deviationEl.classList.add(deviation >= 0 ? 'positive' : 'negative');
+    
+    document.getElementById('kpi-temp-min').textContent = performance.temp_min_c?.toFixed(0) || '-';
+    document.getElementById('kpi-temp-max').textContent = performance.temp_max_c?.toFixed(0) || '-';
+    document.getElementById('kpi-temp-avg').textContent = performance.temp_avg_c?.toFixed(1) || '-';
+    
+    const tempStatusEl = document.getElementById('kpi-temp-status');
+    const maxTemp = performance.temp_max_c || 0;
+    tempStatusEl.classList.remove('good', 'warning', 'danger');
+    if (maxTemp > 85) {
+        tempStatusEl.classList.add('danger');
+        tempStatusEl.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i>';
+    } else if (maxTemp > 75) {
+        tempStatusEl.classList.add('warning');
+        tempStatusEl.innerHTML = '<i class="bi bi-exclamation-circle-fill"></i>';
+    } else {
+        tempStatusEl.classList.add('good');
+        tempStatusEl.innerHTML = '<i class="bi bi-check-circle-fill"></i>';
+    }
+    
+    document.getElementById('kpi-power').textContent = performance.power_kw?.toFixed(2) || '-';
+    document.getElementById('kpi-efficiency').textContent = performance.efficiency_jths?.toFixed(1) || '-';
+    
+    const netProfit = revenue.net_profit_usd || 0;
+    const netProfitEl = document.getElementById('kpi-net-profit');
+    netProfitEl.textContent = '$' + netProfit.toFixed(2);
+    netProfitEl.parentElement.classList.remove('profit-positive', 'profit-negative');
+    netProfitEl.parentElement.classList.add(netProfit >= 0 ? 'profit-positive' : 'profit-negative');
+    
+    document.getElementById('kpi-revenue').textContent = '$' + (revenue.daily_usd?.toFixed(2) || '0.00');
+    document.getElementById('kpi-power-cost').textContent = '$' + (revenue.power_cost_usd?.toFixed(2) || '0.00');
+    
+    const marginEl = document.getElementById('kpi-margin');
+    const margin = revenue.profit_margin_pct || 0;
+    marginEl.querySelector('.margin-value').textContent = margin.toFixed(0) + '%';
+    marginEl.classList.toggle('negative', margin < 0);
+}
+
+function updatePoolInfo(pool) {
+    const poolUrlEl = document.getElementById('pool-url');
+    poolUrlEl.textContent = pool.url || '-';
+    poolUrlEl.title = pool.url || '';
+    
+    document.getElementById('pool-worker').textContent = pool.worker || '-';
+    document.getElementById('pool-latency').textContent = pool.latency_ms?.toFixed(0) || '-';
+    document.getElementById('shares-accepted').textContent = formatNumber(pool.shares_accepted_24h || 0);
+    document.getElementById('shares-rejected').textContent = formatNumber(pool.shares_rejected_24h || 0);
+    document.getElementById('rejected-rate').textContent = pool.rejected_rate_pct?.toFixed(2) || '0.00';
+}
+
+function updateBoardsHealth(boards) {
+    document.getElementById('boards-healthy').textContent = boards.healthy || 0;
+    document.getElementById('boards-total').textContent = boards.total || 0;
+    
+    const tbody = document.getElementById('boards-table-body');
+    
+    if (!boards.data || boards.data.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center text-muted py-4">
+                    ${t('hosting.no_board_data')}
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    let html = '';
+    boards.data.forEach((board, index) => {
+        const healthClass = board.health === 'healthy' ? 'healthy' : (board.health === 'degraded' ? 'degraded' : 'unhealthy');
+        const healthText = board.health === 'healthy' ? t('hosting.healthy') : (board.health === 'degraded' ? t('hosting.degraded') : t('hosting.unhealthy'));
+        
+        html += `
+            <tr>
+                <td><span class="fw-semibold">#${board.index !== undefined ? board.index : index}</span></td>
+                <td>${board.hashrate_ths?.toFixed(1) || '-'} TH/s</td>
+                <td class="${board.temp_c > 85 ? 'text-danger' : (board.temp_c > 75 ? 'text-warning' : '')}">${board.temp_c?.toFixed(0) || '-'}°C</td>
+                <td>${board.chips_ok || '-'}/${board.chips_total || '-'}</td>
+                <td><span class="board-health-badge ${healthClass}">${healthText}</span></td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
+}
+
+function updatePerformanceChart(history) {
+    const container = document.getElementById('performance-chart-container');
+    const noDataMsg = document.getElementById('no-data-message');
+    
+    if (!history || history.length === 0) {
+        container.style.display = 'none';
+        noDataMsg.style.display = 'block';
+        return;
+    }
+    
+    container.style.display = 'block';
+    noDataMsg.style.display = 'none';
+    
+    const ctx = document.getElementById('performanceChart').getContext('2d');
+    
+    if (performanceChart) {
+        performanceChart.destroy();
+    }
+    
+    const labels = history.map(h => h.hour);
+    const hashrateData = history.map(h => h.hashrate_ths);
+    const efficiencyData = history.map(h => h.efficiency_thkw);
+    
+    performanceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: t('hosting.hashrate_ths'),
+                    data: hashrateData,
+                    borderColor: '#4ECDC4',
+                    backgroundColor: 'rgba(78, 205, 196, 0.1)',
+                    borderWidth: 2,
+                    yAxisID: 'y',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 2,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#4ECDC4',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
+                },
+                {
+                    label: t('hosting.efficiency_thkw'),
+                    data: efficiencyData,
+                    borderColor: '#f7931a',
+                    backgroundColor: 'rgba(247, 147, 26, 0.1)',
+                    borderWidth: 2,
+                    yAxisID: 'y1',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 2,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#f7931a',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        color: '#fff',
+                        font: { size: 12 },
+                        padding: 20,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(26, 29, 46, 0.95)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    footerColor: 'rgba(255, 255, 255, 0.7)',
+                    borderColor: '#f7931a',
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 8,
+                    displayColors: true,
+                    footerFont: {
+                        size: 10,
+                        style: 'italic'
+                    },
+                    footerMarginTop: 8,
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (context.parsed.y !== null) {
+                                if (context.datasetIndex === 0) {
+                                    label += ': ' + context.parsed.y.toFixed(1) + ' TH/s';
+                                } else {
+                                    label += ': ' + context.parsed.y.toFixed(2) + ' TH/kW';
+                                }
+                            }
+                            return label;
+                        },
+                        footer: function(tooltipItems) {
+                            if (tooltipItems.length > 0) {
+                                return t('hosting.efficiency_note');
+                            }
+                            return '';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    display: true,
+                    ticks: {
+                        color: '#adb5bd',
+                        maxRotation: 45,
+                        minRotation: 45,
+                        autoSkip: true,
+                        maxTicksLimit: 12
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)',
+                        drawBorder: false
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: t('hosting.hashrate_ths'),
+                        color: '#4ECDC4',
+                        font: { size: 11, weight: 'bold' }
+                    },
+                    ticks: {
+                        color: '#4ECDC4',
+                        callback: function(value) {
+                            return value.toFixed(0);
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(78, 205, 196, 0.1)',
+                        drawBorder: false
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: t('hosting.efficiency_thkw'),
+                        color: '#f7931a',
+                        font: { size: 11, weight: 'bold' }
+                    },
+                    ticks: {
+                        color: '#f7931a',
+                        callback: function(value) {
+                            return value.toFixed(1);
+                        }
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                        drawBorder: false
+                    }
+                }
+            }
+        }
+    });
+}
+
+function formatNumber(num) {
+    if (num >= 1000000) {
+        return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+        return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toString();
+}
+
+function showError() {
+    document.getElementById('performance-chart-container').style.display = 'none';
+    document.getElementById('no-data-message').style.display = 'block';
+}
+
+// ===== Remote Control Functions =====
+let currentCommandType = null;
+const siteId = {{ miner.site_id if miner.site_id else 'null' }};
+const minerSerial = '{{ miner.serial_number }}';
+
+const COMMAND_LABELS = {
+    'REBOOT': { icon: 'bi-arrow-clockwise', label: 'Reboot' },
+    'POWER_MODE': { icon: 'bi-lightning-charge', label: 'Power Mode' },
+    'CHANGE_POOL': { icon: 'bi-water', label: 'Change Pool' },
+    'SET_FREQ': { icon: 'bi-speedometer', label: 'Frequency' },
+    'THERMAL_POLICY': { icon: 'bi-thermometer', label: 'Thermal' },
+    'LED': { icon: 'bi-lightbulb', label: 'LED' }
+};
+
+function showControlModal(commandType) {
+    currentCommandType = commandType;
+    const modal = new bootstrap.Modal(document.getElementById('controlModal'));
+    const titleEl = document.getElementById('controlModalTitle');
+    const bodyEl = document.getElementById('controlModalBody');
+    
+    const cmd = COMMAND_LABELS[commandType] || { icon: 'bi-sliders', label: commandType };
+    titleEl.innerHTML = `<i class="bi ${cmd.icon} me-2"></i>${t('hosting.' + commandType.toLowerCase()) || cmd.label}`;
+    
+    bodyEl.innerHTML = getControlFormHtml(commandType);
+    modal.show();
+}
+
+function getControlFormHtml(commandType) {
+    switch(commandType) {
+        case 'REBOOT':
+            return `
+                <div class="control-form-group">
+                    <label>${t('hosting.reboot_mode') || 'Reboot Mode'}</label>
+                    <select id="control-reboot-mode">
+                        <option value="soft">${t('hosting.soft_reboot') || 'Soft Reboot'} (${t('hosting.recommended') || 'Recommended'})</option>
+                        <option value="hard">${t('hosting.hard_reboot') || 'Hard Reboot'}</option>
+                    </select>
+                </div>
+                <div class="control-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    ${t('hosting.reboot_warning') || 'The miner will be temporarily offline during reboot.'}
+                </div>
+            `;
+        case 'POWER_MODE':
+            return `
+                <div class="control-form-group">
+                    <label>${t('hosting.power_mode') || 'Power Mode'}</label>
+                    <select id="control-power-mode">
+                        <option value="high">${t('hosting.high_performance') || 'High Performance'} ⚡</option>
+                        <option value="normal" selected>${t('hosting.normal') || 'Normal'}</option>
+                        <option value="eco">${t('hosting.eco_mode') || 'Eco Mode'} 🌱</option>
+                    </select>
+                </div>
+            `;
+        case 'CHANGE_POOL':
+            return `
+                <div class="control-form-group">
+                    <label>${t('hosting.pool_url') || 'Pool URL'}</label>
+                    <input type="text" id="control-pool-url" placeholder="stratum+tcp://pool.example.com:3333">
+                </div>
+                <div class="control-form-group">
+                    <label>${t('hosting.worker_name') || 'Worker Name'}</label>
+                    <input type="text" id="control-worker-name" placeholder="farm1.worker1">
+                </div>
+                <div class="control-form-group">
+                    <label>${t('hosting.password') || 'Password'} (${t('common.optional') || 'Optional'})</label>
+                    <input type="password" id="control-pool-password" placeholder="x">
+                </div>
+            `;
+        case 'SET_FREQ':
+            return `
+                <div class="control-form-group">
+                    <label>${t('hosting.frequency_profile') || 'Frequency Profile'}</label>
+                    <select id="control-freq-profile">
+                        <option value="stock">${t('hosting.stock') || 'Stock'} (600 MHz)</option>
+                        <option value="overclock">${t('hosting.overclock') || 'Overclock'} (700 MHz)</option>
+                        <option value="underclock">${t('hosting.underclock') || 'Underclock'} (500 MHz)</option>
+                    </select>
+                </div>
+                <div class="control-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    ${t('hosting.frequency_warning') || 'Overclocking may increase power consumption and temperature.'}
+                </div>
+            `;
+        case 'THERMAL_POLICY':
+            return `
+                <div class="control-form-group">
+                    <label>${t('hosting.fan_mode') || 'Fan Mode'}</label>
+                    <select id="control-fan-mode">
+                        <option value="auto">${t('hosting.auto') || 'Auto'}</option>
+                        <option value="manual">${t('hosting.manual') || 'Manual'}</option>
+                        <option value="aggressive">${t('hosting.aggressive') || 'Aggressive Cooling'}</option>
+                    </select>
+                </div>
+                <div class="control-form-group">
+                    <label>${t('hosting.fan_speed') || 'Fan Speed'} (%)</label>
+                    <input type="range" id="control-fan-speed" min="30" max="100" value="75" oninput="document.getElementById('fan-speed-val').textContent = this.value">
+                    <div class="text-end"><span id="fan-speed-val">75</span>%</div>
+                </div>
+            `;
+        case 'LED':
+            return `
+                <div class="control-form-group">
+                    <label>${t('hosting.led_state') || 'LED State'}</label>
+                    <select id="control-led-state">
+                        <option value="on">${t('hosting.led_on') || 'On'} 💡</option>
+                        <option value="off">${t('hosting.led_off') || 'Off'}</option>
+                    </select>
+                </div>
+                <p class="text-muted small mt-2">${t('hosting.led_help') || 'Turn on the LED to locate this miner in the facility.'}</p>
+            `;
+        default:
+            return '<p class="text-muted">Unknown command type</p>';
+    }
+}
+
+function submitControlCommand() {
+    if (!currentCommandType || !siteId) {
+        alert('Missing command type or site ID');
+        return;
+    }
+    
+    const payload = getCommandPayload(currentCommandType);
+    if (!payload) return;
+    
+    const submitBtn = document.getElementById('controlSubmitBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Sending...';
+    
+    fetch(`/api/sites/${siteId}/commands`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            command_type: currentCommandType,
+            payload: payload,
+            target_scope: 'MINER',
+            target_ids: [minerSerial]
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="bi bi-send me-1"></i>' + (t('common.execute') || 'Execute');
+        
+        if (result.success) {
+            bootstrap.Modal.getInstance(document.getElementById('controlModal')).hide();
+            loadCommandHistory();
+            showToast('success', t('hosting.command_sent') || 'Command sent successfully');
+        } else {
+            showToast('error', result.error || 'Failed to send command');
+        }
+    })
+    .catch(error => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="bi bi-send me-1"></i>' + (t('common.execute') || 'Execute');
+        showToast('error', 'Network error: ' + error.message);
+    });
+}
+
+function getCommandPayload(commandType) {
+    switch(commandType) {
+        case 'REBOOT':
+            return { mode: document.getElementById('control-reboot-mode').value };
+        case 'POWER_MODE':
+            return { mode: document.getElementById('control-power-mode').value };
+        case 'CHANGE_POOL':
+            const poolUrl = document.getElementById('control-pool-url').value;
+            const workerName = document.getElementById('control-worker-name').value;
+            if (!poolUrl || !workerName) {
+                alert(t('hosting.pool_required') || 'Pool URL and Worker Name are required');
+                return null;
+            }
+            return {
+                pool_url: poolUrl,
+                worker_name: workerName,
+                password: document.getElementById('control-pool-password').value || 'x'
+            };
+        case 'SET_FREQ':
+            return { profile: document.getElementById('control-freq-profile').value };
+        case 'THERMAL_POLICY':
+            return {
+                fan_mode: document.getElementById('control-fan-mode').value,
+                fan_speed_pct: parseInt(document.getElementById('control-fan-speed').value)
+            };
+        case 'LED':
+            return { state: document.getElementById('control-led-state').value };
+        default:
+            return {};
+    }
+}
+
+function loadCommandHistory() {
+    if (!siteId) return;
+    
+    fetch(`/api/sites/${siteId}/commands?limit=10`)
+        .then(response => response.json())
+        .then(result => {
+            const tbody = document.getElementById('command-history-body');
+            
+            const minerCommands = (result.commands || []).filter(cmd => 
+                cmd.target_ids && cmd.target_ids.includes(minerSerial)
+            );
+            
+            if (minerCommands.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3">${t('hosting.no_commands') || 'No recent commands'}</td></tr>`;
+                return;
+            }
+            
+            tbody.innerHTML = minerCommands.slice(0, 5).map(cmd => {
+                const cmdInfo = COMMAND_LABELS[cmd.command_type] || { label: cmd.command_type };
+                const statusClass = cmd.status.toLowerCase();
+                const time = cmd.created_at ? new Date(cmd.created_at).toLocaleString() : '-';
+                const resultSummary = cmd.result_summary ? 
+                    `${cmd.result_summary.succeeded}/${cmd.result_summary.total}` : '-';
+                
+                return `
+                    <tr>
+                        <td class="small">${time}</td>
+                        <td><i class="bi ${cmdInfo.icon || 'bi-gear'} me-1"></i>${cmdInfo.label}</td>
+                        <td><span class="cmd-status-badge ${statusClass}">${cmd.status}</span></td>
+                        <td>${resultSummary}</td>
+                    </tr>
+                `;
+            }).join('');
+        })
+        .catch(error => {
+            console.error('Failed to load command history:', error);
+        });
+}
+
+function showToast(type, message) {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} position-fixed`;
+    toast.style.cssText = 'top: 80px; right: 20px; z-index: 9999; min-width: 250px;';
+    toast.innerHTML = `<i class="bi bi-${type === 'success' ? 'check-circle' : 'x-circle'} me-2"></i>${message}`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(loadCommandHistory, 1000);
+});
+</script>
+{% endblock %}

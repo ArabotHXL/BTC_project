@@ -1,0 +1,3 @@
+web: gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app
+scheduler: python -m intelligence.workers.event_scheduler
+worker: python -m intelligence.workers.tasks

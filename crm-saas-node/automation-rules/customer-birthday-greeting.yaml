@@ -1,0 +1,26 @@
+name: "Customer Birthday Greeting"
+description: "Send birthday wishes to customers"
+trigger:
+  type: SCHEDULED
+  schedule: "0 9 * * *" # Daily at 9 AM
+
+conditions:
+  - field: "account.contact_birthday"
+    operator: "is_today"
+    value: true
+  - field: "account.status"
+    operator: "equals"
+    value: "ACTIVE"
+
+actions:
+  - type: "send_email"
+    params:
+      to: "{{contact.email}}"
+      subject: "🎉 Happy Birthday from HashInsight!"
+      template: "customer_birthday"
+  - type: "apply_discount"
+    params:
+      account_id: "{{account.id}}"
+      discount_percent: 10
+      valid_days: 7
+      reason: "Birthday special"

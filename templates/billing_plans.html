@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}订阅计划{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="text-center mb-5">
+                <h1 class="display-4 text-golden">订阅计划</h1>
+                <p class="lead">选择适合您需求的计划</p>
+            </div>
+            
+            <div class="alert alert-info text-center">
+                <i class="bi bi-tools me-2"></i>
+                <strong>系统维护中</strong>
+                <p class="mb-0">订阅功能正在优化升级，请稍后再试。如有紧急需求，请联系客服。</p>
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="{{ url_for('index') }}" class="btn btn-primary">
+                    <i class="bi bi-arrow-left me-2"></i>返回主页
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

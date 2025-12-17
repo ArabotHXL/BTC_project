@@ -1,0 +1,25 @@
+name: "Notify on Asset Deployment"
+description: "Send notification when asset is deployed"
+trigger:
+  type: SCHEDULED
+  event: "asset.deployed"
+  schedule: "0 */1 * * *" # Every hour (check for newly deployed assets)
+
+conditions:
+  - field: "asset.status"
+    operator: "equals"
+    value: "DEPLOYED"
+
+actions:
+  - type: "send_email"
+    params:
+      to: "{{asset.account.email}}"
+      subject: "Your mining equipment is now operational"
+      template: "asset_deployed"
+  - type: "create_notification"
+    params:
+      user_id: "{{asset.account.owner_id}}"
+      message: "Asset {{asset.serial_number}} deployed successfully"
+  - type: "start_mining_monitoring"
+    params:
+      asset_id: "{{asset.id}}"

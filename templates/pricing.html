@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if current_lang == 'zh' %}订阅计划 - BTC挖矿计算器{% else %}Pricing Plans - BTC Mining Calculator{% endif %}</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #121212 0%, #1e2329 100%);
+            color: #f8f9fa;
+            min-height: 100vh;
+        }
+        
+        .pricing-header {
+            background: linear-gradient(135deg, rgba(248, 208, 0, 0.1) 0%, rgba(33, 37, 41, 0.9) 100%);
+            padding: 4rem 0 2rem;
+            text-align: center;
+        }
+        
+        .pricing-title {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #f8d000, #ffffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .pricing-subtitle {
+            font-size: 1.3rem;
+            color: #adb5bd;
+            margin-bottom: 3rem;
+        }
+        
+        .pricing-card {
+            background: linear-gradient(135deg, rgba(248, 208, 0, 0.05), rgba(33, 37, 41, 0.8));
+            border: 1px solid rgba(248, 208, 0, 0.2);
+            border-radius: 1rem;
+            padding: 2.5rem;
+            height: 100%;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .pricing-card.featured {
+            border: 2px solid #f8d000;
+            background: linear-gradient(135deg, rgba(248, 208, 0, 0.15), rgba(33, 37, 41, 0.8));
+            transform: scale(1.05);
+        }
+        
+        .pricing-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 35px rgba(248, 208, 0, 0.3);
+        }
+        
+        .pricing-card.featured:hover {
+            transform: scale(1.05) translateY(-10px);
+        }
+        
+        .plan-badge {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #f8d000;
+            color: #212529;
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .plan-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #f8d000;
+            margin-bottom: 1rem;
+        }
+        
+        .plan-price {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+        
+        .plan-price small {
+            font-size: 1rem;
+            color: #adb5bd;
+        }
+        
+        .plan-description {
+            color: #adb5bd;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 2rem;
+        }
+        
+        .feature-list li {
+            padding: 0.5rem 0;
+            color: #adb5bd;
+            position: relative;
+        }
+        
+        .feature-list li:before {
+            content: "✓";
+            color: #f8d000;
+            font-weight: bold;
+            position: absolute;
+            left: -1.5rem;
+        }
+        
+        .feature-list li.unavailable {
+            color: #6c757d;
+        }
+        
+        .feature-list li.unavailable:before {
+            content: "✗";
+            color: #6c757d;
+        }
+        
+        .cta-button {
+            background: linear-gradient(135deg, #f8d000, #ffcc00);
+            border: none;
+            color: #212529;
+            font-size: 1.1rem;
+            font-weight: 600;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(248, 208, 0, 0.4);
+            color: #212529;
+            text-decoration: none;
+        }
+        
+        .back-button {
+            background: rgba(248, 208, 0, 0.1);
+            border: 1px solid rgba(248, 208, 0, 0.5);
+            color: #f8d000;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .back-button:hover {
+            background: rgba(248, 208, 0, 0.2);
+            color: #f8d000;
+            text-decoration: none;
+        }
+        
+        @media (max-width: 768px) {
+            .pricing-title {
+                font-size: 2.5rem;
+            }
+            .pricing-card.featured {
+                transform: none;
+                margin-bottom: 2rem;
+            }
+            .pricing-card.featured:hover {
+                transform: translateY(-10px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg fixed-top" style="background: rgba(33, 37, 41, 0.95); backdrop-filter: blur(10px);">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('home') }}" style="color: #f8d000; font-weight: bold;">
+                <span style="font-size: 1.5rem;">₿</span> BTC Mining Calculator
+            </a>
+            <div class="navbar-nav ms-auto d-flex align-items-center">
+                <div class="me-3">
+                    <button type="button" data-lang-switch="zh" data-lang="zh" 
+                            class="btn btn-sm btn-outline-light {{ 'active' if current_lang == 'zh' else '' }} lang-switch-btn">
+                        中文
+                    </button>
+                    <button type="button" data-lang-switch="en" data-lang="en" 
+                            class="btn btn-sm btn-outline-light {{ 'active' if current_lang == 'en' else '' }} lang-switch-btn">
+                        EN
+                    </button>
+                </div>
+                <a href="{{ url_for('home') }}" class="nav-link back-button">
+                    <i class="fas fa-arrow-left"></i> {% if current_lang == 'zh' %}返回首页{% else %}Back to Home{% endif %}
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 定价页面头部 -->
+    <section class="pricing-header">
+        <div class="container">
+            <h1 class="pricing-title">
+                {% if current_lang == 'zh' %}
+                    选择适合您的计划
+                {% else %}
+                    Choose Your Perfect Plan
+                {% endif %}
+            </h1>
+            <p class="pricing-subtitle">
+                {% if current_lang == 'zh' %}
+                    从基础分析到专业级挖矿管理，我们提供全方位的比特币挖矿计算解决方案
+                {% else %}
+                    From basic analysis to professional mining management, we provide comprehensive Bitcoin mining calculation solutions
+                {% endif %}
+            </p>
+        </div>
+    </section>
+
+    <!-- 定价计划 -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row">
+                <!-- 免费版 -->
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="pricing-card">
+                        <div class="plan-name">
+                            {% if current_lang == 'zh' %}免费版{% else %}Free{% endif %}
+                        </div>
+                        <div class="plan-price">
+                            $0 <small>/{% if current_lang == 'zh' %}月{% else %}month{% endif %}</small>
+                        </div>
+                        <p class="plan-description">
+                            {% if current_lang == 'zh' %}
+                                适合新手用户和基础挖矿计算需求
+                            {% else %}
+                                Perfect for beginners and basic mining calculations
+                            {% endif %}
+                        </p>
+                        <ul class="feature-list">
+                            <li>{% if current_lang == 'zh' %}基础挖矿计算器{% else %}Basic Mining Calculator{% endif %}</li>
+                            <li>{% if current_lang == 'zh' %}算法测试工具{% else %}Algorithm Testing Tools{% endif %}</li>
+                            <li>{% if current_lang == 'zh' %}电力削减计算{% else %}Power Curtailment Calculator{% endif %}</li>
+                            <li>{% if current_lang == 'zh' %}3种ASIC矿机模型{% else %}3 ASIC Miner Models{% endif %}</li>
+                            <li>{% if current_lang == 'zh' %}7天历史数据{% else %}7 Days Historical Data{% endif %}</li>
+                            <li class="unavailable">{% if current_lang == 'zh' %}批量计算器{% else %}Batch Calculator{% endif %}</li>
+                            <li class="unavailable">{% if current_lang == 'zh' %}CRM客户管理{% else %}CRM System{% endif %}</li>
+                            <li class="unavailable">{% if current_lang == 'zh' %}高级数据分析{% else %}Advanced Analytics{% endif %}</li>
+                        </ul>
+                        <a href="{{ url_for('auth.login') }}" class="cta-button">
+                            {% if current_lang == 'zh' %}免费开始{% else %}Get Started Free{% endif %}
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 基础版 -->
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="pricing-card featured">
+                        <div class="plan-badge">
+                            {% if current_lang == 'zh' %}推荐{% else %}Recommended{% endif %}
+                        </div>
+                        <div class="plan-name">
+                            {% if current_lang == 'zh' %}基础版{% else %}Basic{% endif %}
+                        </div>
+                        <div class="plan-price">
+                            $29 <small>/{% if current_lang == 'zh' %}月{% else %}month{% endif %}</small>
+                        </div>
+                        <p class="plan-description">
+                            {% if current_lang == 'zh' %}
+                                适合中小型矿场和专业投资者
+                            {% else %}
+                                Ideal for small to medium mining operations and professional investors
+                            {% endif %}
+                        </p>
+                        <ul class="feature-list">
+                            <li>{% if current_lang == 'zh' %}所有免费版功能{% else %}All Free Features{% endif %}</li>
+                            <li>{% if current_lang == 'zh' %}批量计算器{% else %}Batch Calculator{% endif %}</li>
+                            <li>{% if current_lang == 'zh' %}网络分析工具{% else %}Network Analysis{% endif %}</li>
+                            <li>{% if current_lang == 'zh' %}CRM客户管理{% else %}CRM System{% endif %}</li>
+                            <li>{% if current_lang == 'zh' %}42种ASIC矿机模型{% else %}42 ASIC Miner Models{% endif %}</li>
+                            <li>{% if current_lang == 'zh' %}30天历史数据{% else %}30 Days Historical Data{% endif %}</li>
+                            <li>{% if current_lang == 'zh' %}ROI分析报告{% else %}ROI Analysis Reports{% endif %}</li>
+                            <li class="unavailable">{% if current_lang == 'zh' %}高级数据分析{% else %}Advanced Analytics{% endif %}</li>
+                        </ul>
+                        <a href="{{ url_for('auth.login') }}" class="cta-button">
+                            {% if current_lang == 'zh' %}选择基础版{% else %}Choose Basic{% endif %}
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 专业版 -->
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="pricing-card">
+                        <div class="plan-name">
+                            {% if current_lang == 'zh' %}专业版{% else %}Pro{% endif %}
+                        </div>
+                        <div class="plan-price">
+                            $99 <small>/{% if current_lang == 'zh' %}月{% else %}month{% endif %}</small>
+                        </div>
+                        <p class="plan-description">
+                            {% if current_lang == 'zh' %}
+                                适合大型矿场和企业级挖矿管理需求
+                            {% else %}
+                                Perfect for large mining operations and enterprise-level management
+                            {% endif %}
+                        </p>
+                        <ul class="feature-list">
+                            <li>{% if current_lang == 'zh' %}所有基础版功能{% else %}All Basic Features{% endif %}</li>
+                            <li>{% if current_lang == 'zh' %}高级数据分析平台{% else %}Advanced Analytics Platform{% endif %}</li>
+                            <li>{% if current_lang == 'zh' %}用户管理系统{% else %}User Management System{% endif %}</li>
+                            <li>{% if current_lang == 'zh' %}专业报告生成{% else %}Professional Report Generation{% endif %}</li>
+                            <li>{% if current_lang == 'zh' %}无限历史数据{% else %}Unlimited Historical Data{% endif %}</li>
+                            <li>{% if current_lang == 'zh' %}API接口访问{% else %}API Access{% endif %}</li>
+                            <li>{% if current_lang == 'zh' %}优先技术支持{% else %}Priority Support{% endif %}</li>
+                            <li>{% if current_lang == 'zh' %}自定义方案场景{% else %}Custom Scenario Analysis{% endif %}</li>
+                        </ul>
+                        <a href="{{ url_for('auth.login') }}" class="cta-button">
+                            {% if current_lang == 'zh' %}选择专业版{% else %}Choose Pro{% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 企业解决方案 -->
+            <div class="row mt-5">
+                <div class="col-12">
+                    <div class="text-center" style="background: rgba(248, 208, 0, 0.05); padding: 3rem; border-radius: 1rem; border: 1px solid rgba(248, 208, 0, 0.2);">
+                        <h3 style="color: #f8d000; margin-bottom: 1.5rem;">
+                            {% if current_lang == 'zh' %}企业定制解决方案{% else %}Enterprise Custom Solutions{% endif %}
+                        </h3>
+                        <p style="color: #adb5bd; font-size: 1.2rem; margin-bottom: 2rem;">
+                            {% if current_lang == 'zh' %}
+                                需要更多功能？联系我们为您定制专属的企业级挖矿管理解决方案
+                            {% else %}
+                                Need more features? Contact us for a custom enterprise-level mining management solution
+                            {% endif %}
+                        </p>
+                        <a href="{{ url_for('auth.login') }}" class="cta-button" style="width: auto; padding: 1rem 3rem;">
+                            {% if current_lang == 'zh' %}联系我们{% else %}Contact Us{% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/i18n.js"></script>
+</body>
+</html>

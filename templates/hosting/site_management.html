@@ -1,0 +1,1124 @@
+{% extends "hosting/hosting_base.html" %}
+
+{% block page_title %}{% if current_lang == 'en' %}Site Management{% else %}站点管理{% endif %}{% endblock %}
+{% block page_subtitle %}{% if current_lang == 'en' %}Manage hosting sites and capacity{% else %}管理托管站点和容量{% endif %}{% endblock %}
+
+{% block header_actions %}
+{{ super() }}
+<div class="btn-group ms-3" role="group">
+    <button class="btn btn-hosting-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createSiteModal">
+        <i class="bi bi-plus-circle me-1"></i>{% if current_lang == 'en' %}New Site{% else %}新建站点{% endif %}
+    </button>
+    <button class="btn btn-hosting-secondary btn-sm" onclick="refreshSites()">
+        <i class="bi bi-arrow-clockwise me-1"></i>{% if current_lang == 'en' %}Refresh{% else %}刷新{% endif %}
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<!-- 站点概览统计 -->
+<div class="hosting-stats-grid">
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="total-sites">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Total Sites{% else %}总站点数{% endif %}</div>
+        <i class="bi bi-building hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="online-sites">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Online Sites{% else %}在线站点{% endif %}</div>
+        <i class="bi bi-check-circle hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="total-capacity">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Total Capacity{% else %}总容量{% endif %}</div>
+        <i class="bi bi-lightning hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="utilization-rate">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Utilization Rate{% else %}利用率{% endif %}</div>
+        <i class="bi bi-speedometer hosting-stat-icon"></i>
+    </div>
+</div>
+
+<!-- 站点管理 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-buildings me-2"></i>{% if current_lang == 'en' %}Hosting Sites{% else %}托管站点{% endif %}
+        </h5>
+        <div class="btn-group" role="group">
+            <button class="btn btn-hosting-outline btn-sm active" onclick="filterSites('all')">{% if current_lang == 'en' %}All{% else %}全部{% endif %}</button>
+            <button class="btn btn-hosting-outline btn-sm" onclick="filterSites('online')">{% if current_lang == 'en' %}Online{% else %}在线{% endif %}</button>
+            <button class="btn btn-hosting-outline btn-sm" onclick="filterSites('offline')">{% if current_lang == 'en' %}Offline{% else %}离线{% endif %}</button>
+        </div>
+    </div>
+    <div class="hosting-card-body">
+        <!-- 筛选选项 -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <select class="form-select" id="location-filter" onchange="filterSitesByLocation()">
+                    <option value="">{% if current_lang == 'en' %}All Locations{% else %}全部地区{% endif %}</option>
+                    <!-- 地区选项通过JavaScript动态加载 -->
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="capacity-filter" onchange="filterSitesByCapacity()">
+                    <option value="">{% if current_lang == 'en' %}All Capacities{% else %}全部容量{% endif %}</option>
+                    <option value="small">{% if current_lang == 'en' %}Small (< 10MW){% else %}小型 (< 10MW){% endif %}</option>
+                    <option value="medium">{% if current_lang == 'en' %}Medium (10-50MW){% else %}中型 (10-50MW){% endif %}</option>
+                    <option value="large">{% if current_lang == 'en' %}Large (> 50MW){% else %}大型 (> 50MW){% endif %}</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="status-filter" onchange="filterSitesByStatus()">
+                    <option value="">{% if current_lang == 'en' %}All Statuses{% else %}全部状态{% endif %}</option>
+                    <option value="online">{% if current_lang == 'en' %}Online{% else %}在线{% endif %}</option>
+                    <option value="offline">{% if current_lang == 'en' %}Offline{% else %}离线{% endif %}</option>
+                    <option value="maintenance">{% if current_lang == 'en' %}Maintenance{% else %}维护中{% endif %}</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="text" class="form-control" id="search-sites" placeholder="{% if current_lang == 'en' %}Search sites...{% else %}搜索站点...{% endif %}" onkeyup="searchSites()">
+            </div>
+        </div>
+        
+        <!-- 站点列表 -->
+        <div class="hosting-table">
+            <table class="table table-hover" id="sites-table">
+                <thead>
+                    <tr>
+                        <th>{% if current_lang == 'en' %}Name{% else %}名称{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Location{% else %}位置{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Capacity{% else %}容量{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Utilization{% else %}利用率{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Devices{% else %}设备数{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Last Updated{% else %}最后更新{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
+                    </tr>
+                </thead>
+                <tbody id="sites-table-body">
+                    <!-- 站点数据通过JavaScript加载 -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 分页 -->
+        <nav aria-label="Sites pagination" class="mt-3">
+            <ul class="pagination justify-content-center" id="sites-pagination">
+                <!-- 分页按钮通过JavaScript生成 -->
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- 站点地图视图 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-geo-alt me-2"></i>{% if current_lang == 'en' %}Sites Map{% else %}站点地图{% endif %}
+        </h5>
+        <div class="btn-group" role="group">
+            <button class="btn btn-hosting-outline btn-sm active" onclick="switchMapView('markers')">{% if current_lang == 'en' %}Markers{% else %}标记{% endif %}</button>
+            <button class="btn btn-hosting-outline btn-sm" onclick="switchMapView('heatmap')">{% if current_lang == 'en' %}Heatmap{% else %}热力图{% endif %}</button>
+        </div>
+    </div>
+    <div class="hosting-card-body">
+        <div id="sites-map" style="height: 400px; background: #1a1a1a; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+            <div class="text-muted">
+                <i class="bi bi-geo-alt fs-1 mb-2 d-block"></i>
+                {% if current_lang == 'en' %}Map integration available{% else %}地图集成可用{% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 创建站点模态框 -->
+<div class="modal fade" id="createSiteModal" tabindex="-1" aria-labelledby="createSiteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
+                <h5 class="modal-title" id="createSiteModalLabel">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    {% if current_lang == 'en' %}Create New Site{% else %}创建新站点{% endif %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createSiteForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="site-name" class="form-label">
+                                {% if current_lang == 'en' %}Site Name{% else %}站点名称{% endif %} <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="site-name" name="name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="site-slug" class="form-label">
+                                {% if current_lang == 'en' %}Site Slug{% else %}站点标识{% endif %} <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="site-slug" name="slug" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="site-location" class="form-label">
+                                {% if current_lang == 'en' %}Location{% else %}位置{% endif %} <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="site-location" name="location" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="site-operator" class="form-label">
+                                {% if current_lang == 'en' %}Operator Name{% else %}运营商名称{% endif %}
+                            </label>
+                            <input type="text" class="form-control" id="site-operator" name="operator_name">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="site-capacity" class="form-label">
+                                {% if current_lang == 'en' %}Capacity (MW){% else %}容量 (MW){% endif %} <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" id="site-capacity" name="capacity_mw" step="0.1" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="site-electricity-rate" class="form-label">
+                                {% if current_lang == 'en' %}Electricity Rate ($/kWh){% else %}电价 ($/kWh){% endif %}
+                            </label>
+                            <input type="number" class="form-control" id="site-electricity-rate" name="electricity_rate" step="0.001">
+                        </div>
+                        <div class="col-12">
+                            <label for="site-description" class="form-label">
+                                {% if current_lang == 'en' %}Description{% else %}描述{% endif %}
+                            </label>
+                            <textarea class="form-control" id="site-description" name="description" rows="3"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-hosting-secondary" data-bs-dismiss="modal">
+                    {% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}
+                </button>
+                <button type="button" class="btn btn-hosting-primary" onclick="createSite()">
+                    {% if current_lang == 'en' %}Create Site{% else %}创建站点{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Site Modal -->
+<div class="modal fade" id="editSiteModal" tabindex="-1" aria-labelledby="editSiteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
+                <h5 class="modal-title" id="editSiteModalLabel">
+                    <i class="bi bi-pencil me-2"></i>
+                    {% if current_lang == 'en' %}Edit Site{% else %}编辑站点{% endif %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editSiteForm">
+                    <input type="hidden" id="edit-site-id" name="id">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="edit-site-name" class="form-label">
+                                {% if current_lang == 'en' %}Site Name{% else %}站点名称{% endif %} <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="edit-site-name" name="name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit-site-slug" class="form-label">
+                                {% if current_lang == 'en' %}Slug{% else %}站点标识{% endif %}
+                            </label>
+                            <input type="text" class="form-control" id="edit-site-slug" name="slug">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit-site-location" class="form-label">
+                                {% if current_lang == 'en' %}Location{% else %}位置{% endif %} <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="edit-site-location" name="location" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit-site-operator" class="form-label">
+                                {% if current_lang == 'en' %}Operator{% else %}运营商{% endif %}
+                            </label>
+                            <input type="text" class="form-control" id="edit-site-operator" name="operator_name">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit-site-capacity" class="form-label">
+                                {% if current_lang == 'en' %}Capacity (MW){% else %}容量 (MW){% endif %} <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" id="edit-site-capacity" name="capacity_mw" step="0.1" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit-site-electricity-rate" class="form-label">
+                                {% if current_lang == 'en' %}Electricity Rate ($/kWh){% else %}电价 ($/kWh){% endif %}
+                            </label>
+                            <input type="number" class="form-control" id="edit-site-electricity-rate" name="electricity_rate" step="0.001">
+                        </div>
+                        <div class="col-12">
+                            <label for="edit-site-description" class="form-label">
+                                {% if current_lang == 'en' %}Description{% else %}描述{% endif %}
+                            </label>
+                            <textarea class="form-control" id="edit-site-description" name="description" rows="3"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-hosting-secondary" data-bs-dismiss="modal">
+                    {% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}
+                </button>
+                <button type="button" class="btn btn-hosting-primary" onclick="updateSite()">
+                    {% if current_lang == 'en' %}Save Changes{% else %}保存修改{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- IP Scan Modal -->
+<div class="modal fade" id="ipScanModal" tabindex="-1" aria-labelledby="ipScanModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content bg-dark">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
+                <h5 class="modal-title" id="ipScanModalLabel">
+                    <i class="bi bi-search me-2"></i>
+                    <span id="scanModalTitle"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="scan-site-id" value="">
+                <input type="hidden" id="current-scan-id" value="">
+                
+                <!-- Scan Form -->
+                <div id="scanFormSection">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <label for="scan-start-ip" class="form-label" id="label-start-ip"></label>
+                            <input type="text" class="form-control" id="scan-start-ip" placeholder="192.168.1.1">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="scan-end-ip" class="form-label" id="label-end-ip"></label>
+                            <input type="text" class="form-control" id="scan-end-ip" placeholder="192.168.1.254">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="scan-username" class="form-label" id="label-username"></label>
+                            <input type="text" class="form-control" id="scan-username" value="root">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="scan-password" class="form-label" id="label-password"></label>
+                            <input type="password" class="form-control" id="scan-password" value="root">
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="scan-edge-device" class="form-label" id="label-edge-device">
+                                {% if current_lang == 'en' %}Edge Device (Optional){% else %}边缘设备（可选）{% endif %}
+                            </label>
+                            <select class="form-select" id="scan-edge-device">
+                                <option value="">{% if current_lang == 'en' %}-- Select Edge Device --{% else %}-- 选择边缘设备 --{% endif %}</option>
+                            </select>
+                            <small class="text-muted" id="edge-device-hint">
+                                {% if current_lang == 'en' %}Select an Edge Collector to perform the scan{% else %}选择边缘采集器执行扫描{% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btn-hosting-primary" id="startScanBtn" onclick="startIPScan()">
+                            <i class="bi bi-play-fill me-1"></i>
+                            <span id="btn-start-scan"></span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Scan Progress Section -->
+                <div id="scanProgressSection" style="display: none;">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span id="scanProgressLabel"></span>
+                            <span id="scanProgressPercent">0%</span>
+                        </div>
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" id="scanProgressBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="text-center text-muted">
+                        <i class="bi bi-arrow-repeat spin me-2"></i>
+                        <span id="scanStatusText"></span>
+                    </div>
+                </div>
+                
+                <!-- Scan Results Section -->
+                <div id="scanResultsSection" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0" id="label-discovered-miners"></h6>
+                        <div class="btn-group btn-group-sm">
+                            <button type="button" class="btn btn-hosting-outline" onclick="selectAllMiners()">
+                                <i class="bi bi-check-all me-1"></i>
+                                <span id="btn-select-all"></span>
+                            </button>
+                            <button type="button" class="btn btn-hosting-outline" onclick="deselectAllMiners()">
+                                <i class="bi bi-x-lg me-1"></i>
+                                <span id="btn-deselect-all"></span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="hosting-table" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-hover table-sm" id="scanResultsTable">
+                            <thead class="sticky-top bg-dark">
+                                <tr>
+                                    <th style="width: 40px;">
+                                        <input type="checkbox" class="form-check-input" id="selectAllCheckbox" onchange="toggleAllMiners(this.checked)">
+                                    </th>
+                                    <th>IP</th>
+                                    <th id="th-type"></th>
+                                    <th id="th-model"></th>
+                                    <th id="th-hashrate"></th>
+                                    <th id="th-temperature"></th>
+                                    <th id="th-status"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="scanResultsBody">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="noMinersMessage" class="text-center text-muted py-4" style="display: none;">
+                        <i class="bi bi-inbox fs-1 mb-2 d-block"></i>
+                        <span id="msg-no-miners"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-hosting-secondary" data-bs-dismiss="modal">
+                    <span id="btn-close"></span>
+                </button>
+                <button type="button" class="btn btn-hosting-primary" id="registerMinersBtn" onclick="registerSelectedMiners()" style="display: none;">
+                    <i class="bi bi-plus-circle me-1"></i>
+                    <span id="btn-register-selected"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.spin {
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadSitesData();
+    loadLocationOptions();
+});
+
+function loadSitesData() {
+    // 加载站点概览统计
+    fetch('/hosting/api/overview')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                updateSiteStats(data.data);
+            } else {
+                console.error('API returned error:', data.error);
+                // 显示默认值
+                updateSiteStats({
+                    sites: {total: 0, online: 0},
+                    capacity: {total_mw: 0, utilization_rate: 0}
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading site stats:', error);
+            // 显示默认值
+            updateSiteStats({
+                sites: {total: 0, online: 0},
+                capacity: {total_mw: 0, utilization_rate: 0}
+            });
+        });
+    
+    // 加载站点列表
+    loadSitesList();
+}
+
+function updateSiteStats(data) {
+    document.getElementById('total-sites').textContent = data.sites.total || 0;
+    document.getElementById('online-sites').textContent = data.sites.online || 0;
+    document.getElementById('total-capacity').textContent = `${data.capacity.total_mw || 0} MW`;
+    document.getElementById('utilization-rate').textContent = `${data.capacity.utilization_rate || 0}%`;
+}
+
+function loadSitesList() {
+    fetch('/hosting/api/sites')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                displaySites(data.sites);
+                loadLocationOptions(data.sites);
+            } else {
+                console.error('API returned error:', data.error);
+                displaySites([]);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading sites:', error);
+            displaySites([]);
+        });
+}
+
+function displaySites(sites) {
+    const tbody = document.getElementById('sites-table-body');
+    tbody.innerHTML = '';
+    
+    if (sites.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center text-muted py-4">
+                    <i class="bi bi-building fs-1 mb-2 d-block"></i>
+                    ${getLanguage() === 'en' ? 'No sites found' : '未找到站点'}
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    sites.forEach(site => {
+        const row = `
+            <tr>
+                <td><strong>${site.name}</strong></td>
+                <td>${site.location}</td>
+                <td><span class="badge bg-${getStatusColor(site.status)}">${getStatusText(site.status)}</span></td>
+                <td>${site.capacity_mw} MW</td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="progress flex-grow-1 me-2" style="height: 20px; width: 60px;">
+                            <div class="progress-bar bg-warning" style="width: ${site.utilization_rate}%"></div>
+                        </div>
+                        <small>${site.utilization_rate}%</small>
+                    </div>
+                </td>
+                <td>
+                    <span class="badge bg-info me-1">${site.devices_count || 0}</span>
+                    <span class="badge bg-success">${site.active_devices || 0}</span>
+                </td>
+                <td>${new Date(site.updated_at || site.created_at || Date.now()).toLocaleDateString()}</td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-hosting-outline" onclick="viewSite(${site.id})">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <button class="btn btn-hosting-outline" onclick="editSite(${site.id})">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-hosting-outline" onclick="openScanModal(${site.id}, '${site.name}')" title="${getLanguage() === 'en' ? 'IP Scanner' : 'IP扫描'}">
+                            <i class="bi bi-search"></i>
+                        </button>
+                        <button class="btn btn-hosting-outline" onclick="manageSite(${site.id})">
+                            <i class="bi bi-gear"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        tbody.insertAdjacentHTML('beforeend', row);
+    });
+}
+
+function createSite() {
+    const form = document.getElementById('createSiteForm');
+    const formData = new FormData(form);
+    
+    // 转换为JSON格式
+    const siteData = {
+        name: formData.get('name'),
+        slug: formData.get('slug'),
+        location: formData.get('location'),
+        operator_name: formData.get('operator_name'),
+        capacity_mw: parseFloat(formData.get('capacity_mw')),
+        electricity_rate: parseFloat(formData.get('electricity_rate')) || 0.05,
+        description: formData.get('description')
+    };
+    
+    fetch('/hosting/api/sites', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(siteData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('createSiteModal')).hide();
+            form.reset();
+            loadSitesData();
+            showToast(getLanguage() === 'en' ? 'Site created successfully' : '站点创建成功', 'success');
+        } else {
+            showToast(data.error || (getLanguage() === 'en' ? 'Creation failed' : '创建失败'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error creating site:', error);
+        showToast(getLanguage() === 'en' ? 'Creation failed' : '创建失败', 'error');
+    });
+}
+
+function updateSite() {
+    const siteId = document.getElementById('edit-site-id').value;
+    const siteData = {
+        name: document.getElementById('edit-site-name').value,
+        slug: document.getElementById('edit-site-slug').value,
+        location: document.getElementById('edit-site-location').value,
+        operator_name: document.getElementById('edit-site-operator').value,
+        capacity_mw: parseFloat(document.getElementById('edit-site-capacity').value),
+        electricity_rate: parseFloat(document.getElementById('edit-site-electricity-rate').value) || 0.05,
+        description: document.getElementById('edit-site-description').value
+    };
+    
+    fetch(`/hosting/api/sites/${siteId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(siteData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('editSiteModal')).hide();
+            loadSitesData();
+            showToast(getLanguage() === 'en' ? 'Site updated successfully' : '站点更新成功', 'success');
+        } else {
+            showToast(data.error || (getLanguage() === 'en' ? 'Update failed' : '更新失败'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating site:', error);
+        showToast(getLanguage() === 'en' ? 'Update failed' : '更新失败', 'error');
+    });
+}
+
+function refreshSites() {
+    loadSitesData();
+    showToast(getLanguage() === 'en' ? 'Sites data refreshed' : '站点数据已刷新', 'success');
+}
+
+function getStatusColor(status) {
+    const colorMap = {
+        'online': 'success',
+        'offline': 'danger',
+        'maintenance': 'warning'
+    };
+    return colorMap[status] || 'secondary';
+}
+
+function getStatusText(status) {
+    const language = getLanguage();
+    const statusMap = {
+        'online': language === 'en' ? 'Online' : '在线',
+        'offline': language === 'en' ? 'Offline' : '离线',
+        'maintenance': language === 'en' ? 'Maintenance' : '维护中'
+    };
+    return statusMap[status] || status;
+}
+
+function getLanguage() {
+    return document.querySelector('meta[name="language"]').content;
+}
+
+function showToast(message, type) {
+    console.log(`[${type.toUpperCase()}] ${message}`);
+    
+    // 创建简单的通知
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 250px;';
+    toast.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close ms-auto" onclick="this.parentElement.parentElement.remove()"></button>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // 自动删除
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.remove();
+        }
+    }, 5000);
+}
+
+// 其他辅助函数
+function filterSites(filter) { /* 实现站点过滤 */ }
+function filterSitesByLocation() { /* 按地区过滤 */ }
+function filterSitesByCapacity() { /* 按容量过滤 */ }
+function filterSitesByStatus() { /* 按状态过滤 */ }
+function searchSites() { /* 搜索站点 */ }
+function switchMapView(view) { /* 切换地图视图 */ }
+function viewSite(id) {
+    window.location.href = `/hosting/host/sites/${id}`;
+}
+function editSite(id) {
+    const site = allSites.find(s => s.id === id);
+    if (!site) return;
+    
+    const lang = getLanguage();
+    document.getElementById('edit-site-id').value = site.id;
+    document.getElementById('edit-site-name').value = site.name || '';
+    document.getElementById('edit-site-slug').value = site.slug || '';
+    document.getElementById('edit-site-location').value = site.location || '';
+    document.getElementById('edit-site-operator').value = site.operator_name || '';
+    document.getElementById('edit-site-capacity').value = site.capacity_mw || '';
+    document.getElementById('edit-site-electricity-rate').value = site.electricity_rate || 0.05;
+    document.getElementById('edit-site-description').value = site.description || '';
+    
+    const modal = new bootstrap.Modal(document.getElementById('editSiteModal'));
+    modal.show();
+}
+function manageSite(id) {
+    window.location.href = `/hosting/host/sites/${id}/settings`;
+}
+function loadLocationOptions(sites) {
+    if (!sites) return;
+    
+    const locationFilter = document.getElementById('location-filter');
+    const locations = [...new Set(sites.map(site => site.location).filter(Boolean))];
+    
+    // 清空现有选项
+    locationFilter.innerHTML = `<option value="">${getLanguage() === 'en' ? 'All Locations' : '全部地区'}</option>`;
+    
+    // 添加地区选项
+    locations.forEach(location => {
+        const option = document.createElement('option');
+        option.value = location;
+        option.textContent = location;
+        locationFilter.appendChild(option);
+    });
+}
+
+// ==================== IP Scanner Functions ====================
+
+let scanPollingInterval = null;
+let discoveredMiners = [];
+
+function loadEdgeDevicesForScan(siteId) {
+    const lang = getLanguage();
+    const select = document.getElementById('scan-edge-device');
+    
+    // Reset dropdown
+    select.innerHTML = `<option value="">${lang === 'en' ? '-- Select Edge Device --' : '-- 选择边缘设备 --'}</option>`;
+    
+    fetch(`/api/devices/by-site/${siteId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.devices && data.devices.length > 0) {
+                data.devices.forEach(device => {
+                    const option = document.createElement('option');
+                    option.value = device.id;
+                    const isActive = device.status === 'ACTIVE';
+                    const statusText = isActive ? (lang === 'en' ? 'Online' : '在线') : (lang === 'en' ? 'Offline' : '离线');
+                    const deviceName = device.device_name || device.name || `Device #${device.id}`;
+                    option.textContent = `${deviceName} (${statusText})`;
+                    option.disabled = !isActive;
+                    select.appendChild(option);
+                });
+            } else {
+                const option = document.createElement('option');
+                option.value = "";
+                option.textContent = lang === 'en' ? 'No devices registered' : '暂无注册设备';
+                option.disabled = true;
+                select.appendChild(option);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading edge devices:', error);
+        });
+}
+
+function openScanModal(siteId, siteName) {
+    const lang = getLanguage();
+    
+    // Set site context
+    document.getElementById('scan-site-id').value = siteId;
+    document.getElementById('current-scan-id').value = '';
+    
+    // Update modal title
+    document.getElementById('scanModalTitle').textContent = lang === 'en' 
+        ? `IP Scanner - ${siteName}` 
+        : `IP扫描 - ${siteName}`;
+    
+    // Update labels with bilingual text
+    document.getElementById('label-start-ip').textContent = lang === 'en' ? 'Start IP' : '起始IP';
+    document.getElementById('label-end-ip').textContent = lang === 'en' ? 'End IP' : '结束IP';
+    document.getElementById('label-username').textContent = lang === 'en' ? 'Username' : '用户名';
+    document.getElementById('label-password').textContent = lang === 'en' ? 'Password' : '密码';
+    document.getElementById('btn-start-scan').textContent = lang === 'en' ? 'Start Scan' : '开始扫描';
+    document.getElementById('btn-close').textContent = lang === 'en' ? 'Close' : '关闭';
+    document.getElementById('btn-register-selected').textContent = lang === 'en' ? 'Register Selected' : '注册选中';
+    document.getElementById('btn-select-all').textContent = lang === 'en' ? 'Select All' : '全选';
+    document.getElementById('btn-deselect-all').textContent = lang === 'en' ? 'Deselect All' : '取消全选';
+    document.getElementById('label-discovered-miners').textContent = lang === 'en' ? 'Discovered Miners' : '发现的矿机';
+    document.getElementById('msg-no-miners').textContent = lang === 'en' ? 'No miners found' : '未发现矿机';
+    
+    // Update table headers
+    document.getElementById('th-type').textContent = lang === 'en' ? 'Type' : '类型';
+    document.getElementById('th-model').textContent = lang === 'en' ? 'Model' : '型号';
+    document.getElementById('th-hashrate').textContent = lang === 'en' ? 'Hashrate' : '算力';
+    document.getElementById('th-temperature').textContent = lang === 'en' ? 'Temperature' : '温度';
+    document.getElementById('th-status').textContent = lang === 'en' ? 'Status' : '状态';
+    
+    // Reset form and sections
+    document.getElementById('scan-start-ip').value = '';
+    document.getElementById('scan-end-ip').value = '';
+    document.getElementById('scan-username').value = 'root';
+    document.getElementById('scan-password').value = 'root';
+    document.getElementById('scan-edge-device').value = '';
+    
+    // Load Edge devices for this site
+    loadEdgeDevicesForScan(siteId);
+    
+    document.getElementById('scanFormSection').style.display = 'block';
+    document.getElementById('scanProgressSection').style.display = 'none';
+    document.getElementById('scanResultsSection').style.display = 'none';
+    document.getElementById('registerMinersBtn').style.display = 'none';
+    document.getElementById('startScanBtn').disabled = false;
+    
+    // Clear previous results
+    document.getElementById('scanResultsBody').innerHTML = '';
+    discoveredMiners = [];
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('ipScanModal'));
+    modal.show();
+}
+
+function startIPScan() {
+    const lang = getLanguage();
+    const siteId = document.getElementById('scan-site-id').value;
+    const startIp = document.getElementById('scan-start-ip').value.trim();
+    const endIp = document.getElementById('scan-end-ip').value.trim();
+    const username = document.getElementById('scan-username').value.trim() || 'root';
+    const password = document.getElementById('scan-password').value || 'root';
+    const edgeDeviceId = document.getElementById('scan-edge-device').value;
+    
+    // Validation
+    if (!startIp || !endIp) {
+        showToast(lang === 'en' ? 'Please enter start and end IP addresses' : '请输入起始和结束IP地址', 'error');
+        return;
+    }
+    
+    // IP validation regex
+    const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+    if (!ipRegex.test(startIp) || !ipRegex.test(endIp)) {
+        showToast(lang === 'en' ? 'Invalid IP address format' : 'IP地址格式无效', 'error');
+        return;
+    }
+    
+    // Disable button and show progress
+    document.getElementById('startScanBtn').disabled = true;
+    document.getElementById('scanFormSection').style.display = 'none';
+    document.getElementById('scanProgressSection').style.display = 'block';
+    document.getElementById('scanProgressLabel').textContent = lang === 'en' ? 'Scanning...' : '扫描中...';
+    document.getElementById('scanStatusText').textContent = lang === 'en' ? 'Initializing scan...' : '正在初始化扫描...';
+    
+    // Start scan API call
+    fetch('/hosting/api/scan/start', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            site_id: parseInt(siteId),
+            start_ip: startIp,
+            end_ip: endIp,
+            username: username,
+            password: password,
+            edge_device_id: edgeDeviceId ? parseInt(edgeDeviceId) : null
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success && data.scan_id) {
+            document.getElementById('current-scan-id').value = data.scan_id;
+            pollScanProgress(data.scan_id);
+        } else {
+            throw new Error(data.error || 'Scan start failed');
+        }
+    })
+    .catch(error => {
+        console.error('Error starting scan:', error);
+        showToast(lang === 'en' ? 'Failed to start scan' : '启动扫描失败', 'error');
+        resetScanForm();
+    });
+}
+
+function pollScanProgress(scanId) {
+    const lang = getLanguage();
+    
+    // Clear any existing interval
+    if (scanPollingInterval) {
+        clearInterval(scanPollingInterval);
+    }
+    
+    scanPollingInterval = setInterval(() => {
+        fetch(`/hosting/api/scan/${scanId}/status`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    const progress = data.progress || {};
+                    const percent = progress.progress_percent || 0;
+                    const scanned = progress.scanned_ips || 0;
+                    const total = progress.total_ips || 0;
+                    const discovered = progress.discovered_miners || 0;
+                    
+                    // Update progress bar
+                    document.getElementById('scanProgressBar').style.width = `${percent}%`;
+                    document.getElementById('scanProgressPercent').textContent = `${percent}%`;
+                    document.getElementById('scanStatusText').textContent = lang === 'en' 
+                        ? `Scanned ${scanned}/${total} IPs, found ${discovered} miners`
+                        : `已扫描 ${scanned}/${total} 个IP，发现 ${discovered} 台矿机`;
+                    
+                    // Check if scan is complete
+                    if (progress.status === 'completed' || progress.status === 'failed') {
+                        clearInterval(scanPollingInterval);
+                        scanPollingInterval = null;
+                        
+                        if (progress.status === 'completed') {
+                            // Fetch final results
+                            fetchScanResults(scanId);
+                        } else {
+                            showToast(lang === 'en' ? 'Scan failed' : '扫描失败', 'error');
+                            resetScanForm();
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error polling scan progress:', error);
+            });
+    }, 2000);
+}
+
+function fetchScanResults(scanId) {
+    const lang = getLanguage();
+    
+    fetch(`/hosting/api/scan/${scanId}/results`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                discoveredMiners = data.miners || [];
+                displayScanResults(discoveredMiners);
+            } else {
+                showToast(lang === 'en' ? 'Failed to load results' : '加载结果失败', 'error');
+                resetScanForm();
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching scan results:', error);
+            showToast(lang === 'en' ? 'Failed to load results' : '加载结果失败', 'error');
+            resetScanForm();
+        });
+}
+
+function displayScanResults(miners) {
+    const lang = getLanguage();
+    
+    // Hide progress, show results
+    document.getElementById('scanProgressSection').style.display = 'none';
+    document.getElementById('scanResultsSection').style.display = 'block';
+    
+    const tbody = document.getElementById('scanResultsBody');
+    tbody.innerHTML = '';
+    
+    if (!miners || miners.length === 0) {
+        document.getElementById('scanResultsTable').style.display = 'none';
+        document.getElementById('noMinersMessage').style.display = 'block';
+        document.getElementById('registerMinersBtn').style.display = 'none';
+        return;
+    }
+    
+    document.getElementById('scanResultsTable').style.display = 'table';
+    document.getElementById('noMinersMessage').style.display = 'none';
+    document.getElementById('registerMinersBtn').style.display = 'inline-block';
+    
+    miners.forEach((miner, index) => {
+        const statusBadge = miner.online 
+            ? `<span class="badge bg-success">${lang === 'en' ? 'Online' : '在线'}</span>`
+            : `<span class="badge bg-danger">${lang === 'en' ? 'Offline' : '离线'}</span>`;
+        
+        const hashrate = miner.hashrate_ths ? `${miner.hashrate_ths.toFixed(2)} TH/s` : '-';
+        const temperature = miner.temperature ? `${miner.temperature.toFixed(1)}°C` : '-';
+        
+        const row = `
+            <tr>
+                <td>
+                    <input type="checkbox" class="form-check-input miner-checkbox" data-index="${index}" checked>
+                </td>
+                <td><code>${miner.ip_address}</code></td>
+                <td>${miner.miner_type || '-'}</td>
+                <td>${miner.model || '-'}</td>
+                <td>${hashrate}</td>
+                <td>${temperature}</td>
+                <td>${statusBadge}</td>
+            </tr>
+        `;
+        tbody.insertAdjacentHTML('beforeend', row);
+    });
+    
+    // Update select all checkbox
+    document.getElementById('selectAllCheckbox').checked = true;
+}
+
+function selectAllMiners() {
+    document.querySelectorAll('.miner-checkbox').forEach(cb => cb.checked = true);
+    document.getElementById('selectAllCheckbox').checked = true;
+}
+
+function deselectAllMiners() {
+    document.querySelectorAll('.miner-checkbox').forEach(cb => cb.checked = false);
+    document.getElementById('selectAllCheckbox').checked = false;
+}
+
+function toggleAllMiners(checked) {
+    document.querySelectorAll('.miner-checkbox').forEach(cb => cb.checked = checked);
+}
+
+function registerSelectedMiners() {
+    const lang = getLanguage();
+    const scanId = document.getElementById('current-scan-id').value;
+    const siteId = document.getElementById('scan-site-id').value;
+    
+    // Get selected miner indices
+    const selectedIndices = [];
+    document.querySelectorAll('.miner-checkbox:checked').forEach(cb => {
+        selectedIndices.push(parseInt(cb.dataset.index));
+    });
+    
+    if (selectedIndices.length === 0) {
+        showToast(lang === 'en' ? 'Please select at least one miner' : '请至少选择一台矿机', 'error');
+        return;
+    }
+    
+    // Get selected miners
+    const selectedMiners = selectedIndices.map(idx => discoveredMiners[idx]);
+    
+    // Disable button during registration
+    const registerBtn = document.getElementById('registerMinersBtn');
+    registerBtn.disabled = true;
+    registerBtn.innerHTML = `<i class="bi bi-arrow-repeat spin me-1"></i>${lang === 'en' ? 'Registering...' : '注册中...'}`;
+    
+    fetch(`/hosting/api/scan/${scanId}/register`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            site_id: parseInt(siteId),
+            miners: selectedMiners
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            const count = data.registered_count || selectedMiners.length;
+            showToast(lang === 'en' ? `Successfully registered ${count} miners` : `成功注册 ${count} 台矿机`, 'success');
+            
+            // Close modal and refresh sites
+            bootstrap.Modal.getInstance(document.getElementById('ipScanModal')).hide();
+            loadSitesData();
+        } else {
+            throw new Error(data.error || 'Registration failed');
+        }
+    })
+    .catch(error => {
+        console.error('Error registering miners:', error);
+        showToast(lang === 'en' ? 'Failed to register miners' : '注册矿机失败', 'error');
+    })
+    .finally(() => {
+        registerBtn.disabled = false;
+        registerBtn.innerHTML = `<i class="bi bi-plus-circle me-1"></i><span id="btn-register-selected">${lang === 'en' ? 'Register Selected' : '注册选中'}</span>`;
+    });
+}
+
+function resetScanForm() {
+    document.getElementById('scanFormSection').style.display = 'block';
+    document.getElementById('scanProgressSection').style.display = 'none';
+    document.getElementById('scanResultsSection').style.display = 'none';
+    document.getElementById('startScanBtn').disabled = false;
+    document.getElementById('scanProgressBar').style.width = '0%';
+    document.getElementById('scanProgressPercent').textContent = '0%';
+    
+    if (scanPollingInterval) {
+        clearInterval(scanPollingInterval);
+        scanPollingInterval = null;
+    }
+}
+
+// Clean up on modal close
+document.getElementById('ipScanModal').addEventListener('hidden.bs.modal', function () {
+    if (scanPollingInterval) {
+        clearInterval(scanPollingInterval);
+        scanPollingInterval = null;
+    }
+    resetScanForm();
+});
+</script>
+{% endblock %}

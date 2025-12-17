@@ -1,0 +1,589 @@
+{% extends "crm/base.html" %}
+
+{% block title %}{{ t('commission_management') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="bi bi-cash-coin me-2 text-warning"></i>
+                <span data-i18n="commission_management">{{ t('commission_management') }}</span>
+            </h2>
+            <p class="text-muted mb-0">
+                <span data-i18n="commission_tracking_desc">{{ t('commission_tracking_desc') }}</span>
+            </p>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="kpi-card gradient-blue">
+                <div class="kpi-icon">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-label"><span data-i18n="total_commission">{{ t('total_commission') }}</span></div>
+                    <div class="kpi-value">$<span id="total-commission-value">0</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="kpi-card gradient-green">
+                <div class="kpi-icon">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-label"><span data-i18n="paid_commission">{{ t('paid_commission') }}</span></div>
+                    <div class="kpi-value">$<span id="paid-commission-value">0</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="kpi-card gradient-orange">
+                <div class="kpi-icon">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-label"><span data-i18n="pending_commission">{{ t('pending_commission') }}</span></div>
+                    <div class="kpi-value">$<span id="unpaid-commission-value">0</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="kpi-card gradient-purple">
+                <div class="kpi-icon">
+                    <i class="bi bi-calendar-month"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-label"><span data-i18n="this_month_commission">{{ t('this_month_commission') }}</span></div>
+                    <div class="kpi-value">$<span id="month-commission-value">0</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <div class="btn-group" role="group" aria-label="Payment status filter">
+            <button type="button" class="btn btn-outline-primary active" data-filter="all" onclick="filterCommissions('all')">
+                <i class="bi bi-list-ul me-1"></i>
+                <span data-i18n="all">{{ t('all') }}</span>
+            </button>
+            <button type="button" class="btn btn-outline-success" data-filter="paid" onclick="filterCommissions('paid')">
+                <i class="bi bi-check-circle me-1"></i>
+                <span data-i18n="paid">{{ t('paid') }}</span>
+            </button>
+            <button type="button" class="btn btn-outline-warning" data-filter="unpaid" onclick="filterCommissions('unpaid')">
+                <i class="bi bi-clock-history me-1"></i>
+                <span data-i18n="unpaid">{{ t('unpaid') }}</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-xl-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent border-0 py-3">
+                    <h5 class="mb-0">
+                        <i class="bi bi-graph-up me-2"></i>
+                        <span data-i18n="commission_trend_12m">{{ t('commission_trend_12m') }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="commission-trend-chart" height="80"></canvas>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-transparent border-0 py-3">
+                    <h5 class="mb-0">
+                        <i class="bi bi-table me-2"></i>
+                        <span data-i18n="commission_records">{{ t('commission_records') }}</span>
+                        <span class="badge bg-secondary ms-2" id="records-count">0</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="commissions-table">
+                            <thead>
+                                <tr>
+                                    <th><span data-i18n="customer">{{ t('customer') }}</span></th>
+                                    <th><span data-i18n="mining_farm">{{ t('mining_farm') }}</span></th>
+                                    <th><span data-i18n="commission_amount">{{ t('commission_amount') }}</span></th>
+                                    <th><span data-i18n="settlement_month">{{ t('settlement_month') }}</span></th>
+                                    <th><span data-i18n="payment_status">{{ t('payment_status') }}</span></th>
+                                    <th><span data-i18n="payment_date">{{ t('payment_date') }}</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="commissions-tbody">
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent border-0 py-3">
+                    <h5 class="mb-0">
+                        <i class="bi bi-pie-chart me-2"></i>
+                        <span data-i18n="settlement_status">{{ t('settlement_status') }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="settlement-status-chart" height="200"></canvas>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent border-0 py-3">
+                    <h5 class="mb-0">
+                        <i class="bi bi-star me-2"></i>
+                        <span data-i18n="top_5_months">{{ t('top_5_months') }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="top-months-list">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary spinner-border-sm" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-transparent border-0 py-3">
+                    <h5 class="mb-0">
+                        <i class="bi bi-graph-up-arrow me-2"></i>
+                        <span data-i18n="income_forecast">{{ t('income_forecast') }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center">
+                        <div class="forecast-label text-muted mb-2">
+                            <span data-i18n="next_month_estimated">{{ t('next_month_estimated') }}</span>
+                        </div>
+                        <div class="forecast-value text-warning display-6 fw-bold">
+                            $<span id="forecast-value">0</span>
+                        </div>
+                        <small class="text-muted d-block mt-2">
+                            <span data-i18n="based_on_12m_average">{{ t('based_on_12m_average') }}</span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/countup@1.8.2/dist/countUp.min.js"></script>
+
+<script>
+let currentFilter = 'all';
+let commissionsData = [];
+
+async function loadCommissionStats() {
+    try {
+        const response = await fetch('/crm/api/broker/commissions/stats');
+        const result = await response.json();
+        
+        if (result.success) {
+            const data = result.data;
+            
+            initCountUp('total-commission-value', parseFloat(data.total_commission) || 0, {
+                duration: 2,
+                separator: ',',
+                decimal: '.',
+                decimalPlaces: 0
+            });
+            
+            initCountUp('paid-commission-value', parseFloat(data.paid_commission) || 0, {
+                duration: 2,
+                separator: ',',
+                decimal: '.',
+                decimalPlaces: 0
+            });
+            
+            initCountUp('unpaid-commission-value', parseFloat(data.unpaid_commission) || 0, {
+                duration: 2,
+                separator: ',',
+                decimal: '.',
+                decimalPlaces: 0
+            });
+            
+            initCountUp('month-commission-value', parseFloat(data.this_month_commission) || 0, {
+                duration: 2,
+                separator: ',',
+                decimal: '.',
+                decimalPlaces: 0
+            });
+        }
+    } catch (error) {
+        console.error('Error loading stats:', error);
+    }
+}
+
+async function loadCommissionTrend() {
+    try {
+        const response = await fetch('/crm/api/broker/commissions/trend');
+        const result = await response.json();
+        
+        if (result.success) {
+            const data = result.data;
+            
+            const config = {
+                type: 'line',
+                data: {
+                    labels: data.months || [],
+                    datasets: [
+                        {
+                            label: window.getTranslation ? window.getTranslation('paid') : 'Paid',
+                            data: (data.paid || []).map(v => parseFloat(v) || 0),
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: window.getTranslation ? window.getTranslation('unpaid') : 'Unpaid',
+                            data: (data.unpaid || []).map(v => parseFloat(v) || 0),
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                color: '#e0e6ed',
+                                font: { size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': $' + context.parsed.y.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#9ca3af',
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        x: {
+                            ticks: { color: '#9ca3af' },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.05)'
+                            }
+                        }
+                    }
+                }
+            };
+            
+            initChart('commission-trend-chart', config);
+            
+            const paidAmounts = (data.paid || []).map(v => parseFloat(v) || 0);
+            const avgForecast = paidAmounts.length > 0 
+                ? paidAmounts.reduce((a, b) => a + b, 0) / paidAmounts.length 
+                : 0;
+            
+            initCountUp('forecast-value', avgForecast, {
+                duration: 2,
+                separator: ',',
+                decimal: '.',
+                decimalPlaces: 0
+            });
+        }
+    } catch (error) {
+        console.error('Error loading trend:', error);
+    }
+}
+
+async function loadSettlementStatus() {
+    try {
+        const response = await fetch('/crm/api/broker/commissions/settlement-status');
+        const result = await response.json();
+        
+        if (result.success) {
+            const data = result.data;
+            
+            const config = {
+                type: 'doughnut',
+                data: {
+                    labels: data.labels || [],
+                    datasets: [{
+                        data: (data.amounts || []).map(v => parseFloat(v) || 0),
+                        backgroundColor: ['#10b981', '#f59e0b'],
+                        borderColor: '#252a3f',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: {
+                                color: '#e0e6ed',
+                                font: { size: 12 },
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    return label + ': $' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            
+            initChart('settlement-status-chart', config);
+        }
+    } catch (error) {
+        console.error('Error loading settlement status:', error);
+    }
+}
+
+async function loadCommissionsList(paidFilter = null) {
+    try {
+        let url = '/crm/api/broker/commissions/list';
+        if (paidFilter !== null) {
+            url += '?paid=' + paidFilter;
+        }
+        
+        const response = await fetch(url);
+        const result = await response.json();
+        
+        if (result.success) {
+            commissionsData = result.data || [];
+            renderCommissionsTable(commissionsData);
+            loadTopMonths(commissionsData);
+        }
+    } catch (error) {
+        console.error('Error loading commissions:', error);
+        document.getElementById('commissions-tbody').innerHTML = 
+            '<tr><td colspan="6" class="text-center text-danger">Error loading data</td></tr>';
+    }
+}
+
+function renderCommissionsTable(data) {
+    const tbody = document.getElementById('commissions-tbody');
+    document.getElementById('records-count').textContent = data.length;
+    
+    if (data.length === 0) {
+        const noRecordsMsg = window.getTranslation ? window.getTranslation('no_commission_records') : 'No commission records found';
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">' + noRecordsMsg + '</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = data.map(record => `
+        <tr>
+            <td>
+                <a href="/crm/customer/${record.customer_id}" class="text-decoration-none text-primary">
+                    ${record.customer_name || 'Unknown'}
+                </a>
+            </td>
+            <td>${record.mining_farm_name || '-'}</td>
+            <td class="fw-bold text-success">$${parseFloat(record.commission_amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+            <td>${record.record_month || '-'}</td>
+            <td>
+                ${record.paid 
+                    ? '<span class="badge bg-success" data-i18n="paid">' + (window.getTranslation ? window.getTranslation('paid') : 'Paid') + '</span>' 
+                    : '<span class="badge bg-warning" data-i18n="unpaid">' + (window.getTranslation ? window.getTranslation('unpaid') : 'Unpaid') + '</span>'}
+            </td>
+            <td>${record.payment_date || '-'}</td>
+        </tr>
+    `).join('');
+}
+
+function loadTopMonths(data) {
+    const monthlyData = {};
+    
+    data.forEach(record => {
+        const month = record.record_month || 'Unknown';
+        if (!monthlyData[month]) {
+            monthlyData[month] = 0;
+        }
+        monthlyData[month] += parseFloat(record.commission_amount || 0);
+    });
+    
+    const sortedMonths = Object.entries(monthlyData)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+    
+    const container = document.getElementById('top-months-list');
+    
+    if (sortedMonths.length === 0) {
+        const noDataMsg = window.getTranslation ? window.getTranslation('no_data_available') : 'No data available';
+        container.innerHTML = '<p class="text-muted text-center">' + noDataMsg + '</p>';
+        return;
+    }
+    
+    container.innerHTML = sortedMonths.map((item, index) => `
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+            <div>
+                <span class="badge bg-warning me-2">#${index + 1}</span>
+                <strong>${item[0]}</strong>
+            </div>
+            <div class="text-success fw-bold">
+                $${parseFloat(item[1]).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+            </div>
+        </div>
+    `).join('');
+}
+
+function filterCommissions(filter) {
+    currentFilter = filter;
+    
+    document.querySelectorAll('[data-filter]').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+    
+    if (filter === 'all') {
+        loadCommissionsList();
+    } else if (filter === 'paid') {
+        loadCommissionsList('true');
+    } else if (filter === 'unpaid') {
+        loadCommissionsList('false');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadCommissionStats();
+    loadCommissionTrend();
+    loadSettlementStatus();
+    loadCommissionsList();
+});
+</script>
+
+<style>
+.kpi-card {
+    background: linear-gradient(135deg, var(--btc-card-bg) 0%, rgba(247, 147, 26, 0.1) 100%);
+    border: 1px solid var(--btc-border);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+}
+
+.kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow);
+}
+
+.kpi-card.gradient-blue { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); }
+.kpi-card.gradient-green { background: linear-gradient(135deg, #065f46 0%, #10b981 100%); }
+.kpi-card.gradient-orange { background: linear-gradient(135deg, #92400e 0%, #f59e0b 100%); }
+.kpi-card.gradient-purple { background: linear-gradient(135deg, #5b21b6 0%, #a855f7 100%); }
+
+.kpi-icon {
+    font-size: 2.5rem;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1;
+}
+
+.kpi-content {
+    flex: 1;
+}
+
+.kpi-label {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+.kpi-value {
+    color: white;
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.card {
+    background: var(--btc-card-bg);
+    border: 1px solid var(--btc-border);
+    border-radius: var(--radius-md);
+}
+
+.card-header {
+    background: transparent;
+    border-bottom: 1px solid var(--btc-border);
+    color: var(--btc-text-primary);
+}
+
+.table {
+    color: var(--btc-text-primary);
+}
+
+.table thead th {
+    border-color: var(--btc-border);
+    color: var(--btc-text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+}
+
+.table tbody td {
+    border-color: var(--btc-border);
+    vertical-align: middle;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(247, 147, 26, 0.05);
+}
+
+.btn-outline-primary:hover,
+.btn-outline-success:hover,
+.btn-outline-warning:hover {
+    transform: translateY(-1px);
+}
+
+.forecast-value {
+    text-shadow: 0 2px 10px rgba(247, 147, 26, 0.3);
+}
+</style>
+{% endblock %}

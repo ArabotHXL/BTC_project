@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HashInsight Architecture Diagrams Viewer</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1a1d2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: rgba(247, 147, 26, 0.1);
+            border-bottom: 3px solid #f7931a;
+            padding: 2rem;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header h1 {
+            color: #f7931a;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 10px rgba(247, 147, 26, 0.5);
+        }
+        
+        .header p {
+            color: #b0b0b0;
+            font-size: 1rem;
+        }
+        
+        .navigation {
+            background: rgba(26, 29, 46, 0.95);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            position: sticky;
+            top: 100px;
+            z-index: 99;
+            border-bottom: 1px solid #f7931a;
+        }
+        
+        .nav-button {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: #f7931a;
+            border: 2px solid #f7931a;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .nav-button:hover {
+            background: linear-gradient(135deg, #f7931a 0%, #ff9800 100%);
+            color: #1a1d2e;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(247, 147, 26, 0.4);
+        }
+        
+        .nav-button.active {
+            background: #f7931a;
+            color: #1a1d2e;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        
+        .diagram-section {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid #f7931a;
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .diagram-section h2 {
+            color: #f7931a;
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .diagram-section h3 {
+            color: #ff9800;
+            font-size: 1.4rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            padding-left: 1rem;
+            border-left: 4px solid #f7931a;
+        }
+        
+        .diagram-section p {
+            color: #b0b0b0;
+            margin-bottom: 1.5rem;
+            font-size: 1rem;
+        }
+        
+        .mermaid {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 2rem 0;
+            overflow-x: auto;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid #f7931a;
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateX(5px);
+        }
+        
+        .stat-card h4 {
+            color: #f7931a;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-card p {
+            color: #e0e0e0;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 0;
+        }
+        
+        .legend {
+            background: rgba(247, 147, 26, 0.1);
+            border: 1px solid #f7931a;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .legend h4 {
+            color: #f7931a;
+            margin-bottom: 0.5rem;
+        }
+        
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.5rem;
+            color: #b0b0b0;
+            font-size: 0.9rem;
+        }
+        
+        .footer {
+            background: rgba(26, 29, 46, 0.95);
+            padding: 2rem;
+            text-align: center;
+            color: #b0b0b0;
+            border-top: 2px solid #f7931a;
+            margin-top: 3rem;
+        }
+        
+        .scroll-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: #f7931a;
+            color: #1a1d2e;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            box-shadow: 0 5px 15px rgba(247, 147, 26, 0.4);
+            transition: all 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        .scroll-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .scroll-top:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(247, 147, 26, 0.6);
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .navigation {
+                top: 80px;
+            }
+            
+            .diagram-section {
+                padding: 1rem;
+            }
+            
+            .mermaid {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏗️ HashInsight Enterprise - Architecture Diagrams</h1>
+        <p>Visual System Architecture Documentation with 40+ Interactive Diagrams</p>
+    </div>
+    
+    <div class="navigation">
+        <a href="#overview" class="nav-button">System Overview</a>
+        <a href="#dataflow" class="nav-button">Data Flows</a>
+        <a href="#database" class="nav-button">Database ERD</a>
+        <a href="#modules" class="nav-button">Modules</a>
+        <a href="#auth" class="nav-button">Authentication</a>
+        <a href="#deployment" class="nav-button">Deployment</a>
+    </div>
+    
+    <div class="container">
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h4>Total Diagrams</h4>
+                <p>40+</p>
+            </div>
+            <div class="stat-card">
+                <h4>Documentation Files</h4>
+                <p>14</p>
+            </div>
+            <div class="stat-card">
+                <h4>Modules Covered</h4>
+                <p>9</p>
+            </div>
+            <div class="stat-card">
+                <h4>Database Tables</h4>
+                <p>15+</p>
+            </div>
+        </div>
+        
+        <!-- System Overview -->
+        <div id="overview" class="diagram-section">
+            <h2>🌐 1. Complete System Overview</h2>
+            <p>This diagram shows the complete HashInsight Enterprise architecture including all modules, services, databases, and external integrations.</p>
+            
+            <div class="mermaid">
+graph TB
+    subgraph "Client Layer"
+        BROWSER[🌐 Web Browsers<br/>Desktop & Mobile]
+        WALLET[👛 Web3 Wallets<br/>MetaMask]
+    end
+    
+    subgraph "Application Server - Flask on Gunicorn"
+        subgraph "Presentation Layer"
+            TEMPLATES[📄 Jinja2 Templates]
+            STATIC[🎨 Bootstrap 5 UI<br/>Chart.js Visualizations]
+        end
+        
+        subgraph "Security & Middleware"
+            AUTH[🔐 Authentication<br/>Email/Web3/Verification]
+            RBAC[🛡️ Role-Based Access Control<br/>Owner/Admin/User/Client/Guest]
+            CSRF[🔒 CSRF Protection]
+            SESSION[🔑 Session Management]
+        end
+        
+        subgraph "Core Business Modules"
+            CALC[🧮 Mining Calculator<br/>19+ ASIC Models<br/>ROI Analysis]
+            CRM[👥 CRM System<br/>Lead/Deal Pipeline<br/>Invoice Generation]
+            HOST[🏭 Hosting Services<br/>6000+ Miners<br/>Real-time Telemetry]
+            ANALYTICS[📊 Technical Analysis<br/>10+ Indicators<br/>Signal Generation]
+        end
+        
+        subgraph "Intelligence & Optimization"
+            CURTAIL[⚡ Smart Curtailment<br/>Performance Priority<br/>Auto Recovery]
+            FORECAST[🔮 ARIMA Forecasting<br/>BTC Price & Difficulty]
+            OPTIMIZE[🎯 PuLP Optimization<br/>Power & Efficiency]
+            ANOMALY[⚠️ Anomaly Detection]
+        end
+    end
+    
+    subgraph "Data Layer"
+        POSTGRES[(🗄️ PostgreSQL<br/>Users, Miners, CRM<br/>Telemetry, Analytics)]
+        REDIS[(⚡ Redis Cache<br/>API Responses<br/>Session Storage<br/>Job Queue)]
+    end
+    
+    subgraph "External APIs"
+        MARKET[📈 Market Data<br/>CoinGecko, Blockchain.info<br/>Mempool.space]
+        EXCHANGE[💹 Exchange APIs<br/>Binance, OKX<br/>Deribit, Bybit]
+    end
+    
+    subgraph "Mining Hardware"
+        CGMINER[⚙️ CGMiner APIs<br/>TCP:4028<br/>ASIC Miners]
+    end
+    
+    BROWSER --> AUTH
+    WALLET --> AUTH
+    AUTH --> RBAC
+    RBAC --> CSRF
+    CSRF --> SESSION
+    SESSION --> CALC
+    SESSION --> CRM
+    SESSION --> HOST
+    SESSION --> ANALYTICS
+    HOST --> CURTAIL
+    CURTAIL --> OPTIMIZE
+    CALC --> POSTGRES
+    CRM --> POSTGRES
+    HOST --> POSTGRES
+    ANALYTICS --> POSTGRES
+    CALC --> REDIS
+    HOST --> REDIS
+    HOST --> CGMINER
+    ANALYTICS --> MARKET
+    ANALYTICS --> EXCHANGE
+    
+    style BROWSER fill:#4CAF50,stroke:#2E7D32,color:#fff
+    style POSTGRES fill:#336791,stroke:#1a3a52,color:#fff
+    style REDIS fill:#DC382D,stroke:#8b2119,color:#fff
+            </div>
+            
+            <div class="legend">
+                <h4>Legend</h4>
+                <div class="legend-grid">
+                    <div>🌐 Client Interface</div>
+                    <div>🔐 Security Layer</div>
+                    <div>🧮 Core Modules</div>
+                    <div>⚡ Intelligence</div>
+                    <div>🗄️ Database</div>
+                    <div>📈 External APIs</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Data Flow -->
+        <div id="dataflow" class="diagram-section">
+            <h2>🔄 2. Data Flow Diagrams</h2>
+            
+            <h3>Mining Calculator Request Flow</h3>
+            <p>Shows how a user request flows through the system with caching and external API calls.</p>
+            
+            <div class="mermaid">
+sequenceDiagram
+    actor User
+    participant Browser
+    participant Flask
+    participant Cache
+    participant DB
+    participant API as External API
+    
+    User->>Browser: Enter miner model + cost
+    Browser->>Flask: POST /calculator/calculate
+    Flask->>Cache: Check BTC price cache
+    
+    alt Cache HIT
+        Cache-->>Flask: $92,477 (cached)
+    else Cache MISS
+        Flask->>API: GET BTC price
+        API-->>Flask: $92,477
+        Flask->>Cache: Store for 5 min
+    end
+    
+    Flask->>DB: Get miner specs
+    DB-->>Flask: S19 Pro: 110 TH/s, 3250W
+    
+    Flask->>Flask: Calculate profitability
+    Note over Flask: Daily Profit = Revenue - Cost<br/>ROI = Investment / Annual Profit
+    
+    Flask->>DB: Save calculation
+    Flask-->>Browser: Display results
+    Browser-->>User: Show profit & ROI
+            </div>
+            
+            <h3>Background Telemetry Collection</h3>
+            <p>Real-time miner performance data collection every 60 seconds.</p>
+            
+            <div class="mermaid">
+graph TB
+    START([⏰ Every 60 seconds])
+    START --> LOCK{Acquire Lock?}
+    LOCK -->|Yes| QUERY[Query Active Miners]
+    LOCK -->|No| SKIP([Skip - Already Running])
+    QUERY --> LOOP[For Each Miner]
+    LOOP --> CONNECT[Connect to CGMiner API]
+    CONNECT --> SUCCESS{Response?}
+    SUCCESS -->|✅ Success| PARSE[Parse Telemetry Data]
+    SUCCESS -->|❌ Timeout| OFFLINE[Mark Offline]
+    PARSE --> SAVE[Save to Database]
+    SAVE --> CACHE[Update Cache]
+    CACHE --> CHECK{Check Thresholds}
+    CHECK -->|Temp > 80°C| ALERT[Send Alert]
+    CHECK -->|Normal| NEXT{More Miners?}
+    ALERT --> NEXT
+    OFFLINE --> NEXT
+    NEXT -->|Yes| LOOP
+    NEXT -->|No| RELEASE[Release Lock]
+    RELEASE --> END([Complete])
+    
+    style START fill:#4CAF50,stroke:#2E7D32,color:#fff
+    style ALERT fill:#F44336,stroke:#b71c1c,color:#fff
+    style END fill:#4CAF50,stroke:#2E7D32,color:#fff
+            </div>
+        </div>
+        
+        <!-- Database Schema -->
+        <div id="database" class="diagram-section">
+            <h2>🗄️ 3. Database Entity Relationship Diagram</h2>
+            <p>Complete database schema showing all 15+ tables and their relationships.</p>
+            
+            <div class="mermaid">
+erDiagram
+    USERS ||--o{ USER_ACCESS : has
+    USERS ||--o{ CRM_LEADS : owns
+    USERS ||--o{ HOSTING_MINERS : "owns (client)"
+    
+    CRM_LEADS ||--o{ CRM_DEALS : converts_to
+    CRM_DEALS ||--o{ CRM_INVOICES : has
+    
+    HOSTING_SITES ||--o{ HOSTING_MINERS : contains
+    MINER_MODELS ||--o{ HOSTING_MINERS : specifies
+    HOSTING_MINERS ||--o{ MINER_TELEMETRY : generates
+    HOSTING_MINERS ||--o{ MINER_OPERATION_LOG : logs
+    
+    CURTAILMENT_PLANS ||--o{ CURTAILMENT_PLAN_MINERS : affects
+    HOSTING_MINERS }o--|| CURTAILMENT_PLAN_MINERS : "affected by"
+    
+    MARKET_ANALYTICS ||--o{ TECHNICAL_INDICATORS : calculates
+    
+    USERS {
+        text id PK
+        text email UK
+        text password_hash
+        varchar role
+        timestamp created_at
+    }
+    
+    HOSTING_MINERS {
+        serial id PK
+        text serial_number UK
+        integer miner_model_id FK
+        integer site_id FK
+        text status
+        text client_id FK
+        timestamp created_at
+    }
+    
+    MINER_TELEMETRY {
+        serial id PK
+        integer miner_id FK
+        numeric hashrate
+        numeric temperature
+        numeric power_consumption
+        timestamp recorded_at
+    }
+    
+    CURTAILMENT_PLANS {
+        serial id PK
+        integer site_id FK
+        numeric target_power_reduction
+        text status
+        timestamp scheduled_time
+    }
+            </div>
+        </div>
+        
+        <!-- Module Interaction -->
+        <div id="modules" class="diagram-section">
+            <h2>📦 4. Module Interaction & Dependencies</h2>
+            <p>How all 9 modules communicate and depend on each other.</p>
+            
+            <div class="mermaid">
+graph TB
+    subgraph "User Modules"
+        CALC[🧮 Calculator]
+        CRM[👥 CRM]
+        HOST[🏭 Hosting]
+        ANALYTICS[📊 Analytics]
+    end
+    
+    subgraph "Intelligence"
+        CURTAIL[⚡ Curtailment]
+        FORECAST[🔮 Forecasting]
+    end
+    
+    subgraph "Services"
+        TREASURY[💰 Treasury]
+        REPORT[📄 Reports]
+        BILLING[💳 Billing]
+    end
+    
+    subgraph "Data"
+        DB[(🗄️ Database)]
+        CACHE[(⚡ Cache)]
+    end
+    
+    CALC --> DB
+    CALC --> CACHE
+    CALC --> TREASURY
+    CALC --> REPORT
+    
+    CRM --> DB
+    CRM --> BILLING
+    CRM --> REPORT
+    
+    HOST --> DB
+    HOST --> CACHE
+    HOST --> CURTAIL
+    HOST --> BILLING
+    HOST --> REPORT
+    
+    ANALYTICS --> DB
+    ANALYTICS --> CACHE
+    ANALYTICS --> FORECAST
+    ANALYTICS --> REPORT
+    
+    CURTAIL --> HOST
+    CURTAIL --> DB
+    
+    FORECAST --> ANALYTICS
+    
+    TREASURY --> CALC
+    REPORT --> CALC
+    REPORT --> CRM
+    REPORT --> HOST
+    BILLING --> HOST
+    BILLING --> CRM
+    
+    style CALC fill:#4CAF50,stroke:#2E7D32,color:#fff
+    style CRM fill:#2196F3,stroke:#0D47A1,color:#fff
+    style HOST fill:#FF9800,stroke:#E65100,color:#fff
+    style DB fill:#336791,stroke:#1a3a52,color:#fff
+            </div>
+        </div>
+        
+        <!-- Authentication -->
+        <div id="auth" class="diagram-section">
+            <h2>🔐 5. Authentication & Authorization</h2>
+            
+            <h3>Role-Based Access Control (RBAC)</h3>
+            <p>Six role types with different permission levels.</p>
+            
+            <div class="mermaid">
+graph TB
+    START([User Request])
+    START --> CHECK{Session Exists?}
+    CHECK -->|No| LOGIN[Redirect to Login]
+    CHECK -->|Yes| ROLE{User Role}
+    
+    ROLE -->|owner| OWNER[🔑 Owner<br/>Full Access]
+    ROLE -->|admin| ADMIN[👔 Admin<br/>Most Features]
+    ROLE -->|host| HOST[🏭 Host<br/>Device Management]
+    ROLE -->|user| USER[👤 User<br/>Calculator & Dashboard]
+    ROLE -->|client| CLIENT[🤝 Client<br/>Own Miners Only]
+    ROLE -->|guest| GUEST[🌐 Guest<br/>Public Pages]
+    
+    OWNER --> AUTHORIZE{Route Allowed?}
+    ADMIN --> AUTHORIZE
+    HOST --> AUTHORIZE
+    USER --> AUTHORIZE
+    CLIENT --> AUTHORIZE
+    GUEST --> AUTHORIZE
+    
+    AUTHORIZE -->|Yes| PROCESS[Process Request]
+    AUTHORIZE -->|No| DENY[403 Forbidden]
+    
+    PROCESS --> RESPONSE([Return Response])
+    
+    style OWNER fill:#FFD700,stroke:#FFA500,color:#000
+    style ADMIN fill:#4CAF50,stroke:#2E7D32,color:#fff
+    style HOST fill:#2196F3,stroke:#0D47A1,color:#fff
+            </div>
+            
+            <h3>Web3 Wallet Authentication</h3>
+            <p>MetaMask wallet connection and signature verification.</p>
+            
+            <div class="mermaid">
+sequenceDiagram
+    actor User
+    participant Browser
+    participant MetaMask
+    participant API
+    participant DB
+    
+    User->>Browser: Click "Connect Wallet"
+    Browser->>MetaMask: Request accounts
+    MetaMask->>User: "Connect to HashInsight?"
+    User->>MetaMask: Approve
+    MetaMask-->>Browser: 0x742d35Cc...
+    
+    Browser->>API: POST /api/wallet/nonce
+    API->>DB: Find/Create user
+    API-->>Browser: nonce: a1b2c3d4...
+    
+    Browser->>MetaMask: Sign message
+    MetaMask->>User: "Sign this message"
+    User->>MetaMask: Sign
+    MetaMask-->>Browser: signature: 0x8f3e...
+    
+    Browser->>API: POST /api/wallet/login<br/>{wallet, signature, nonce}
+    API->>API: Verify signature
+    
+    alt Valid
+        API->>DB: Create session
+        API-->>Browser: Success + redirect
+        Browser-->>User: ✅ Logged in!
+    else Invalid
+        API-->>Browser: Error
+        Browser-->>User: ❌ Verification failed
+    end
+            </div>
+        </div>
+        
+        <!-- Deployment -->
+        <div id="deployment" class="diagram-section">
+            <h2>🚀 6. Deployment Architecture</h2>
+            <p>Complete infrastructure on Replit platform.</p>
+            
+            <div class="mermaid">
+graph TB
+    subgraph "Users"
+        DESKTOP[💻 Desktop]
+        MOBILE[📱 Mobile]
+    end
+    
+    subgraph "Replit Platform"
+        CDN[🌐 CDN]
+        LB[⚖️ Load Balancer]
+        
+        subgraph "Application"
+            GUNICORN[🔧 Gunicorn<br/>Port 5000]
+            FLASK[⚙️ Flask App]
+            SCHEDULER[⏰ APScheduler<br/>Background Jobs]
+        end
+        
+        POSTGRES[(🗄️ PostgreSQL<br/>Neon)]
+        REDIS[(⚡ Redis<br/>Optional)]
+    end
+    
+    subgraph "External"
+        APIs[📈 Market APIs]
+        BLOCKCHAIN[⛓️ Blockchain]
+        CGMINER[⚙️ Mining Hardware]
+    end
+    
+    DESKTOP --> CDN
+    MOBILE --> CDN
+    CDN --> LB
+    LB --> GUNICORN
+    GUNICORN --> FLASK
+    GUNICORN --> SCHEDULER
+    
+    FLASK --> POSTGRES
+    FLASK --> REDIS
+    SCHEDULER --> POSTGRES
+    SCHEDULER --> REDIS
+    
+    FLASK --> APIs
+    FLASK --> BLOCKCHAIN
+    SCHEDULER --> CGMINER
+    
+    style GUNICORN fill:#4CAF50,stroke:#2E7D32,color:#fff
+    style POSTGRES fill:#336791,stroke:#1a3a52,color:#fff
+    style REDIS fill:#DC382D,stroke:#8b2119,color:#fff
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>📊 HashInsight Enterprise Architecture Documentation</p>
+        <p>Total Diagrams: 40+ | Documentation Files: 14 | Last Updated: November 2025</p>
+    </div>
+    
+    <div class="scroll-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">↑</div>
+    
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            },
+            sequence: {
+                useMaxWidth: true,
+                actorMargin: 50,
+                boxMargin: 10
+            }
+        });
+        
+        // Scroll to top button
+        window.addEventListener('scroll', function() {
+            const scrollTop = document.querySelector('.scroll-top');
+            if (window.pageYOffset > 300) {
+                scrollTop.classList.add('visible');
+            } else {
+                scrollTop.classList.remove('visible');
+            }
+        });
+        
+        // Navigation active state
+        const navButtons = document.querySelectorAll('.nav-button');
+        navButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                navButtons.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+        
+        // Smooth scroll for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

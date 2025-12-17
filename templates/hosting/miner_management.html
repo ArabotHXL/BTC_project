@@ -1,0 +1,2704 @@
+{% extends "hosting/hosting_base.html" %}
+
+{% block page_title %}{% if current_lang == 'en' %}Miner Management{% else %}矿机管理{% endif %}{% endblock %}
+{% block page_subtitle %}{% if current_lang == 'en' %}Professional mining device management with unified approval workflow{% else %}专业矿机设备管理，统一审核流程{% endif %}{% endblock %}
+
+{% block header_actions %}
+{{ super() }}
+<div class="btn-group ms-3" role="group">
+    <button class="btn btn-hosting-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addMinerModal">
+        <i class="bi bi-plus-circle me-1"></i>{% if current_lang == 'en' %}Add Miner{% else %}添加矿机{% endif %}
+    </button>
+    <button class="btn btn-hosting-secondary btn-sm" onclick="refreshMiners()">
+        <i class="bi bi-arrow-clockwise me-1"></i>{% if current_lang == 'en' %}Refresh{% else %}刷新{% endif %}
+    </button>
+    <a href="{{ url_for('hosting_service_bp.miner_setup_guide') }}" class="btn btn-info btn-sm" target="_blank">
+        <i class="bi bi-book me-1"></i>{% if current_lang == 'en' %}Help Guide{% else %}帮助文档{% endif %}
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<!-- KPI卡片区 -->
+<div class="row mb-4" id="kpi-cards">
+    <div class="col-md-3 mb-3">
+        <div class="kpi-card">
+            <div class="kpi-icon">
+                <i class="bi bi-cpu"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-label">{% if current_lang == 'en' %}Total Miners{% else %}总矿机数{% endif %}</div>
+                <div class="kpi-value" id="kpi-total-miners">-</div>
+                <div class="kpi-unit">&nbsp;</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background: linear-gradient(135deg, #4ECDC4, #44A08D);">
+                <i class="bi bi-speedometer2"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-label">{% if current_lang == 'en' %}Total Hashrate{% else %}总算力{% endif %}</div>
+                <div class="kpi-value" id="kpi-total-hashrate">-</div>
+                <div class="kpi-unit">PH/s</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background: linear-gradient(135deg, #F7971E, #FFD200);">
+                <i class="bi bi-lightning-charge"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-label">{% if current_lang == 'en' %}Power & Efficiency{% else %}功耗+能效{% endif %}</div>
+                <div class="kpi-value" id="kpi-total-power">-</div>
+                <div class="kpi-subvalue" id="kpi-avg-efficiency">-</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                <i class="bi bi-heart-pulse"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-label">{% if current_lang == 'en' %}Device Health{% else %}设备健康度{% endif %}</div>
+                <div class="kpi-value" id="kpi-health-score">-</div>
+                <div class="kpi-subvalue">
+                    {% if current_lang == 'en' %}Online Rate:{% else %}在线率:{% endif %} 
+                    <span id="kpi-online-rate">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 加密控制中心 - 仅矿场主/管理员可见 -->
+{% if session.get('role') in ['owner', 'admin', 'mining_site'] %}
+<div class="hosting-card mb-4" id="encryption-control-center">
+    <div class="hosting-card-header d-flex justify-content-between align-items-center cursor-pointer" 
+         data-bs-toggle="collapse" data-bs-target="#encryptionBody" aria-expanded="false">
+        <h6 class="hosting-card-title mb-0">
+            <i class="bi bi-shield-lock me-2"></i>{% if current_lang == 'en' %}Encryption Control Center{% else %}加密控制中心{% endif %}
+            <span class="badge bg-warning ms-2" id="encryption-status-badge">
+                {% if current_lang == 'en' %}Not Configured{% else %}未配置{% endif %}
+            </span>
+        </h6>
+        <i class="bi bi-chevron-down collapse-icon"></i>
+    </div>
+    <div class="collapse" id="encryptionBody">
+        <div class="hosting-card-body">
+            <div class="row">
+                <!-- 左侧：状态信息 -->
+                <div class="col-md-6">
+                    <div class="encryption-status-panel p-3 rounded" style="background: rgba(247,147,26,0.1); border: 1px solid rgba(247,147,26,0.3);">
+                        <h6 class="mb-3">
+                            <i class="bi bi-info-circle me-2"></i>{% if current_lang == 'en' %}Encryption Status{% else %}加密状态{% endif %}
+                        </h6>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="mb-2">
+                                    <small class="text-muted">{% if current_lang == 'en' %}Total Miners{% else %}矿机总数{% endif %}</small>
+                                    <div class="fw-bold" id="enc-total-miners">-</div>
+                                </div>
+                                <div class="mb-2">
+                                    <small class="text-muted">{% if current_lang == 'en' %}Encrypted Miners{% else %}已加密矿机{% endif %}</small>
+                                    <div class="fw-bold" id="enc-encrypted-miners">-</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="mb-2">
+                                    <small class="text-muted">{% if current_lang == 'en' %}Key Version{% else %}密钥版本{% endif %}</small>
+                                    <div class="fw-bold" id="enc-key-version">-</div>
+                                </div>
+                                <div class="mb-2">
+                                    <small class="text-muted">{% if current_lang == 'en' %}Unlock Status{% else %}解锁状态{% endif %}</small>
+                                    <div id="enc-unlock-status">
+                                        <span class="badge bg-secondary">{% if current_lang == 'en' %}Locked{% else %}已锁定{% endif %}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 进度条 -->
+                        <div class="mt-3" id="enc-progress-container" style="display: none;">
+                            <small class="text-muted">{% if current_lang == 'en' %}Processing...{% else %}处理中...{% endif %}</small>
+                            <div class="progress mt-1" style="height: 20px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     role="progressbar" id="enc-progress-bar" 
+                                     style="width: 0%">0%</div>
+                            </div>
+                            <small class="text-muted mt-1" id="enc-progress-text"></small>
+                        </div>
+                    </div>
+                </div>
+                <!-- 右侧：操作按钮 -->
+                <div class="col-md-6">
+                    <div class="p-3">
+                        <h6 class="mb-3">
+                            <i class="bi bi-gear me-2"></i>{% if current_lang == 'en' %}Quick Actions{% else %}快捷操作{% endif %}
+                        </h6>
+                        <!-- 首次设置密码 -->
+                        <div id="enc-setup-section">
+                            <p class="text-muted small mb-2">
+                                {% if current_lang == 'en' %}Set up a master passphrase to encrypt all miners' network data (IP/MAC addresses).{% else %}设置主密码以加密所有矿机的网络数据（IP/MAC地址）。{% endif %}
+                            </p>
+                            <div class="input-group mb-2">
+                                <span class="input-group-text"><i class="bi bi-key"></i></span>
+                                <input type="password" class="form-control" id="enc-setup-passphrase" 
+                                       placeholder="{% if current_lang == 'en' %}Enter master passphrase (min 8 chars){% else %}输入主密码（至少8位）{% endif %}">
+                            </div>
+                            <div class="input-group mb-3">
+                                <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
+                                <input type="password" class="form-control" id="enc-setup-confirm" 
+                                       placeholder="{% if current_lang == 'en' %}Confirm passphrase{% else %}确认密码{% endif %}">
+                            </div>
+                            <button class="btn btn-hosting-primary w-100" onclick="setupOwnerEncryption()">
+                                <i class="bi bi-shield-lock me-2"></i>{% if current_lang == 'en' %}Setup & Encrypt All{% else %}设置并加密所有矿机{% endif %}
+                            </button>
+                        </div>
+                        <!-- 解锁操作 -->
+                        <div id="enc-unlock-section" style="display: none;">
+                            <p class="text-muted small mb-2">
+                                {% if current_lang == 'en' %}Enter your master passphrase to unlock and view encrypted data.{% else %}输入主密码以解锁并查看加密数据。{% endif %}
+                            </p>
+                            <div class="input-group mb-3">
+                                <span class="input-group-text"><i class="bi bi-unlock"></i></span>
+                                <input type="password" class="form-control" id="enc-unlock-passphrase" 
+                                       placeholder="{% if current_lang == 'en' %}Enter master passphrase{% else %}输入主密码{% endif %}">
+                                <button class="btn btn-hosting-primary" onclick="unlockOwnerEncryption()">
+                                    <i class="bi bi-unlock-fill"></i>
+                                </button>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-warning flex-fill" onclick="lockOwnerEncryption()">
+                                    <i class="bi bi-lock me-1"></i>{% if current_lang == 'en' %}Lock{% else %}锁定{% endif %}
+                                </button>
+                                <button class="btn btn-outline-danger flex-fill" onclick="rotateOwnerKey()">
+                                    <i class="bi bi-arrow-repeat me-1"></i>{% if current_lang == 'en' %}Rotate Key{% else %}轮换密钥{% endif %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- 操作按钮区 -->
+<div class="d-flex justify-content-between gap-3 mb-4 flex-wrap">
+    <div class="d-flex gap-2 flex-wrap">
+        <button class="btn btn-hosting-primary" data-bs-toggle="modal" data-bs-target="#batchImportModal">
+            <i class="bi bi-upload me-2"></i>{% if current_lang == 'en' %}Batch Import{% else %}批量导入{% endif %}
+        </button>
+        <button class="btn btn-hosting-secondary" onclick="showPendingOnly()">
+            <i class="bi bi-clock me-2"></i>{% if current_lang == 'en' %}Pending Review{% else %}待审核{% endif %}
+            <span class="badge bg-warning text-dark ms-2" id="pending-count">0</span>
+        </button>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-warning dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="batch-ops-btn" disabled>
+                <i class="bi bi-list-check me-1"></i>{% if current_lang == 'en' %}Batch Operations{% else %}批量操作{% endif %}
+                <span class="badge bg-light text-dark ms-1" id="selected-count">0</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchApprove()">
+                    <i class="bi bi-check-circle me-2"></i>{% if current_lang == 'en' %}Approve{% else %}批量审核通过{% endif %}
+                </a></li>
+                <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchStart()">
+                    <i class="bi bi-play-circle me-2"></i>{% if current_lang == 'en' %}Start{% else %}批量启动{% endif %}
+                </a></li>
+                <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchShutdown()">
+                    <i class="bi bi-stop-circle me-2"></i>{% if current_lang == 'en' %}Shutdown{% else %}批量关闭{% endif %}
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchChangeStatus()">
+                    <i class="bi bi-arrow-left-right me-2"></i>{% if current_lang == 'en' %}Change Status{% else %}批量修改状态{% endif %}
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="batchDelete()">
+                    <i class="bi bi-trash me-2"></i>{% if current_lang == 'en' %}Delete{% else %}批量删除{% endif %}
+                </a></li>
+            </ul>
+        </div>
+        <button class="btn btn-success" onclick="exportCSV()">
+            <i class="bi bi-download me-1"></i>{% if current_lang == 'en' %}Export CSV{% else %}导出CSV{% endif %}
+        </button>
+    </div>
+</div>
+
+<!-- 筛选器 -->
+<div class="hosting-card">
+    <div class="hosting-card-header d-flex justify-content-between align-items-center">
+        <h6 class="hosting-card-title mb-0">
+            <i class="bi bi-funnel me-2"></i>{% if current_lang == 'en' %}Filter Options{% else %}筛选选项{% endif %}
+        </h6>
+        <div class="input-group" style="width: 300px;">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control" id="quickSearch" placeholder="{% if current_lang == 'en' %}Search Serial Number/IP/Rack...{% else %}搜索序列号/IP/机架位置...{% endif %}">
+        </div>
+    </div>
+    <div class="hosting-card-body">
+        <form class="row g-3" id="filter-form">
+            <div class="col-md-3">
+                <label for="status-filter" class="form-label">
+                    {% if current_lang == 'en' %}Status{% else %}状态{% endif %}
+                </label>
+                <select class="form-select" id="status-filter" name="status">
+                    <option value="">{% if current_lang == 'en' %}All Status{% else %}全部状态{% endif %}</option>
+                    <option value="active">{% if current_lang == 'en' %}Running{% else %}运行中{% endif %}</option>
+                    <option value="offline">{% if current_lang == 'en' %}Offline{% else %}离线{% endif %}</option>
+                    <option value="maintenance">{% if current_lang == 'en' %}Maintenance{% else %}维护中{% endif %}</option>
+                    <option value="error">{% if current_lang == 'en' %}Error{% else %}故障{% endif %}</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="approval-filter" class="form-label">
+                    {% if current_lang == 'en' %}Approval Status{% else %}审核状态{% endif %}
+                </label>
+                <select class="form-select" id="approval-filter" name="approval_status">
+                    <option value="">{% if current_lang == 'en' %}All Status{% else %}全部状态{% endif %}</option>
+                    <option value="draft">{% if current_lang == 'en' %}Draft{% else %}草稿{% endif %}</option>
+                    <option value="pending_approval">{% if current_lang == 'en' %}Pending Review{% else %}待审核{% endif %}</option>
+                    <option value="approved">{% if current_lang == 'en' %}Approved{% else %}已通过{% endif %}</option>
+                    <option value="rejected">{% if current_lang == 'en' %}Rejected{% else %}已拒绝{% endif %}</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="site-filter" class="form-label">
+                    {% if current_lang == 'en' %}Site{% else %}站点{% endif %}
+                </label>
+                <select class="form-select" id="site-filter" name="site_id">
+                    <option value="">{% if current_lang == 'en' %}All Sites{% else %}全部站点{% endif %}</option>
+                    <!-- 动态加载站点选项 -->
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="customer-filter" class="form-label">
+                    {% if current_lang == 'en' %}Customer{% else %}客户{% endif %}
+                </label>
+                <select class="form-select" id="customer-filter" name="customer_id">
+                    <option value="">{% if current_lang == 'en' %}All Customers{% else %}全部客户{% endif %}</option>
+                    <!-- 动态加载客户选项 -->
+                </select>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 矿机列表 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-list me-2"></i>{% if current_lang == 'en' %}Miner List{% else %}矿机列表{% endif %}
+        </h5>
+        <div class="d-flex gap-2 flex-wrap">
+            <span class="badge bg-info" id="total-count">{% if current_lang == 'en' %}Total: 0{% else %}总计: 0{% endif %}</span>
+            <span class="badge bg-success" id="active-count">{% if current_lang == 'en' %}Running: 0{% else %}运行: 0{% endif %}</span>
+            <span class="badge bg-warning" id="pending-approval-count">{% if current_lang == 'en' %}Pending: 0{% else %}待审核: 0{% endif %}</span>
+        </div>
+    </div>
+    <div class="hosting-card-body">
+        <div class="hosting-table">
+            <table class="table table-hover" id="miners-table">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;"><input type="checkbox" id="selectAll" class="form-check-input"></th>
+                        <th>{% if current_lang == 'en' %}Serial Number{% else %}序列号{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Grade{% else %}评级{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Customer{% else %}客户{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Miner Model{% else %}矿机型号{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Site{% else %}站点{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Power{% else %}功耗{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Daily Profit{% else %}日收益{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}CGMiner{% else %}CGMiner{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Temperature{% else %}温度{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Fan{% else %}风扇{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 数据通过JavaScript加载 -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 分页 -->
+        <nav aria-label="Miner pagination" class="mt-3">
+            <ul class="pagination justify-content-center" id="pagination">
+                <!-- 分页按钮通过JavaScript生成 -->
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- 添加矿机模态框 -->
+<div class="modal fade" id="addMinerModal" tabindex="-1" aria-labelledby="addMinerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
+                <h5 class="modal-title" id="addMinerModalLabel">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    {% if current_lang == 'en' %}Add New Miner{% else %}添加新矿机{% endif %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addMinerForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="serial_number" class="form-label">
+                                {% if current_lang == 'en' %}Serial Number{% else %}序列号{% endif %} <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="serial_number" name="serial_number" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="miner_model" class="form-label">
+                                {% if current_lang == 'en' %}Miner Model{% else %}矿机型号{% endif %} <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="miner_model" name="miner_model" required>
+                                <option value="">{% if current_lang == 'en' %}Select Model{% else %}选择型号{% endif %}</option>
+                                <option value="Antminer S19 Pro">Antminer S19 Pro</option>
+                                <option value="Antminer S19j Pro">Antminer S19j Pro</option>
+                                <option value="WhatsMiner M30S++">WhatsMiner M30S++</option>
+                                <option value="WhatsMiner M31S+">WhatsMiner M31S+</option>
+                                <option value="AvalonMiner 1246">AvalonMiner 1246</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="site_id" class="form-label">
+                                {% if current_lang == 'en' %}Site{% else %}站点{% endif %} <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="site_id" name="site_id" required>
+                                <option value="">{% if current_lang == 'en' %}Select Site{% else %}选择站点{% endif %}</option>
+                                <!-- 动态加载站点选项 -->
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="customer_email" class="form-label">
+                                {% if current_lang == 'en' %}Customer Email{% else %}客户邮箱{% endif %} <span class="text-danger">*</span>
+                            </label>
+                            <input type="email" class="form-control" id="customer_email" name="customer_email" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="ip_address" class="form-label">
+                                {% if current_lang == 'en' %}IP Address{% else %}IP地址{% endif %}
+                            </label>
+                            <input type="text" class="form-control" id="ip_address" name="ip_address" placeholder="192.168.1.100">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="rack_position" class="form-label">
+                                {% if current_lang == 'en' %}Rack Position{% else %}机架位置{% endif %}
+                            </label>
+                            <input type="text" class="form-control" id="rack_position" name="rack_position" placeholder="A-01-05">
+                        </div>
+                        <div class="col-12">
+                            <label for="notes" class="form-label">
+                                {% if current_lang == 'en' %}Notes{% else %}备注{% endif %}
+                            </label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-hosting-secondary" data-bs-dismiss="modal">
+                    {% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}
+                </button>
+                <button type="button" class="btn btn-hosting-primary" onclick="addMiner()">
+                    {% if current_lang == 'en' %}Add Miner{% else %}添加矿机{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 批量导入模态框 -->
+<div class="modal fade" id="batchImportModal" tabindex="-1" aria-labelledby="batchImportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
+                <h5 class="modal-title" id="batchImportModalLabel">
+                    <i class="bi bi-upload me-2"></i>
+                    {% if current_lang == 'en' %}Batch Import Miners{% else %}批量导入矿机{% endif %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Link to Full Import Page with Field Documentation -->
+                <div class="alert alert-warning border-warning mb-3">
+                    <div class="d-flex align-items-start">
+                        <i class="bi bi-lightbulb-fill fs-4 me-3 text-warning"></i>
+                        <div class="flex-grow-1">
+                            <h6 class="alert-heading mb-2">
+                                {% if current_lang == 'en' %}
+                                    Need detailed field requirements?
+                                {% else %}
+                                    需要查看详细字段说明？
+                                {% endif %}
+                            </h6>
+                            <p class="mb-2">
+                                {% if current_lang == 'en' %}
+                                    For complete hosting field documentation, required vs optional fields, and validation rules, visit our full import page.
+                                {% else %}
+                                    如需查看完整的托管字段说明、必填与可选字段、验证规则，请访问完整导入页面。
+                                {% endif %}
+                            </p>
+                            <a href="/batch/import" target="_blank" class="btn btn-sm btn-outline-warning">
+                                <i class="bi bi-box-arrow-up-right me-1"></i>
+                                {% if current_lang == 'en' %}Open Full Import Page{% else %}打开完整导入页面{% endif %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Download Template Section -->
+                <div class="alert alert-info d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <i class="bi bi-info-circle me-2"></i>
+                        {% if current_lang == 'en' %}
+                            <strong>First time?</strong> Download the CSV template to get started
+                        {% else %}
+                            <strong>第一次使用？</strong> 下载CSV模板开始使用
+                        {% endif %}
+                    </div>
+                    <div class="btn-group" role="group">
+                        <a href="/batch/api/template/download?lang={{ current_lang }}&examples=true" class="btn btn-sm btn-outline-primary" download>
+                            <i class="bi bi-download me-1"></i>
+                            {% if current_lang == 'en' %}With Examples{% else %}带示例{% endif %}
+                        </a>
+                        <a href="/batch/api/template/download?lang={{ current_lang }}&examples=false" class="btn btn-sm btn-outline-secondary" download>
+                            <i class="bi bi-file-earmark me-1"></i>
+                            {% if current_lang == 'en' %}Blank{% else %}空白模板{% endif %}
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="batchFile" class="form-label">
+                        {% if current_lang == 'en' %}Select CSV File{% else %}选择CSV文件{% endif %}
+                    </label>
+                    <input type="file" class="form-control" id="batchFile" accept=".csv">
+                    <div class="form-text">
+                        {% if current_lang == 'en' %}
+                            Required fields: Hashrate (TH/s), Power (W), Electricity Cost ($/kWh)
+                        {% else %}
+                            必填字段：算力(TH/s)、功耗(W)、电费($/kWh)
+                        {% endif %}
+                    </div>
+                </div>
+                <div id="importPreview" class="d-none">
+                    <h6>{% if current_lang == 'en' %}Import Preview:{% else %}导入预览：{% endif %}</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm" id="previewTable">
+                            <thead></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-hosting-secondary" data-bs-dismiss="modal">
+                    {% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}
+                </button>
+                <button type="button" class="btn btn-hosting-primary" id="confirmImport" disabled onclick="confirmBatchImport()">
+                    {% if current_lang == 'en' %}Import{% else %}导入{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑矿机模态框 -->
+<div class="modal fade" id="editMinerModal" tabindex="-1" aria-labelledby="editMinerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
+                <h5 class="modal-title" id="editMinerModalLabel">
+                    <i class="bi bi-pencil me-2"></i>
+                    {% if current_lang == 'en' %}Edit Miner{% else %}编辑矿机{% endif %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editMinerForm">
+                    <input type="hidden" id="edit_miner_id" name="miner_id">
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="edit_serial_number" class="form-label">
+                                {% if current_lang == 'en' %}Serial Number{% else %}序列号{% endif %}
+                            </label>
+                            <input type="text" class="form-control" id="edit_serial_number" readonly>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="edit_rack_position" class="form-label">
+                                {% if current_lang == 'en' %}Rack Position{% else %}机架位置{% endif %}
+                            </label>
+                            <input type="text" class="form-control" id="edit_rack_position" name="rack_position">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="edit_ip_address" class="form-label">
+                                {% if current_lang == 'en' %}IP Address{% else %}IP地址{% endif %}
+                            </label>
+                            <input type="text" class="form-control" id="edit_ip_address" name="ip_address" placeholder="192.168.1.100">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="edit_mac_address" class="form-label">
+                                {% if current_lang == 'en' %}MAC Address{% else %}MAC地址{% endif %}
+                            </label>
+                            <input type="text" class="form-control" id="edit_mac_address" name="mac_address" placeholder="00:1A:2B:3C:4D:5E">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="edit_actual_hashrate" class="form-label">
+                                {% if current_lang == 'en' %}Actual Hashrate (TH/s){% else %}实际算力 (TH/s){% endif %}
+                            </label>
+                            <input type="number" class="form-control" id="edit_actual_hashrate" name="actual_hashrate" step="0.01">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="edit_actual_power" class="form-label">
+                                {% if current_lang == 'en' %}Actual Power (W){% else %}实际功耗 (W){% endif %}
+                            </label>
+                            <input type="number" class="form-control" id="edit_actual_power" name="actual_power" step="1">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="edit_status" class="form-label">
+                                {% if current_lang == 'en' %}Status{% else %}状态{% endif %}
+                            </label>
+                            <select class="form-select" id="edit_status" name="status">
+                                <option value="active">{% if current_lang == 'en' %}Active{% else %}运行中{% endif %}</option>
+                                <option value="inactive">{% if current_lang == 'en' %}Inactive{% else %}停机{% endif %}</option>
+                                <option value="maintenance">{% if current_lang == 'en' %}Maintenance{% else %}维护中{% endif %}</option>
+                                <option value="offline">{% if current_lang == 'en' %}Offline{% else %}离线{% endif %}</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-hosting-secondary" data-bs-dismiss="modal">
+                    {% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}
+                </button>
+                <button type="button" class="btn btn-hosting-primary" onclick="saveMinerEdit()">
+                    {% if current_lang == 'en' %}Save Changes{% else %}保存修改{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 批量操作确认Modal -->
+<div class="modal fade" id="batchConfirmModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="batchConfirmTitle">{% if current_lang == 'en' %}Confirm Batch Operation{% else %}确认批量操作{% endif %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <span id="batchConfirmMessage"></span>
+                </div>
+                <div id="batchConfirmList" class="mb-3"></div>
+                <div id="batchNotesInput" class="d-none">
+                    <label class="form-label">{% if current_lang == 'en' %}Notes (Optional){% else %}备注（可选）{% endif %}</label>
+                    <textarea class="form-control" id="batchNotes" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}</button>
+                <button type="button" class="btn btn-warning" id="batchConfirmBtn">{% if current_lang == 'en' %}Confirm{% else %}确认{% endif %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 快速修改状态Modal -->
+<div class="modal fade" id="quickStatusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header bg-info text-dark">
+                <h5 class="modal-title">{% if current_lang == 'en' %}Change Miner Status{% else %}修改矿机状态{% endif %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="quickStatusMinerId">
+                <div class="mb-3">
+                    <label class="form-label">{% if current_lang == 'en' %}Select New Status{% else %}选择新状态{% endif %}</label>
+                    <select class="form-select" id="quickStatusSelect">
+                        <option value="active">{% if current_lang == 'en' %}Active (Running){% else %}运行中{% endif %}</option>
+                        <option value="offline">{% if current_lang == 'en' %}Offline{% else %}离线{% endif %}</option>
+                        <option value="maintenance">{% if current_lang == 'en' %}Maintenance{% else %}维护中{% endif %}</option>
+                        <option value="error">{% if current_lang == 'en' %}Error{% else %}故障{% endif %}</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{% if current_lang == 'en' %}Notes (Optional){% else %}备注（可选）{% endif %}</label>
+                    <textarea class="form-control" id="quickStatusNotes" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}</button>
+                <button type="button" class="btn btn-info" onclick="saveQuickStatus()">{% if current_lang == 'en' %}Save{% else %}保存{% endif %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 操作日志Modal -->
+<div class="modal fade" id="operationLogsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content bg-dark">
+            <div class="modal-header bg-secondary">
+                <h5 class="modal-title">{% if current_lang == 'en' %}Operation Logs{% else %}操作日志{% endif %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-dark table-hover">
+                        <thead>
+                            <tr>
+                                <th>{% if current_lang == 'en' %}Time{% else %}时间{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Operation{% else %}操作类型{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Old Status{% else %}原状态{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}New Status{% else %}新状态{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Operator{% else %}操作人{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Notes{% else %}备注{% endif %}</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logsTableBody">
+                            <tr><td colspan="6" class="text-center">{% if current_lang == 'en' %}Loading...{% else %}加载中...{% endif %}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <nav>
+                    <ul class="pagination pagination-sm justify-content-center" id="logsPagination"></ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSS样式 -->
+<style>
+.kpi-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    color: white;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-height: 120px;
+    transition: transform 0.2s;
+}
+
+.kpi-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+}
+
+.kpi-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+}
+
+.kpi-content {
+    flex: 1;
+}
+
+.kpi-label {
+    font-size: 0.85rem;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.kpi-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.kpi-unit {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.kpi-subvalue {
+    font-size: 0.85rem;
+    opacity: 0.85;
+    margin-top: 0.25rem;
+}
+
+/* 加密控制中心样式 */
+.cursor-pointer { cursor: pointer; }
+.collapse-icon { transition: transform 0.3s ease; }
+.hosting-card-header[aria-expanded="true"] .collapse-icon { transform: rotate(180deg); }
+#encryption-control-center .hosting-card-header { border-bottom: none; }
+#encryption-control-center .hosting-card-header[aria-expanded="true"] { border-bottom: 1px solid rgba(255,255,255,0.1); }
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadMiners();
+    loadSitesForDropdown();
+    loadCustomersForDropdown();
+    setupFilterForm();
+    setupBatchImport();
+});
+
+let currentPage = 1;
+const perPage = 20;
+
+function loadMiners(page = 1, filters = {}) {
+    const queryParams = new URLSearchParams({
+        page: page,
+        per_page: perPage,
+        ...filters
+    });
+    
+    return fetch(`/hosting/api/miners?${queryParams}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                displayMiners(data.miners || []);
+                updateCounts(data.counts || {total: 0, active: 0, pending: 0});
+                if (typeof updatePagination === 'function') {
+                    updatePagination(data.pagination || {});
+                }
+            } else {
+                console.error('API returned error:', data.error);
+                displayMiners([]);
+                updateCounts({total: 0, active: 0, pending: 0});
+            }
+        })
+        .catch(error => {
+            console.error('Error loading miners:', error.message || error);
+            displayMiners([]);
+            updateCounts({total: 0, active: 0, pending: 0});
+        });
+}
+
+function displayMiners(miners) {
+    const tbody = document.querySelector('#miners-table tbody');
+    if (!tbody) {
+        console.error('Miners table body not found');
+        return;
+    }
+    
+    tbody.innerHTML = '';
+    
+    if (!miners || miners.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="14" class="text-center text-muted py-4">
+                    <i class="bi bi-cpu fs-1 mb-2 d-block"></i>
+                    <span data-i18n="hosting.no_miners_found">${getLanguage() === 'en' ? 'No miners found' : '未找到矿机'}</span>
+                </td>
+            </tr>
+        `;
+        if (window.I18n) {
+            I18n.updatePageTranslations();
+        }
+        return;
+    }
+    
+    miners.forEach(miner => {
+        const telemetry = miner.telemetry || {live: false};
+        const hasLiveTelemetry = telemetry.live === true;
+        
+        const cgminerOnline = hasLiveTelemetry ? telemetry.online : (miner.cgminer_online || false);
+        const tempAvg = hasLiveTelemetry && telemetry.temperature_avg ? telemetry.temperature_avg : (miner.temperature_avg || null);
+        const tempMax = hasLiveTelemetry && telemetry.temperature_max ? telemetry.temperature_max : (miner.temperature_max || null);
+        const fanAvg = hasLiveTelemetry && telemetry.fan_speeds?.length ? 
+            telemetry.fan_speeds.reduce((a, b) => a + b, 0) / telemetry.fan_speeds.length : (miner.fan_avg || null);
+        const lastSeen = hasLiveTelemetry && telemetry.last_seen ? telemetry.last_seen : (miner.last_seen || null);
+        const liveHashrate = hasLiveTelemetry ? telemetry.hashrate_ths : null;
+        const livePower = hasLiveTelemetry && telemetry.power_consumption ? telemetry.power_consumption : null;
+        
+        // Format CGMiner online status with live indicator
+        const liveIndicator = hasLiveTelemetry ? '<span class="badge bg-success ms-1" style="font-size:0.6rem;">LIVE</span>' : '';
+        const cgminerStatus = cgminerOnline 
+            ? '<i class="bi bi-wifi text-success fs-5" title="' + (getLanguage() === 'en' ? 'Online' : '在线') + '"></i>' + liveIndicator
+            : '<i class="bi bi-wifi-off text-danger fs-5" title="' + (getLanguage() === 'en' ? 'Offline' : '离线') + '"></i>';
+        
+        // Format temperature with color coding
+        let tempDisplay = '-';
+        let tempClass = '';
+        if (tempAvg !== null && tempMax !== null) {
+            tempClass = tempMax > 85 ? 'text-danger' : (tempMax > 75 ? 'text-warning' : '');
+            const tempVal = typeof tempAvg === 'number' ? tempAvg.toFixed(1) : tempAvg;
+            const tempMaxVal = typeof tempMax === 'number' ? tempMax.toFixed(1) : tempMax;
+            tempDisplay = `<span class="${tempClass}" title="${getLanguage() === 'en' ? 'Avg / Max' : '平均 / 最高'}">${tempVal}°C / ${tempMaxVal}°C</span>`;
+        }
+        
+        // Format fan speed
+        const fanDisplay = fanAvg !== null ? `${Math.round(fanAvg)} RPM` : '-';
+        
+        // Format last seen time
+        let lastSeenDisplay = '-';
+        if (lastSeen) {
+            const timeAgo = getTimeAgo(lastSeen);
+            lastSeenDisplay = `<small class="text-muted" title="${lastSeen}">${timeAgo}</small>`;
+        }
+        
+        // Format alert badge
+        let alertBadge = '';
+        if (miner.alerts && miner.alerts.has_alerts && miner.alerts.count > 0) {
+            const hasCritical = miner.alerts.alerts.some(a => a.severity === 'critical');
+            const badgeColor = hasCritical ? 'danger' : 'warning';
+            const alertMessages = miner.alerts.alerts.map(a => a.message).join(', ');
+            alertBadge = `
+                <span class="badge bg-${badgeColor} ms-2" 
+                      data-bs-toggle="tooltip" 
+                      data-bs-placement="top"
+                      title="${alertMessages}">
+                    <i class="bi bi-exclamation-triangle"></i> ${miner.alerts.count}
+                </span>`;
+        }
+        
+        // Format evaluation grade badge
+        const grade = miner.evaluation_grade || '-';
+        const gradeColors = {
+            'A': 'success',
+            'B': 'info', 
+            'C': 'warning',
+            'D': 'secondary',
+            'F': 'danger'
+        };
+        const gradeColor = gradeColors[grade] || 'secondary';
+        const gradeScore = miner.evaluation_score ? miner.evaluation_score.toFixed(0) : '-';
+        const gradeDisplay = grade !== '-' 
+            ? `<span class="badge bg-${gradeColor} fs-6" data-bs-toggle="tooltip" title="${getLanguage() === 'en' ? 'Score: ' : '评分: '}${gradeScore}">${grade}</span>`
+            : '<span class="badge bg-secondary">-</span>';
+        
+        // Format daily profit
+        const dailyProfit = miner.daily_net_profit;
+        let profitDisplay = '-';
+        if (dailyProfit !== null && dailyProfit !== undefined) {
+            const profitColor = dailyProfit >= 0 ? 'text-success' : 'text-danger';
+            const profitSign = dailyProfit >= 0 ? '+' : '';
+            profitDisplay = `<span class="${profitColor}">${profitSign}$${Math.abs(dailyProfit).toFixed(2)}</span>`;
+        }
+        
+        const row = `
+            <tr id="miner-row-${miner.id}">
+                <td><input type="checkbox" class="form-check-input miner-checkbox" value="${miner.id}"></td>
+                <td><strong>${miner.serial_number}</strong>${alertBadge}</td>
+                <td class="text-center">${gradeDisplay}</td>
+                <td>${miner.customer_email || '-'}</td>
+                <td>${miner.miner_model_name || '-'}</td>
+                <td>${miner.site_name || '-'}</td>
+                <td>${liveHashrate !== null ? liveHashrate : (miner.actual_hashrate || '-')} TH/s${hasLiveTelemetry && liveHashrate ? ' <i class="bi bi-broadcast text-success" style="font-size:0.7rem;"></i>' : ''}</td>
+                <td>${livePower !== null ? livePower : (miner.actual_power || '-')} W${hasLiveTelemetry && livePower ? ' <i class="bi bi-broadcast text-success" style="font-size:0.7rem;"></i>' : ''}</td>
+                <td>${profitDisplay}</td>
+                <td class="text-center">${cgminerStatus}<br>${lastSeenDisplay}</td>
+                <td>${tempDisplay}</td>
+                <td>${fanDisplay}</td>
+                <td><span class="badge bg-${getStatusColor(miner.status)}">${getStatusText(miner.status)}</span></td>
+                <td>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <a href="/hosting/miner/${miner.id}/detail" class="btn btn-hosting-primary btn-sm" title="${getLanguage() === 'en' ? 'View Details' : '查看详情'}">
+                            <i class="bi bi-graph-up"></i>
+                        </a>
+                        <button class="btn btn-hosting-outline" onclick="testMinerConnection(${miner.id})" title="${getLanguage() === 'en' ? 'Test Connection' : '测试连接'}">
+                            <i class="bi bi-activity"></i>
+                        </button>
+                        <button class="btn btn-hosting-outline" onclick="editMiner(${miner.id})" title="${getLanguage() === 'en' ? 'Edit' : '编辑'}">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        ${miner.approval_status === 'pending_approval' ? `
+                        <button class="btn btn-success btn-sm" onclick="approveMiner(${miner.id})" title="${getLanguage() === 'en' ? 'Approve' : '批准'}">
+                            <i class="bi bi-check"></i>
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="rejectMiner(${miner.id})" title="${getLanguage() === 'en' ? 'Reject' : '拒绝'}">
+                            <i class="bi bi-x"></i>
+                        </button>` : ''}
+                    </div>
+                </td>
+            </tr>
+        `;
+        tbody.insertAdjacentHTML('beforeend', row);
+    });
+    
+    initializeTooltips();
+    
+    if (window.I18n) {
+        I18n.updatePageTranslations();
+    }
+}
+
+function initializeTooltips() {
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+}
+
+function updateCounts(counts) {
+    const totalCountEl = document.querySelector('[data-stat="total"]');
+    const activeCountEl = document.querySelector('[data-stat="running"]');
+    const pendingCountEl = document.querySelector('[data-stat="pending"]');
+    
+    // 更新数据统计显示
+    if (totalCountEl) totalCountEl.textContent = counts.total || 0;
+    if (activeCountEl) activeCountEl.textContent = counts.active || 0;
+    if (pendingCountEl) pendingCountEl.textContent = counts.pending || 0;
+    
+    // 更新顶部显示区域
+    const totalDisplay = document.getElementById('total-count');
+    const activeDisplay = document.getElementById('active-count');
+    const pendingDisplay = document.getElementById('pending-count');
+    
+    if (totalDisplay) totalDisplay.textContent = `${getLanguage() === 'en' ? 'Total:' : '总计:'} ${counts.total || 0}`;
+    if (activeDisplay) activeDisplay.textContent = `${getLanguage() === 'en' ? 'Running:' : '运行:'} ${counts.active || 0}`;
+    if (pendingDisplay) pendingDisplay.textContent = `${getLanguage() === 'en' ? 'Pending:' : '待审核:'} ${counts.pending || 0}`;
+}
+
+function updatePagination(pagination) {
+    const paginationEl = document.getElementById('pagination');
+    if (!paginationEl || !pagination) return;
+    
+    const { page, pages, total, has_prev, has_next } = pagination;
+    const lang = getLanguage();
+    
+    // 清空现有分页
+    paginationEl.innerHTML = '';
+    
+    if (pages <= 1) return; // 只有1页时不显示分页
+    
+    // 首页按钮
+    const firstLi = document.createElement('li');
+    firstLi.className = `page-item ${!has_prev ? 'disabled' : ''}`;
+    firstLi.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="goToPage(1)">${lang === 'en' ? 'First' : '首页'}</a>`;
+    paginationEl.appendChild(firstLi);
+    
+    // 上一页按钮
+    const prevLi = document.createElement('li');
+    prevLi.className = `page-item ${!has_prev ? 'disabled' : ''}`;
+    prevLi.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="goToPage(${page - 1})">&laquo;</a>`;
+    paginationEl.appendChild(prevLi);
+    
+    // 智能页码显示策略 - 确保总是显示至少5个页码（如果总页数>=5）
+    const delta = 2; // 当前页左右各显示2个页码
+    const range = [];
+    const minVisible = 5; // 最少显示5个页码
+    
+    if (pages <= minVisible + 2) {
+        // 总页数少，显示所有页码
+        for (let i = 1; i <= pages; i++) {
+            range.push(i);
+        }
+    } else {
+        // 计算显示窗口
+        let start, end;
+        
+        if (page <= delta + 1) {
+            // 靠近开始：显示 [1,2,3,4,5,...,pages]
+            start = 1;
+            end = minVisible;
+        } else if (page >= pages - delta) {
+            // 靠近结束：显示 [1,...,pages-4,pages-3,pages-2,pages-1,pages]
+            start = pages - minVisible + 1;
+            end = pages;
+        } else {
+            // 中间：显示 [1,...,page-2,page-1,page,page+1,page+2,...,pages]
+            start = page - delta;
+            end = page + delta;
+        }
+        
+        // 添加第一页（如果不在窗口内）
+        if (start > 1) {
+            range.push(1);
+        }
+        
+        // 添加窗口内的页码
+        for (let i = start; i <= end; i++) {
+            if (i > 1 && i < pages) {
+                range.push(i);
+            } else if (i === 1 || i === pages) {
+                if (!range.includes(i)) {
+                    range.push(i);
+                }
+            }
+        }
+        
+        // 添加最后一页（如果不在窗口内）
+        if (end < pages && !range.includes(pages)) {
+            range.push(pages);
+        }
+        
+        // 排序（确保页码按顺序）
+        range.sort((a, b) => a - b);
+    }
+    
+    // 渲染页码
+    let lastPage = 0;
+    range.forEach(i => {
+        // 如果页码不连续，添加省略号
+        if (lastPage && i > lastPage + 1) {
+            const ellipsisLi = document.createElement('li');
+            ellipsisLi.className = 'page-item disabled';
+            ellipsisLi.innerHTML = '<span class="page-link">...</span>';
+            paginationEl.appendChild(ellipsisLi);
+        }
+        
+        // 添加页码按钮
+        const li = document.createElement('li');
+        li.className = `page-item ${i === page ? 'active' : ''}`;
+        li.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="goToPage(${i})">${i}</a>`;
+        paginationEl.appendChild(li);
+        
+        lastPage = i;
+    });
+    
+    // 下一页按钮
+    const nextLi = document.createElement('li');
+    nextLi.className = `page-item ${!has_next ? 'disabled' : ''}`;
+    nextLi.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="goToPage(${page + 1})">&raquo;</a>`;
+    paginationEl.appendChild(nextLi);
+    
+    // 末页按钮
+    const lastLi = document.createElement('li');
+    lastLi.className = `page-item ${!has_next ? 'disabled' : ''}`;
+    lastLi.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="goToPage(${pages})">${lang === 'en' ? 'Last' : '末页'}</a>`;
+    paginationEl.appendChild(lastLi);
+    
+    // 添加页面信息和跳转输入框
+    const infoLi = document.createElement('li');
+    infoLi.className = 'page-item disabled ms-2';
+    infoLi.innerHTML = `<span class="page-link">${lang === 'en' ? `Page ${page}/${pages} (Total: ${total})` : `第 ${page}/${pages} 页 (共 ${total} 条)`}</span>`;
+    paginationEl.appendChild(infoLi);
+    
+    // 页面跳转输入框
+    const jumpLi = document.createElement('li');
+    jumpLi.className = 'page-item ms-2';
+    jumpLi.innerHTML = `
+        <div class="input-group input-group-sm" style="width: 150px;">
+            <input type="number" class="form-control" id="jumpToPage" placeholder="${lang === 'en' ? 'Jump to' : '跳转'}" min="1" max="${pages}">
+            <button class="btn btn-outline-secondary" type="button" onclick="jumpToPage(${pages})">${lang === 'en' ? 'Go' : '跳转'}</button>
+        </div>
+    `;
+    paginationEl.appendChild(jumpLi);
+}
+
+// 跳转到指定页
+function goToPage(pageNum) {
+    // 严格验证页码
+    const num = parseInt(pageNum);
+    if (isNaN(num) || num < 1) return;
+    
+    // 动态获取最大页数（从当前分页数据）
+    const paginationData = window.currentPaginationData || { pages: 301 };
+    const maxPages = paginationData.pages || 301;
+    
+    if (num > maxPages) return;
+    
+    currentPage = num;
+    const filters = getFilters();
+    loadMiners(currentPage, filters);
+}
+
+// 输入框跳转
+function jumpToPage(maxPages) {
+    const input = document.getElementById('jumpToPage');
+    const pageNum = parseInt(input.value);
+    
+    if (!input.value.trim()) {
+        alert(getLanguage() === 'en' ? 'Please enter a page number' : '请输入页码');
+        return;
+    }
+    
+    if (isNaN(pageNum) || pageNum < 1 || pageNum > maxPages) {
+        alert(getLanguage() === 'en' ? `Please enter a valid page number (1-${maxPages})` : `请输入有效的页码 (1-${maxPages})`);
+        input.value = '';
+        return;
+    }
+    
+    goToPage(pageNum);
+    input.value = '';
+}
+
+function refreshMiners() {
+    const filters = getFilters();
+    loadMiners(currentPage, filters);
+}
+
+function setupFilterForm() {
+    const form = document.getElementById('filter-form');
+    form.addEventListener('change', function() {
+        const filters = getFilters();
+        currentPage = 1;
+        loadMiners(currentPage, filters);
+    });
+}
+
+function getFilters() {
+    const form = document.getElementById('filter-form');
+    const formData = new FormData(form);
+    const filters = {};
+    
+    for (let [key, value] of formData.entries()) {
+        if (value) {
+            filters[key] = value;
+        }
+    }
+    
+    return filters;
+}
+
+function loadSitesForDropdown() {
+    fetch('/hosting/api/sites')
+        .then(response => response.json())
+        .then(data => {
+            const siteFilter = document.getElementById('site-filter');
+            const siteSelect = document.getElementById('site_id');
+            
+            if (data.success && data.sites) {
+                data.sites.forEach(site => {
+                    const option = `<option value="${site.id}">${site.name}</option>`;
+                    if (siteFilter) siteFilter.insertAdjacentHTML('beforeend', option);
+                    if (siteSelect) siteSelect.insertAdjacentHTML('beforeend', option);
+                });
+            }
+        });
+}
+
+function loadCustomersForDropdown() {
+    fetch('/hosting/api/customers')
+        .then(response => response.json())
+        .then(data => {
+            const customerFilter = document.getElementById('customer-filter');
+            
+            if (data.success && data.customers && customerFilter) {
+                data.customers.forEach(customer => {
+                    const displayName = customer.name || customer.email;
+                    const option = `<option value="${customer.id}">${displayName}</option>`;
+                    customerFilter.insertAdjacentHTML('beforeend', option);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading customers:', error);
+        });
+}
+
+function addMiner() {
+    const form = document.getElementById('addMinerForm');
+    const formData = new FormData(form);
+    
+    fetch('/hosting/api/miners/create', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('addMinerModal')).hide();
+            form.reset();
+            refreshMiners();
+            showToast(getLanguage() === 'en' ? 'Miner added successfully' : '矿机添加成功', 'success');
+        } else {
+            showToast(data.message || (getLanguage() === 'en' ? 'Error adding miner' : '添加矿机失败'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error adding miner:', error);
+        showToast(getLanguage() === 'en' ? 'Error adding miner' : '添加矿机失败', 'error');
+    });
+}
+
+function getStatusColor(status) {
+    const colorMap = {
+        'active': 'success',
+        'offline': 'danger',
+        'maintenance': 'warning',
+        'error': 'danger'
+    };
+    return colorMap[status] || 'secondary';
+}
+
+function getApprovalColor(approval) {
+    const colorMap = {
+        'draft': 'secondary',
+        'pending_approval': 'warning',
+        'approved': 'success',
+        'rejected': 'danger'
+    };
+    return colorMap[approval] || 'secondary';
+}
+
+function getStatusText(status) {
+    if (window.I18n && I18n.initialized) {
+        const translated = I18n.t('hosting.status.' + status);
+        if (translated !== 'hosting.status.' + status) {
+            return translated;
+        }
+    }
+    const language = getLanguage();
+    const statusMap = {
+        'active': language === 'en' ? 'Running' : '运行中',
+        'offline': language === 'en' ? 'Offline' : '离线',
+        'maintenance': language === 'en' ? 'Maintenance' : '维护中',
+        'error': language === 'en' ? 'Error' : '故障'
+    };
+    return statusMap[status] || status;
+}
+
+function getApprovalText(approval) {
+    if (window.I18n && I18n.initialized) {
+        const translated = I18n.t('hosting.approval.' + approval);
+        if (translated !== 'hosting.approval.' + approval) {
+            return translated;
+        }
+    }
+    const language = getLanguage();
+    const approvalMap = {
+        'draft': language === 'en' ? 'Draft' : '草稿',
+        'pending_approval': language === 'en' ? 'Pending' : '待审核',
+        'approved': language === 'en' ? 'Approved' : '已通过',
+        'rejected': language === 'en' ? 'Rejected' : '已拒绝'
+    };
+    return approvalMap[approval] || approval;
+}
+
+function getLanguage() {
+    if (window.I18n && I18n.initialized) {
+        return I18n.getLang();
+    }
+    return document.querySelector('meta[name="language"]').content;
+}
+
+function showToast(message, type = 'info') {
+    // Enhanced toast notification with proper Bootstrap toast display
+    let bgColor = 'bg-secondary';
+    let icon = 'bi-info-circle';
+    
+    // Map type to Bootstrap colors and icons
+    if (type === 'success') {
+        bgColor = 'bg-success';
+        icon = 'bi-check-circle';
+    } else if (type === 'error' || type === 'danger') {
+        bgColor = 'bg-danger';
+        icon = 'bi-exclamation-circle';
+    } else if (type === 'warning') {
+        bgColor = 'bg-warning text-dark';
+        icon = 'bi-exclamation-triangle';
+    } else if (type === 'info') {
+        bgColor = 'bg-info text-dark';
+        icon = 'bi-info-circle';
+    }
+    
+    const toastHtml = `
+        <div class="toast align-items-center text-white ${bgColor} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="bi ${icon} me-2"></i>${message}
+                </div>
+                <button type="button" class="btn-close ${type === 'warning' || type === 'info' ? '' : 'btn-close-white'} me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `;
+    
+    // Get or create toast container
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        toastContainer.style.zIndex = '9999';
+        document.body.appendChild(toastContainer);
+    }
+    
+    // Add toast to container
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+    const toastElement = toastContainer.lastElementChild;
+    
+    // Initialize and show toast
+    const toast = new bootstrap.Toast(toastElement, {
+        autohide: true,
+        delay: type === 'error' || type === 'danger' ? 5000 : 3000
+    });
+    toast.show();
+    
+    // Remove toast element after it's hidden
+    toastElement.addEventListener('hidden.bs.toast', function () {
+        toastElement.remove();
+    });
+}
+
+// Test CGMiner connection
+async function testMinerConnection(minerId) {
+    const lang = getLanguage();
+    const button = event.target.closest('button');
+    const originalHtml = button.innerHTML;
+    
+    // Show loading state
+    button.disabled = true;
+    button.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+    
+    try {
+        const response = await fetch(`/hosting/api/miners/${minerId}/test-connection`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast(
+                lang === 'en' 
+                    ? 'Connection test successful! Refreshing data...' 
+                    : '连接测试成功！正在刷新数据...',
+                'success'
+            );
+            
+            // Auto-refresh the miner row data
+            setTimeout(() => refreshMinerData(minerId), 500);
+        } else {
+            showToast(
+                lang === 'en' 
+                    ? `Connection test failed: ${data.message || 'Unknown error'}` 
+                    : `连接测试失败：${data.message || '未知错误'}`,
+                'error'
+            );
+        }
+    } catch (error) {
+        console.error('Error testing connection:', error);
+        showToast(
+            lang === 'en' 
+                ? 'Error testing connection' 
+                : '测试连接时出错',
+            'error'
+        );
+    } finally {
+        button.disabled = false;
+        button.innerHTML = originalHtml;
+    }
+}
+
+// Refresh individual miner data
+async function refreshMinerData(minerId) {
+    const lang = getLanguage();
+    
+    try {
+        const response = await fetch(`/hosting/api/miners/${minerId}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.miner) {
+            // Update the specific row with new data
+            updateMinerRow(data.miner);
+            showToast(
+                lang === 'en' 
+                    ? 'Miner data refreshed successfully' 
+                    : '矿机数据已刷新',
+                'success'
+            );
+        } else {
+            throw new Error(data.message || 'Failed to fetch miner data');
+        }
+    } catch (error) {
+        console.error('Error refreshing miner data:', error);
+        showToast(
+            lang === 'en' 
+                ? 'Error refreshing miner data' 
+                : '刷新矿机数据时出错',
+            'error'
+        );
+    }
+}
+
+// Update a single miner row with fresh data
+function updateMinerRow(miner) {
+    const row = document.getElementById(`miner-row-${miner.id}`);
+    if (!row) {
+        console.warn(`Row not found for miner ${miner.id}`);
+        return;
+    }
+    
+    const cgminerOnline = miner.cgminer_online || false;
+    const tempAvg = miner.temperature_avg || null;
+    const tempMax = miner.temperature_max || null;
+    const fanAvg = miner.fan_avg || null;
+    const hashrate5s = miner.hashrate_5s || null;
+    const lastSeen = miner.last_seen || null;
+    
+    // Format CGMiner online status
+    const cgminerStatus = cgminerOnline 
+        ? '<i class="bi bi-wifi text-success fs-5" title="' + (getLanguage() === 'en' ? 'Online' : '在线') + '"></i>'
+        : '<i class="bi bi-wifi-off text-danger fs-5" title="' + (getLanguage() === 'en' ? 'Offline' : '离线') + '"></i>';
+    
+    // Format temperature with color coding
+    let tempDisplay = '-';
+    let tempClass = '';
+    if (tempAvg !== null && tempMax !== null) {
+        tempClass = tempMax > 85 ? 'text-danger' : (tempMax > 75 ? 'text-warning' : '');
+        tempDisplay = `<span class="${tempClass}" title="${getLanguage() === 'en' ? 'Avg / Max' : '平均 / 最高'}">${tempAvg.toFixed(1)}°C / ${tempMax.toFixed(1)}°C</span>`;
+    }
+    
+    // Format fan speed
+    const fanDisplay = fanAvg !== null ? `${Math.round(fanAvg)} RPM` : '-';
+    
+    // Format 5s hashrate
+    const hashrate5sDisplay = hashrate5s !== null ? `${hashrate5s.toFixed(1)} TH/s` : '-';
+    
+    // Format last seen time
+    let lastSeenDisplay = '-';
+    if (lastSeen) {
+        const timeAgo = getTimeAgo(lastSeen);
+        lastSeenDisplay = `<small class="text-muted" title="${lastSeen}">${timeAgo}</small>`;
+    }
+    
+    // Update cells (skip first 6 columns that don't change frequently)
+    const cells = row.querySelectorAll('td');
+    if (cells.length >= 13) {
+        cells[6].innerHTML = `<div class="text-center">${cgminerStatus}<br>${lastSeenDisplay}</div>`;
+        cells[7].innerHTML = tempDisplay;
+        cells[8].innerHTML = fanDisplay;
+        cells[9].innerHTML = hashrate5sDisplay;
+        cells[10].innerHTML = `<span class="badge bg-${getStatusColor(miner.status)}">${getStatusText(miner.status)}</span>`;
+    }
+    
+    // Add a brief highlight effect
+    row.classList.add('table-active');
+    setTimeout(() => row.classList.remove('table-active'), 1000);
+}
+
+// Get human-readable time ago
+function getTimeAgo(dateString) {
+    if (!dateString) return '-';
+    
+    const lang = getLanguage();
+    const now = new Date();
+    const past = new Date(dateString);
+    const diffMs = now - past;
+    const diffSecs = Math.floor(diffMs / 1000);
+    const diffMins = Math.floor(diffSecs / 60);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    
+    if (diffSecs < 60) {
+        return lang === 'en' ? 'just now' : '刚刚';
+    } else if (diffMins < 60) {
+        return lang === 'en' ? `${diffMins} min ago` : `${diffMins}分钟前`;
+    } else if (diffHours < 24) {
+        return lang === 'en' ? `${diffHours} hour${diffHours > 1 ? 's' : ''} ago` : `${diffHours}小时前`;
+    } else if (diffDays < 7) {
+        return lang === 'en' ? `${diffDays} day${diffDays > 1 ? 's' : ''} ago` : `${diffDays}天前`;
+    } else {
+        return lang === 'en' ? past.toLocaleDateString('en-US') : past.toLocaleDateString('zh-CN');
+    }
+}
+
+// 批量导入相关函数
+function setupBatchImport() {
+    const fileInput = document.getElementById('batchFile');
+    fileInput.addEventListener('change', handleFileSelect);
+}
+
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (file && file.type === 'text/csv') {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const csv = e.target.result;
+            const data = parseCSV(csv);
+            showImportPreview(data);
+        };
+        reader.readAsText(file);
+    }
+}
+
+function parseCSV(csv) {
+    const lines = csv.split('\n');
+    const headers = lines[0].split(',');
+    const data = [];
+    
+    for (let i = 1; i < lines.length; i++) {
+        if (lines[i].trim()) {
+            const values = lines[i].split(',');
+            const row = {};
+            headers.forEach((header, index) => {
+                row[header.trim()] = values[index] ? values[index].trim() : '';
+            });
+            data.push(row);
+        }
+    }
+    
+    return { headers, data };
+}
+
+function showImportPreview(csvData) {
+    const preview = document.getElementById('importPreview');
+    const table = document.getElementById('previewTable');
+    
+    // 创建表头
+    const thead = table.querySelector('thead');
+    thead.innerHTML = '<tr>' + csvData.headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+    
+    // 显示前5行数据作为预览
+    const tbody = table.querySelector('tbody');
+    tbody.innerHTML = '';
+    csvData.data.slice(0, 5).forEach(row => {
+        const tr = document.createElement('tr');
+        csvData.headers.forEach(header => {
+            const td = document.createElement('td');
+            td.textContent = row[header] || '';
+            tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+    });
+    
+    preview.classList.remove('d-none');
+    document.getElementById('confirmImport').disabled = false;
+}
+
+function confirmBatchImport() {
+    const file = document.getElementById('batchFile').files[0];
+    if (!file) return;
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    fetch('/batch/api/upload', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('batchImportModal')).hide();
+            refreshMiners();
+            showToast(`${getLanguage() === 'en' ? 'Successfully imported' : '成功导入'} ${data.imported_count || data.imported || 0} ${getLanguage() === 'en' ? 'miners' : '台矿机'}`, 'success');
+        } else {
+            showToast(data.error || data.message || (getLanguage() === 'en' ? 'Import failed' : '导入失败'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error importing miners:', error);
+        showToast(getLanguage() === 'en' ? 'Import failed' : '导入失败', 'error');
+    });
+}
+
+// 添加缺失的 showPendingOnly 函数
+function showPendingOnly() {
+    const pendingFilter = document.getElementById('approvalFilter');
+    if (pendingFilter) {
+        pendingFilter.value = 'pending_approval';
+        filterMiners();
+    }
+}
+
+// 查看矿机详情
+function viewMiner(minerId) {
+    fetch(`/hosting/api/miners/${minerId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.miner) {
+                const miner = data.miner;
+                const lang = getLanguage();
+                const title = lang === 'en' ? 'Miner Details' : '矿机详情';
+                const content = `
+                    <div class="row g-3">
+                        <div class="col-md-6"><strong>${lang === 'en' ? 'Serial Number' : '序列号'}:</strong> ${miner.serial_number}</div>
+                        <div class="col-md-6"><strong>${lang === 'en' ? 'Status' : '状态'}:</strong> <span class="badge bg-${getStatusColor(miner.status)}">${getStatusText(miner.status)}</span></div>
+                        <div class="col-md-6"><strong>${lang === 'en' ? 'Model' : '型号'}:</strong> ${miner.miner_model_name || '-'}</div>
+                        <div class="col-md-6"><strong>${lang === 'en' ? 'Site' : '站点'}:</strong> ${miner.site_name || '-'}</div>
+                        <div class="col-md-6"><strong>${lang === 'en' ? 'Customer' : '客户'}:</strong> ${miner.customer_email || '-'}</div>
+                        <div class="col-md-6"><strong>${lang === 'en' ? 'Hashrate' : '算力'}:</strong> ${miner.actual_hashrate || '-'} TH/s</div>
+                        <div class="col-md-6"><strong>${lang === 'en' ? 'Power' : '功耗'}:</strong> ${miner.actual_power || '-'} W</div>
+                        <div class="col-md-6"><strong>${lang === 'en' ? 'Rack Position' : '机架位置'}:</strong> ${miner.rack_position || '-'}</div>
+                        <div class="col-md-6"><strong>${lang === 'en' ? 'IP Address' : 'IP地址'}:</strong> ${miner.ip_address || '-'}</div>
+                        <div class="col-md-6"><strong>${lang === 'en' ? 'Approval' : '审核状态'}:</strong> <span class="badge bg-${getApprovalColor(miner.approval_status)}">${getApprovalText(miner.approval_status)}</span></div>
+                    </div>
+                `;
+                showModalDialog(title, content);
+            } else {
+                showToast(data.error || (lang === 'en' ? 'Failed to load miner details' : '加载矿机详情失败'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading miner:', error);
+            const lang = getLanguage();
+            showToast(lang === 'en' ? 'Failed to load miner details' : '加载矿机详情失败', 'error');
+        });
+}
+
+// 编辑矿机
+function editMiner(minerId) {
+    fetch(`/hosting/api/miners/${minerId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.miner) {
+                const miner = data.miner;
+                const lang = getLanguage();
+                
+                document.getElementById('edit_miner_id').value = miner.id;
+                document.getElementById('edit_serial_number').value = miner.serial_number || '';
+                document.getElementById('edit_rack_position').value = miner.rack_position || '';
+                document.getElementById('edit_actual_hashrate').value = miner.actual_hashrate || '';
+                document.getElementById('edit_actual_power').value = miner.actual_power || '';
+                document.getElementById('edit_status').value = miner.status || 'active';
+                
+                const isOwnerEncrypted = miner.encryption_scope === 'owner';
+                const hasCachedKey = window.MinerE2EE && window.MinerE2EE.isCacheValid();
+                
+                if (miner.has_encrypted_ip || miner.has_encrypted_mac) {
+                    if (isOwnerEncrypted && hasCachedKey) {
+                        const cachedData = getDecryptedNetworkData(miner.id);
+                        document.getElementById('edit_ip_address').value = cachedData.ip || '';
+                        document.getElementById('edit_mac_address').value = cachedData.mac || '';
+                        document.getElementById('edit_ip_address').placeholder = lang === 'en' ? 'IP Address' : 'IP地址';
+                        document.getElementById('edit_mac_address').placeholder = lang === 'en' ? 'MAC Address' : 'MAC地址';
+                    } else if (isOwnerEncrypted) {
+                        document.getElementById('edit_ip_address').placeholder = lang === 'en' ? 'Unlock in Control Center to view' : '请在加密控制中心解锁以查看';
+                        document.getElementById('edit_mac_address').placeholder = lang === 'en' ? 'Unlock in Control Center to view' : '请在加密控制中心解锁以查看';
+                        document.getElementById('edit_ip_address').value = '********';
+                        document.getElementById('edit_mac_address').value = '**:**:**:**:**:**';
+                    } else {
+                        document.getElementById('edit_ip_address').value = miner.ip_address || '';
+                        document.getElementById('edit_mac_address').value = miner.mac_address || '';
+                    }
+                } else {
+                    document.getElementById('edit_ip_address').value = miner.ip_address || '';
+                    document.getElementById('edit_mac_address').value = miner.mac_address || '';
+                }
+                
+                const editModal = document.getElementById('editMinerModal');
+                if (editModal) {
+                    new bootstrap.Modal(editModal).show();
+                } else {
+                    showToast(lang === 'en' ? 'Edit modal not found. Please contact administrator.' : '编辑模态框未找到，请联系管理员。', 'warning');
+                }
+            } else {
+                const lang = getLanguage();
+                showToast(data.error || (lang === 'en' ? 'Failed to load miner data' : '加载矿机数据失败'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading miner for edit:', error);
+            const lang = getLanguage();
+            showToast(lang === 'en' ? 'Failed to load miner data' : '加载矿机数据失败', 'error');
+        });
+}
+
+async function saveMinerEdit() {
+    const minerId = document.getElementById('edit_miner_id').value;
+    const ipAddress = document.getElementById('edit_ip_address').value;
+    const macAddress = document.getElementById('edit_mac_address').value;
+    const lang = getLanguage();
+    
+    let formData = {
+        rack_position: document.getElementById('edit_rack_position').value,
+        actual_hashrate: parseFloat(document.getElementById('edit_actual_hashrate').value) || null,
+        actual_power: parseInt(document.getElementById('edit_actual_power').value) || null,
+        status: document.getElementById('edit_status').value
+    };
+    
+    if (ipAddress !== '********') {
+        formData.ip_address = ipAddress;
+    }
+    if (macAddress !== '**:**:**:**:**:**') {
+        formData.mac_address = macAddress;
+    }
+    
+    try {
+        const response = await fetch(`/hosting/api/miners/${minerId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast(data.message || (lang === 'en' ? 'Miner updated successfully' : '矿机更新成功'), 'success');
+            const editModal = bootstrap.Modal.getInstance(document.getElementById('editMinerModal'));
+            if (editModal) editModal.hide();
+            refreshMiners();
+        } else {
+            showToast(data.error || (lang === 'en' ? 'Failed to update miner' : '更新矿机失败'), 'error');
+        }
+    } catch (error) {
+        console.error('Error updating miner:', error);
+        showToast(lang === 'en' ? 'Failed to update miner' : '更新矿机失败', 'error');
+    }
+}
+
+// 通用模态对话框
+function showModalDialog(title, content) {
+    const modalHtml = `
+        <div class="modal fade" id="dynamicModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content bg-dark">
+                    <div class="modal-header">
+                        <h5 class="modal-title">${title}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">${content}</div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${getLanguage() === 'en' ? 'Close' : '关闭'}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // 移除旧的动态模态框
+    const oldModal = document.getElementById('dynamicModal');
+    if (oldModal) oldModal.remove();
+    
+    // 添加新模态框
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('dynamicModal'));
+    modal.show();
+    
+    // 关闭后移除DOM
+    document.getElementById('dynamicModal').addEventListener('hidden.bs.modal', function () {
+        this.remove();
+    });
+}
+
+// ========== Phase 3: 设备管理升级 JavaScript ==========
+
+// 全局状态
+let selectedMiners = [];
+
+// 加载KPI统计数据
+async function loadKPIStats() {
+    try {
+        const siteId = document.getElementById('site-filter').value;
+        const url = siteId ? `/hosting/api/miners/stats?site_id=${siteId}` : '/hosting/api/miners/stats';
+        
+        const response = await fetch(url);
+        const result = await response.json();
+        
+        if (result.success) {
+            const data = result.data;
+            document.getElementById('kpi-total-miners').textContent = data.total_miners || 0;
+            document.getElementById('kpi-total-hashrate').textContent = data.total_hashrate_ph || '0.00';
+            document.getElementById('kpi-total-power').textContent = `${data.total_power_mw || '0.00'} MW`;
+            document.getElementById('kpi-avg-efficiency').textContent = `${data.avg_efficiency_w_th || '0'} W/TH`;
+            document.getElementById('kpi-health-score').textContent = `${data.avg_health_score || '100'}%`;
+            document.getElementById('kpi-online-rate').textContent = `${data.online_rate || '0'}%`;
+        }
+    } catch (error) {
+        console.error('加载KPI统计失败:', error);
+    }
+}
+
+// 初始化复选框事件
+function initCheckboxes() {
+    document.getElementById('selectAll').addEventListener('change', function() {
+        document.querySelectorAll('.miner-checkbox').forEach(cb => {
+            cb.checked = this.checked;
+        });
+        updateSelectedMiners();
+    });
+    
+    document.querySelectorAll('.miner-checkbox').forEach(cb => {
+        cb.addEventListener('change', updateSelectedMiners);
+    });
+}
+
+// 更新选中的矿机列表
+function updateSelectedMiners() {
+    selectedMiners = Array.from(document.querySelectorAll('.miner-checkbox:checked')).map(cb => parseInt(cb.value));
+    
+    // 更新选中计数显示
+    document.getElementById('selected-count').textContent = selectedMiners.length;
+    
+    // 启用/禁用批量操作按钮
+    const batchOpsBtn = document.getElementById('batch-ops-btn');
+    if (selectedMiners.length > 0) {
+        batchOpsBtn.disabled = false;
+    } else {
+        batchOpsBtn.disabled = true;
+    }
+    
+    // 更新全选checkbox状态
+    const allCheckboxes = document.querySelectorAll('.miner-checkbox');
+    const checkedCount = document.querySelectorAll('.miner-checkbox:checked').length;
+    const selectAllCheckbox = document.getElementById('selectAll');
+    
+    if (checkedCount === 0) {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
+    } else if (checkedCount === allCheckboxes.length) {
+        selectAllCheckbox.checked = true;
+        selectAllCheckbox.indeterminate = false;
+    } else {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = true;
+    }
+}
+
+// 搜索防抖函数
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func(...args), wait);
+    };
+}
+
+// 设置快速搜索
+function setupQuickSearch() {
+    const quickSearch = document.getElementById('quickSearch');
+    const debouncedSearch = debounce(function(query) {
+        const filters = getFilters();
+        filters.search = query;
+        currentPage = 1;
+        loadMiners(currentPage, filters);
+    }, 300);
+    
+    quickSearch.addEventListener('input', (e) => {
+        debouncedSearch(e.target.value);
+    });
+}
+
+// 批量审核通过
+async function batchApprove() {
+    if (selectedMiners.length === 0) {
+        showToast(getLanguage() === 'en' ? 'Please select miners first' : '请先选择矿机', 'warning');
+        return;
+    }
+    
+    showBatchConfirmModal(
+        getLanguage() === 'en' ? 'Batch Approve Miners' : '批量审核通过',
+        getLanguage() === 'en' ? 
+            `You are about to approve ${selectedMiners.length} miners. Continue?` : 
+            `您即将审核通过 ${selectedMiners.length} 台矿机，是否继续？`,
+        selectedMiners,
+        true,
+        async (notes) => {
+            const response = await fetch('/hosting/api/miners/batch-approve', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({miner_ids: selectedMiners, approval_notes: notes})
+            });
+            const result = await response.json();
+            if (result.success) {
+                showToast(result.message || (getLanguage() === 'en' ? 'Batch approve successful' : '批量审核成功'), 'success');
+                refreshMiners();
+                loadKPIStats();
+            } else {
+                showToast(result.error, 'error');
+            }
+        }
+    );
+}
+
+// 批量启动 - 发送命令到边缘采集器
+async function batchStart() {
+    if (selectedMiners.length === 0) {
+        showToast(getLanguage() === 'en' ? 'Please select miners first' : '请先选择矿机', 'warning');
+        return;
+    }
+    
+    showBatchConfirmModal(
+        getLanguage() === 'en' ? 'Batch Start Miners' : '批量启动矿机',
+        getLanguage() === 'en' ? 
+            `You are about to start ${selectedMiners.length} miners. Continue?` : 
+            `您即将启动 ${selectedMiners.length} 台矿机，是否继续？`,
+        selectedMiners,
+        false,
+        async () => {
+            const response = await fetch('/hosting/api/miners/batch-start', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({miner_ids: selectedMiners})
+            });
+            const result = await response.json();
+            if (result.success) {
+                let msg = result.message || (getLanguage() === 'en' ? 'Batch start successful' : '批量启动成功');
+                if (result.commands_queued > 0) {
+                    msg += getLanguage() === 'en' 
+                        ? ` (${result.commands_queued} commands sent to edge collector)` 
+                        : ` (${result.commands_queued}条命令已发送到边缘采集器)`;
+                }
+                if (result.skipped_no_collector > 0) {
+                    msg += getLanguage() === 'en'
+                        ? ` (${result.skipped_no_collector} skipped - no collector)`
+                        : ` (${result.skipped_no_collector}台跳过 - 无采集器)`;
+                }
+                showToast(msg, 'success');
+                refreshMiners();
+                loadKPIStats();
+            } else {
+                if (result.skipped_no_collector > 0) {
+                    showToast(getLanguage() === 'en'
+                        ? `${result.skipped_no_collector} miners have no edge collector. Control operations require an active collector.`
+                        : `${result.skipped_no_collector}台矿机无边缘采集器。控制操作需要活跃的采集器。`, 'error');
+                } else {
+                    showToast(result.error, 'error');
+                }
+            }
+        }
+    );
+}
+
+// 批量关闭 - 发送命令到边缘采集器
+async function batchShutdown() {
+    if (selectedMiners.length === 0) {
+        showToast(getLanguage() === 'en' ? 'Please select miners first' : '请先选择矿机', 'warning');
+        return;
+    }
+    
+    showBatchConfirmModal(
+        getLanguage() === 'en' ? 'Batch Shutdown Miners' : '批量关闭矿机',
+        getLanguage() === 'en' ? 
+            `You are about to shutdown ${selectedMiners.length} miners. Continue?` : 
+            `您即将关闭 ${selectedMiners.length} 台矿机，是否继续？`,
+        selectedMiners,
+        false,
+        async () => {
+            const response = await fetch('/hosting/api/miners/batch-shutdown', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({miner_ids: selectedMiners})
+            });
+            const result = await response.json();
+            if (result.success) {
+                let msg = result.message || (getLanguage() === 'en' ? 'Batch shutdown successful' : '批量关闭成功');
+                if (result.commands_queued > 0) {
+                    msg += getLanguage() === 'en' 
+                        ? ` (${result.commands_queued} commands sent to edge collector)` 
+                        : ` (${result.commands_queued}条命令已发送到边缘采集器)`;
+                }
+                if (result.skipped_no_collector > 0) {
+                    msg += getLanguage() === 'en'
+                        ? ` (${result.skipped_no_collector} skipped - no collector)`
+                        : ` (${result.skipped_no_collector}台跳过 - 无采集器)`;
+                }
+                showToast(msg, 'success');
+                refreshMiners();
+                loadKPIStats();
+            } else {
+                if (result.skipped_no_collector > 0) {
+                    showToast(getLanguage() === 'en'
+                        ? `${result.skipped_no_collector} miners have no edge collector. Control operations require an active collector.`
+                        : `${result.skipped_no_collector}台矿机无边缘采集器。控制操作需要活跃的采集器。`, 'error');
+                } else {
+                    showToast(result.error, 'error');
+                }
+            }
+        }
+    );
+}
+
+// 批量修改状态
+async function batchChangeStatus() {
+    if (selectedMiners.length === 0) {
+        showToast(getLanguage() === 'en' ? 'Please select miners first' : '请先选择矿机', 'warning');
+        return;
+    }
+    
+    // 显示快速修改状态Modal，但用于批量操作
+    const modal = new bootstrap.Modal(document.getElementById('quickStatusModal'));
+    document.getElementById('quickStatusMinerId').value = JSON.stringify(selectedMiners);
+    modal.show();
+}
+
+// 批量删除
+async function batchDelete() {
+    if (selectedMiners.length === 0) {
+        showToast(getLanguage() === 'en' ? 'Please select miners first' : '请先选择矿机', 'warning');
+        return;
+    }
+    
+    showBatchConfirmModal(
+        getLanguage() === 'en' ? 'Batch Delete Miners' : '批量删除矿机',
+        getLanguage() === 'en' ? 
+            `WARNING: You are about to DELETE ${selectedMiners.length} miners. This action cannot be undone!` : 
+            `警告：您即将删除 ${selectedMiners.length} 台矿机，此操作无法撤销！`,
+        selectedMiners,
+        false,
+        async () => {
+            const response = await fetch('/hosting/api/miners/batch-delete', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({miner_ids: selectedMiners})
+            });
+            const result = await response.json();
+            if (result.success) {
+                showToast(result.message || (getLanguage() === 'en' ? 'Batch delete successful' : '批量删除成功'), 'success');
+                refreshMiners();
+                loadKPIStats();
+            } else {
+                showToast(result.error, 'error');
+            }
+        }
+    );
+}
+
+// 显示批量操作确认Modal
+function showBatchConfirmModal(title, message, minerIds, showNotes, onConfirm) {
+    const modal = new bootstrap.Modal(document.getElementById('batchConfirmModal'));
+    document.getElementById('batchConfirmTitle').textContent = title;
+    document.getElementById('batchConfirmMessage').textContent = message;
+    
+    // 显示选中的矿机列表
+    const listHTML = `<div class="alert alert-info"><strong>${getLanguage() === 'en' ? 'Selected miners:' : '已选择的矿机：'}</strong> ${minerIds.length} ${getLanguage() === 'en' ? 'items' : '项'}</div>`;
+    document.getElementById('batchConfirmList').innerHTML = listHTML;
+    
+    // 是否显示备注输入框
+    const notesInput = document.getElementById('batchNotesInput');
+    if (showNotes) {
+        notesInput.classList.remove('d-none');
+    } else {
+        notesInput.classList.add('d-none');
+    }
+    
+    // 绑定确认按钮
+    const confirmBtn = document.getElementById('batchConfirmBtn');
+    confirmBtn.onclick = async () => {
+        const notes = showNotes ? document.getElementById('batchNotes').value : '';
+        modal.hide();
+        await onConfirm(notes);
+    };
+    
+    modal.show();
+}
+
+// 单机启动 - 发送命令到边缘采集器
+async function startMiner(minerId) {
+    const response = await fetch(`/hosting/api/miners/${minerId}/start`, {method: 'POST'});
+    const result = await response.json();
+    if (result.success) {
+        let msg = getLanguage() === 'en' ? 'Miner started successfully' : '矿机启动成功';
+        if (result.command_queued) {
+            msg += getLanguage() === 'en' ? ' (Command sent to edge collector)' : ' (命令已发送到边缘采集器)';
+        }
+        showToast(msg, 'success');
+        refreshMiners();
+        loadKPIStats();
+    } else {
+        if (result.collector_available === false) {
+            showToast(getLanguage() === 'en' 
+                ? 'No edge collector available. Control operations require an active collector.' 
+                : '无边缘采集器。控制操作需要活跃的采集器。', 'error');
+        } else {
+            showToast(result.error, 'error');
+        }
+    }
+}
+
+// 单机关闭 - 发送命令到边缘采集器
+async function shutdownMiner(minerId) {
+    const response = await fetch(`/hosting/api/miners/${minerId}/shutdown`, {method: 'POST'});
+    const result = await response.json();
+    if (result.success) {
+        let msg = getLanguage() === 'en' ? 'Miner shutdown successfully' : '矿机关闭成功';
+        if (result.command_queued) {
+            msg += getLanguage() === 'en' ? ' (Command sent to edge collector)' : ' (命令已发送到边缘采集器)';
+        }
+        showToast(msg, 'success');
+        refreshMiners();
+        loadKPIStats();
+    } else {
+        if (result.collector_available === false) {
+            showToast(getLanguage() === 'en' 
+                ? 'No edge collector available. Control operations require an active collector.' 
+                : '无边缘采集器。控制操作需要活跃的采集器。', 'error');
+        } else {
+            showToast(result.error, 'error');
+        }
+    }
+}
+
+// 单机重启 - 发送命令到边缘采集器
+async function restartMiner(minerId) {
+    const response = await fetch(`/hosting/api/miners/${minerId}/restart`, {method: 'POST'});
+    const result = await response.json();
+    if (result.success) {
+        let msg = getLanguage() === 'en' ? 'Miner restarted successfully' : '矿机重启成功';
+        if (result.command_queued) {
+            msg += getLanguage() === 'en' ? ' (Command sent to edge collector)' : ' (命令已发送到边缘采集器)';
+        }
+        showToast(msg, 'success');
+        refreshMiners();
+        loadKPIStats();
+    } else {
+        if (result.collector_available === false) {
+            showToast(getLanguage() === 'en' 
+                ? 'No edge collector available. Control operations require an active collector.' 
+                : '无边缘采集器。控制操作需要活跃的采集器。', 'error');
+        } else {
+            showToast(result.error, 'error');
+        }
+    }
+}
+
+// 快速修改状态
+function quickChangeStatus(minerId) {
+    const modal = new bootstrap.Modal(document.getElementById('quickStatusModal'));
+    document.getElementById('quickStatusMinerId').value = minerId;
+    modal.show();
+}
+
+// 保存快速状态修改
+async function saveQuickStatus() {
+    const minerIdValue = document.getElementById('quickStatusMinerId').value;
+    const newStatus = document.getElementById('quickStatusSelect').value;
+    const notes = document.getElementById('quickStatusNotes').value;
+    
+    try {
+        const minerIds = JSON.parse(minerIdValue);
+        // 批量操作
+        const response = await fetch('/hosting/api/miners/batch-status', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({miner_ids: minerIds, new_status: newStatus, notes: notes})
+        });
+        const result = await response.json();
+        if (result.success) {
+            showToast(result.message || (getLanguage() === 'en' ? 'Status updated successfully' : '状态更新成功'), 'success');
+            bootstrap.Modal.getInstance(document.getElementById('quickStatusModal')).hide();
+            refreshMiners();
+            loadKPIStats();
+        } else {
+            showToast(result.error, 'error');
+        }
+    } catch {
+        // 单个矿机操作
+        const minerId = parseInt(minerIdValue);
+        const response = await fetch(`/hosting/api/miners/${minerId}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({status: newStatus, notes: notes})
+        });
+        const result = await response.json();
+        if (result.success) {
+            showToast(getLanguage() === 'en' ? 'Status updated successfully' : '状态更新成功', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('quickStatusModal')).hide();
+            refreshMiners();
+            loadKPIStats();
+        } else {
+            showToast(result.error, 'error');
+        }
+    }
+}
+
+// 显示操作日志
+async function showOperationLogs(minerId) {
+    const modal = new bootstrap.Modal(document.getElementById('operationLogsModal'));
+    modal.show();
+    
+    // 加载日志
+    await loadOperationLogs(minerId, 1);
+}
+
+// 加载操作日志
+async function loadOperationLogs(minerId, page = 1) {
+    try {
+        const response = await fetch(`/hosting/api/miners/${minerId}/logs?page=${page}&limit=20`);
+        const result = await response.json();
+        
+        if (result.success) {
+            const tbody = document.getElementById('logsTableBody');
+            tbody.innerHTML = '';
+            
+            if (result.logs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">${getLanguage() === 'en' ? 'No operation logs' : '暂无操作日志'}</td></tr>`;
+            } else {
+                result.logs.forEach(log => {
+                    const row = `
+                        <tr>
+                            <td>${new Date(log.created_at).toLocaleString()}</td>
+                            <td><span class="badge bg-secondary">${log.operation_type}</span></td>
+                            <td>${log.old_status || '-'}</td>
+                            <td>${log.new_status || '-'}</td>
+                            <td>${log.operator_email || '-'}</td>
+                            <td>${log.notes || '-'}</td>
+                        </tr>
+                    `;
+                    tbody.insertAdjacentHTML('beforeend', row);
+                });
+            }
+            
+            // 更新分页
+            const pagination = result.pagination;
+            const paginationEl = document.getElementById('logsPagination');
+            paginationEl.innerHTML = '';
+            
+            for (let i = 1; i <= pagination.total_pages; i++) {
+                const li = document.createElement('li');
+                li.className = `page-item ${i === pagination.current_page ? 'active' : ''}`;
+                li.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="loadOperationLogs(${minerId}, ${i})">${i}</a>`;
+                paginationEl.appendChild(li);
+            }
+        }
+    } catch (error) {
+        console.error('加载操作日志失败:', error);
+    }
+}
+
+// 导出CSV
+function exportCSV() {
+    const siteId = document.getElementById('site-filter').value;
+    const status = document.getElementById('status-filter').value;
+    const search = document.getElementById('quickSearch').value;
+    
+    const params = new URLSearchParams();
+    if (siteId) params.append('site_id', siteId);
+    if (status) params.append('status', status);
+    if (search) params.append('search', search);
+    
+    window.location.href = `/hosting/api/miners/export?${params.toString()}`;
+}
+
+// 初始化时加载KPI和设置事件
+document.addEventListener('DOMContentLoaded', function() {
+    loadKPIStats();
+    setupQuickSearch();
+    
+    // 每次刷新矿机列表后，重新初始化复选框
+    const originalLoadMiners = loadMiners;
+    window.loadMiners = function(...args) {
+        originalLoadMiners.apply(this, args).then(() => {
+            initCheckboxes();
+        });
+    };
+    
+    // 站点筛选器变化时也更新KPI
+    document.getElementById('site-filter').addEventListener('change', function() {
+        loadKPIStats();
+    });
+});
+
+
+// ==================== 矿场主批量加密控制中心 (Owner-Level Encryption) ====================
+
+let ownerEncryptionStatus = null;
+let decryptedNetworkData = {};
+
+async function loadOwnerEncryptionStatus() {
+    try {
+        const response = await fetch('/hosting/api/encryption/owner-key');
+        const result = await response.json();
+        
+        if (result.success) {
+            ownerEncryptionStatus = result;
+            updateEncryptionUI(result);
+        }
+    } catch (err) {
+        console.error('Failed to load owner encryption status:', err);
+    }
+}
+
+function updateEncryptionUI(status) {
+    const badge = document.getElementById('encryption-status-badge');
+    const setupSection = document.getElementById('enc-setup-section');
+    const unlockSection = document.getElementById('enc-unlock-section');
+    const totalMiners = document.getElementById('enc-total-miners');
+    const encryptedMiners = document.getElementById('enc-encrypted-miners');
+    const keyVersion = document.getElementById('enc-key-version');
+    const unlockStatus = document.getElementById('enc-unlock-status');
+    const lang = getLanguage();
+    
+    totalMiners.textContent = status.total_miners || 0;
+    encryptedMiners.textContent = status.encrypted_miners || 0;
+    
+    if (!status.has_encryption) {
+        badge.className = 'badge bg-warning ms-2';
+        badge.textContent = lang === 'en' ? 'Not Configured' : '未配置';
+        setupSection.style.display = 'block';
+        unlockSection.style.display = 'none';
+        keyVersion.textContent = '-';
+    } else {
+        badge.className = 'badge bg-success ms-2';
+        badge.textContent = lang === 'en' ? 'Configured' : '已配置';
+        setupSection.style.display = 'none';
+        unlockSection.style.display = 'block';
+        keyVersion.textContent = 'v' + (status.key_version || 1);
+    }
+    
+    const isCached = window.MinerE2EE && window.MinerE2EE.isCacheValid();
+    if (isCached) {
+        unlockStatus.innerHTML = `<span class="badge bg-success">${lang === 'en' ? 'Unlocked' : '已解锁'}</span>`;
+    } else {
+        unlockStatus.innerHTML = `<span class="badge bg-secondary">${lang === 'en' ? 'Locked' : '已锁定'}</span>`;
+    }
+}
+
+function showEncryptionProgress(current, total, message) {
+    const container = document.getElementById('enc-progress-container');
+    const bar = document.getElementById('enc-progress-bar');
+    const text = document.getElementById('enc-progress-text');
+    const lang = getLanguage();
+    
+    container.style.display = 'block';
+    const pct = Math.round((current / total) * 100);
+    bar.style.width = pct + '%';
+    bar.textContent = pct + '%';
+    text.textContent = message || (lang === 'en' ? `Processing ${current} / ${total}...` : `处理中 ${current} / ${total}...`);
+}
+
+function hideEncryptionProgress() {
+    document.getElementById('enc-progress-container').style.display = 'none';
+}
+
+async function setupOwnerEncryption() {
+    const passphrase = document.getElementById('enc-setup-passphrase').value;
+    const confirm = document.getElementById('enc-setup-confirm').value;
+    const lang = getLanguage();
+    
+    if (!passphrase || passphrase.length < 8) {
+        alert(lang === 'en' ? 'Passphrase must be at least 8 characters' : '密码至少需要8位字符');
+        return;
+    }
+    
+    if (passphrase !== confirm) {
+        alert(lang === 'en' ? 'Passwords do not match' : '两次输入的密码不一致');
+        return;
+    }
+    
+    if (!window.MinerE2EE || !window.MinerE2EE.isSupported()) {
+        alert(lang === 'en' ? 'Browser does not support encryption' : '浏览器不支持加密');
+        return;
+    }
+    
+    const confirmMsg = lang === 'en'
+        ? 'This will encrypt all miners\' network data (IP/MAC addresses). Make sure to remember your master passphrase - it cannot be recovered! Continue?'
+        : '这将加密所有矿机的网络数据（IP/MAC地址）。请确保记住主密码 - 密码无法恢复！是否继续？';
+    
+    if (!window.confirm(confirmMsg)) return;
+    
+    try {
+        showEncryptionProgress(0, 1, lang === 'en' ? 'Creating encryption key...' : '创建加密密钥...');
+        
+        const keyResult = await window.MinerE2EE.createOwnerKey(passphrase);
+        
+        const saveResponse = await fetch('/hosting/api/encryption/owner-key', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                encrypted_data_key: keyResult.encrypted_data_key,
+                key_salt: keyResult.key_salt
+            })
+        });
+        
+        const saveResult = await saveResponse.json();
+        if (!saveResult.success) {
+            throw new Error(saveResult.error || 'Failed to save key');
+        }
+        
+        window.MinerE2EE.cacheDataKey(keyResult.data_key, 30);
+        
+        showEncryptionProgress(0, 1, lang === 'en' ? 'Loading miners...' : '加载矿机列表...');
+        
+        let allMiners = [];
+        let page = 1;
+        let hasMore = true;
+        
+        while (hasMore) {
+            const response = await fetch(`/hosting/api/encryption/bulk-network?page=${page}&per_page=500`);
+            const data = await response.json();
+            
+            if (data.success && data.miners) {
+                allMiners = allMiners.concat(data.miners.filter(m => m.ip_address || m.mac_address));
+                hasMore = page < data.pages;
+                page++;
+            } else {
+                hasMore = false;
+            }
+        }
+        
+        if (allMiners.length === 0) {
+            hideEncryptionProgress();
+            alert(lang === 'en' ? 'No miners with network data to encrypt' : '没有需要加密的矿机网络数据');
+            loadOwnerEncryptionStatus();
+            return;
+        }
+        
+        showEncryptionProgress(0, allMiners.length, lang === 'en' ? 'Encrypting...' : '加密中...');
+        
+        const encryptedMiners = await window.MinerE2EE.batchEncryptMiners(
+            allMiners,
+            keyResult.data_key,
+            (current, total) => showEncryptionProgress(current, total)
+        );
+        
+        showEncryptionProgress(allMiners.length, allMiners.length, lang === 'en' ? 'Saving encrypted data...' : '保存加密数据...');
+        
+        const batchSize = 100;
+        for (let i = 0; i < encryptedMiners.length; i += batchSize) {
+            const batch = encryptedMiners.slice(i, i + batchSize);
+            await fetch('/hosting/api/encryption/bulk-encrypt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ miners: batch })
+            });
+        }
+        
+        hideEncryptionProgress();
+        alert(lang === 'en' 
+            ? `Successfully encrypted ${encryptedMiners.length} miners!` 
+            : `成功加密 ${encryptedMiners.length} 台矿机！`);
+        
+        loadOwnerEncryptionStatus();
+        refreshMiners();
+        
+    } catch (err) {
+        hideEncryptionProgress();
+        console.error('Setup failed:', err);
+        alert((lang === 'en' ? 'Setup failed: ' : '设置失败: ') + err.message);
+    }
+}
+
+async function unlockOwnerEncryption() {
+    const passphrase = document.getElementById('enc-unlock-passphrase').value;
+    const lang = getLanguage();
+    
+    if (!passphrase) {
+        alert(lang === 'en' ? 'Please enter passphrase' : '请输入密码');
+        return;
+    }
+    
+    try {
+        showEncryptionProgress(0, 1, lang === 'en' ? 'Verifying passphrase...' : '验证密码中...');
+        
+        const response = await fetch('/hosting/api/encryption/owner-key/verify', { method: 'POST' });
+        const result = await response.json();
+        
+        if (!result.success) {
+            throw new Error(result.error || 'Failed to verify');
+        }
+        
+        const dataKey = await window.MinerE2EE.unlockOwnerKey(result.encrypted_data_key, passphrase);
+        window.MinerE2EE.cacheDataKey(dataKey, 30);
+        
+        showEncryptionProgress(0, 1, lang === 'en' ? 'Decrypting miners...' : '解密矿机数据...');
+        
+        let allMiners = [];
+        let page = 1;
+        let hasMore = true;
+        
+        while (hasMore) {
+            const resp = await fetch(`/hosting/api/encryption/bulk-network?page=${page}&per_page=500`);
+            const data = await resp.json();
+            
+            if (data.success && data.miners) {
+                allMiners = allMiners.concat(data.miners.filter(m => m.encryption_scope === 'owner'));
+                hasMore = page < data.pages;
+                page++;
+            } else {
+                hasMore = false;
+            }
+        }
+        
+        if (allMiners.length > 0) {
+            decryptedNetworkData = await window.MinerE2EE.batchDecryptMiners(
+                allMiners,
+                dataKey,
+                (current, total) => showEncryptionProgress(current, total)
+            );
+        }
+        
+        hideEncryptionProgress();
+        document.getElementById('enc-unlock-passphrase').value = '';
+        updateEncryptionUI(ownerEncryptionStatus);
+        refreshMiners();
+        
+        alert(lang === 'en' 
+            ? `Unlocked! ${Object.keys(decryptedNetworkData).length} miners decrypted.`
+            : `解锁成功！已解密 ${Object.keys(decryptedNetworkData).length} 台矿机。`);
+        
+    } catch (err) {
+        hideEncryptionProgress();
+        console.error('Unlock failed:', err);
+        alert((lang === 'en' ? 'Unlock failed: ' : '解锁失败: ') + err.message);
+    }
+}
+
+function lockOwnerEncryption() {
+    const lang = getLanguage();
+    
+    window.MinerE2EE.clearCachedDataKey();
+    decryptedNetworkData = {};
+    
+    updateEncryptionUI(ownerEncryptionStatus);
+    refreshMiners();
+    
+    alert(lang === 'en' ? 'Encryption locked. Enter passphrase to unlock.' : '已锁定。请输入密码解锁。');
+}
+
+async function rotateOwnerKey() {
+    const lang = getLanguage();
+    
+    const confirmMsg = lang === 'en'
+        ? 'This will create a new encryption key. You will need to re-encrypt all miners. Current passphrase is required. Continue?'
+        : '这将创建新的加密密钥。您需要重新加密所有矿机。需要当前密码。是否继续？';
+    
+    if (!window.confirm(confirmMsg)) return;
+    
+    const currentPassphrase = prompt(lang === 'en' ? 'Enter current passphrase:' : '请输入当前密码:');
+    if (!currentPassphrase) return;
+    
+    const newPassphrase = prompt(lang === 'en' ? 'Enter new passphrase (min 8 chars):' : '请输入新密码（至少8位）:');
+    if (!newPassphrase || newPassphrase.length < 8) {
+        alert(lang === 'en' ? 'New passphrase must be at least 8 characters' : '新密码至少需要8位');
+        return;
+    }
+    
+    const confirmNew = prompt(lang === 'en' ? 'Confirm new passphrase:' : '确认新密码:');
+    if (newPassphrase !== confirmNew) {
+        alert(lang === 'en' ? 'Passwords do not match' : '两次输入的密码不一致');
+        return;
+    }
+    
+    try {
+        showEncryptionProgress(0, 1, lang === 'en' ? 'Verifying current passphrase...' : '验证当前密码...');
+        
+        const verifyResp = await fetch('/hosting/api/encryption/owner-key/verify', { method: 'POST' });
+        const verifyResult = await verifyResp.json();
+        
+        if (!verifyResult.success) {
+            throw new Error(verifyResult.error);
+        }
+        
+        const oldDataKey = await window.MinerE2EE.unlockOwnerKey(verifyResult.encrypted_data_key, currentPassphrase);
+        
+        showEncryptionProgress(0, 1, lang === 'en' ? 'Creating new key...' : '创建新密钥...');
+        
+        const newKeyResult = await window.MinerE2EE.createOwnerKey(newPassphrase);
+        
+        showEncryptionProgress(0, 1, lang === 'en' ? 'Loading miners...' : '加载矿机...');
+        
+        let allMiners = [];
+        let page = 1;
+        let hasMore = true;
+        
+        while (hasMore) {
+            const response = await fetch(`/hosting/api/encryption/bulk-network?page=${page}&per_page=500`);
+            const data = await response.json();
+            
+            if (data.success && data.miners) {
+                allMiners = allMiners.concat(data.miners.filter(m => m.encryption_scope === 'owner'));
+                hasMore = page < data.pages;
+                page++;
+            } else {
+                hasMore = false;
+            }
+        }
+        
+        showEncryptionProgress(0, allMiners.length, lang === 'en' ? 'Decrypting with old key...' : '用旧密钥解密...');
+        
+        const decryptedData = await window.MinerE2EE.batchDecryptMiners(
+            allMiners,
+            oldDataKey,
+            (current, total) => showEncryptionProgress(current, total, lang === 'en' ? 'Decrypting...' : '解密中...')
+        );
+        
+        const minersToReEncrypt = allMiners.map(m => ({
+            id: m.id,
+            ip_address: decryptedData[m.id]?.ip,
+            mac_address: decryptedData[m.id]?.mac
+        })).filter(m => m.ip_address || m.mac_address);
+        
+        showEncryptionProgress(0, minersToReEncrypt.length, lang === 'en' ? 'Re-encrypting with new key...' : '用新密钥重新加密...');
+        
+        const reEncrypted = await window.MinerE2EE.batchEncryptMiners(
+            minersToReEncrypt,
+            newKeyResult.data_key,
+            (current, total) => showEncryptionProgress(current, total, lang === 'en' ? 'Encrypting...' : '加密中...')
+        );
+        
+        await fetch('/hosting/api/encryption/owner-key', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                encrypted_data_key: newKeyResult.encrypted_data_key,
+                key_salt: newKeyResult.key_salt
+            })
+        });
+        
+        const batchSize = 100;
+        for (let i = 0; i < reEncrypted.length; i += batchSize) {
+            const batch = reEncrypted.slice(i, i + batchSize);
+            await fetch('/hosting/api/encryption/bulk-encrypt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ miners: batch })
+            });
+        }
+        
+        window.MinerE2EE.cacheDataKey(newKeyResult.data_key, 30);
+        
+        hideEncryptionProgress();
+        loadOwnerEncryptionStatus();
+        refreshMiners();
+        
+        alert(lang === 'en' 
+            ? `Key rotated successfully! ${reEncrypted.length} miners re-encrypted.`
+            : `密钥轮换成功！已重新加密 ${reEncrypted.length} 台矿机。`);
+        
+    } catch (err) {
+        hideEncryptionProgress();
+        console.error('Key rotation failed:', err);
+        alert((lang === 'en' ? 'Key rotation failed: ' : '密钥轮换失败: ') + err.message);
+    }
+}
+
+function getDecryptedNetworkData(minerId) {
+    return decryptedNetworkData[minerId] || { ip: null, mac: null };
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // 加密控制中心 - 仅矿场主/管理员可见
+    const encryptionBody = document.getElementById('encryptionBody');
+    if (encryptionBody) {
+        loadOwnerEncryptionStatus();
+        
+        encryptionBody.addEventListener('show.bs.collapse', function() {
+            document.querySelector('#encryption-control-center .hosting-card-header').setAttribute('aria-expanded', 'true');
+        });
+        encryptionBody.addEventListener('hide.bs.collapse', function() {
+            document.querySelector('#encryption-control-center .hosting-card-header').setAttribute('aria-expanded', 'false');
+        });
+    }
+});
+
+</script>
+{% endblock %}

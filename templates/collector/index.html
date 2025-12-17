@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}
+{% if lang == 'zh' %}采集器监控{% else %}Collector Monitor{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="text-warning mb-0">
+                <i class="bi bi-broadcast me-2"></i>
+                {% if lang == 'zh' %}边缘采集器监控{% else %}Edge Collector Monitor{% endif %}
+            </h2>
+            <p class="text-muted">
+                {% if lang == 'zh' %}实时矿机遥测数据采集与监控{% else %}Real-time miner telemetry collection & monitoring{% endif %}
+            </p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        {% for item in site_stats %}
+        <div class="col-md-6 col-xl-4">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-warning">
+                        <i class="bi bi-building me-2"></i>{{ item.site.name }}
+                    </h5>
+                    <span class="badge {% if item.online_miners > 0 %}bg-success{% else %}bg-secondary{% endif %}">
+                        {% if item.online_miners > 0 %}
+                            {% if lang == 'zh' %}运行中{% else %}Active{% endif %}
+                        {% else %}
+                            {% if lang == 'zh' %}待连接{% else %}Pending{% endif %}
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="text-muted small">
+                                {% if lang == 'zh' %}总矿机{% else %}Total Miners{% endif %}
+                            </div>
+                            <div class="h4 mb-0 text-white">{{ item.total_miners }}</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-muted small">
+                                {% if lang == 'zh' %}在线{% else %}Online{% endif %}
+                            </div>
+                            <div class="h4 mb-0 text-success">{{ item.online_miners }}</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-muted small">
+                                {% if lang == 'zh' %}总算力{% else %}Hashrate{% endif %}
+                            </div>
+                            <div class="h5 mb-0 text-info">{{ "%.2f"|format(item.total_hashrate_ths) }} TH/s</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-muted small">
+                                {% if lang == 'zh' %}平均温度{% else %}Avg Temp{% endif %}
+                            </div>
+                            <div class="h5 mb-0 {% if item.avg_temperature > 75 %}text-danger{% elif item.avg_temperature > 65 %}text-warning{% else %}text-success{% endif %}">
+                                {{ item.avg_temperature }}°C
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="border-secondary my-3">
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">
+                            <i class="bi bi-key me-1"></i>
+                            {{ item.collector_keys }} {% if lang == 'zh' %}个密钥{% else %}keys{% endif %}
+                        </span>
+                        <div class="btn-group btn-group-sm">
+                            <a href="{{ url_for('collector_routes.site_detail', site_id=item.site.id) }}" class="btn btn-outline-info">
+                                <i class="bi bi-speedometer2 me-1"></i>
+                                {% if lang == 'zh' %}监控{% else %}Monitor{% endif %}
+                            </a>
+                            <a href="{{ url_for('collector_routes.manage_keys', site_id=item.site.id) }}" class="btn btn-outline-warning">
+                                <i class="bi bi-key me-1"></i>
+                                {% if lang == 'zh' %}密钥{% else %}Keys{% endif %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                {% if lang == 'zh' %}暂无托管站点，请先创建站点{% else %}No hosting sites found. Please create a site first.{% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-lg-8">
+            <div class="card bg-dark border-secondary">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-terminal me-2"></i>
+                        {% if lang == 'zh' %}部署指南{% else %}Deployment Guide{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <div class="p-3 bg-black rounded text-center">
+                                <div class="display-6 text-warning mb-2">1</div>
+                                <h6>{% if lang == 'zh' %}生成密钥{% else %}Generate Key{% endif %}</h6>
+                                <p class="text-muted small mb-0">
+                                    {% if lang == 'zh' %}在站点管理中创建采集器API密钥{% else %}Create collector API key in site management{% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <div class="p-3 bg-black rounded text-center">
+                                <div class="display-6 text-warning mb-2">2</div>
+                                <h6>{% if lang == 'zh' %}部署采集器{% else %}Deploy Collector{% endif %}</h6>
+                                <p class="text-muted small mb-0">
+                                    {% if lang == 'zh' %}在矿场本地服务器运行采集器程序{% else %}Run collector program on mining farm server{% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 bg-black rounded text-center">
+                                <div class="display-6 text-warning mb-2">3</div>
+                                <h6>{% if lang == 'zh' %}开始监控{% else %}Start Monitoring{% endif %}</h6>
+                                <p class="text-muted small mb-0">
+                                    {% if lang == 'zh' %}实时查看矿机状态和性能数据{% else %}View real-time miner status and performance{% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-book me-2"></i>
+                        {% if lang == 'zh' %}部署文档{% else %}Deployment Docs{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body d-flex flex-column justify-content-center">
+                    <p class="text-muted small mb-3">
+                        {% if lang == 'zh' %}选择适合您的部署方式：{% else %}Choose your deployment method:{% endif %}
+                    </p>
+                    <a href="{{ url_for('collector_routes.local_guide') }}" class="btn btn-warning mb-2">
+                        <i class="bi bi-hdd-network me-2"></i>
+                        {% if lang == 'zh' %}本地部署指南{% else %}Local Deployment Guide{% endif %}
+                    </a>
+                    <a href="{{ url_for('collector_routes.guide') }}" class="btn btn-outline-warning">
+                        <i class="bi bi-cloud-upload me-2"></i>
+                        {% if lang == 'zh' %}Edge Collector 指南{% else %}Edge Collector Guide{% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

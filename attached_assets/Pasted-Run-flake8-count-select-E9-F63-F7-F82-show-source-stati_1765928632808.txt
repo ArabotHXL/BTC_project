@@ -1,0 +1,56 @@
+Run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+./deribit_analysis_package/deribit_web_routes.py:377:5: F824 `global collection_active` is unused: name is never assigned in scope
+    global collection_active, poc_instance
+    ^
+./deribit_analysis_package/deribit_web_routes.py:377:5: F824 `global poc_instance` is unused: name is never assigned in scope
+    global collection_active, poc_instance
+    ^
+./mining_calculator.py:1150:33: F821 undefined name 'total_hashrate'
+                    "hashrate": total_hashrate,
+                                ^
+./mining_calculator.py:1151:42: F821 undefined name 'total_power_consumption'
+                    "power_consumption": total_power_consumption,
+                                         ^
+./mining_calculator.py:1152:35: F821 undefined name 'total_power_consumption'
+                    "efficiency": total_power_consumption / total_hashrate if total_hashrate > 0 else 0,
+                                  ^
+./mining_calculator.py:1152:61: F821 undefined name 'total_hashrate'
+                    "efficiency": total_power_consumption / total_hashrate if total_hashrate > 0 else 0,
+                                                            ^
+./mining_calculator.py:1152:79: F821 undefined name 'total_hashrate'
+                    "efficiency": total_power_consumption / total_hashrate if total_hashrate > 0 else 0,
+                                                                              ^
+./mining_calculator.py:1156:34: F821 undefined name 'current_btc_price'
+                    "btc_price": current_btc_price,
+                                 ^
+./mining_calculator.py:1157:41: F821 undefined name 'current_network_hashrate'
+                    "network_hashrate": current_network_hashrate,
+                                        ^
+./mining_calculator.py:1158:43: F821 undefined name 'current_difficulty'
+                    "network_difficulty": current_difficulty,
+                                          ^
+./mining_calculator.py:1179:41: F821 undefined name 'total_hashrate'
+                            hashrate_th=total_hashrate,
+                                        ^
+./mining_calculator.py:1180:49: F821 undefined name 'total_power_consumption'
+                            power_consumption_w=total_power_consumption,
+                                                ^
+./mining_calculator.py:1188:25: F821 undefined name 'db'
+                        db.session.add(blockchain_record)
+                        ^
+./mining_calculator.py:1189:25: F821 undefined name 'db'
+                        db.session.commit()
+                        ^
+./mining_calculator.py:1195:25: F821 undefined name 'db'
+                        db.session.rollback()
+                        ^
+./sla_collector_engine.py:716:5: F824 `global sla_collector` is unused: name is never assigned in scope
+    global sla_collector
+    ^
+./sla_nft_minting_system.py:856:5: F824 `global sla_minting_system` is unused: name is never assigned in scope
+    global sla_minting_system
+    ^
+13    F821 undefined name 'total_hashrate'
+4     F824 `global collection_active` is unused: name is never assigned in scope
+17
+Error: Process completed with exit code 1.

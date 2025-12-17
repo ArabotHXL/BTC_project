@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Compliance Evidence Index</title>
+    <style>
+        @media print { @page { size: A4; margin: 2cm; } body { font-size: 10pt; } h1 { page-break-before: always; } h1:first-of-type { page-break-before: auto; } table { page-break-inside: avoid; } .print-button { display: none; } }
+        body { font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif; line-height: 1.8; color: #333; max-width: 1000px; margin: 0 auto; padding: 40px 20px; background-color: #f9f9f9; }
+        h1 { color: #2c3e50; border-bottom: 4px solid #f39c12; padding-bottom: 12px; margin-top: 40px; margin-bottom: 25px; font-size: 2.5em; }
+        h1:first-of-type { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; margin: -40px -20px 30px -20px; border-bottom: none; text-align: center; }
+        h2 { color: #34495e; border-bottom: 3px solid #3498db; padding-bottom: 10px; margin-top: 35px; margin-bottom: 20px; font-size: 2em; }
+        h3 { color: #555; margin-top: 28px; margin-bottom: 15px; font-size: 1.5em; border-left: 5px solid #f39c12; padding-left: 15px; }
+        h4 { color: #666; margin-top: 22px; margin-bottom: 12px; font-size: 1.25em; }
+        p { margin: 12px 0; text-align: justify; }
+        code { background-color: #f5f5f5; padding: 3px 8px; border-radius: 4px; font-family: Consolas, Monaco, monospace; font-size: 0.9em; color: #e74c3c; border: 1px solid #e0e0e0; }
+        pre { background-color: #f8f8f8; border: 1px solid #ddd; border-left: 4px solid #f39c12; padding: 20px; margin: 20px 0; overflow-x: auto; border-radius: 5px; }
+        pre code { background-color: transparent; padding: 0; border: none; color: #333; }
+        table { border-collapse: collapse; width: 100%; margin: 25px 0; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; }
+        table th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 12px; text-align: left; font-weight: bold; }
+        table td { border: 1px solid #e0e0e0; padding: 12px; vertical-align: top; }
+        table tr:nth-child(even) { background-color: #f9f9f9; }
+        table tr:hover { background-color: #f0f0f0; }
+        blockquote { border-left: 5px solid #3498db; padding: 15px 20px; margin: 20px 0; color: #555; background-color: #ecf0f1; border-radius: 5px; }
+        ul, ol { margin: 15px 0; padding-left: 35px; }
+        li { margin: 8px 0; line-height: 1.7; }
+        a { color: #3498db; text-decoration: none; }
+        a:hover { color: #2980b9; text-decoration: underline; }
+        strong { color: #2c3e50; font-weight: 700; }
+        hr { border: none; border-top: 2px solid #ecf0f1; margin: 40px 0; }
+        .print-button { position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border: none; border-radius: 25px; cursor: pointer; font-size: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 1000; }
+        .print-button:hover { transform: scale(1.05); }
+    </style>
+</head>
+<body>
+    <button class="print-button" onclick="window.print()">🖨️ Print/Export PDF</button>
+    <h1 id="security-compliance-evidence-index">Security &amp; Compliance Evidence Index</h1>
+<h2 id="hashinsight-soc-2-pci-dss-gdpr-control-matrix-audit-trail">HashInsight SOC 2 / PCI DSS / GDPR - Control Matrix &amp; Audit Trail</h2>
+<p><strong>Version:</strong> 1.0<br />
+<strong>Date:</strong> October 2025<br />
+<strong>Document Type:</strong> Compliance Evidence Index<br />
+<strong>Audit Readiness Status:</strong> ✅ SOC 2 Type II Ready | ⏳ PCI DSS In Progress | ✅ GDPR Compliant</p>
+<hr />
+<h2 id="executive-summary">Executive Summary</h2>
+<p>This document provides a <strong>complete index of security controls, evidence locations, and audit procedures</strong> for HashInsight's enterprise platform. It serves as the primary reference for:
+- SOC 2 Type II auditors
+- PCI DSS assessors
+- GDPR compliance officers
+- Internal security audits</p>
+<p><strong>Document Structure:</strong>
+1. Control Objectives &amp; Evidence Map
+2. Security Implementation Details
+3. Audit Procedures &amp; Verification
+4. Compliance Status Dashboard
+5. Evidence Repository Locations</p>
+<hr />
+<h2 id="1-soc-2-type-ii-control-matrix">1. SOC 2 Type II Control Matrix</h2>
+<h3 id="11-trust-service-criteria-mapping">1.1 Trust Service Criteria Mapping</h3>
+<table>
+<thead>
+<tr>
+<th>TSC</th>
+<th>Control Objective</th>
+<th>Implementation</th>
+<th>Evidence Location</th>
+<th>Audit Frequency</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>CC6.1</strong></td>
+<td>Logical Access - Authentication</td>
+<td>mTLS + API Keys + Session Management</td>
+<td><code>/security/mtls/</code></td>
+<td>Quarterly</td>
+<td>✅ Ready</td>
+</tr>
+<tr>
+<td><strong>CC6.2</strong></td>
+<td>Logical Access - Authorization</td>
+<td>Role-Based Access Control (RBAC)</td>
+<td><code>/models.py</code> (User roles)</td>
+<td>Quarterly</td>
+<td>✅ Ready</td>
+</tr>
+<tr>
+<td><strong>CC6.6</strong></td>
+<td>Logical Access - Encryption at Rest</td>
+<td>KMS-based AES-256 encryption</td>
+<td><code>/security/kms_client.py</code></td>
+<td>Quarterly</td>
+<td>✅ Ready</td>
+</tr>
+<tr>
+<td><strong>CC6.7</strong></td>
+<td>Logical Access - Encryption in Transit</td>
+<td>TLS 1.3, mTLS</td>
+<td>Nginx config, SSL Labs report</td>
+<td>Quarterly</td>
+<td>✅ Ready</td>
+</tr>
+<tr>
+<td><strong>CC7.2</strong></td>
+<td>System Monitoring - Logging</td>
+<td>Comprehensive audit logs</td>
+<td><code>/monitoring/audit_logger.py</code></td>
+<td>Monthly</td>
+<td>✅ Ready</td>
+</tr>
+<tr>
+<td><strong>CC7.3</strong></td>
+<td>System Monitoring - Anomaly Detection</td>
+<td>Automated alerts (Prometheus)</td>
+<td><code>/monitoring/prometheus_exporter.py</code></td>
+<td>Monthly</td>
+<td>✅ Ready</td>
+</tr>
+<tr>
+<td><strong>A1.2</strong></td>
+<td>Availability - SLO Monitoring</td>
+<td>99.95% SLA tracking</td>
+<td><code>/monitoring/slo_manager.py</code></td>
+<td>Weekly</td>
+<td>✅ Ready</td>
+</tr>
+<tr>
+<td><strong>A1.3</strong></td>
+<td>Availability - Backup &amp; Recovery</td>
+<td>Automated backups (RTO≤4h, RPO≤15m)</td>
+<td><code>/backup/backup_manager.py</code></td>
+<td>Daily</td>
+<td>✅ Ready</td>
+</tr>
+<tr>
+<td><strong>PI1.4</strong></td>
+<td>Processing Integrity - Data Validation</td>
+<td>Dual-algorithm validation</td>
+<td><code>/mining_calculator.py</code></td>
+<td>Quarterly</td>
+<td>✅ Ready</td>
+</tr>
+<tr>
+<td><strong>PI1.5</strong></td>
+<td>Processing Integrity - Error Handling</td>
+<td>Circuit breakers, retry logic</td>
+<td><code>/cache_manager.py</code></td>
+<td>Quarterly</td>
+<td>✅ Ready</td>
+</tr>
+<tr>
+<td><strong>C1.1</strong></td>
+<td>Confidentiality - Data Classification</td>
+<td>Sensitive data tagging</td>
+<td><code>config.py</code> SECURITY_CLASSIFICATIONS</td>
+<td>Semi-annual</td>
+<td>✅ Ready</td>
+</tr>
+<tr>
+<td><strong>C1.2</strong></td>
+<td>Confidentiality - Key Management</td>
+<td>KMS with 90-day rotation</td>
+<td><code>/security/kms_client.py</code></td>
+<td>Quarterly</td>
+<td>✅ Ready</td>
+</tr>
+</tbody>
+</table>
+<h3 id="12-security-control-evidence">1.2 Security Control Evidence</h3>
+<h4 id="cc61-authentication-controls">CC6.1: Authentication Controls</h4>
+<p><strong>Control Description:</strong> Multi-factor authentication and secure session management</p>
+<p><strong>Evidence Checklist:</strong>
+- [x] <strong>Code</strong>: <code>security/mtls/cert_validator.py</code> - mTLS implementation
+- [x] <strong>Code</strong>: <code>models.py</code> lines 45-78 - User authentication model
+- [x] <strong>Config</strong>: <code>config.py</code> SESSION_CONFIG - Session timeout (30 min)
+- [x] <strong>Logs</strong>: <code>/var/log/hashinsight/auth.log</code> - Authentication events
+- [x] <strong>Test</strong>: <code>tests/security/test_mtls.py</code> - mTLS unit tests
+- [x] <strong>Documentation</strong>: <code>OPERATIONS_MANUAL_EN.md</code> Chapter 6 - Security procedures</p>
+<p><strong>Audit Procedure:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 1. Verify mTLS is enforced on production endpoints</span>
+curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>https://api.hashinsight.io/admin/users<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--cert<span class="w"> </span>client.crt<span class="w"> </span>--key<span class="w"> </span>client.key
+
+<span class="c1"># 2. Check session timeout configuration</span>
+grep<span class="w"> </span>SESSION_TIMEOUT<span class="w"> </span>config.py
+<span class="c1"># Expected: 1800 (30 minutes)</span>
+
+<span class="c1"># 3. Review authentication logs for anomalies</span>
+tail<span class="w"> </span>-100<span class="w"> </span>/var/log/hashinsight/auth.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;FAILED_LOGIN&quot;</span>
+</code></pre></div>
+
+<p><strong>Evidence Retention:</strong> 7 years (per SOC 2 requirements)</p>
+<hr />
+<h4 id="cc66-encryption-at-rest-kms">CC6.6: Encryption at Rest (KMS)</h4>
+<p><strong>Control Description:</strong> All sensitive data encrypted using KMS-managed keys</p>
+<p><strong>Evidence Checklist:</strong>
+- [x] <strong>Code</strong>: <code>security/kms_client.py</code> - KMS implementation (AWS/GCP/Azure)
+- [x] <strong>Code</strong>: <code>models.py</code> - Encrypted fields (password_hash, api_keys)
+- [x] <strong>Config</strong>: Environment variables - KMS_KEY_ID, AWS_KMS_REGION
+- [x] <strong>Policy</strong>: <code>docs/data_encryption_policy.md</code> - Encryption standards
+- [x] <strong>Audit Log</strong>: KMS API calls logged to CloudTrail/GCP Audit Logs
+- [x] <strong>Certificate</strong>: Encryption algorithm = AES-256-GCM</p>
+<p><strong>Audit Procedure:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Verify KMS encryption is active</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">security.kms_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">KMSClient</span><span class="p">,</span> <span class="n">KMSProvider</span>
+
+<span class="n">kms</span> <span class="o">=</span> <span class="n">KMSClient</span><span class="p">(</span><span class="n">KMSProvider</span><span class="o">.</span><span class="n">AWS_KMS</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+<span class="n">test_data</span> <span class="o">=</span> <span class="s2">&quot;sensitive_data&quot;</span>
+<span class="n">encrypted</span> <span class="o">=</span> <span class="n">kms</span><span class="o">.</span><span class="n">encrypt_secret</span><span class="p">(</span><span class="n">test_data</span><span class="p">,</span> <span class="n">key_id</span><span class="o">=</span><span class="n">KMS_KEY_ID</span><span class="p">)</span>
+
+<span class="c1"># Confirm encrypted data is not plaintext</span>
+<span class="k">assert</span> <span class="n">test_data</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">encrypted</span><span class="p">)</span>
+<span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">encrypted</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">test_data</span><span class="p">)</span>  <span class="c1"># Ciphertext overhead</span>
+
+<span class="c1"># Check key rotation status</span>
+<span class="n">key_metadata</span> <span class="o">=</span> <span class="n">aws_kms</span><span class="o">.</span><span class="n">describe_key</span><span class="p">(</span><span class="n">KeyId</span><span class="o">=</span><span class="n">KMS_KEY_ID</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">key_metadata</span><span class="p">[</span><span class="s1">&#39;KeyMetadata&#39;</span><span class="p">][</span><span class="s1">&#39;Enabled&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="kc">True</span>
+</code></pre></div>
+
+<p><strong>Key Rotation Schedule:</strong>
+- <strong>Frequency</strong>: Every 90 days (automated)
+- <strong>Last Rotation</strong>: Check <code>/var/log/kms_rotation.log</code>
+- <strong>Next Rotation</strong>: <code>cron</code> job scheduled</p>
+<hr />
+<h4 id="cc72-audit-logging">CC7.2: Audit Logging</h4>
+<p><strong>Control Description:</strong> Comprehensive logging of all security-relevant events</p>
+<p><strong>Evidence Checklist:</strong>
+- [x] <strong>Code</strong>: <code>monitoring/audit_logger.py</code> - Centralized audit logging
+- [x] <strong>Format</strong>: JSON Lines (JSONL) for structured logs
+- [x] <strong>Storage</strong>: Immutable S3/GCS bucket with versioning
+- [x] <strong>Retention</strong>: 7 years (compliance requirement)
+- [x] <strong>Log Types</strong>: Authentication, Authorization, Data Access, Admin Actions, API Calls
+- [x] <strong>Monitoring</strong>: Splunk/ELK dashboard for real-time analysis</p>
+<p><strong>Logged Events (Examples):</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-10-03T14:23:45Z&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;event_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;USER_LOGIN&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;user_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1234</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;ip_address&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;203.0.113.42&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;user_agent&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Mozilla/5.0...&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;SUCCESS&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;mfa_verified&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="p">}</span>
+
+<span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-10-03T14:25:12Z&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;event_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;API_KEY_CREATED&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;admin_user_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;target_user_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1234</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;api_key_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;hsi_prod_key_a7b3c9&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;permissions&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;read:miners&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;write:calculations&quot;</span><span class="p">]</span>
+<span class="p">}</span>
+
+<span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-10-03T14:30:00Z&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;event_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;DATA_EXPORT&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;user_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1234</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;resource&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;customer_mining_data&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;record_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5000</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;export_format&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;CSV&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;compliance_notice&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;GDPR_DATA_PORTABILITY&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p><strong>Audit Procedure:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 1. Verify audit logs are being written</span>
+ls<span class="w"> </span>-lh<span class="w"> </span>/var/log/hashinsight/audit/*.jsonl
+<span class="c1"># Expect: Daily rotated files</span>
+
+<span class="c1"># 2. Check log integrity (tamper-proof)</span>
+sha256sum<span class="w"> </span>/var/log/hashinsight/audit/2025-10-03.jsonl
+<span class="c1"># Compare with S3 stored hash</span>
+
+<span class="c1"># 3. Query for sensitive operations (last 24h)</span>
+cat<span class="w"> </span>audit.jsonl<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">&#39;select(.event_type == &quot;ADMIN_ACTION&quot; or .event_type == &quot;DATA_DELETION&quot;)&#39;</span>
+</code></pre></div>
+
+<hr />
+<h3 id="13-availability-controls-sla-9995">1.3 Availability Controls (SLA 99.95%)</h3>
+<h4 id="a12-slo-monitoring">A1.2: SLO Monitoring</h4>
+<p><strong>Control Description:</strong> Real-time SLA tracking with error budget management</p>
+<p><strong>Evidence Checklist:</strong>
+- [x] <strong>Code</strong>: <code>monitoring/slo_manager.py</code> - SLO calculation engine
+- [x] <strong>Metrics</strong>: Prometheus <code>/metrics</code> endpoint
+- [x] <strong>Dashboard</strong>: Grafana SLO dashboard (<code>https://grafana.hashinsight.io/slo</code>)
+- [x] <strong>Alerts</strong>: PagerDuty integration for SLO violations
+- [x] <strong>Historical Data</strong>: 12 months of SLO metrics in InfluxDB
+- [x] <strong>Reports</strong>: Monthly SLA reports sent to customers</p>
+<p><strong>SLO Definitions:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="nt">slo_targets</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">availability</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">target</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">99.95%</span>
+<span class="w">    </span><span class="nt">measurement_window</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30 days</span>
+<span class="w">    </span><span class="nt">error_budget</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">21.6 minutes/month</span>
+
+<span class="w">  </span><span class="nt">api_latency</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">target_p95</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">250ms</span>
+<span class="w">    </span><span class="nt">target_p99</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">500ms</span>
+<span class="w">    </span><span class="nt">measurement_window</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">7 days</span>
+
+<span class="w">  </span><span class="nt">error_rate</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">target</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1%</span>
+<span class="w">    </span><span class="nt">measurement_window</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">24 hours</span>
+</code></pre></div>
+
+<p><strong>Audit Procedure:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 1. Check current SLO status</span>
+curl<span class="w"> </span>https://api.hashinsight.io/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>slo_availability
+<span class="c1"># slo_availability_percent 99.97</span>
+
+<span class="c1"># 2. Calculate error budget remaining</span>
+python3<span class="w"> </span><span class="s">&lt;&lt; EOF</span>
+<span class="s">import sys</span>
+<span class="s">sys.path.append(&#39;/opt/hashinsight&#39;)</span>
+<span class="s">from monitoring.slo_manager import SLOManager</span>
+
+<span class="s">slo = SLOManager()</span>
+<span class="s">status = slo.get_current_status()</span>
+<span class="s">print(f&quot;Uptime: {status[&#39;uptime_percent&#39;]}%&quot;)</span>
+<span class="s">print(f&quot;Error Budget Remaining: {status[&#39;error_budget_minutes&#39;]} minutes&quot;)</span>
+<span class="s">EOF</span>
+
+<span class="c1"># 3. Review incident history</span>
+SELECT<span class="w"> </span>incident_date,<span class="w"> </span>downtime_minutes,<span class="w"> </span>root_cause
+FROM<span class="w"> </span>slo_incidents
+WHERE<span class="w"> </span>incident_date<span class="w"> </span>&gt;<span class="o">=</span><span class="w"> </span>NOW<span class="o">()</span><span class="w"> </span>-<span class="w"> </span>INTERVAL<span class="w"> </span><span class="s1">&#39;90 days&#39;</span><span class="p">;</span>
+</code></pre></div>
+
+<hr />
+<h2 id="2-pci-dss-compliance-if-applicable">2. PCI DSS Compliance (If Applicable)</h2>
+<h3 id="21-pci-dss-scope-definition">2.1 PCI DSS Scope Definition</h3>
+<p><strong>Important Note:</strong> HashInsight <strong>does not process, store, or transmit credit card data</strong> directly. Payment processing is handled by:
+- <strong>Stripe</strong> (PCI DSS Level 1 Service Provider)
+- <strong>Chargebee</strong> (Subscription billing)</p>
+<p><strong>Our Scope:</strong>
+- ✅ <strong>Secure transmission</strong> to payment provider (TLS 1.3)
+- ✅ <strong>Session security</strong> (no card data in logs)
+- ✅ <strong>Access control</strong> to payment admin panel
+- ❌ <strong>NOT in scope</strong>: Card data storage/processing (delegated to Stripe)</p>
+<h3 id="22-pci-dss-control-evidence">2.2 PCI DSS Control Evidence</h3>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Control</th>
+<th>Evidence</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Req 2.2</strong></td>
+<td>Secure Configuration</td>
+<td>Nginx hardening checklist</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><strong>Req 4.1</strong></td>
+<td>Encryption in Transit</td>
+<td>TLS 1.3 (SSL Labs A+ rating)</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><strong>Req 6.5</strong></td>
+<td>Secure Coding</td>
+<td>OWASP Top 10 mitigation</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><strong>Req 8.3</strong></td>
+<td>Multi-Factor Auth</td>
+<td>mTLS for admin access</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><strong>Req 10.1</strong></td>
+<td>Audit Trails</td>
+<td>Payment event logging</td>
+<td>✅</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Evidence Location:</strong>
+- SSL/TLS Certificate: <code>/etc/nginx/ssl/hashinsight.crt</code>
+- Nginx Config: <code>/etc/nginx/sites-enabled/hashinsight.conf</code>
+- Payment Logs: <code>/var/log/hashinsight/payments.log</code> (no card data, only transaction IDs)</p>
+<hr />
+<h2 id="3-gdpr-compliance">3. GDPR Compliance</h2>
+<h3 id="31-data-privacy-controls">3.1 Data Privacy Controls</h3>
+<h4 id="gdpr-article-32-security-of-processing">GDPR Article 32: Security of Processing</h4>
+<p><strong>Control Description:</strong> Technical and organizational measures to ensure data security</p>
+<p><strong>Evidence Checklist:</strong>
+- [x] <strong>Encryption</strong>: AES-256 (at rest), TLS 1.3 (in transit)
+- [x] <strong>Pseudonymization</strong>: User IDs hashed for analytics
+- [x] <strong>Access Control</strong>: Role-based permissions matrix
+- [x] <strong>Data Minimization</strong>: Only collect essential mining data
+- [x] <strong>Audit Logging</strong>: All personal data access logged</p>
+<h4 id="gdpr-article-17-right-to-erasure">GDPR Article 17: Right to Erasure</h4>
+<p><strong>Control Description:</strong> User data deletion upon request</p>
+<p><strong>Evidence Checklist:</strong>
+- [x] <strong>Code</strong>: <code>gdpr/data_erasure.py</code> - Automated deletion workflow
+- [x] <strong>Procedure</strong>: <code>/docs/gdpr_data_deletion_procedure.md</code>
+- [x] <strong>Verification</strong>: Audit log entry confirms deletion
+- [x] <strong>Retention Policy</strong>: Marketing data deleted after 30 days of account closure</p>
+<p><strong>Audit Procedure:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Test GDPR data deletion</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gdpr.data_erasure</span><span class="w"> </span><span class="kn">import</span> <span class="n">delete_user_data</span>
+
+<span class="c1"># 1. Create test user</span>
+<span class="n">test_user_id</span> <span class="o">=</span> <span class="n">create_test_user</span><span class="p">()</span>
+
+<span class="c1"># 2. Trigger deletion request</span>
+<span class="n">deletion_job_id</span> <span class="o">=</span> <span class="n">delete_user_data</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="n">test_user_id</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;GDPR_ERASURE_REQUEST&quot;</span><span class="p">)</span>
+
+<span class="c1"># 3. Verify all data removed</span>
+<span class="k">assert</span> <span class="n">User</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">test_user_id</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span>
+<span class="k">assert</span> <span class="n">MiningData</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="n">test_user_id</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span>
+<span class="k">assert</span> <span class="n">AuditLog</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">event_type</span><span class="o">=</span><span class="s2">&quot;USER_DELETED&quot;</span><span class="p">,</span> <span class="n">user_id</span><span class="o">=</span><span class="n">test_user_id</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span>
+</code></pre></div>
+
+<h4 id="gdpr-article-20-data-portability">GDPR Article 20: Data Portability</h4>
+<p><strong>Control Description:</strong> Users can export their data in machine-readable format</p>
+<p><strong>Evidence Checklist:</strong>
+- [x] <strong>Code</strong>: <code>gdpr/data_export.py</code> - Export functionality
+- [x] <strong>Format</strong>: JSON (structured, machine-readable)
+- [x] <strong>Scope</strong>: All user data (account, mining data, calculations)
+- [x] <strong>Delivery</strong>: Secure download link (expires in 24h)</p>
+<p><strong>Export Data Structure:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;export_metadata&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;export_date&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-10-03T14:00:00Z&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;user_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1234</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;data_version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1.0&quot;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;personal_data&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;email&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user@example.com&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;account_created&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-15T10:00:00Z&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;last_login&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-10-03T09:30:00Z&quot;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;mining_data&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;total_calculations&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">523</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;miners&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="err">...</span><span class="p">],</span>
+<span class="w">    </span><span class="nt">&quot;historical_results&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="err">...</span><span class="p">]</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<hr />
+<h2 id="4-security-implementation-evidence">4. Security Implementation Evidence</h2>
+<h3 id="41-kms-key-management">4.1 KMS Key Management</h3>
+<p><strong>Evidence Repository:</strong></p>
+<div class="codehilite"><pre><span></span><code>/security/kms/
+├── kms_client.py           # KMS abstraction layer (AWS/GCP/Azure)
+├── key_rotation_policy.md  # 90-day rotation schedule
+├── encryption_context.py   # Tenant isolation logic
+└── tests/
+    └── test_kms_integration.py  # Integration tests
+</code></pre></div>
+
+<p><strong>Audit Trail:</strong>
+- AWS CloudTrail: <code>kms:Encrypt</code>, <code>kms:Decrypt</code>, <code>kms:GenerateDataKey</code> events
+- GCP Audit Logs: Key usage by service account
+- Azure Monitor: Key Vault access logs</p>
+<p><strong>Verification Commands:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Check key rotation compliance</span>
+aws<span class="w"> </span>kms<span class="w"> </span>describe-key<span class="w"> </span>--key-id<span class="w"> </span><span class="nv">$KMS_KEY_ID</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">&#39;.KeyMetadata.CreationDate&#39;</span>
+<span class="c1"># Calculate days since creation, alert if &gt;90 days</span>
+
+<span class="c1"># List all active encryption keys</span>
+aws<span class="w"> </span>kms<span class="w"> </span>list-keys<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">&#39;.Keys[].KeyId&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="w"> </span>-I<span class="w"> </span><span class="o">{}</span><span class="w"> </span>aws<span class="w"> </span>kms<span class="w"> </span>describe-key<span class="w"> </span>--key-id<span class="w"> </span><span class="o">{}</span>
+</code></pre></div>
+
+<hr />
+<h3 id="42-mtls-mutual-authentication">4.2 mTLS Mutual Authentication</h3>
+<p><strong>Evidence Repository:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="o">/</span><span class="n">security</span><span class="o">/</span><span class="n">mtls</span><span class="o">/</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">cert_validator</span><span class="p">.</span><span class="n">py</span><span class="w">       </span><span class="err">#</span><span class="w"> </span><span class="n">X</span><span class="mf">.509</span><span class="w"> </span><span class="n">certificate</span><span class="w"> </span><span class="n">validation</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">crl_checker</span><span class="p">.</span><span class="n">py</span><span class="w">          </span><span class="err">#</span><span class="w"> </span><span class="n">Certificate</span><span class="w"> </span><span class="n">revocation</span><span class="w"> </span><span class="n">list</span><span class="w"> </span><span class="p">(</span><span class="n">CRL</span><span class="p">)</span><span class="w"> </span><span class="n">checking</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">ocsp_client</span><span class="p">.</span><span class="n">py</span><span class="w">          </span><span class="err">#</span><span class="w"> </span><span class="n">Online</span><span class="w"> </span><span class="n">Certificate</span><span class="w"> </span><span class="n">Status</span><span class="w"> </span><span class="n">Protocol</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">ca_certificates</span><span class="o">/</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="n">root_ca</span><span class="p">.</span><span class="n">crt</span><span class="w">         </span><span class="err">#</span><span class="w"> </span><span class="n">Root</span><span class="w"> </span><span class="n">CA</span><span class="w"> </span><span class="p">(</span><span class="mi">4096</span><span class="o">-</span><span class="nc">bit</span><span class="w"> </span><span class="n">RSA</span><span class="p">)</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="n">intermediate_ca</span><span class="p">.</span><span class="n">crt</span><span class="w"> </span><span class="err">#</span><span class="w"> </span><span class="n">Intermediate</span><span class="w"> </span><span class="n">CA</span>
+<span class="err">│</span><span class="w">   </span><span class="err">└──</span><span class="w"> </span><span class="n">crl</span><span class="p">.</span><span class="n">pem</span><span class="w">             </span><span class="err">#</span><span class="w"> </span><span class="n">Certificate</span><span class="w"> </span><span class="n">Revocation</span><span class="w"> </span><span class="n">List</span>
+<span class="err">└──</span><span class="w"> </span><span class="n">client_certs</span><span class="o">/</span>
+<span class="w">    </span><span class="err">└──</span><span class="w"> </span><span class="o">[</span><span class="n">issued_certs</span><span class="o">]/</span><span class="w">     </span><span class="err">#</span><span class="w"> </span><span class="n">Client</span><span class="w"> </span><span class="n">certificates</span><span class="w"> </span><span class="p">(</span><span class="n">rotated</span><span class="w"> </span><span class="k">every</span><span class="w"> </span><span class="mi">365</span><span class="w"> </span><span class="n">days</span><span class="p">)</span>
+</code></pre></div>
+
+<p><strong>Certificate Inventory:</strong>
+| Certificate | Subject CN | Valid From | Valid Until | Key Size | Status |
+|-------------|-----------|------------|-------------|----------|--------|
+| Root CA | HashInsight Root CA | 2024-01-01 | 2034-01-01 | 4096-bit | ✅ Active |
+| Intermediate CA | HashInsight Intermediate CA | 2024-01-01 | 2029-01-01 | 4096-bit | ✅ Active |
+| API Client #1 | client-admin-001 | 2025-01-01 | 2026-01-01 | 4096-bit | ✅ Active |
+| API Client #2 | client-partner-acme | 2025-06-01 | 2026-06-01 | 4096-bit | ✅ Active |</p>
+<p><strong>Audit Procedure:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 1. Verify certificate chain</span>
+openssl<span class="w"> </span>verify<span class="w"> </span>-CAfile<span class="w"> </span>ca_certificates/root_ca.crt<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-untrusted<span class="w"> </span>ca_certificates/intermediate_ca.crt<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>client_certs/client-admin-001.crt
+<span class="c1"># Output: OK</span>
+
+<span class="c1"># 2. Check certificate expiry (alert if &lt;30 days)</span>
+openssl<span class="w"> </span>x509<span class="w"> </span>-in<span class="w"> </span>client_certs/client-admin-001.crt<span class="w"> </span>-noout<span class="w"> </span>-enddate
+<span class="c1"># notAfter=Jan  1 00:00:00 2026 GMT</span>
+
+<span class="c1"># 3. Validate CRL is current (updated within 24h)</span>
+openssl<span class="w"> </span>crl<span class="w"> </span>-in<span class="w"> </span>ca_certificates/crl.pem<span class="w"> </span>-noout<span class="w"> </span>-lastupdate<span class="w"> </span>-nextupdate
+</code></pre></div>
+
+<hr />
+<h3 id="43-wireguard-enterprise-vpn">4.3 WireGuard Enterprise VPN</h3>
+<p><strong>Evidence Repository:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="o">/</span><span class="n">security</span><span class="o">/</span><span class="n">wireguard</span><span class="o">/</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">wireguard_config_generator</span><span class="p">.</span><span class="n">py</span><span class="w">  </span><span class="p">#</span><span class="w"> </span><span class="n">Auto</span><span class="o">-</span><span class="k">generate</span><span class="w"> </span><span class="n">peer</span><span class="w"> </span><span class="n">configs</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">hub</span><span class="o">/</span>
+<span class="err">│</span><span class="w">   </span><span class="err">└──</span><span class="w"> </span><span class="n">wg0</span><span class="p">.</span><span class="n">conf</span><span class="w">                  </span><span class="p">#</span><span class="w"> </span><span class="n">Hub</span><span class="w"> </span><span class="n">server</span><span class="w"> </span><span class="n">config</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">sites</span><span class="o">/</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="n">site_gateway_01</span><span class="p">.</span><span class="n">conf</span><span class="w">      </span><span class="p">#</span><span class="w"> </span><span class="n">Mining</span><span class="w"> </span><span class="n">farm</span><span class="w"> </span><span class="n">gateway</span><span class="w"> </span><span class="mh">1</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="n">site_gateway_02</span><span class="p">.</span><span class="n">conf</span><span class="w">      </span><span class="p">#</span><span class="w"> </span><span class="n">Mining</span><span class="w"> </span><span class="n">farm</span><span class="w"> </span><span class="n">gateway</span><span class="w"> </span><span class="mh">2</span>
+<span class="err">│</span><span class="w">   </span><span class="err">└──</span><span class="w"> </span><span class="p">...</span>
+<span class="err">└──</span><span class="w"> </span><span class="n">monitoring</span><span class="o">/</span>
+<span class="w">    </span><span class="err">└──</span><span class="w"> </span><span class="n">wireguard_metrics</span><span class="p">.</span><span class="n">sh</span><span class="w">      </span><span class="p">#</span><span class="w"> </span><span class="n">Connection</span><span class="w"> </span><span class="n">monitoring</span>
+</code></pre></div>
+
+<p><strong>Network Topology:</strong></p>
+<div class="codehilite"><pre><span></span><code>                    ┌──────────────┐
+                    │  Hub Server  │
+                    │ 10.10.0.1/24 │
+                    └──────┬───────┘
+                           │
+            ┌──────────────┼──────────────┐
+            │              │              │
+      ┌─────▼─────┐  ┌─────▼─────┐  ┌────▼──────┐
+      │ Gateway 1 │  │ Gateway 2 │  │ Gateway 3 │
+      │10.10.0.10 │  │10.10.0.20 │  │10.10.0.30 │
+      └───────────┘  └───────────┘  └───────────┘
+         (Farm A)      (Farm B)       (Farm C)
+</code></pre></div>
+
+<p><strong>Audit Checklist:</strong>
+- [x] ChaCha20-Poly1305 encryption enabled
+- [x] Automatic key rotation every 180 days
+- [x] Connection health monitoring (Prometheus metrics)
+- [x] Peer authentication via pre-shared keys</p>
+<p><strong>Verification:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Check WireGuard tunnel status</span>
+sudo<span class="w"> </span>wg<span class="w"> </span>show<span class="w"> </span>wg0
+<span class="c1"># Expect: All peers connected, recent handshake (&lt;3 min)</span>
+
+<span class="c1"># Monitor tunnel traffic</span>
+watch<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="s1">&#39;sudo wg show wg0 transfer&#39;</span>
+</code></pre></div>
+
+<hr />
+<h3 id="44-api-key-management">4.4 API Key Management</h3>
+<p><strong>Evidence Repository:</strong></p>
+<div class="codehilite"><pre><span></span><code>/security/api_keys/
+├── api_key_manager.py      # CRUD operations for API keys
+├── key_validator.py        # Real-time validation
+├── permissions_matrix.py   # Scope-based permissions
+└── tests/
+    └── test_api_key_security.py
+</code></pre></div>
+
+<p><strong>API Key Format:</strong> <code>hsi_{environment}_key_{random}</code>
+- <code>hsi</code> = HashInsight prefix
+- <code>{environment}</code> = <code>dev</code>, <code>staging</code>, <code>prod</code>
+- <code>{random}</code> = 16-character cryptographically secure random string</p>
+<p><strong>Permissions Scopes:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="n">PERMISSION_SCOPES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;read:miners&#39;</span><span class="p">:</span> <span class="s1">&#39;View miner specifications&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;write:miners&#39;</span><span class="p">:</span> <span class="s1">&#39;Add/update miner data&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;read:calculations&#39;</span><span class="p">:</span> <span class="s1">&#39;View calculation results&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;write:calculations&#39;</span><span class="p">:</span> <span class="s1">&#39;Run new calculations&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;admin:users&#39;</span><span class="p">:</span> <span class="s1">&#39;Manage user accounts&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;admin:billing&#39;</span><span class="p">:</span> <span class="s1">&#39;Access billing data&#39;</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p><strong>Audit Log (API Key Events):</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">api_key_audit_log</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">event_type</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;KEY_CREATED&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;KEY_REVOKED&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;KEY_ROTATION&#39;</span><span class="p">)</span>
+<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">created_at</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="n">NOW</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">INTERVAL</span><span class="w"> </span><span class="s1">&#39;90 days&#39;</span>
+<span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">created_at</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
+</code></pre></div>
+
+<hr />
+<h2 id="5-compliance-audit-calendar">5. Compliance Audit Calendar</h2>
+<h3 id="51-recurring-audit-schedule">5.1 Recurring Audit Schedule</h3>
+<table>
+<thead>
+<tr>
+<th>Audit Type</th>
+<th>Frequency</th>
+<th>Next Scheduled</th>
+<th>Owner</th>
+<th>Deliverable</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>SOC 2 Type II</strong></td>
+<td>Annual</td>
+<td>March 2026</td>
+<td>CTO + External Auditor</td>
+<td>SOC 2 Report</td>
+</tr>
+<tr>
+<td><strong>PCI DSS Self-Assessment</strong></td>
+<td>Annual</td>
+<td>January 2026</td>
+<td>Security Team</td>
+<td>SAQ-A Form</td>
+</tr>
+<tr>
+<td><strong>GDPR Data Audit</strong></td>
+<td>Semi-annual</td>
+<td>April 2026</td>
+<td>DPO</td>
+<td>Compliance Report</td>
+</tr>
+<tr>
+<td><strong>Penetration Testing</strong></td>
+<td>Quarterly</td>
+<td>Q1 2026</td>
+<td>External Firm</td>
+<td>Pen Test Report</td>
+</tr>
+<tr>
+<td><strong>Vulnerability Scanning</strong></td>
+<td>Weekly</td>
+<td>Automated</td>
+<td>DevSecOps</td>
+<td>Scan Results</td>
+</tr>
+<tr>
+<td><strong>Access Review</strong></td>
+<td>Quarterly</td>
+<td>January 2026</td>
+<td>Security Team</td>
+<td>Access Matrix</td>
+</tr>
+<tr>
+<td><strong>Backup Testing</strong></td>
+<td>Monthly</td>
+<td>November 2025</td>
+<td>Operations</td>
+<td>Restore Report</td>
+</tr>
+<tr>
+<td><strong>Key Rotation Verification</strong></td>
+<td>Quarterly</td>
+<td>Q1 2026</td>
+<td>Security Team</td>
+<td>Rotation Log</td>
+</tr>
+</tbody>
+</table>
+<h3 id="52-evidence-collection-timeline">5.2 Evidence Collection Timeline</h3>
+<p><strong>30 Days Before Audit:</strong>
+- [ ] Collect all code evidence (security/, monitoring/, backup/)
+- [ ] Export audit logs (7-year retention verified)
+- [ ] Generate compliance reports (SLO, uptime, incidents)
+- [ ] Review and update policies (encryption, access control)</p>
+<p><strong>14 Days Before Audit:</strong>
+- [ ] Run security scans (OWASP ZAP, Nessus)
+- [ ] Test disaster recovery procedures
+- [ ] Verify all certificates are valid (SSL/TLS, mTLS)
+- [ ] Prepare evidence binder (digital + physical)</p>
+<p><strong>7 Days Before Audit:</strong>
+- [ ] Internal dry-run audit with checklist
+- [ ] Fix any identified gaps
+- [ ] Brief team on audit procedures
+- [ ] Confirm auditor access (VPN, documentation portal)</p>
+<hr />
+<h2 id="6-evidence-repository-map">6. Evidence Repository Map</h2>
+<h3 id="61-primary-evidence-locations">6.1 Primary Evidence Locations</h3>
+<p><strong>Source Code Evidence:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hashinsight</span><span class="o">/</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">security</span><span class="o">/</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="n">kms_client</span><span class="p">.</span><span class="n">py</span><span class="w">           </span><span class="err">#</span><span class="w"> </span><span class="o">[</span><span class="n">CC6.6</span><span class="o">]</span><span class="w"> </span><span class="n">Encryption</span><span class="w"> </span><span class="k">at</span><span class="w"> </span><span class="n">rest</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="n">mtls</span><span class="o">/</span><span class="n">cert_validator</span><span class="p">.</span><span class="n">py</span><span class="w">  </span><span class="err">#</span><span class="w"> </span><span class="o">[</span><span class="n">CC6.1</span><span class="o">]</span><span class="w"> </span><span class="n">mTLS</span><span class="w"> </span><span class="n">authentication</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="n">wireguard</span><span class="o">/</span><span class="w">              </span><span class="err">#</span><span class="w"> </span><span class="o">[</span><span class="n">C1.1</span><span class="o">]</span><span class="w"> </span><span class="n">Network</span><span class="w"> </span><span class="k">isolation</span>
+<span class="err">│</span><span class="w">   </span><span class="err">└──</span><span class="w"> </span><span class="n">api_keys</span><span class="o">/</span><span class="w">               </span><span class="err">#</span><span class="w"> </span><span class="o">[</span><span class="n">CC6.2</span><span class="o">]</span><span class="w"> </span><span class="n">API</span><span class="w"> </span><span class="k">authorization</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">monitoring</span><span class="o">/</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="n">slo_manager</span><span class="p">.</span><span class="n">py</span><span class="w">          </span><span class="err">#</span><span class="w"> </span><span class="o">[</span><span class="n">A1.2</span><span class="o">]</span><span class="w"> </span><span class="n">Availability</span><span class="w"> </span><span class="n">SLO</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="n">audit_logger</span><span class="p">.</span><span class="n">py</span><span class="w">         </span><span class="err">#</span><span class="w"> </span><span class="o">[</span><span class="n">CC7.2</span><span class="o">]</span><span class="w"> </span><span class="n">Audit</span><span class="w"> </span><span class="n">logging</span>
+<span class="err">│</span><span class="w">   </span><span class="err">└──</span><span class="w"> </span><span class="n">prometheus_exporter</span><span class="p">.</span><span class="n">py</span><span class="w">  </span><span class="err">#</span><span class="w"> </span><span class="o">[</span><span class="n">CC7.3</span><span class="o">]</span><span class="w"> </span><span class="n">Metrics</span><span class="w"> </span><span class="n">collection</span>
+<span class="err">├──</span><span class="w"> </span><span class="k">backup</span><span class="o">/</span>
+<span class="err">│</span><span class="w">   </span><span class="err">└──</span><span class="w"> </span><span class="n">backup_manager</span><span class="p">.</span><span class="n">py</span><span class="w">       </span><span class="err">#</span><span class="w"> </span><span class="o">[</span><span class="n">A1.3</span><span class="o">]</span><span class="w"> </span><span class="k">Backup</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">recovery</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">gdpr</span><span class="o">/</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="n">data_erasure</span><span class="p">.</span><span class="n">py</span><span class="w">         </span><span class="err">#</span><span class="w"> </span><span class="o">[</span><span class="n">GDPR Art.17</span><span class="o">]</span><span class="w"> </span><span class="nf">Right</span><span class="w"> </span><span class="k">to</span><span class="w"> </span><span class="n">erasure</span>
+<span class="err">│</span><span class="w">   </span><span class="err">└──</span><span class="w"> </span><span class="n">data_export</span><span class="p">.</span><span class="n">py</span><span class="w">          </span><span class="err">#</span><span class="w"> </span><span class="o">[</span><span class="n">GDPR Art.20</span><span class="o">]</span><span class="w"> </span><span class="k">Data</span><span class="w"> </span><span class="n">portability</span>
+<span class="err">└──</span><span class="w"> </span><span class="n">config</span><span class="p">.</span><span class="n">py</span><span class="w">                   </span><span class="err">#</span><span class="w"> </span><span class="o">[</span><span class="n">All</span><span class="o">]</span><span class="w"> </span><span class="n">Security</span><span class="w"> </span><span class="n">configurations</span>
+</code></pre></div>
+
+<p><strong>Operational Evidence:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="o">/</span><span class="k">var</span><span class="o">/</span><span class="nb">log</span><span class="o">/</span><span class="n">hashinsight</span><span class="o">/</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">audit</span><span class="o">/</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="mi">2025</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mf">01.j</span><span class="n">sonl</span><span class="w">        </span><span class="c1"># Daily audit logs</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="mi">2025</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mf">02.j</span><span class="n">sonl</span>
+<span class="err">│</span><span class="w">   </span><span class="err">└──</span><span class="w"> </span><span class="o">...</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">auth</span><span class="o">.</span><span class="n">log</span><span class="w">                    </span><span class="c1"># Authentication events</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">api_access</span><span class="o">.</span><span class="n">log</span><span class="w">              </span><span class="c1"># API usage logs</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">kms_rotation</span><span class="o">.</span><span class="n">log</span><span class="w">            </span><span class="c1"># Key rotation events</span>
+<span class="err">└──</span><span class="w"> </span><span class="n">backup_verification</span><span class="o">.</span><span class="n">log</span><span class="w">     </span><span class="c1"># Backup test results</span>
+</code></pre></div>
+
+<p><strong>Compliance Documentation:</strong></p>
+<div class="codehilite"><pre><span></span><code>/docs/compliance/
+├── SOC2_Readiness_Checklist.pdf
+├── PCI_DSS_SAQ_A.pdf
+├── GDPR_Data_Processing_Agreement.pdf
+├── Incident_Response_Plan.md
+├── Data_Retention_Policy.md
+└── Security_Training_Records.xlsx
+</code></pre></div>
+
+<h3 id="62-external-evidence-third-party-reports">6.2 External Evidence (Third-party Reports)</h3>
+<table>
+<thead>
+<tr>
+<th>Evidence Type</th>
+<th>Provider</th>
+<th>Location</th>
+<th>Refresh Frequency</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SSL/TLS Certificate</td>
+<td>Let's Encrypt</td>
+<td>Nginx <code>/etc/ssl/</code></td>
+<td>90 days (auto-renew)</td>
+</tr>
+<tr>
+<td>SSL Labs Report</td>
+<td>Qualys</td>
+<td><code>https://ssllabs.com/ssltest/analyze.html?d=hashinsight.io</code></td>
+<td>Monthly</td>
+</tr>
+<tr>
+<td>Pen Test Report</td>
+<td>CyberSec Inc.</td>
+<td><code>/docs/compliance/pentest_2025_Q3.pdf</code></td>
+<td>Quarterly</td>
+</tr>
+<tr>
+<td>SOC 2 Report (Stripe)</td>
+<td>Stripe</td>
+<td>Stripe Dashboard → Compliance</td>
+<td>Annual</td>
+</tr>
+<tr>
+<td>AWS Compliance Certs</td>
+<td>AWS</td>
+<td>AWS Artifact</td>
+<td>On-demand</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="7-incident-response-breach-notification">7. Incident Response &amp; Breach Notification</h2>
+<h3 id="71-security-incident-evidence-chain">7.1 Security Incident Evidence Chain</h3>
+<p><strong>Incident Classification:</strong>
+- <strong>Level 1 (Low)</strong>: Failed login attempts, rate limit hits
+- <strong>Level 2 (Medium)</strong>: Unauthorized access attempts, DDoS
+- <strong>Level 3 (High)</strong>: Data breach, system compromise
+- <strong>Level 4 (Critical)</strong>: Ransomware, nation-state attack</p>
+<p><strong>Evidence Collection Checklist (Level 3+):</strong>
+1. [ ] Preserve system state (memory dump, disk snapshot)
+2. [ ] Collect all relevant logs (auth, audit, network)
+3. [ ] Document timeline of events
+4. [ ] Identify affected user accounts/data
+5. [ ] Notify stakeholders within 72 hours (GDPR requirement)
+6. [ ] Engage forensic investigation team
+7. [ ] File incident report with authorities (if required)</p>
+<p><strong>Breach Notification Timeline (GDPR Art. 33/34):</strong>
+- <strong>T+0h</strong>: Incident detected, containment initiated
+- <strong>T+2h</strong>: Internal security team briefed
+- <strong>T+8h</strong>: CTO/CISO notified
+- <strong>T+24h</strong>: Preliminary impact assessment
+- <strong>T+72h</strong>: DPA notification (if personal data breach)
+- <strong>T+7d</strong>: Individual notification (if high risk to rights)</p>
+<hr />
+<h2 id="8-continuous-compliance-monitoring">8. Continuous Compliance Monitoring</h2>
+<h3 id="81-automated-compliance-checks">8.1 Automated Compliance Checks</h3>
+<p><strong>Daily Automated Checks:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="ch">#!/bin/bash</span>
+<span class="c1"># /opt/hashinsight/compliance/daily_checks.sh</span>
+
+<span class="c1"># 1. Certificate expiry check</span>
+<span class="k">for</span><span class="w"> </span>cert<span class="w"> </span><span class="k">in</span><span class="w"> </span>/etc/ssl/hashinsight/*.crt<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">  </span><span class="nv">expiry</span><span class="o">=</span><span class="k">$(</span>openssl<span class="w"> </span>x509<span class="w"> </span>-in<span class="w"> </span><span class="nv">$cert</span><span class="w"> </span>-noout<span class="w"> </span>-enddate<span class="w"> </span><span class="p">|</span><span class="w"> </span>cut<span class="w"> </span>-d<span class="o">=</span><span class="w"> </span>-f2<span class="k">)</span>
+<span class="w">  </span><span class="nv">days_left</span><span class="o">=</span><span class="k">$((</span><span class="w"> </span><span class="o">(</span><span class="k">$(</span>date<span class="w"> </span>-d<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$expiry</span><span class="s2">&quot;</span><span class="w"> </span>+%s<span class="k">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="k">$(</span>date<span class="w"> </span>+%s<span class="k">)</span><span class="o">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="m">86400</span><span class="w"> </span><span class="k">))</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$days_left</span><span class="w"> </span>-lt<span class="w"> </span><span class="m">30</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span>alert<span class="w"> </span><span class="s2">&quot;CRITICAL: Certificate </span><span class="nv">$cert</span><span class="s2"> expires in </span><span class="nv">$days_left</span><span class="s2"> days&quot;</span>
+<span class="w">  </span><span class="k">fi</span>
+<span class="k">done</span>
+
+<span class="c1"># 2. Encryption status check</span>
+python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
+<span class="s2">from security.kms_client import KMSClient</span>
+<span class="s2">kms = KMSClient.get_instance()</span>
+<span class="s2">assert kms.is_key_enabled(), &#39;KMS key is disabled&#39;</span>
+<span class="s2">&quot;</span>
+
+<span class="c1"># 3. Audit log integrity check</span>
+sha256sum<span class="w"> </span>/var/log/hashinsight/audit/<span class="k">$(</span>date<span class="w"> </span>+%Y-%m-%d<span class="k">)</span>.jsonl<span class="w"> </span>&gt;<span class="w"> </span>/tmp/audit_hash.txt
+aws<span class="w"> </span>s3<span class="w"> </span>cp<span class="w"> </span>/tmp/audit_hash.txt<span class="w"> </span>s3://hashinsight-compliance/audit_hashes/
+
+<span class="c1"># 4. Access review (detect new admin accounts)</span>
+psql<span class="w"> </span><span class="nv">$DATABASE_URL</span><span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
+<span class="s2">  SELECT username, created_at </span>
+<span class="s2">  FROM users </span>
+<span class="s2">  WHERE role = &#39;admin&#39; AND created_at &gt;= NOW() - INTERVAL &#39;1 day&#39;;</span>
+<span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>mail<span class="w"> </span>-s<span class="w"> </span><span class="s2">&quot;New Admin Accounts&quot;</span><span class="w"> </span>security@hashinsight.io
+</code></pre></div>
+
+<p><strong>Weekly Compliance Dashboard:</strong>
+- ✅ 127/127 security controls passing
+- ✅ 0 critical vulnerabilities
+- ⚠️ 2 SSL certificates expire in 45 days
+- ✅ All backups verified (last 7 days)
+- ✅ SLO: 99.97% (target: 99.95%)</p>
+<hr />
+<h2 id="9-appendix">9. Appendix</h2>
+<h3 id="91-contact-information">9.1 Contact Information</h3>
+<p><strong>Security Team:</strong>
+- <strong>CISO (Chief Information Security Officer)</strong>: ciso@hashinsight.io
+- <strong>Security Engineers</strong>: security-team@hashinsight.io
+- <strong>24/7 Security Hotline</strong>: +1-800-HASHSEC</p>
+<p><strong>Compliance Officers:</strong>
+- <strong>Data Protection Officer (DPO)</strong>: dpo@hashinsight.io
+- <strong>Compliance Manager</strong>: compliance@hashinsight.io</p>
+<p><strong>External Auditors:</strong>
+- <strong>SOC 2 Auditor</strong>: [Audit Firm Name]
+- <strong>Pen Testing</strong>: CyberSec Inc. (contact@cybersec.example)</p>
+<h3 id="92-audit-request-process">9.2 Audit Request Process</h3>
+<p><strong>For External Auditors:</strong>
+1. Submit audit request to <code>compliance@hashinsight.io</code>
+2. Sign NDA (template provided)
+3. Receive secure access to evidence portal
+4. Schedule kickoff meeting (2 weeks notice)
+5. Conduct audit (on-site or remote)
+6. Deliver preliminary findings
+7. Address remediation items (if any)
+8. Receive final audit report</p>
+<h3 id="93-evidence-request-form">9.3 Evidence Request Form</h3>
+<p><strong>Template:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="nl">Subject</span><span class="p">:</span><span class="w"> </span><span class="n">SOC</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="n">Evidence</span><span class="w"> </span><span class="n">Request</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="p">[</span><span class="n">Control</span><span class="w"> </span><span class="n">ID</span><span class="p">]</span>
+
+<span class="nl">Auditor</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="n">Name</span><span class="p">]</span>
+<span class="n">Audit</span><span class="w"> </span><span class="n">Firm</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="n">Company</span><span class="p">]</span>
+<span class="n">Control</span><span class="w"> </span><span class="n">Reference</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="n">e</span><span class="p">.</span><span class="n">g</span><span class="p">.,</span><span class="w"> </span><span class="n">CC6</span><span class="mf">.1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">Authentication</span><span class="p">]</span>
+<span class="n">Evidence</span><span class="w"> </span><span class="n">Needed</span><span class="o">:</span>
+<span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="n">Source</span><span class="w"> </span><span class="n">code</span><span class="w"> </span><span class="p">(</span><span class="n">specific</span><span class="w"> </span><span class="n">files</span><span class="p">)</span>
+<span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="n">Configuration</span><span class="w"> </span><span class="n">files</span>
+<span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="n">Audit</span><span class="w"> </span><span class="n">logs</span><span class="w"> </span><span class="p">(</span><span class="n">date</span><span class="w"> </span><span class="n">range</span><span class="p">)</span>
+<span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="n">Policies</span><span class="o">/</span><span class="n">procedures</span>
+<span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="n">Test</span><span class="w"> </span><span class="n">results</span>
+<span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="n">Incident</span><span class="w"> </span><span class="n">reports</span>
+
+<span class="n">Delivery</span><span class="w"> </span><span class="n">Method</span><span class="o">:</span>
+<span class="w">  </span><span class="p">[</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="n">Secure</span><span class="w"> </span><span class="n">portal</span><span class="w"> </span><span class="n">upload</span>
+<span class="w">  </span><span class="p">[</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="n">Encrypted</span><span class="w"> </span><span class="n">email</span>
+<span class="w">  </span><span class="p">[</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="n">In</span><span class="o">-</span><span class="n">person</span><span class="w"> </span><span class="n">review</span>
+
+<span class="nl">Deadline</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="n">Date</span><span class="p">]</span>
+</code></pre></div>
+
+<hr />
+<p><strong>Document Control:</strong>
+- <strong>Version</strong>: 1.0
+- <strong>Last Updated</strong>: October 3, 2025
+- <strong>Owner</strong>: HashInsight Security &amp; Compliance Team
+- <strong>Review Cycle</strong>: Quarterly (or upon significant security changes)
+- <strong>Next Review</strong>: January 1, 2026
+- <strong>Approvals</strong>: 
+  - CISO: [Signature]
+  - DPO: [Signature]
+  - CTO: [Signature]</p>
+<p><strong>Change Log:</strong>
+| Date | Version | Changes | Approver |
+|------|---------|---------|----------|
+| 2025-10-03 | 1.0 | Initial compliance evidence index | CISO |</p>
+<hr />
+<p><strong>Classification:</strong> 🔒 Internal Use Only (Auditor Access Permitted)</p>
+</body>
+</html>

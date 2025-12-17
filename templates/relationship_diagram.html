@@ -1,0 +1,527 @@
+{% extends "base.html" %}
+
+{% block title %}
+    System Relationship Diagram / 系统关系图 - HashInsight Enterprise
+{% endblock %}
+
+{% block header_title %}
+    <i class="bi bi-diagram-3 me-2"></i>Module Relationships / 模块关系图
+{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+body {
+    background: linear-gradient(135deg, #1a1d2e 0%, #0d0f1a 100%);
+    min-height: 100vh;
+}
+.diagram-container {
+    background: rgba(26, 29, 46, 0.95);
+    border-radius: 16px;
+    border: 1px solid rgba(247, 147, 26, 0.2);
+    padding: 30px;
+    margin: 20px auto;
+}
+.diagram-title {
+    color: #f7931a;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.6rem;
+    font-weight: 600;
+}
+.diagram-subtitle {
+    color: #8a8fa8;
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 0.95rem;
+}
+
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    margin: 0 12px 10px;
+}
+.legend-color {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    margin-right: 8px;
+}
+.legend-text {
+    color: #8a8fa8;
+    font-size: 0.85rem;
+}
+
+.section-title {
+    color: #f7931a;
+    font-size: 1.1rem;
+    margin: 25px 0 15px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(247, 147, 26, 0.3);
+}
+
+.mermaid-container {
+    background: rgba(13, 15, 26, 0.8);
+    border-radius: 12px;
+    padding: 25px;
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+.data-flow {
+    background: rgba(52, 152, 219, 0.1);
+    border: 1px solid rgba(52, 152, 219, 0.3);
+    border-radius: 8px;
+    padding: 15px;
+    margin: 8px 0;
+    height: 100%;
+}
+.data-flow-title {
+    color: #3498db;
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+.data-flow-desc {
+    color: #8a8fa8;
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+.back-btn {
+    color: #f7931a;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+}
+.back-btn:hover {
+    color: #d4780f;
+}
+
+.tab-btn {
+    background: rgba(26, 29, 46, 0.9);
+    border: 1px solid rgba(247, 147, 26, 0.3);
+    color: #8a8fa8;
+    padding: 10px 20px;
+    border-radius: 8px;
+    margin: 0 5px 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.tab-btn:hover, .tab-btn.active {
+    background: rgba(247, 147, 26, 0.2);
+    border-color: #f7931a;
+    color: #f7931a;
+}
+
+.diagram-section {
+    display: none;
+}
+.diagram-section.active {
+    display: block;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <a href="{{ url_for('dashboard') }}" class="back-btn">
+            <i class="bi bi-arrow-left me-2"></i>
+            <span data-i18n="back_to_dashboard">Back to Dashboard</span>
+        </a>
+        <a href="{{ url_for('feature_interactions') }}" class="btn btn-outline-warning btn-sm">
+            <i class="bi bi-arrow-left-right me-2"></i>Feature Interactions / 功能交互图
+        </a>
+    </div>
+    
+    <div class="diagram-container">
+        <h2 class="diagram-title">
+            <i class="bi bi-diagram-3 me-2"></i>
+            HashInsight Enterprise - 系统关系图
+        </h2>
+        <p class="diagram-subtitle">Module Relationships, Database ERD & Data Flow</p>
+        
+        <div class="text-center mb-4">
+            <button class="tab-btn active" onclick="showSection('overview')">
+                <i class="bi bi-grid-3x3-gap me-1"></i>System Overview
+            </button>
+            <button class="tab-btn" onclick="showSection('crm')">
+                <i class="bi bi-people me-1"></i>CRM Integration
+            </button>
+            <button class="tab-btn" onclick="showSection('hosting')">
+                <i class="bi bi-cpu me-1"></i>Hosting Flow
+            </button>
+            <button class="tab-btn" onclick="showSection('erd')">
+                <i class="bi bi-database me-1"></i>Database ERD
+            </button>
+        </div>
+        
+        <div class="text-center mb-3">
+            <span class="legend-item">
+                <span class="legend-color" style="background: linear-gradient(135deg, #f7931a, #d4780f);"></span>
+                <span class="legend-text">Core Module</span>
+            </span>
+            <span class="legend-item">
+                <span class="legend-color" style="background: linear-gradient(135deg, #27ae60, #1e8449);"></span>
+                <span class="legend-text">Service</span>
+            </span>
+            <span class="legend-item">
+                <span class="legend-color" style="background: linear-gradient(135deg, #3498db, #2980b9);"></span>
+                <span class="legend-text">Data Layer</span>
+            </span>
+            <span class="legend-item">
+                <span class="legend-color" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);"></span>
+                <span class="legend-text">Integration</span>
+            </span>
+        </div>
+        
+        <div id="section-overview" class="diagram-section active">
+            <h4 class="section-title"><i class="bi bi-diagram-2 me-2"></i>Core System Architecture</h4>
+            <div class="mermaid-container">
+                <pre class="mermaid">
+flowchart TB
+    subgraph Frontend["Frontend Layer"]
+        UI[Web UI<br/>Jinja2 + Bootstrap 5]
+        I18N[i18n Engine<br/>859+ Keys]
+    end
+    
+    subgraph Core["Core Modules"]
+        DASH[Dashboard]
+        CALC[Calculator]
+        HOST[Hosting<br/>6000+ Miners]
+        CRM[CRM]
+        TREAS[Treasury]
+    end
+    
+    subgraph Services["Service Layer"]
+        AUTH[RBAC v2.0]
+        THERMAL[Thermal Protection]
+        CURTAIL[Smart Curtailment]
+        INTEL[AI Intelligence]
+    end
+    
+    subgraph Data["Data Layer"]
+        PG[(PostgreSQL)]
+        REDIS[(Redis)]
+    end
+    
+    subgraph Integration["Integration"]
+        WEB3[Web3/Blockchain]
+        EDGE[Edge Collector]
+        E2EE[E2EE Encryption]
+    end
+    
+    UI --> Core
+    I18N --> UI
+    Core --> Services
+    Services --> Data
+    HOST --> Integration
+    
+    style Frontend fill:#1a1d2e,stroke:#f7931a
+    style Core fill:#1a1d2e,stroke:#f7931a
+    style Services fill:#1a1d2e,stroke:#27ae60
+    style Data fill:#1a1d2e,stroke:#3498db
+    style Integration fill:#1a1d2e,stroke:#9b59b6
+                </pre>
+            </div>
+            
+            <h4 class="section-title"><i class="bi bi-arrow-left-right me-2"></i>Key Data Flows</h4>
+            <div class="row">
+                <div class="col-md-6 col-lg-3">
+                    <div class="data-flow">
+                        <div class="data-flow-title"><i class="bi bi-cpu me-2"></i>Miner Telemetry</div>
+                        <div class="data-flow-desc">Edge Collector → CGMiner API → Telemetry DB → Dashboard (60s interval)</div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="data-flow">
+                        <div class="data-flow-title"><i class="bi bi-currency-bitcoin me-2"></i>Revenue Calc</div>
+                        <div class="data-flow-desc">BTC Price + Difficulty → Daily BTC → USD Revenue - Electricity</div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="data-flow">
+                        <div class="data-flow-title"><i class="bi bi-people me-2"></i>CRM Sync</div>
+                        <div class="data-flow-desc">Customer.email ↔ UserAccess.email → UserMiner Stats → CRM Update</div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="data-flow">
+                        <div class="data-flow-title"><i class="bi bi-lightning me-2"></i>Curtailment</div>
+                        <div class="data-flow-desc">Schedule → Miner Selection → CGMiner Stop → Auto Recovery</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="section-crm" class="diagram-section">
+            <h4 class="section-title"><i class="bi bi-link-45deg me-2"></i>CRM-Hosting Integration</h4>
+            <div class="mermaid-container">
+                <pre class="mermaid">
+flowchart LR
+    subgraph CRM["CRM Module"]
+        CUST[Customer<br/>email, name, company]
+        DEAL[Deal<br/>Pipeline Stages]
+        INV[Invoice<br/>Billing Records]
+    end
+    
+    subgraph Hosting["Hosting Module"]
+        UA[UserAccess<br/>email, role, site_id]
+        UM[UserMiner<br/>hashrate, power, status]
+        SITE[HostingSite<br/>location, capacity]
+    end
+    
+    subgraph Sync["Sync Service"]
+        SYNC[CRMHostingService]
+        API1[/api/hosting-stats/]
+        API2[/api/hosting-miners/]
+        API3[/api/sync-status/]
+    end
+    
+    CUST -->|email match| UA
+    UA -->|user_id FK| UM
+    UM -->|site_id FK| SITE
+    
+    SYNC --> API1 & API2 & API3
+    CUST --> SYNC
+    UA --> SYNC
+    UM --> SYNC
+    
+    SYNC -->|update| CUST
+    
+    style CRM fill:#2c3e50,stroke:#3498db
+    style Hosting fill:#1e8449,stroke:#27ae60
+    style Sync fill:#8e44ad,stroke:#9b59b6
+                </pre>
+            </div>
+            
+            <h4 class="section-title"><i class="bi bi-gear me-2"></i>CRM Sync API Endpoints</h4>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="data-flow">
+                        <div class="data-flow-title">GET /crm/api/customer/{id}/hosting-stats</div>
+                        <div class="data-flow-desc">获取客户托管统计：矿机数量、总算力、总功率、日收益估算</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="data-flow">
+                        <div class="data-flow-title">GET /crm/api/customer/{id}/hosting-miners</div>
+                        <div class="data-flow-desc">获取客户矿机列表，支持状态过滤 (?status=active)</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="data-flow">
+                        <div class="data-flow-title">POST /crm/api/customer/{id}/sync-hosting</div>
+                        <div class="data-flow-desc">同步单个客户托管数据到CRM记录</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="data-flow">
+                        <div class="data-flow-title">GET /crm/api/sync-status</div>
+                        <div class="data-flow-desc">查看同步状态：关联率、健康度、问题列表</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="section-hosting" class="diagram-section">
+            <h4 class="section-title"><i class="bi bi-thermometer-half me-2"></i>Thermal Protection Flow</h4>
+            <div class="mermaid-container">
+                <pre class="mermaid">
+flowchart TB
+    subgraph Monitor["Temperature Monitoring"]
+        SENSOR[Temperature Sensors]
+        CHECK[Thermal Check Service]
+    end
+    
+    subgraph Thresholds["Protection Thresholds"]
+        WARN["Warning: 70°C"]
+        THROTTLE["Throttle: 80°C"]
+        CRIT["Critical: 90°C"]
+        RECOVER["Recovery: 65°C"]
+    end
+    
+    subgraph Actions["Protection Actions"]
+        LOG[Event Logging]
+        NOTIFY[Email Notification]
+        FREQ[Frequency Adjust]
+    end
+    
+    SENSOR --> CHECK
+    CHECK --> WARN & THROTTLE & CRIT
+    
+    WARN --> LOG
+    THROTTLE --> FREQ
+    CRIT --> NOTIFY
+    
+    CHECK --> RECOVER
+    RECOVER --> FREQ
+    
+    style Monitor fill:#3498db,stroke:#2980b9
+    style Thresholds fill:#e74c3c,stroke:#c0392b
+    style Actions fill:#27ae60,stroke:#1e8449
+                </pre>
+            </div>
+            
+            <h4 class="section-title"><i class="bi bi-lightning-charge me-2"></i>Smart Curtailment Flow</h4>
+            <div class="mermaid-container">
+                <pre class="mermaid">
+flowchart LR
+    subgraph Schedule["Scheduler"]
+        PLAN[Curtailment Plan]
+        CRON[APScheduler]
+    end
+    
+    subgraph Selection["Miner Selection"]
+        PERF[Performance Priority]
+        SITE[Site Filter]
+        MODEL[Model Filter]
+    end
+    
+    subgraph Execute["Execution"]
+        STOP[CGMiner Stop]
+        LOG[Audit Log]
+        RECOVER[Auto Recovery]
+    end
+    
+    PLAN --> CRON
+    CRON --> Selection
+    Selection --> STOP
+    STOP --> LOG
+    CRON --> RECOVER
+    RECOVER --> LOG
+    
+    style Schedule fill:#9b59b6,stroke:#8e44ad
+    style Selection fill:#f39c12,stroke:#d35400
+    style Execute fill:#27ae60,stroke:#1e8449
+                </pre>
+            </div>
+        </div>
+        
+        <div id="section-erd" class="diagram-section">
+            <h4 class="section-title"><i class="bi bi-database me-2"></i>Database Entity Relationships</h4>
+            <div class="mermaid-container">
+                <pre class="mermaid">
+graph TB
+    subgraph UserDomain[User Domain]
+        User[User<br/>id, email, role]
+        UserAccess[UserAccess<br/>id, user_id, email, site_id]
+        UserMiner[UserMiner<br/>id, user_id, model_id, hashrate]
+    end
+    
+    subgraph HostingDomain[Hosting Domain]
+        HostingSite[HostingSite<br/>id, name, location, capacity]
+        MinerModel[MinerModel<br/>id, model_name, hashrate, power]
+        SiteBranding[SiteBranding<br/>id, site_id, company_name]
+    end
+    
+    subgraph CRMDomain[CRM Domain]
+        Customer[Customer<br/>id, name, email, company]
+        Deal[Deal<br/>id, customer_id, amount]
+        Invoice[Invoice<br/>id, customer_id, total]
+    end
+    
+    subgraph OperationsDomain[Operations Domain]
+        ThermalEvent[ThermalEvent<br/>id, miner_id, temperature]
+        MinerTelemetry[MinerTelemetry<br/>id, miner_id, timestamp]
+        CurtailmentPlan[CurtailmentPlan<br/>id, site_id, schedule]
+    end
+    
+    User -->|1:N| UserAccess
+    UserAccess -->|1:N| UserMiner
+    UserMiner -->|N:1| MinerModel
+    UserMiner -->|N:1| HostingSite
+    HostingSite -->|1:1| SiteBranding
+    HostingSite -->|1:N| CurtailmentPlan
+    Customer -->|1:N| Deal
+    Customer -->|1:N| Invoice
+    UserMiner -->|1:N| ThermalEvent
+    UserMiner -->|1:N| MinerTelemetry
+    
+    Customer -.->|email match| UserAccess
+    
+    style UserDomain fill:#1a1d2e,stroke:#f7931a
+    style HostingDomain fill:#1a1d2e,stroke:#27ae60
+    style CRMDomain fill:#1a1d2e,stroke:#3498db
+    style OperationsDomain fill:#1a1d2e,stroke:#9b59b6
+                </pre>
+            </div>
+            
+            <h4 class="section-title"><i class="bi bi-key me-2"></i>Key Relationships</h4>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="data-flow">
+                        <div class="data-flow-title">CRM ↔ Hosting 关联</div>
+                        <div class="data-flow-desc">Customer.email = UserAccess.email<br/>通过邮箱匹配实现跨模块数据关联</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="data-flow">
+                        <div class="data-flow-title">UserMiner 核心关系</div>
+                        <div class="data-flow-desc">UserMiner → UserAccess (owner)<br/>UserMiner → MinerModel (type)<br/>UserMiner → HostingSite (location)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    var renderedSections = {};
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'dark',
+            themeVariables: {
+                primaryColor: '#f7931a',
+                primaryTextColor: '#fff',
+                primaryBorderColor: '#d4780f',
+                lineColor: '#4a5568',
+                secondaryColor: '#2c3e50',
+                tertiaryColor: '#1a1d2e',
+                background: '#0d0f1a',
+                mainBkg: '#1a1d2e',
+                fontFamily: 'Inter, system-ui, sans-serif',
+                fontSize: '13px',
+                clusterBkg: 'rgba(26,29,46,0.9)',
+                clusterBorder: '#f7931a'
+            },
+            flowchart: { curve: 'basis', padding: 15 }
+        });
+        
+        renderSection('overview');
+    });
+    
+    function renderSection(name) {
+        if (renderedSections[name]) return;
+        var section = document.getElementById('section-' + name);
+        if (!section) return;
+        var diagrams = section.querySelectorAll('.mermaid:not([data-processed])');
+        if (diagrams.length > 0) {
+            mermaid.run({ nodes: diagrams });
+            renderedSections[name] = true;
+        }
+    }
+    
+    function showSection(name) {
+        document.querySelectorAll('.diagram-section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('section-' + name).classList.add('active');
+        event.target.classList.add('active');
+        
+        setTimeout(function() {
+            renderSection(name);
+        }, 50);
+    }
+</script>
+{% endblock %}

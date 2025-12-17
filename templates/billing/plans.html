@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if current_lang == 'en' %}Subscription Plans - BTC Mining Calculator{% else %}订阅计划 - BTC挖矿计算器{% endif %}</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/css/responsive.css">
+    <style>
+        :root {
+            --primary-color: #f7931e;
+            --primary-gradient: linear-gradient(45deg, #f7931e, #ffad33);
+            --secondary-color: #1a1a1a;
+            --accent-color: #f7931e;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --border-color: #333333;
+            --card-bg: rgba(255, 255, 255, 0.05);
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .plans-container {
+            padding: 60px 0;
+        }
+
+        .plan-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .plan-card:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(247, 147, 30, 0.2);
+        }
+
+        .plan-card.featured {
+            border-color: var(--accent-color);
+            background: linear-gradient(135deg, rgba(247, 147, 30, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            position: relative;
+        }
+
+        .plan-card.featured::before {
+            content: attr(data-recommended);
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            background: var(--primary-gradient);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .plan-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--accent-color);
+        }
+
+        .plan-price {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .plan-period {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .plan-features {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 2rem;
+        }
+
+        .plan-features li {
+            padding: 0.5rem 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .plan-features li i {
+            color: var(--accent-color);
+            margin-right: 0.5rem;
+        }
+
+        .btn-plan {
+            width: 100%;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: 600;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .btn-plan-free {
+            background: transparent;
+            border: 2px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .btn-plan-free:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .btn-plan-premium {
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+        }
+
+        .btn-plan-premium:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(247, 147, 30, 0.3);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .plans-container {
+                padding: 30px 0;
+            }
+            .plan-card {
+                padding: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+            .plan-name {
+                font-size: 1.3rem;
+            }
+            .plan-price {
+                font-size: 2rem;
+            }
+            .btn-plan {
+                padding: 12px;
+                font-size: 1rem;
+            }
+            .navbar-brand {
+                font-size: 1rem;
+            }
+            .container {
+                padding: 0 15px;
+            }
+            .display-4 {
+                font-size: 2rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .plans-container {
+                padding: 20px 0;
+            }
+            .plan-card {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            .plan-name {
+                font-size: 1.2rem;
+            }
+            .plan-price {
+                font-size: 1.8rem;
+            }
+            .plan-features {
+                font-size: 0.9rem;
+            }
+            .plan-card.featured::before {
+                right: 15px;
+                font-size: 0.75rem;
+                padding: 4px 12px;
+            }
+            .display-4 {
+                font-size: 1.5rem;
+            }
+            .lead {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-cpu me-2"></i>
+                {% if current_lang == 'en' %}BTC Mining Calculator{% else %}BTC 挖矿计算器{% endif %}
+            </a>
+            <div>
+                <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm me-2">
+                    <i class="bi bi-house-door me-1"></i>
+                    {% if current_lang == 'en' %}Home{% else %}主页{% endif %}
+                </a>
+                <a href="/calculator" class="btn btn-outline-light btn-sm">
+                    {% if current_lang == 'en' %}Calculator{% else %}计算器{% endif %}
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Plans Section -->
+    <div class="plans-container">
+        <div class="container">
+            <div class="row mb-5">
+                <div class="col-12 text-center">
+                    <h1 class="display-4 mb-3">
+                        {% if current_lang == 'en' %}Choose Your Subscription Plan{% else %}选择您的订阅计划{% endif %}
+                    </h1>
+                    <p class="lead text-secondary">
+                        {% if current_lang == 'en' %}Unlock more features and enhance your mining profitability analysis{% else %}解锁更多功能，提升挖矿收益分析能力{% endif %}
+                    </p>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Free Plan -->
+                <div class="col-lg-4 mb-4">
+                    <div class="plan-card">
+                        <div class="plan-name">
+                            {% if current_lang == 'en' %}Free{% else %}免费版{% endif %}
+                        </div>
+                        <div class="plan-price">$0</div>
+                        <div class="plan-period">
+                            {% if current_lang == 'en' %}Forever Free{% else %}永久免费{% endif %}
+                        </div>
+                        
+                        <ul class="plan-features">
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}Basic Mining Calculator{% else %}基础挖矿计算器{% endif %}
+                            </li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}Real-time BTC Price{% else %}实时BTC价格{% endif %}
+                            </li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}3 Miner Models{% else %}3种矿机型号{% endif %}
+                            </li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}Basic ROI Analysis{% else %}基础ROI分析{% endif %}
+                            </li>
+                            <li><i class="bi bi-x-circle text-muted"></i> 
+                                {% if current_lang == 'en' %}Historical Data Analysis{% else %}历史数据分析{% endif %}
+                            </li>
+                            <li><i class="bi bi-x-circle text-muted"></i> 
+                                {% if current_lang == 'en' %}Advanced Charts{% else %}高级图表{% endif %}
+                            </li>
+                            <li><i class="bi bi-x-circle text-muted"></i> 
+                                {% if current_lang == 'en' %}API Access{% else %}API访问{% endif %}
+                            </li>
+                        </ul>
+                        
+                        <a href="/calculator" class="btn-plan btn-plan-free">
+                            <i class="bi bi-rocket-takeoff me-2"></i>
+                            {% if current_lang == 'en' %}Start Using{% else %}开始使用{% endif %}
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Basic Plan -->
+                <div class="col-lg-4 mb-4">
+                    <div class="plan-card featured" data-recommended="{% if current_lang == 'en' %}Recommended{% else %}推荐{% endif %}">
+                        <div class="plan-name">
+                            {% if current_lang == 'en' %}Basic{% else %}基础版{% endif %}
+                        </div>
+                        <div class="plan-price">$29</div>
+                        <div class="plan-period">
+                            {% if current_lang == 'en' %}Per Month{% else %}每月{% endif %}
+                        </div>
+                        
+                        <ul class="plan-features">
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}All Free Features{% else %}所有免费版功能{% endif %}
+                            </li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}10+ Miner Models{% else %}10+矿机型号{% endif %}
+                            </li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}Historical Data Analysis{% else %}历史数据分析{% endif %}
+                            </li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}Advanced Charts{% else %}高级图表{% endif %}
+                            </li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}Power Curtailment Analysis{% else %}电力削减分析{% endif %}
+                            </li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}Email Support{% else %}邮件支持{% endif %}
+                            </li>
+                            <li><i class="bi bi-x-circle text-muted"></i> 
+                                {% if current_lang == 'en' %}API Access{% else %}API访问{% endif %}
+                            </li>
+                        </ul>
+                        
+                        <form action="/billing/create-checkout-session" method="POST">
+                            <input type="hidden" name="price_id" value="{{ basic_price_id }}">
+                            <button type="submit" class="btn-plan btn-plan-premium">
+                                <i class="bi bi-star me-2"></i>
+                                {% if current_lang == 'en' %}Subscribe Now{% else %}立即订阅{% endif %}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Pro Plan -->
+                <div class="col-lg-4 mb-4">
+                    <div class="plan-card">
+                        <div class="plan-name">
+                            {% if current_lang == 'en' %}Professional{% else %}专业版{% endif %}
+                        </div>
+                        <div class="plan-price">$99</div>
+                        <div class="plan-period">
+                            {% if current_lang == 'en' %}Per Month{% else %}每月{% endif %}
+                        </div>
+                        
+                        <ul class="plan-features">
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}All Basic Features{% else %}所有基础版功能{% endif %}
+                            </li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}Unlimited Miner Models{% else %}无限矿机型号{% endif %}
+                            </li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}CRM Customer Management{% else %}CRM客户管理{% endif %}
+                            </li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}Full API Access{% else %}API完全访问{% endif %}
+                            </li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}Custom Reports{% else %}自定义报告{% endif %}
+                            </li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}Priority Technical Support{% else %}优先技术支持{% endif %}
+                            </li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}White Label Customization{% else %}白标定制{% endif %}
+                            </li>
+                        </ul>
+                        
+                        <form action="/billing/create-checkout-session" method="POST">
+                            <input type="hidden" name="price_id" value="{{ pro_price_id }}">
+                            <button type="submit" class="btn-plan btn-plan-premium">
+                                <i class="bi bi-lightning me-2"></i>
+                                {% if current_lang == 'en' %}Subscribe Now{% else %}立即订阅{% endif %}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQ Section -->
+            <div class="row mt-5">
+                <div class="col-12">
+                    <h3 class="text-center mb-4">
+                        {% if current_lang == 'en' %}Frequently Asked Questions{% else %}常见问题{% endif %}
+                    </h3>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>
+                                {% if current_lang == 'en' %}How to cancel subscription?{% else %}如何取消订阅？{% endif %}
+                            </h5>
+                            <p class="text-secondary">
+                                {% if current_lang == 'en' %}You can cancel your subscription at any time in account settings. Cancellation will take effect at the end of the current billing cycle.{% else %}您可以随时在账户设置中取消订阅，取消后将在当前计费周期结束时生效。{% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>
+                                {% if current_lang == 'en' %}What payment methods are supported?{% else %}支持哪些支付方式？{% endif %}
+                            </h5>
+                            <p class="text-secondary">
+                                {% if current_lang == 'en' %}Payment processing has been disabled for this hosting transparency platform - contact administrator for billing arrangements.{% else %}此托管透明度平台已禁用支付处理 - 请联系管理员安排计费事宜处理。{% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

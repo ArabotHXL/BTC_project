@@ -1,0 +1,627 @@
+{% extends "crm/base.html" %}
+
+{% block title %}线索管理 | BTC Mining CRM{% endblock %}
+
+{% block page_title %}线索管理{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">线索列表</li>
+{% endblock %}
+
+{% block action_buttons %}
+<a href="{{ url_for('crm.customers') }}" class="btn btn-primary">
+    <i class="bi bi-plus-circle me-1"></i> 为客户创建线索
+</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .kpi-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(247, 147, 26, 0.2) 0%, rgba(247, 147, 26, 0.05) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 15px;
+    }
+    
+    .kpi-icon i {
+        font-size: 1.8rem;
+        color: var(--btc-gold);
+    }
+    
+    .kpi-content {
+        flex: 1;
+    }
+    
+    .kpi-label {
+        font-size: 0.85rem;
+        color: var(--btc-text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+    }
+    
+    .kpi-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--btc-gold);
+        line-height: 1;
+    }
+    
+    .followup-item {
+        padding: 12px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        transition: background 0.3s ease;
+    }
+    
+    .followup-item:last-child {
+        border-bottom: none;
+    }
+    
+    .followup-item:hover {
+        background: rgba(247, 147, 26, 0.1);
+    }
+    
+    .chart-wrapper {
+        position: relative;
+        height: 300px;
+    }
+    
+    .status-workflow {
+        margin-bottom: 20px;
+    }
+    
+    .status-node {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .status-indicator {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        position: relative;
+    }
+    
+    .status-indicator:hover {
+        transform: scale(1.1);
+        box-shadow: 0 0 20px rgba(247, 147, 26, 0.5);
+    }
+    
+    .status-current .status-indicator {
+        transform: scale(1.15);
+        box-shadow: 0 0 25px rgba(247, 147, 26, 0.6);
+    }
+    
+    .status-line {
+        position: absolute;
+        top: 20px;
+        left: 7%;
+        right: 7%;
+        height: 2px;
+        background: var(--btc-border);
+        z-index: 1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- 空状态提示 -->
+{% if not leads %}
+<div class="alert alert-info mb-4">
+    <i class="bi bi-info-circle me-2"></i>
+    当前没有线索数据。<a href="{{ url_for('crm.customers') }}" class="alert-link">前往客户列表创建线索</a>
+</div>
+{% endif %}
+
+<!-- KPI统计卡片区域 -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3 mb-md-0">
+        <div class="kpi-card">
+            <div class="kpi-icon">
+                <i class="bi bi-lightbulb"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-label">总线索数</div>
+                <div class="kpi-value" id="total-leads">0</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3 mb-md-0">
+        <div class="kpi-card">
+            <div class="kpi-icon">
+                <i class="bi bi-graph-up-arrow"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-label">转化率</div>
+                <div class="kpi-value" id="conversion-rate">0%</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3 mb-md-0">
+        <div class="kpi-card">
+            <div class="kpi-icon">
+                <i class="bi bi-bell"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-label">今日跟进</div>
+                <div class="kpi-value" id="today-followups">0</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card">
+            <div class="kpi-icon">
+                <i class="bi bi-currency-dollar"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-label">平均线索价值</div>
+                <div class="kpi-value" id="avg-value">$0</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 可视化图表区域 -->
+<div class="row mb-4">
+    <div class="col-lg-7 mb-3 mb-lg-0">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-funnel me-2"></i>销售漏斗</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-wrapper">
+                    <canvas id="funnelChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-pie-chart me-2"></i>线索来源分布</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-wrapper">
+                    <canvas id="sourceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 跟进提醒卡片区域 -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-alarm me-2"></i>跟进提醒</h5>
+    </div>
+    <div class="card-body">
+        <div id="followup-list">
+            {% if today_followups %}
+                {% for lead in today_followups %}
+                <div class="followup-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <a href="{{ url_for('crm.lead_detail', lead_id=lead.id) }}" class="text-warning">
+                                {{ lead.title }}
+                            </a>
+                            <small class="text-muted d-block">
+                                客户: 
+                                {% if lead.customer %}
+                                <a href="{{ url_for('crm.customer_detail', customer_id=lead.customer.id) }}" class="text-info">
+                                    {{ lead.customer.name }}
+                                </a>
+                                {% else %}
+                                未知
+                                {% endif %}
+                            </small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-danger">{{ lead.next_follow_up.strftime('%H:%M') }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted text-center mb-0">今天没有待跟进的线索</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- 状态过滤器和搜索 -->
+<div class="card mb-4">
+    <div class="card-body">
+        <!-- 可视化状态流程图过滤器 -->
+        <div class="status-workflow">
+            <div class="d-flex justify-content-between position-relative mb-2">
+                <!-- 全部状态链接 -->
+                <div class="status-node status-all {{ 'status-current' if not status else '' }}">
+                    <a href="{{ url_for('crm.leads') }}" class="status-indicator bg-dark border border-light">
+                        <i class="bi bi-grid text-white" style="font-size: 0.6rem;"></i>
+                    </a>
+                </div>
+                
+                <!-- 各个状态节点 -->
+                {% for status_name in ['NEW', 'CONTACTED', 'QUALIFIED', 'NEGOTIATION', 'WON', 'LOST'] %}
+                    {% set is_current = status == status_name %}
+                    <div class="status-node {{ 'status-current' if is_current else '' }}">
+                        <a href="{{ url_for('crm.leads', status=status_name) }}" 
+                           class="status-indicator 
+                                {{ 'bg-primary' if is_current else 
+                                   'bg-success' if status_name == 'WON' else 
+                                   'bg-danger' if status_name == 'LOST' else 
+                                   'bg-info' if status_name == 'CONTACTED' else
+                                   'bg-warning' if status_name == 'NEGOTIATION' else
+                                   'bg-secondary' }}"
+                           title="{{ {'NEW': '新建', 'CONTACTED': '已联系', 'QUALIFIED': '合格线索', 'NEGOTIATION': '谈判中', 'WON': '已成交', 'LOST': '已流失'}[status_name] }}">
+                        </a>
+                    </div>
+                {% endfor %}
+                
+                <!-- 连接线 -->
+                <div class="status-line"></div>
+            </div>
+            <div class="d-flex justify-content-between small text-muted" style="width: 87%; margin-left: 13%;">
+                <span>新建</span>
+                <span>已联系</span>
+                <span>合格</span>
+                <span>谈判</span>
+                <span>成交</span>
+                <span>流失</span>
+            </div>
+        </div>
+        
+        <!-- 搜索框 -->
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-dark border-secondary">
+                        <i class="bi bi-search text-warning"></i>
+                    </span>
+                    <input type="text" id="searchInput" class="form-control bg-dark border-secondary text-light" 
+                           placeholder="搜索线索名称、客户或来源...">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 优化的线索表格 -->
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">线索列表</h5>
+            <span class="badge bg-info">{{ leads|length }} 个线索</span>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-dark table-hover mb-0" id="leadsTable">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">线索名称</th>
+                        <th style="width: 15%;">客户</th>
+                        <th style="width: 10%;">状态</th>
+                        <th style="width: 12%;">来源</th>
+                        <th style="width: 12%;">预估价值</th>
+                        <th style="width: 10%;">创建日期</th>
+                        <th style="width: 10%;">负责人</th>
+                        <th style="width: 10%;">下次跟进</th>
+                        <th style="width: 8%;">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if leads %}
+                        {% for lead in leads %}
+                        <tr class="lead-row">
+                            <td>
+                                <a href="{{ url_for('crm.lead_detail', lead_id=lead.id) }}" class="text-warning fw-bold">
+                                    {{ lead.title }}
+                                </a>
+                            </td>
+                            <td>
+                                {% if lead.customer %}
+                                <a href="{{ url_for('crm.customer_detail', customer_id=lead.customer.id) }}" class="text-info">
+                                    {{ lead.customer.name }}
+                                </a>
+                                {% else %}
+                                <span class="text-muted">未知客户</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 
+                                    'secondary' if lead.status.name == 'NEW' else 
+                                    'info' if lead.status.name == 'CONTACTED' else 
+                                    'primary' if lead.status.name == 'QUALIFIED' else 
+                                    'warning' if lead.status.name == 'NEGOTIATION' else 
+                                    'success' if lead.status.name == 'WON' else
+                                    'danger' if lead.status.name == 'LOST' else
+                                    'secondary' 
+                                }}">{{ lead.status.value }}</span>
+                            </td>
+                            <td>{{ lead.source or '未知' }}</td>
+                            <td class="text-warning fw-bold">${{ "{:,.0f}".format(lead.estimated_value) }}</td>
+                            <td>{{ lead.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ lead.assigned_to or '未分配' }}</td>
+                            <td>
+                                {% if lead.next_follow_up %}
+                                <span class="text-info">{{ lead.next_follow_up.strftime('%Y-%m-%d') }}</span>
+                                {% else %}
+                                <span class="text-muted">未设置</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{{ url_for('crm.lead_detail', lead_id=lead.id) }}" class="btn btn-sm btn-outline-info" title="查看详情">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="9" class="text-center py-4">
+                                {% if status %}
+                                    <i class="bi bi-search text-secondary mb-3" style="font-size: 2rem;"></i>
+                                    <p class="text-muted mb-0">没有找到符合条件的线索</p>
+                                {% else %}
+                                    <i class="bi bi-lightbulb text-secondary mb-3" style="font-size: 2rem;"></i>
+                                    <p class="text-muted mb-0">暂无线索数据</p>
+                                    <a href="{{ url_for('crm.customers') }}" class="btn btn-primary mt-3">
+                                        <i class="bi bi-plus-circle me-1"></i> 前往客户列表创建线索
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // ==================== KPI 数据计算（完全防御式编程）====================
+        // 确保获取有效数值，避免任何NaN情况
+        let totalLeads = parseInt('{{ leads|length }}') || 0;
+        let wonLeads = parseInt('{{ leads|selectattr("status.name", "equalto", "WON")|list|length }}') || 0;
+        let todayFollowupsCount = parseInt('{{ today_followups|length }}') || 0;
+        
+        // 转化率计算
+        let conversionRate = '0';
+        if (totalLeads > 0) {
+            conversionRate = ((wonLeads / totalLeads) * 100).toFixed(1);
+        }
+        
+        // 平均线索价值计算
+        let totalValue = parseFloat('{{ leads|sum(attribute="estimated_value") or 0 }}') || 0;
+        let avgValue = 0;
+        if (totalLeads > 0 && !isNaN(totalValue)) {
+            avgValue = totalValue / totalLeads;
+        }
+        
+        // 直接设置 KPI 值（对于0值不使用动画，更快更可靠）
+        const totalLeadsEl = document.getElementById('total-leads');
+        if (totalLeadsEl) {
+            if (totalLeads > 0) {
+                initCountUp('total-leads', totalLeads);
+            } else {
+                totalLeadsEl.textContent = '0';
+            }
+        }
+        
+        const todayFollowupsEl = document.getElementById('today-followups');
+        if (todayFollowupsEl) {
+            if (todayFollowupsCount > 0) {
+                initCountUp('today-followups', todayFollowupsCount);
+            } else {
+                todayFollowupsEl.textContent = '0';
+            }
+        }
+        
+        // 转化率显示
+        const conversionRateEl = document.getElementById('conversion-rate');
+        if (conversionRateEl) {
+            conversionRateEl.textContent = conversionRate + '%';
+        }
+        
+        // 平均价值显示
+        const avgValueEl = document.getElementById('avg-value');
+        if (avgValueEl) {
+            if (!isNaN(avgValue) && avgValue >= 0) {
+                avgValueEl.textContent = '$' + Math.round(avgValue).toLocaleString('en-US');
+            } else {
+                avgValueEl.textContent = '$0';
+            }
+        }
+        
+        // ==================== 状态统计（安全计算）====================
+        const statusCounts = {
+            'NEW': {{ leads|selectattr('status.name', 'equalto', 'NEW')|list|length }} || 0,
+            'CONTACTED': {{ leads|selectattr('status.name', 'equalto', 'CONTACTED')|list|length }} || 0,
+            'QUALIFIED': {{ leads|selectattr('status.name', 'equalto', 'QUALIFIED')|list|length }} || 0,
+            'NEGOTIATION': {{ leads|selectattr('status.name', 'equalto', 'NEGOTIATION')|list|length }} || 0,
+            'WON': {{ leads|selectattr('status.name', 'equalto', 'WON')|list|length }} || 0,
+            'LOST': {{ leads|selectattr('status.name', 'equalto', 'LOST')|list|length }} || 0
+        };
+        
+        // ==================== 销售漏斗图表（空状态处理）====================
+        const totalLeadsForChart = {{ leads|length }} || 0;
+        const funnelChartCanvas = document.getElementById('funnelChart');
+        
+        if (totalLeadsForChart > 0 && funnelChartCanvas) {
+            // 有数据时初始化图表
+            const funnelChart = initChart('funnelChart', {
+                type: 'bar',
+                data: {
+                    labels: ['新建', '已联系', '合格线索', '谈判中', '已成交'],
+                    datasets: [{
+                        label: '线索数量',
+                        data: [
+                            statusCounts['NEW'], 
+                            statusCounts['CONTACTED'], 
+                            statusCounts['QUALIFIED'], 
+                            statusCounts['NEGOTIATION'], 
+                            statusCounts['WON']
+                        ],
+                        backgroundColor: [
+                            'rgba(108, 117, 125, 0.7)',
+                            'rgba(13, 202, 240, 0.7)',
+                            'rgba(13, 110, 253, 0.7)',
+                            'rgba(255, 193, 7, 0.7)',
+                            'rgba(25, 135, 84, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgb(108, 117, 125)',
+                            'rgb(13, 202, 240)',
+                            'rgb(13, 110, 253)',
+                            'rgb(255, 193, 7)',
+                            'rgb(25, 135, 84)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            display: false 
+                        },
+                        title: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0,
+                                color: '#9ca3af'
+                            },
+                            grid: {
+                                color: 'rgba(61, 68, 88, 0.3)'
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                color: '#e0e6ed',
+                                font: {
+                                    size: 13
+                                }
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        } else if (funnelChartCanvas) {
+            // 空状态：显示提示消息
+            funnelChartCanvas.parentElement.innerHTML = '<p class="text-muted text-center py-5"><i class="bi bi-info-circle me-2"></i>暂无线索数据</p>';
+        }
+        
+        // ==================== 线索来源分布图表（空状态处理）====================
+        // 统计线索来源
+        const sources = {};
+        {% for lead in leads %}
+            {% if lead.source %}
+                const source_{{ loop.index }} = '{{ lead.source }}';
+                sources[source_{{ loop.index }}] = (sources[source_{{ loop.index }}] || 0) + 1;
+            {% endif %}
+        {% endfor %}
+        
+        const sourceLabels = Object.keys(sources);
+        const sourceData = Object.values(sources);
+        const sourceChartCanvas = document.getElementById('sourceChart');
+        
+        if (sourceLabels.length > 0 && sourceChartCanvas) {
+            // 有数据时初始化图表
+            const sourceChart = initChart('sourceChart', {
+                type: 'doughnut',
+                data: {
+                    labels: sourceLabels,
+                    datasets: [{
+                        data: sourceData,
+                        backgroundColor: [
+                            'rgba(247, 147, 26, 0.8)',
+                            'rgba(13, 202, 240, 0.8)',
+                            'rgba(25, 135, 84, 0.8)',
+                            'rgba(220, 53, 69, 0.8)',
+                            'rgba(13, 110, 253, 0.8)',
+                            'rgba(255, 193, 7, 0.8)',
+                            'rgba(108, 117, 125, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgb(247, 147, 26)',
+                            'rgb(13, 202, 240)',
+                            'rgb(25, 135, 84)',
+                            'rgb(220, 53, 69)',
+                            'rgb(13, 110, 253)',
+                            'rgb(255, 193, 7)',
+                            'rgb(108, 117, 125)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                color: '#e0e6ed',
+                                padding: 15,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        } else if (sourceChartCanvas) {
+            // 空状态：显示提示消息
+            sourceChartCanvas.parentElement.innerHTML = '<p class="text-muted text-center py-5"><i class="bi bi-info-circle me-2"></i>暂无来源数据</p>';
+        }
+        
+        // ==================== 搜索功能 ====================
+        const searchInput = document.getElementById('searchInput');
+        const tableRows = document.querySelectorAll('.lead-row');
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                
+                tableRows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    if (text.includes(searchTerm)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,1585 @@
+openapi: 3.0.3
+info:
+  title: HashInsight CRM Platform API
+  description: |
+    # HashInsight CRM平台API规范 / HashInsight CRM Platform API Specification
+    
+    企业级比特币矿业CRM管理平台，提供客户关系管理、销售线索、商机跟踪、计费发票、资产管理和运维工单等完整功能。
+    
+    Enterprise-level Bitcoin mining CRM management platform, providing complete features including customer relationship management, sales leads, deal tracking, billing invoices, asset management and operations tickets.
+    
+    ## 认证方式 / Authentication
+    - JWT Bearer Token：用于用户身份验证 / Used for user authentication
+    - API Key：用于系统间调用 / Used for system-to-system calls
+    
+    ## 响应格式 / Response Format
+    所有API采用统一的响应格式 / All APIs use unified response format:
+    ```json
+    {
+      "success": true,
+      "data": {},
+      "message": "操作成功",
+      "timestamp": "2025-10-07T00:00:00Z"
+    }
+    ```
+  version: 1.0.0
+  contact:
+    name: HashInsight API Support
+    email: api@hashinsight.net
+  license:
+    name: Proprietary
+    
+servers:
+  - url: https://api.hashinsight.net/v1
+    description: Production Server / 生产环境
+  - url: https://api-staging.hashinsight.net/v1
+    description: Staging Server / 测试环境
+  - url: http://localhost:3000/v1
+    description: Development Server / 开发环境
+
+tags:
+  - name: Authentication
+    description: 认证相关接口 / Authentication endpoints
+  - name: CRM Core
+    description: CRM核心功能 / CRM core features
+  - name: Billing
+    description: 计费发票 / Billing and invoicing
+  - name: Asset Management
+    description: 资产管理 / Asset management
+  - name: Operations
+    description: 运维工单 / Operations tickets
+
+security:
+  - bearerAuth: []
+  - apiKeyAuth: []
+
+paths:
+  # ==================== Authentication 认证 ====================
+  /api/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: 用户登录 / User Login
+      description: |
+        使用邮箱和密码登录系统，返回JWT访问令牌
+        
+        Login to the system using email and password, returns JWT access token
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: 用户邮箱 / User email
+                  example: admin@hashinsight.net
+                password:
+                  type: string
+                  format: password
+                  description: 用户密码 / User password
+                  example: SecureP@ssw0rd
+      responses:
+        '200':
+          description: 登录成功 / Login successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          accessToken:
+                            type: string
+                            description: JWT访问令牌 / JWT access token
+                            example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                          refreshToken:
+                            type: string
+                            description: 刷新令牌（30天有效）/ Refresh token (valid for 30 days)
+                            example: a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0
+                          user:
+                            $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: 用户注册 / User Registration
+      description: |
+        创建新用户账户
+        
+        Create a new user account
+      operationId: register
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - name
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: 用户邮箱 / User email
+                  example: newuser@example.com
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                  description: 用户密码（最少8位）/ User password (min 8 characters)
+                  example: SecureP@ssw0rd
+                name:
+                  type: string
+                  description: 用户姓名 / User name
+                  example: Zhang San
+      responses:
+        '201':
+          description: 注册成功 / Registration successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          accessToken:
+                            type: string
+                            description: JWT访问令牌 / JWT access token
+                          refreshToken:
+                            type: string
+                            description: 刷新令牌（30天有效）/ Refresh token (valid for 30 days)
+                          user:
+                            $ref: '#/components/schemas/User'
+        '409':
+          description: 邮箱已存在 / Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: 刷新访问令牌 / Refresh Access Token
+      description: |
+        使用刷新令牌获取新的访问令牌和刷新令牌（Token Rotation）
+        
+        Use refresh token to get new access token and refresh token (Token Rotation)
+      operationId: refreshToken
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refreshToken
+              properties:
+                refreshToken:
+                  type: string
+                  description: 刷新令牌 / Refresh token
+                  example: a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0
+      responses:
+        '200':
+          description: 令牌刷新成功 / Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          accessToken:
+                            type: string
+                            description: 新的JWT访问令牌 / New JWT access token
+                            example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                          refreshToken:
+                            type: string
+                            description: 新的刷新令牌 / New refresh token
+                            example: b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1
+        '400':
+          description: 缺少刷新令牌 / Missing refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 无效或过期的刷新令牌 / Invalid or expired refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: 用户登出 / User Logout
+      description: |
+        撤销当前设备的刷新令牌，要求客户端提供有效的refresh token
+        
+        Revoke the refresh token for current device, requires valid refresh token from client
+      operationId: logout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refreshToken
+              properties:
+                refreshToken:
+                  type: string
+                  description: 要撤销的刷新令牌 / Refresh token to revoke
+                  example: a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0
+      responses:
+        '200':
+          description: 登出成功 / Logout successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Logout successful
+        '400':
+          description: 缺少或无效的刷新令牌 / Missing or invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missingToken:
+                  value:
+                    error: Bad Request
+                    message: Refresh token required
+                invalidToken:
+                  value:
+                    error: Bad Request
+                    message: Invalid refresh token
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/auth/logout-all:
+    post:
+      tags:
+        - Authentication
+      summary: 全局登出 / Logout from All Devices
+      description: |
+        撤销当前用户的所有刷新令牌，从所有设备登出
+        
+        Revoke all refresh tokens for current user, logout from all devices
+      operationId: logoutAll
+      responses:
+        '200':
+          description: 全局登出成功 / Logout from all devices successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Logged out from 3 device(s)
+                      devicesLoggedOut:
+                        type: integer
+                        description: 登出的设备数量 / Number of devices logged out
+                        example: 3
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ==================== CRM Core CRM核心 ====================
+  /api/leads:
+    get:
+      tags:
+        - CRM Core
+      summary: 获取线索列表 / Get Leads List
+      description: |
+        获取销售线索列表，支持分页、过滤和排序
+        
+        Get sales leads list with pagination, filtering and sorting
+      operationId: getLeads
+      parameters:
+        - name: page
+          in: query
+          description: 页码（从1开始）/ Page number (starts from 1)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          description: 每页数量 / Items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: status
+          in: query
+          description: 线索状态过滤 / Filter by lead status
+          schema:
+            type: string
+            enum: [NEW, CONTACTED, QUALIFIED, UNQUALIFIED, CONVERTED, LOST]
+        - name: source
+          in: query
+          description: 线索来源过滤 / Filter by lead source
+          schema:
+            type: string
+            enum: [WEBSITE, REFERRAL, EMAIL, PHONE, SOCIAL_MEDIA, TRADE_SHOW, PARTNER, OTHER]
+        - name: assignedTo
+          in: query
+          description: 分配给用户ID / Filter by assigned user ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 成功获取线索列表 / Successfully retrieved leads list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          items:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Lead'
+                          pagination:
+                            $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - CRM Core
+      summary: 创建线索 / Create Lead
+      description: |
+        创建新的销售线索
+        
+        Create a new sales lead
+      operationId: createLead
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - source
+                - company
+                - contactName
+              properties:
+                source:
+                  type: string
+                  enum: [WEBSITE, REFERRAL, EMAIL, PHONE, SOCIAL_MEDIA, TRADE_SHOW, PARTNER, OTHER]
+                  description: 线索来源 / Lead source
+                  example: WEBSITE
+                company:
+                  type: string
+                  description: 公司名称 / Company name
+                  example: Bitcoin Mining Corp
+                contactName:
+                  type: string
+                  description: 联系人姓名 / Contact name
+                  example: John Doe
+                email:
+                  type: string
+                  format: email
+                  description: 邮箱 / Email
+                  example: john@btcmining.com
+                phone:
+                  type: string
+                  description: 电话 / Phone
+                  example: +86-138-0000-0000
+                assignedTo:
+                  type: string
+                  format: uuid
+                  description: 分配给用户ID / Assign to user ID
+      responses:
+        '201':
+          description: 线索创建成功 / Lead created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Lead'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/leads/{id}:
+    put:
+      tags:
+        - CRM Core
+      summary: 更新线索 / Update Lead
+      description: |
+        更新现有线索信息
+        
+        Update existing lead information
+      operationId: updateLead
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 线索ID / Lead ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [NEW, CONTACTED, QUALIFIED, UNQUALIFIED, CONVERTED, LOST]
+                  description: 线索状态 / Lead status
+                company:
+                  type: string
+                  description: 公司名称 / Company name
+                contactName:
+                  type: string
+                  description: 联系人姓名 / Contact name
+                email:
+                  type: string
+                  format: email
+                  description: 邮箱 / Email
+                phone:
+                  type: string
+                  description: 电话 / Phone
+                score:
+                  type: integer
+                  minimum: 0
+                  maximum: 100
+                  description: 线索评分 / Lead score
+                assignedTo:
+                  type: string
+                  format: uuid
+                  description: 分配给用户ID / Assign to user ID
+      responses:
+        '200':
+          description: 线索更新成功 / Lead updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Lead'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/leads/{id}/convert:
+    post:
+      tags:
+        - CRM Core
+      summary: 转换线索为商机 / Convert Lead to Deal
+      description: |
+        将合格线索转换为销售商机
+        
+        Convert qualified lead to sales deal
+      operationId: convertLead
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 线索ID / Lead ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - accountId
+                - dealTitle
+                - dealValue
+              properties:
+                accountId:
+                  type: string
+                  format: uuid
+                  description: 客户账户ID / Account ID
+                dealTitle:
+                  type: string
+                  description: 商机标题 / Deal title
+                  example: Q1 2025 Mining Equipment Deal
+                dealValue:
+                  type: number
+                  format: decimal
+                  description: 商机金额 / Deal value
+                  example: 500000.00
+                expectedClose:
+                  type: string
+                  format: date
+                  description: 预计成交日期 / Expected close date
+                  example: "2025-03-31"
+      responses:
+        '201':
+          description: 转换成功 / Conversion successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          lead:
+                            $ref: '#/components/schemas/Lead'
+                          deal:
+                            $ref: '#/components/schemas/Deal'
+        '400':
+          description: 线索状态不允许转换 / Lead status does not allow conversion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/deals:
+    get:
+      tags:
+        - CRM Core
+      summary: 获取商机列表 / Get Deals List
+      description: |
+        获取销售商机列表，支持分页和过滤
+        
+        Get sales deals list with pagination and filtering
+      operationId: getDeals
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: stage
+          in: query
+          description: 商机阶段过滤 / Filter by deal stage
+          schema:
+            type: string
+            enum: [PROSPECTING, QUALIFICATION, PROPOSAL, NEGOTIATION, CLOSED_WON, CLOSED_LOST]
+        - name: ownerId
+          in: query
+          description: 负责人ID / Filter by owner ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 成功获取商机列表 / Successfully retrieved deals list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          items:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Deal'
+                          pagination:
+                            $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/deals/{id}/stage:
+    put:
+      tags:
+        - CRM Core
+      summary: 更新商机阶段 / Update Deal Stage
+      description: |
+        更新商机的销售阶段
+        
+        Update the sales stage of a deal
+      operationId: updateDealStage
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 商机ID / Deal ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - stage
+              properties:
+                stage:
+                  type: string
+                  enum: [PROSPECTING, QUALIFICATION, PROPOSAL, NEGOTIATION, CLOSED_WON, CLOSED_LOST]
+                  description: 商机阶段 / Deal stage
+                  example: PROPOSAL
+                probability:
+                  type: integer
+                  minimum: 0
+                  maximum: 100
+                  description: 成交概率 / Win probability
+                  example: 75
+                notes:
+                  type: string
+                  description: 备注说明 / Notes
+                  example: Client requested proposal revision
+      responses:
+        '200':
+          description: 商机阶段更新成功 / Deal stage updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Deal'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  # ==================== Billing 计费 ====================
+  /api/invoices:
+    get:
+      tags:
+        - Billing
+      summary: 获取发票列表 / Get Invoices List
+      description: |
+        获取发票列表，支持分页和状态过滤
+        
+        Get invoices list with pagination and status filtering
+      operationId: getInvoices
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: status
+          in: query
+          description: 发票状态过滤 / Filter by invoice status
+          schema:
+            type: string
+            enum: [DRAFT, SENT, PAID, OVERDUE, CANCELLED]
+        - name: accountId
+          in: query
+          description: 客户账户ID / Filter by account ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 成功获取发票列表 / Successfully retrieved invoices list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          items:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Invoice'
+                          pagination:
+                            $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - Billing
+      summary: 创建发票 / Create Invoice
+      description: |
+        创建新的账单发票
+        
+        Create a new billing invoice
+      operationId: createInvoice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - accountId
+                - issueDate
+                - dueDate
+                - lineItems
+              properties:
+                accountId:
+                  type: string
+                  format: uuid
+                  description: 客户账户ID / Account ID
+                contractId:
+                  type: string
+                  format: uuid
+                  description: 关联合同ID / Associated contract ID
+                issueDate:
+                  type: string
+                  format: date
+                  description: 开票日期 / Issue date
+                  example: "2025-10-01"
+                dueDate:
+                  type: string
+                  format: date
+                  description: 到期日期 / Due date
+                  example: "2025-10-31"
+                lineItems:
+                  type: array
+                  description: 发票明细 / Invoice line items
+                  items:
+                    type: object
+                    required:
+                      - description
+                      - quantity
+                      - unitPrice
+                      - type
+                    properties:
+                      description:
+                        type: string
+                        example: Mining Hosting Fee - October 2025
+                      quantity:
+                        type: number
+                        format: decimal
+                        example: 100
+                      unitPrice:
+                        type: number
+                        format: decimal
+                        example: 50.00
+                      type:
+                        type: string
+                        enum: [HOSTING_FEE, ELECTRICITY, MAINTENANCE, EQUIPMENT, OTHER]
+      responses:
+        '201':
+          description: 发票创建成功 / Invoice created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Invoice'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/payments:
+    post:
+      tags:
+        - Billing
+      summary: 记录付款 / Record Payment
+      description: |
+        记录客户付款信息
+        
+        Record customer payment information
+      operationId: recordPayment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - invoiceId
+                - amount
+                - paymentDate
+                - method
+              properties:
+                invoiceId:
+                  type: string
+                  format: uuid
+                  description: 发票ID / Invoice ID
+                amount:
+                  type: number
+                  format: decimal
+                  description: 付款金额 / Payment amount
+                  example: 5000.00
+                paymentDate:
+                  type: string
+                  format: date-time
+                  description: 付款日期 / Payment date
+                  example: "2025-10-15T10:30:00Z"
+                method:
+                  type: string
+                  enum: [BANK_TRANSFER, CREDIT_CARD, CRYPTO, CHECK, OTHER]
+                  description: 付款方式 / Payment method
+                  example: BANK_TRANSFER
+                reference:
+                  type: string
+                  description: 交易参考号 / Transaction reference
+                  example: TXN-2025-10-15-001
+      responses:
+        '201':
+          description: 付款记录成功 / Payment recorded successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Payment'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  # ==================== Asset Management 资产管理 ====================
+  /api/assets:
+    get:
+      tags:
+        - Asset Management
+      summary: 获取矿机资产列表 / Get Miner Assets List
+      description: |
+        获取矿机资产列表，支持分页和状态过滤
+        
+        Get miner assets list with pagination and status filtering
+      operationId: getAssets
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: status
+          in: query
+          description: 资产状态过滤 / Filter by asset status
+          schema:
+            type: string
+            enum: [OPERATIONAL, MAINTENANCE, OFFLINE, RETIRED]
+        - name: accountId
+          in: query
+          description: 客户账户ID / Filter by account ID
+          schema:
+            type: string
+            format: uuid
+        - name: model
+          in: query
+          description: 设备型号 / Filter by model
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功获取资产列表 / Successfully retrieved assets list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          items:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/MinerAsset'
+                          pagination:
+                            $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/assets/batch-import:
+    post:
+      tags:
+        - Asset Management
+      summary: 批量导入资产 / Batch Import Assets
+      description: |
+        批量导入矿机资产信息
+        
+        Batch import miner assets information
+      operationId: batchImportAssets
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - accountId
+                - assets
+              properties:
+                accountId:
+                  type: string
+                  format: uuid
+                  description: 客户账户ID / Account ID
+                assets:
+                  type: array
+                  description: 资产列表 / Assets list
+                  minItems: 1
+                  maxItems: 1000
+                  items:
+                    type: object
+                    required:
+                      - model
+                      - serialNumber
+                    properties:
+                      model:
+                        type: string
+                        description: 设备型号 / Device model
+                        example: Antminer S19 Pro
+                      serialNumber:
+                        type: string
+                        description: 序列号 / Serial number
+                        example: S19PRO-2025-001234
+                      hashrate:
+                        type: number
+                        format: decimal
+                        description: 算力(TH/s) / Hashrate in TH/s
+                        example: 110.00
+                      power:
+                        type: number
+                        format: decimal
+                        description: 功率(W) / Power in watts
+                        example: 3250.00
+                      location:
+                        type: string
+                        description: 部署位置 / Deployment location
+                        example: DC-Beijing-Rack-A01
+      responses:
+        '201':
+          description: 批量导入成功 / Batch import successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          successCount:
+                            type: integer
+                            description: 成功导入数量 / Successful imports
+                            example: 95
+                          failCount:
+                            type: integer
+                            description: 失败数量 / Failed imports
+                            example: 5
+                          errors:
+                            type: array
+                            description: 错误详情 / Error details
+                            items:
+                              type: object
+                              properties:
+                                serialNumber:
+                                  type: string
+                                error:
+                                  type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  # ==================== Operations 运维 ====================
+  /api/tickets:
+    get:
+      tags:
+        - Operations
+      summary: 获取工单列表 / Get Tickets List
+      description: |
+        获取运维工单列表，支持分页和状态过滤
+        
+        Get operations tickets list with pagination and status filtering
+      operationId: getTickets
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: status
+          in: query
+          description: 工单状态过滤 / Filter by ticket status
+          schema:
+            type: string
+            enum: [OPEN, IN_PROGRESS, RESOLVED, CLOSED, CANCELLED]
+        - name: priority
+          in: query
+          description: 优先级过滤 / Filter by priority
+          schema:
+            type: string
+            enum: [LOW, MEDIUM, HIGH, CRITICAL]
+        - name: type
+          in: query
+          description: 工单类型过滤 / Filter by ticket type
+          schema:
+            type: string
+            enum: [HARDWARE_ISSUE, NETWORK_ISSUE, PERFORMANCE, MAINTENANCE, SUPPORT, OTHER]
+      responses:
+        '200':
+          description: 成功获取工单列表 / Successfully retrieved tickets list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          items:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Ticket'
+                          pagination:
+                            $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - Operations
+      summary: 创建工单 / Create Ticket
+      description: |
+        创建新的运维工单
+        
+        Create a new operations ticket
+      operationId: createTicket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - accountId
+                - type
+                - priority
+                - subject
+              properties:
+                accountId:
+                  type: string
+                  format: uuid
+                  description: 客户账户ID / Account ID
+                assetId:
+                  type: string
+                  format: uuid
+                  description: 关联资产ID / Associated asset ID
+                type:
+                  type: string
+                  enum: [HARDWARE_ISSUE, NETWORK_ISSUE, PERFORMANCE, MAINTENANCE, SUPPORT, OTHER]
+                  description: 工单类型 / Ticket type
+                  example: HARDWARE_ISSUE
+                priority:
+                  type: string
+                  enum: [LOW, MEDIUM, HIGH, CRITICAL]
+                  description: 优先级 / Priority
+                  example: HIGH
+                subject:
+                  type: string
+                  description: 工单主题 / Ticket subject
+                  example: Miner S19-001234 hashrate dropped
+                description:
+                  type: string
+                  description: 问题描述 / Issue description
+                  example: Hashrate dropped from 110TH/s to 85TH/s over the past 24 hours
+                assignedTo:
+                  type: string
+                  format: uuid
+                  description: 分配给技术人员ID / Assign to technician ID
+      responses:
+        '201':
+          description: 工单创建成功 / Ticket created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Ticket'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+# ==================== Components ====================
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT访问令牌，格式：Bearer <token>
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API密钥，用于系统间调用
+
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: 请求是否成功 / Request success status
+        message:
+          type: string
+          description: 响应消息 / Response message
+        timestamp:
+          type: string
+          format: date-time
+          description: 响应时间戳 / Response timestamp
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: 错误代码 / Error code
+            message:
+              type: string
+              description: 错误消息 / Error message
+            details:
+              type: array
+              description: 详细错误信息 / Detailed error information
+              items:
+                type: object
+        timestamp:
+          type: string
+          format: date-time
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: 当前页码 / Current page number
+        pageSize:
+          type: integer
+          description: 每页数量 / Items per page
+        total:
+          type: integer
+          description: 总记录数 / Total items
+        totalPages:
+          type: integer
+          description: 总页数 / Total pages
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        roleId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, SUSPENDED]
+        createdAt:
+          type: string
+          format: date-time
+
+    Lead:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        source:
+          type: string
+          enum: [WEBSITE, REFERRAL, EMAIL, PHONE, SOCIAL_MEDIA, TRADE_SHOW, PARTNER, OTHER]
+        company:
+          type: string
+        contactName:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        status:
+          type: string
+          enum: [NEW, CONTACTED, QUALIFIED, UNQUALIFIED, CONVERTED, LOST]
+        score:
+          type: integer
+        assignedTo:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Deal:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        leadId:
+          type: string
+          format: uuid
+        accountId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        value:
+          type: number
+          format: decimal
+        stage:
+          type: string
+          enum: [PROSPECTING, QUALIFICATION, PROPOSAL, NEGOTIATION, CLOSED_WON, CLOSED_LOST]
+        probability:
+          type: integer
+        expectedClose:
+          type: string
+          format: date
+        ownerId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Invoice:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        accountId:
+          type: string
+          format: uuid
+        contractId:
+          type: string
+          format: uuid
+        invoiceNumber:
+          type: string
+        issueDate:
+          type: string
+          format: date
+        dueDate:
+          type: string
+          format: date
+        totalAmount:
+          type: number
+          format: decimal
+        status:
+          type: string
+          enum: [DRAFT, SENT, PAID, OVERDUE, CANCELLED]
+        pdfUrl:
+          type: string
+          format: uri
+        lineItems:
+          type: array
+          items:
+            type: object
+            properties:
+              description:
+                type: string
+              quantity:
+                type: number
+                format: decimal
+              unitPrice:
+                type: number
+                format: decimal
+              amount:
+                type: number
+                format: decimal
+              type:
+                type: string
+                enum: [HOSTING_FEE, ELECTRICITY, MAINTENANCE, EQUIPMENT, OTHER]
+        createdAt:
+          type: string
+          format: date-time
+
+    Payment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        invoiceId:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          format: decimal
+        paymentDate:
+          type: string
+          format: date-time
+        method:
+          type: string
+          enum: [BANK_TRANSFER, CREDIT_CARD, CRYPTO, CHECK, OTHER]
+        reference:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, COMPLETED, FAILED, REFUNDED]
+        createdAt:
+          type: string
+          format: date-time
+
+    MinerAsset:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        accountId:
+          type: string
+          format: uuid
+        model:
+          type: string
+        serialNumber:
+          type: string
+        hashrate:
+          type: number
+          format: decimal
+        power:
+          type: number
+          format: decimal
+        status:
+          type: string
+          enum: [OPERATIONAL, MAINTENANCE, OFFLINE, RETIRED]
+        location:
+          type: string
+        purchasedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    Ticket:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        accountId:
+          type: string
+          format: uuid
+        assetId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [HARDWARE_ISSUE, NETWORK_ISSUE, PERFORMANCE, MAINTENANCE, SUPPORT, OTHER]
+        priority:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+        status:
+          type: string
+          enum: [OPEN, IN_PROGRESS, RESOLVED, CLOSED, CANCELLED]
+        subject:
+          type: string
+        description:
+          type: string
+        assignedTo:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        resolvedAt:
+          type: string
+          format: date-time
+
+  responses:
+    Unauthorized:
+      description: 未授权 / Unauthorized
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ErrorResponse'
+              - type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string
+                        example: Authentication required
+
+    NotFound:
+      description: 资源不存在 / Resource not found
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ErrorResponse'
+              - type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: NOT_FOUND
+                      message:
+                        type: string
+                        example: Resource not found
+
+    ValidationError:
+      description: 请求验证失败 / Request validation failed
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ErrorResponse'
+              - type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: VALIDATION_ERROR
+                      message:
+                        type: string
+                        example: Request validation failed
+                      details:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            field:
+                              type: string
+                            message:
+                              type: string

@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}交易详情 - Deal Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>交易详情 / Deal Details</h2>
+                <div>
+                    <a href="{{ url_for('broker.deals') }}" class="btn btn-secondary">
+                        返回交易列表 / Back to Deals
+                    </a>
+                    <a href="{{ url_for('broker.add_commission') }}" class="btn btn-primary">
+                        添加佣金记录 / Add Commission
+                    </a>
+                </div>
+            </div>
+
+            <!-- 交易基本信息 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">交易信息 / Deal Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="fw-bold">交易标题 / Title:</td>
+                                    <td>{{ deal.title }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">客户 / Customer:</td>
+                                    <td>
+                                        {% if deal.customer %}
+                                            <a href="{{ url_for('crm.customer_detail', customer_id=deal.customer.id) }}">
+                                                {{ deal.customer.company_name or deal.customer.name }}
+                                            </a>
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">交易金额 / Value:</td>
+                                    <td class="text-success fw-bold">${{ "%.2f"|format(deal.value) if deal.value else "0.00" }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">状态 / Status:</td>
+                                    <td>
+                                        <span class="badge {% if deal.status == 'COMPLETED' %}bg-success{% elif deal.status == 'SIGNED' %}bg-primary{% elif deal.status == 'NEGOTIATION' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                            {{ deal.status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">创建时间 / Created:</td>
+                                    <td>{{ deal.created_at.strftime('%Y-%m-%d %H:%M') if deal.created_at else 'N/A' }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="fw-bold">矿场名称 / Mining Farm:</td>
+                                    <td>{{ deal.mining_farm_name or 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">矿场位置 / Location:</td>
+                                    <td>{{ deal.mining_farm_location or 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">客户投资 / Client Investment:</td>
+                                    <td class="text-info fw-bold">${{ "%.2f"|format(deal.client_investment) if deal.client_investment else "0.00" }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">佣金类型 / Commission Type:</td>
+                                    <td>
+                                        {% if deal.commission_type == 'percentage' %}
+                                            利润抽成 / Profit Share ({{ deal.commission_rate }}%)
+                                        {% elif deal.commission_type == 'fixed' %}
+                                            固定费用 / Fixed Fee
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">月度利润预估 / Monthly Profit Est.:</td>
+                                    <td>${{ "%.2f"|format(deal.monthly_profit_estimate) if deal.monthly_profit_estimate else "0.00" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    {% if deal.description %}
+                    <div class="mt-3">
+                        <h6>描述 / Description:</h6>
+                        <p class="text-muted">{{ deal.description }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 佣金记录 -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">佣金记录 / Commission Records</h5>
+                </div>
+                <div class="card-body">
+                    {% if commission_records %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>记录月份 / Month</th>
+                                    <th>客户利润 / Client Profit</th>
+                                    <th>佣金金额 / Commission Amount</th>
+                                    <th>收款状态 / Payment Status</th>
+                                    <th>记录时间 / Record Date</th>
+                                    <th>备注 / Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in commission_records %}
+                                <tr>
+                                    <td>{{ record.record_month }}</td>
+                                    <td class="text-success">${{ "%.2f"|format(record.client_monthly_profit) }}</td>
+                                    <td class="fw-bold text-primary">${{ "%.2f"|format(record.commission_amount) }}</td>
+                                    <td>
+                                        {% if record.paid %}
+                                            <span class="badge bg-success">已收款 / Paid</span>
+                                            {% if record.paid_date %}
+                                                <br><small>{{ record.paid_date.strftime('%Y-%m-%d') }}</small>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-warning">待收款 / Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ record.record_date.strftime('%Y-%m-%d') if record.record_date else 'N/A' }}</td>
+                                    <td>{{ record.notes or 'N/A' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- 佣金汇总 -->
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h6>总佣金 / Total Commission</h6>
+                                    <h4>${{ "%.2f"|format(commission_records|sum(attribute='commission_amount')) }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h6>已收款 / Paid</h6>
+                                    <h4>${{ "%.2f"|format(commission_records|selectattr('paid')|sum(attribute='commission_amount')) }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body text-center">
+                                    <h6>待收款 / Pending</h6>
+                                    <h4>${{ "%.2f"|format(commission_records|rejectattr('paid')|sum(attribute='commission_amount')) }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-5">
+                        <p>此交易暂无佣金记录</p>
+                        <p>No commission records for this deal</p>
+                        <a href="{{ url_for('broker.add_commission') }}" class="btn btn-primary">
+                            添加佣金记录 / Add Commission Record
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

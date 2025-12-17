@@ -1,0 +1,141 @@
+{
+  "app": {
+    "name": "CRM Platform",
+    "welcome": "Welcome to CRM Platform"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "leads": "Leads",
+    "deals": "Deals",
+    "invoices": "Invoices",
+    "assets": "Assets",
+    "logout": "Logout"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "username": "Username",
+    "loginSuccess": "Login successful",
+    "loginError": "Login failed",
+    "logoutSuccess": "Logout successful"
+  },
+  "common": {
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "save": "Save",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "confirm": "Confirm",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "company": "Company",
+    "status": "Status",
+    "date": "Date",
+    "amount": "Amount",
+    "actions": "Actions",
+    "details": "Details",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "total": "Total",
+    "notes": "Notes"
+  },
+  "lead": {
+    "leads": "Leads",
+    "newLead": "New Lead",
+    "leadDetails": "Lead Details",
+    "source": "Source",
+    "score": "Score",
+    "convertToDeal": "Convert to Deal",
+    "leadConverted": "Lead converted to deal successfully",
+    "sources": {
+      "WEBSITE": "Website",
+      "REFERRAL": "Referral",
+      "PARTNER": "Partner",
+      "OTHER": "Other"
+    }
+  },
+  "deal": {
+    "deals": "Deals",
+    "newDeal": "New Deal",
+    "dealDetails": "Deal Details",
+    "pipeline": "Pipeline",
+    "stage": "Stage",
+    "probability": "Probability",
+    "value": "Value",
+    "expectedCloseDate": "Expected Close Date",
+    "generateContract": "Generate Contract",
+    "contractGenerated": "Contract generated successfully",
+    "stages": {
+      "PROSPECTING": "Prospecting",
+      "QUALIFIED": "Qualified",
+      "PROPOSAL": "Proposal",
+      "NEGOTIATION": "Negotiation",
+      "CLOSED_WON": "Closed Won",
+      "CLOSED_LOST": "Closed Lost"
+    }
+  },
+  "invoice": {
+    "invoices": "Invoices",
+    "newInvoice": "New Invoice",
+    "invoiceDetails": "Invoice Details",
+    "invoiceNumber": "Invoice Number",
+    "dueDate": "Due Date",
+    "issueDate": "Issue Date",
+    "recordPayment": "Record Payment",
+    "paymentRecorded": "Payment recorded successfully",
+    "agingReport": "Aging Report",
+    "statuses": {
+      "DRAFT": "Draft",
+      "SENT": "Sent",
+      "PARTIAL": "Partially Paid",
+      "PAID": "Paid",
+      "OVERDUE": "Overdue"
+    }
+  },
+  "payment": {
+    "payment": "Payment",
+    "paymentMethod": "Payment Method",
+    "paymentDate": "Payment Date",
+    "paymentAmount": "Payment Amount",
+    "methods": {
+      "CASH": "Cash",
+      "BANK_TRANSFER": "Bank Transfer",
+      "CREDIT_CARD": "Credit Card",
+      "CHECK": "Check"
+    }
+  },
+  "asset": {
+    "assets": "Assets",
+    "assetDetails": "Asset Details",
+    "serialNumber": "Serial Number",
+    "model": "Model",
+    "purchaseDate": "Purchase Date",
+    "warrantyExpiry": "Warranty Expiry"
+  },
+  "dashboard": {
+    "dashboard": "Dashboard",
+    "overview": "Overview",
+    "metrics": "Key Metrics",
+    "recentActivities": "Recent Activities",
+    "totalLeads": "Total Leads",
+    "activeDeals": "Active Deals",
+    "pendingInvoices": "Pending Invoices",
+    "totalAssets": "Total Assets"
+  },
+  "validation": {
+    "required": "This field is required",
+    "invalidEmail": "Invalid email address",
+    "minLength": "Minimum length is {{min}} characters",
+    "maxLength": "Maximum length is {{max}} characters"
+  }
+}

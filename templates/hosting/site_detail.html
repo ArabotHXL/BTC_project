@@ -1,0 +1,326 @@
+{% extends "hosting/hosting_base.html" %}
+
+{% block page_title %}{% if current_lang == 'en' %}Site Details{% else %}站点详情{% endif %} - {{ site.name }}{% endblock %}
+{% block page_subtitle %}{% if current_lang == 'en' %}Site management and monitoring{% else %}站点管理和监控{% endif %}{% endblock %}
+
+{% block header_actions %}
+{{ super() }}
+<div class="btn-group ms-3" role="group">
+    <a href="/hosting/host" class="btn btn-hosting-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>{% if current_lang == 'en' %}Back{% else %}返回{% endif %}
+    </a>
+    <a href="/hosting/host/devices?site={{ site.id }}" class="btn btn-hosting-primary btn-sm">
+        <i class="bi bi-cpu me-1"></i>{% if current_lang == 'en' %}Devices{% else %}设备管理{% endif %}
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<!-- 站点信息概览 -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="hosting-card">
+            <div class="hosting-card-header">
+                <h5 class="hosting-card-title">
+                    <i class="bi bi-info-circle me-2"></i>{% if current_lang == 'en' %}Site Information{% else %}站点信息{% endif %}
+                </h5>
+            </div>
+            <div class="hosting-card-body">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="info-section">
+                            <h6 class="text-warning mb-3">{% if current_lang == 'en' %}Basic Information{% else %}基本信息{% endif %}</h6>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="text-muted">{% if current_lang == 'en' %}Site Name{% else %}站点名称{% endif %}:</td>
+                                    <td><strong>{{ site.name }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">{% if current_lang == 'en' %}Location{% else %}位置{% endif %}:</td>
+                                    <td>{{ site.location }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">{% if current_lang == 'en' %}Status{% else %}状态{% endif %}:</td>
+                                    <td><span class="badge bg-{{ 'success' if site.status == 'active' else 'warning' }}">{{ site.status }}</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">{% if current_lang == 'en' %}Created{% else %}创建时间{% endif %}:</td>
+                                    <td>{{ site.created_at.strftime('%Y-%m-%d') if site.created_at else '-' }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-section">
+                            <h6 class="text-warning mb-3">{% if current_lang == 'en' %}Capacity Information{% else %}容量信息{% endif %}</h6>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="text-muted">{% if current_lang == 'en' %}Total Capacity{% else %}总容量{% endif %}:</td>
+                                    <td><strong>{{ site.capacity_mw }} MW</strong></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">{% if current_lang == 'en' %}Used Capacity{% else %}已用容量{% endif %}:</td>
+                                    <td>{{ site.used_capacity_mw }} MW</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">{% if current_lang == 'en' %}Available{% else %}可用容量{% endif %}:</td>
+                                    <td>{{ (site.capacity_mw - site.used_capacity_mw) | round(2) }} MW</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">{% if current_lang == 'en' %}Utilization{% else %}利用率{% endif %}:</td>
+                                    <td>
+                                        {% set utilization = ((site.used_capacity_mw / site.capacity_mw) * 100) if site.capacity_mw > 0 else 0 %}
+                                        <strong>{{ utilization | round(1) }}%</strong>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if site.description %}
+                <div class="mt-4">
+                    <h6 class="text-warning mb-2">{% if current_lang == 'en' %}Description{% else %}描述{% endif %}</h6>
+                    <p class="text-muted">{{ site.description }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="hosting-card">
+            <div class="hosting-card-header">
+                <h5 class="hosting-card-title">
+                    <i class="bi bi-graph-up me-2"></i>{% if current_lang == 'en' %}Quick Stats{% else %}快速统计{% endif %}
+                </h5>
+            </div>
+            <div class="hosting-card-body text-center">
+                <div class="mb-4">
+                    <div class="display-6 text-warning" id="device-count">--</div>
+                    <small class="text-muted">{% if current_lang == 'en' %}Total Devices{% else %}总设备数{% endif %}</small>
+                </div>
+                <div class="mb-4">
+                    <div class="display-6 text-warning" id="active-devices">--</div>
+                    <small class="text-muted">{% if current_lang == 'en' %}Active Devices{% else %}运行设备{% endif %}</small>
+                </div>
+                <div class="mb-4">
+                    <div class="display-6 text-warning" id="total-hashrate">--</div>
+                    <small class="text-muted">{% if current_lang == 'en' %}Total Hashrate{% else %}总算力{% endif %}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 容量利用率可视化 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-bar-chart me-2"></i>{% if current_lang == 'en' %}Capacity Utilization{% else %}容量利用率{% endif %}
+        </h5>
+    </div>
+    <div class="hosting-card-body">
+        <div class="row g-4">
+            <div class="col-md-8">
+                <div class="progress mb-3" style="height: 30px;">
+                    {% set utilization = ((site.used_capacity_mw / site.capacity_mw) * 100) if site.capacity_mw > 0 else 0 %}
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                         role="progressbar" 
+                         style="width: {{ utilization }}%; background: linear-gradient(135deg, #f7931e, #ffc107);" 
+                         aria-valuenow="{{ utilization }}" 
+                         aria-valuemin="0" 
+                         aria-valuemax="100">
+                        {{ utilization | round(1) }}%
+                    </div>
+                </div>
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="text-warning fw-bold">{{ site.used_capacity_mw }} MW</div>
+                        <small class="text-muted">{% if current_lang == 'en' %}Used{% else %}已使用{% endif %}</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-success fw-bold">{{ (site.capacity_mw - site.used_capacity_mw) | round(2) }} MW</div>
+                        <small class="text-muted">{% if current_lang == 'en' %}Available{% else %}可用{% endif %}</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-info fw-bold">{{ site.capacity_mw }} MW</div>
+                        <small class="text-muted">{% if current_lang == 'en' %}Total{% else %}总计{% endif %}</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <canvas id="capacityChart" width="150" height="150"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 设备列表预览 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-cpu me-2"></i>{% if current_lang == 'en' %}Recent Devices{% else %}最近设备{% endif %}
+        </h5>
+        <a href="/hosting/host/devices?site={{ site.id }}" class="btn btn-hosting-primary btn-sm">
+            <i class="bi bi-list me-1"></i>{% if current_lang == 'en' %}View All{% else %}查看全部{% endif %}
+        </a>
+    </div>
+    <div class="hosting-card-body">
+        <div class="hosting-table">
+            <table class="table table-hover" id="devices-preview-table">
+                <thead>
+                    <tr>
+                        <th>{% if current_lang == 'en' %}Serial Number{% else %}序列号{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Model{% else %}型号{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Customer{% else %}客户{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 数据通过JavaScript加载 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadSiteDetails();
+    initCapacityChart();
+});
+
+function loadSiteDetails() {
+    const siteId = {{ site.id }};
+    
+    // 加载站点统计数据
+    fetch(`/hosting/api/sites/${siteId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateSiteStats(data.site);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading site details:', error);
+        });
+    
+    // 加载设备预览
+    fetch(`/hosting/api/miners?site_id=${siteId}&page=1&per_page=5`)
+        .then(response => response.json())
+        .then(data => {
+            displayDevicesPreview(data.miners);
+        })
+        .catch(error => {
+            console.error('Error loading devices preview:', error);
+        });
+}
+
+function updateSiteStats(site) {
+    document.getElementById('device-count').textContent = site.device_count || 0;
+    document.getElementById('active-devices').textContent = site.active_devices || 0;
+    document.getElementById('total-hashrate').textContent = (site.total_hashrate || 0) + ' TH/s';
+}
+
+function displayDevicesPreview(devices) {
+    const tbody = document.querySelector('#devices-preview-table tbody');
+    tbody.innerHTML = '';
+    
+    if (devices.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center text-muted py-4">
+                    <i class="bi bi-inbox fs-1 mb-2 d-block"></i>
+                    ${getLanguage() === 'en' ? 'No devices found' : '暂无设备'}
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    devices.forEach(device => {
+        const row = `
+            <tr>
+                <td><strong>${device.serial_number}</strong></td>
+                <td>${device.miner_model}</td>
+                <td>${device.customer_email || '-'}</td>
+                <td>${device.hashrate || '-'} TH/s</td>
+                <td><span class="badge bg-${getStatusColor(device.status)}">${getStatusText(device.status)}</span></td>
+            </tr>
+        `;
+        tbody.insertAdjacentHTML('beforeend', row);
+    });
+}
+
+function initCapacityChart() {
+    const ctx = document.getElementById('capacityChart').getContext('2d');
+    const used = {{ site.used_capacity_mw }};
+    const available = {{ (site.capacity_mw - site.used_capacity_mw) | round(2) }};
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: [
+                '{% if current_lang == "en" %}Used{% else %}已使用{% endif %}',
+                '{% if current_lang == "en" %}Available{% else %}可用{% endif %}'
+            ],
+            datasets: [{
+                data: [used, available],
+                backgroundColor: [
+                    'rgba(247, 147, 30, 0.8)',
+                    'rgba(108, 117, 125, 0.3)'
+                ],
+                borderColor: [
+                    '#f7931e',
+                    '#6c757d'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+}
+
+function getStatusColor(status) {
+    const colorMap = {
+        'active': 'success',
+        'offline': 'danger',
+        'maintenance': 'warning',
+        'error': 'danger'
+    };
+    return colorMap[status] || 'secondary';
+}
+
+function getStatusText(status) {
+    const language = getLanguage();
+    const statusMap = {
+        'active': language === 'en' ? 'Running' : '运行中',
+        'offline': language === 'en' ? 'Offline' : '离线',
+        'maintenance': language === 'en' ? 'Maintenance' : '维护中',
+        'error': language === 'en' ? 'Error' : '故障'
+    };
+    return statusMap[status] || status;
+}
+
+function getLanguage() {
+    return document.querySelector('meta[name="language"]').content;
+}
+</script>
+{% endblock %}

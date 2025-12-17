@@ -1,0 +1,2315 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {{ t('batch_mining_calculator') }} - BTC Mining Calculator
+{% endblock %}
+
+{% block header_title %}
+    {{ t('batch_mining_calculator') }}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Batch Calculator Styles - 响应式自适应 */
+.batch-calculator-container {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0.5rem;
+}
+
+/* 响应式布局优化 */
+@media (min-width: 1200px) {
+    .batch-calculator-container {
+        max-width: 1400px;
+    }
+}
+
+@media (min-width: 992px) and (max-width: 1199px) {
+    .batch-calculator-container {
+        max-width: 100%;
+        padding: 1rem;
+    }
+}
+
+/* 表格响应式优化 - 确保所有列完全显示 */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    min-width: 100%;
+}
+
+/* 表格最小宽度确保所有列显示完全 */
+#minersTable {
+    min-width: 1000px; /* 确保表格有足够宽度显示所有列 */
+    width: 100%;
+}
+
+/* 表格列最小宽度 */
+#minersTable th,
+#minersTable td {
+    white-space: nowrap; /* 防止文字换行 */
+    min-width: fit-content;
+}
+
+/* 具体列宽调整 */
+#minersTable th:nth-child(1), #minersTable td:nth-child(1) { min-width: 50px; }  /* # */
+#minersTable th:nth-child(2), #minersTable td:nth-child(2) { min-width: 180px; } /* Model */
+#minersTable th:nth-child(3), #minersTable td:nth-child(3) { min-width: 70px; }  /* Qty */
+#minersTable th:nth-child(4), #minersTable td:nth-child(4) { min-width: 90px; }  /* Power */
+#minersTable th:nth-child(5), #minersTable td:nth-child(5) { min-width: 90px; }  /* Price */
+#minersTable th:nth-child(6), #minersTable td:nth-child(6) { min-width: 80px; }  /* Electric */
+#minersTable th:nth-child(7), #minersTable td:nth-child(7) { min-width: 90px; }  /* Hashrate */
+#minersTable th:nth-child(8), #minersTable td:nth-child(8) { min-width: 80px; }  /* Decay */
+#minersTable th:nth-child(9), #minersTable td:nth-child(9) { min-width: 60px; }  /* Actions */
+
+/* 表格内输入框和选择框优化 */
+#minersTable select.form-select-sm,
+#minersTable input.form-control-sm {
+    min-width: 100%;
+    width: 100%;
+    font-size: 0.85rem;
+}
+
+/* 确保表格容器有足够宽度 */
+.card-body {
+    overflow-x: visible;
+}
+
+/* 为Miners Configuration卡片增加最小宽度 */
+.col-xl-8 .card {
+    min-width: 0; /* 允许shrink */
+}
+
+/* 卡片头部布局优化 */
+.card-header h5 {
+    font-weight: 600;
+    color: #fff;
+}
+
+.card-header .badge {
+    font-size: 0.85rem;
+    padding: 0.5rem 0.75rem;
+}
+
+/* 统计信息区域 */
+.card-header .progress {
+    border-radius: 4px;
+    background-color: rgba(255,255,255,0.1);
+}
+
+/* 改进卡片头部按钮间距 */
+.card-header .btn {
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.card-header .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* 响应式布局改进 */
+@media (max-width: 991px) {
+    .card-header .d-flex.gap-3 {
+        flex-direction: column;
+        align-items: stretch !important;
+    }
+    
+    .card-header .d-flex.gap-2 {
+        justify-content: center;
+        margin-top: 0.5rem;
+    }
+}
+
+.miner-card {
+    background: #1a1a1a;
+    border: 2px solid #333;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.miner-card:hover {
+    border-color: #ffc107;
+    box-shadow: 0 5px 15px rgba(255, 193, 7, 0.2);
+}
+
+.calculation-results {
+    background: #1a1a1a;
+    border: 2px solid #333;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+.result-summary {
+    background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);
+    color: #000;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.quota-display {
+    background: rgba(255, 193, 7, 0.08);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    border-radius: 8px;    
+    padding: 0.6rem 0.5rem;    
+    box-shadow: 0 1px 4px rgba(255, 193, 7, 0.1);
+}
+    
+.quota-bar {
+    background: #333;
+    border-radius: 4px;
+    height: 8px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+}
+
+.quota-fill {
+    background: linear-gradient(90deg, #ffc107, #ff8c00);
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.quota-counter {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.quota-counter .fw-bold {
+    font-size: 1rem;
+}
+
+.remaining-display {
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+/* 语言切换按钮改进 */
+.language-switcher {
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.language-btn {
+    border: none !important;
+    background: transparent;
+    color: #ffc107;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.language-btn:hover {
+    background: rgba(255, 193, 7, 0.2);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.language-btn.active {
+    background: #ffc107;
+    color: #212529;
+    font-weight: 600;
+}
+
+/* 计算按钮增强 */
+#calculateBtn {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border: none;
+    border-radius: 12px;
+    padding: 1rem 2rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+#calculateBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+    background: linear-gradient(135deg, #218838 0%, #1ea87a 100%);
+}
+
+#calculateBtn:disabled {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    transform: none;
+    box-shadow: none;
+}
+
+/* 操作按钮组改进 */
+.btn-outline-primary {
+    border: 2px solid #007bff;
+    color: #007bff;
+    background: transparent;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-primary:hover {
+    background: #007bff;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.btn-outline-secondary {
+    border: 2px solid #6c757d;
+    color: #6c757d;
+    background: transparent;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-secondary:hover {
+    background: #6c757d;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+/* 导出按钮改进 */
+.btn-outline-success {
+    border: 2px solid #28a745;
+    color: #28a745;
+    background: transparent;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-success:hover {
+    background: #28a745;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.btn-outline-danger {
+    border: 2px solid #dc3545;
+    color: #dc3545;
+    background: transparent;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-danger:hover {
+    background: #dc3545;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+/* 返回主页按钮改进 */
+.btn-outline-light {
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-light:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.8);
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+}
+
+/* 移动端响应式优化 */
+@media (max-width: 768px) {
+    .batch-calculator-container {
+        padding: 0.5rem;
+    }
+    
+    .miner-card {
+        padding: 1rem;
+    }
+    
+    /* 移动端布局调整 */
+    .row > .col-md-8,
+    .row > .col-md-4 {
+        margin-bottom: 1rem;
+    }
+    
+    /* 表格在移动端的优化 */
+    .table th, .table td {
+        padding: 0.4rem 0.3rem;
+        font-size: 0.8rem;
+    }
+    
+    /* 移动端表格最小宽度调整 */
+    #minersTable {
+        min-width: 800px; /* 移动端稍微减少但仍确保列完全显示 */
+    }
+    
+    /* 移动端输入框优化 */
+    .form-control-sm {
+        font-size: 0.8rem;
+        padding: 0.2rem 0.4rem;
+    }
+    
+    /* 移动端表格响应式水平滚动提示 */
+    .table-responsive::after {
+        content: "← 向左滑动查看更多列 →";
+        display: block;
+        text-align: center;
+        color: #6c757d;
+        font-size: 0.75rem;
+        padding: 0.5rem;
+        background: rgba(108, 117, 125, 0.1);
+        border-radius: 0 0 0.375rem 0.375rem;
+    }
+    }
+    
+    /* 移动端按钮组优化 */
+    .btn-group {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn-group .btn {
+        margin-bottom: 0.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    /* 超小屏幕优化 */
+    .batch-calculator-container {
+        padding: 0.25rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.8rem;
+    }
+    
+    .btn {
+        font-size: 0.85rem;
+        padding: 0.375rem 0.75rem;
+    }
+}
+
+/* 新导航栏样式增强 */
+.navbar .btn-light:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    background: rgba(255,255,255,1) !important;
+}
+
+.navbar .dropdown-toggle:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.navbar .dropdown-menu {
+    animation: fadeInUp 0.3s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-item:hover {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+    color: white !important;
+    transform: translateX(5px);
+    transition: all 0.2s ease;
+}
+
+.dropdown-item.active {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+}
+
+/* 响应式导航优化 */
+@media (max-width: 991px) {
+    .navbar .container-fluid {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .navbar-brand, .navbar-nav {
+        justify-content: center;
+    }
+    
+    .navbar h4 {
+        font-size: 1.2rem;
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="batch-calculator-container">
+    <!-- 新版本导航栏 -->
+    <nav class="navbar navbar-expand-lg mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; padding: 1rem 1.5rem;">
+        <div class="container-fluid">
+            <!-- 左侧：返回主页按钮 -->
+            <div class="navbar-brand mb-0">
+                <a href="{{ url_for('index') }}" class="btn btn-light btn-lg shadow-sm d-flex align-items-center text-decoration-none" 
+                   style="border-radius: 12px; padding: 0.75rem 1.5rem; transition: all 0.3s ease; background: rgba(255,255,255,0.95);">
+                    <i class="bi bi-house-door-fill me-2 text-primary" style="font-size: 1.2rem;"></i>
+                    <span class="fw-bold text-dark" data-i18n="home">{{ t('home') }}</span>
+                </a>
+            </div>
+            
+            <!-- 中间：页面标题和快速导航 -->
+            <div class="navbar-nav mx-auto d-flex flex-row gap-3">
+                <div class="d-flex align-items-center">
+                    <h4 class="mb-0 text-white fw-bold d-flex align-items-center me-4">
+                        <i class="bi bi-calculator me-2"></i>
+                        <span data-i18n="batch_mining_calculator">{{ t('batch_mining_calculator') }}</span>
+                    </h4>
+                    <!-- 快速导航到单机计算器 -->
+                    <a href="/mining-calculator" class="btn btn-outline-light btn-sm d-flex align-items-center"
+                       style="border-radius: 8px; padding: 0.5rem 1rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3);">
+                        <i class="bi bi-cpu me-2"></i>
+                        <span data-i18n="single_mode">{{ t('single_mode') }}</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- 右侧：语言切换系统 -->
+            <div class="navbar-nav">
+                <div class="btn-group shadow-sm" role="group">
+                    <button type="button" class="btn btn-light dropdown-toggle d-flex align-items-center" 
+                            data-bs-toggle="dropdown" aria-expanded="false"
+                            style="border-radius: 12px; padding: 0.75rem 1.25rem; background: rgba(255,255,255,0.95); border: none;">
+                        <i class="bi bi-globe me-2 text-primary"></i>
+                        <span class="fw-semibold text-dark" data-i18n="language">{{ t('language') }}</span>
+                        <span class="ms-2 badge bg-primary">{{ 'CN' if current_lang == 'zh' else 'EN' }}</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg" style="border-radius: 12px; border: none; min-width: 180px;">
+                        <li>
+                            <button type="button" data-lang-switch="zh" data-lang="zh"
+                                    class="dropdown-item d-flex align-items-center py-2 {{ 'active bg-primary text-white' if current_lang == 'zh' else '' }}"
+                                    style="border-radius: 8px; margin: 4px; border: none; background: transparent; width: calc(100% - 8px); text-align: left;">
+                                <i class="bi bi-translate me-3"></i>
+                                <span class="fw-semibold">中文 (简体)</span>
+                                {% if current_lang == 'zh' %}<i class="bi bi-check-lg ms-auto"></i>{% endif %}
+                            </button>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <button type="button" data-lang-switch="en" data-lang="en"
+                                    class="dropdown-item d-flex align-items-center py-2 {{ 'active bg-primary text-white' if current_lang == 'en' else '' }}"
+                                    style="border-radius: 8px; margin: 4px; border: none; background: transparent; width: calc(100% - 8px); text-align: left;">
+                                <i class="bi bi-globe-americas me-3"></i>
+                                <span class="fw-semibold">English</span>
+                                {% if current_lang == 'en' %}<i class="bi bi-check-lg ms-auto"></i>{% endif %}
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- 描述和说明区域 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info border-0 shadow-sm" style="background: linear-gradient(135deg, rgba(13, 110, 253, 0.1) 0%, rgba(13, 202, 240, 0.1) 100%); border-radius: 12px;">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-info-circle text-info me-3" style="font-size: 1.5rem;"></i>
+                    <div>
+                        <h6 class="alert-heading mb-1 text-info fw-bold" data-i18n="batch_calculation">{{ t('batch_calculation') }}</h6>
+                        <p class="mb-0 text-muted" data-i18n="batch_calc_description">{{ t('batch_calc_description') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <!-- Batch Input Section -->
+        <!-- Global Settings and Network Status -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-gear me-2"></i>
+                            <span data-i18n="global_settings">{{ t('global_settings') }}</span>
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label" data-i18n="btc_price">{{ t('btc_price') }}</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="globalBtcPrice" 
+                                           value="116000" min="1000" max="1000000">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" data-i18n="use_realtime_data">{{ t('use_realtime_data') }}</label>
+                                <div class="form-check form-switch mt-2">
+                                    <input class="form-check-input" type="checkbox" id="useRealTimeData" checked onchange="handleRealtimeToggle()">
+                                    <label class="form-check-label" for="useRealTimeData" data-i18n="auto_update_prices">{{ t('auto_update_prices') }}</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Network Status -->
+                        <div class="mt-4 pt-3 border-top">
+                            <h6 class="text-muted mb-3">
+                                <i class="bi bi-globe2 me-2"></i>
+                                <span data-i18n="network_status">{{ t('network_status') }}</span>
+                                <span id="dataUpdateTime" class="small text-success ms-2"></span>
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-3 col-6">
+                                    <div class="text-center p-2 bg-dark rounded">
+                                        <div class="small text-muted" data-i18n="btc_price">{{ t('btc_price') }}</div>
+                                        <div class="fw-bold text-warning" id="currentBtcPrice">$116,644</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="text-center p-2 bg-dark rounded">
+                                        <div class="small text-muted" data-i18n="difficulty">{{ t('difficulty') }}</div>
+                                        <div class="fw-bold text-info" id="currentDifficulty">129.4T</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="text-center p-2 bg-dark rounded">
+                                        <div class="small text-muted" data-i18n="hashrate">{{ t('hashrate') }}</div>
+                                        <div class="fw-bold text-primary" id="currentHashrate">752.81 EH/s</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="text-center p-2 bg-dark rounded">
+                                        <div class="small text-muted" data-i18n="block_reward">{{ t('block_reward') }}</div>
+                                        <div class="fw-bold text-success" id="currentBlockReward">3.125 BTC</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <!-- Calculate Button -->
+                <div class="text-center mb-3">
+                    <button class="btn btn-primary btn-lg" onclick="calculateBatchProfitability()" id="calculateBtn">
+                        <i class="bi bi-calculator me-2"></i>
+                        <span data-i18n="calculate_batch_profitability">{{ t('calculate_batch_profitability') }}</span>
+                    </button>
+                </div>
+                
+                <!-- Export Options -->
+                <div class="card" id="exportCard" style="display: none;">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-download me-2"></i>
+                            <span data-i18n="export_results">{{ t('export_results') }}</span>
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-success btn-sm" onclick="exportToCSV()">
+                                <i class="bi bi-file-earmark-spreadsheet me-1"></i>
+                                <span data-i18n="export_csv">{{ t('export_csv') }}</span>
+                            </button>
+                            {% if user_plan.id != 'free' %}
+                            <button class="btn btn-outline-primary btn-sm" onclick="exportToExcel()">
+                                <i class="bi bi-file-earmark-excel me-1"></i>
+                                <span data-i18n="export_excel">{{ t('export_excel') }}</span>
+                            </button>
+                            {% endif %}
+                            {% if user_plan.allow_advanced_analytics %}
+                            <button class="btn btn-outline-danger btn-sm" onclick="exportToPDF()">
+                                <i class="bi bi-file-earmark-pdf me-1"></i>
+                                <span data-i18n="export_pdf_report">{{ t('export_pdf_report') }}</span>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-xl-8 col-lg-7">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start gap-3">
+                            <!-- 标题和按钮组 -->
+                            <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3 w-100">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-table me-2 text-warning"></i>
+                                    <span data-i18n="miners_configuration">{{ t('miners_configuration') }}</span>
+                                </h5>
+                                
+                                <!-- 操作按钮组 -->
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="addMinerRow()">
+                                        <i class="bi bi-plus-circle me-1"></i>
+                                        <span data-i18n="add_miner">{{ t('add_miner') }}</span>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearAllMiners()">
+                                        <i class="bi bi-trash me-1"></i>
+                                        <span data-i18n="clear_all">{{ t('clear_all') }}</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- 统计信息 -->
+                            <div class="d-flex align-items-center gap-3 text-nowrap">
+                                <div class="badge bg-primary">
+                                    <span data-i18n="miners_label">{{ t('miners_label') }}</span>
+                                    <span id="currentCount">0</span>/<span>{{ user_plan.max_miners }}</span>
+                                </div>
+                                <div class="progress" style="width: 100px; height: 8px;">
+                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 0%" id="quotaProgress"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- CSV Upload Section -->
+                        <div class="mb-4">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">
+                                        <i class="bi bi-file-earmark-spreadsheet me-1"></i>
+                                        <span data-i18n="upload_csv_file">{{ t('upload_csv_file') }}</span>
+                                    </label>
+                                    <div class="input-group mb-2">
+                                        <input type="file" class="form-control" id="csvFile" accept=".csv" onchange="processCsvFile(event)">
+                                        <button class="btn btn-outline-success" type="button" onclick="downloadTemplate()">
+                                            <i class="bi bi-download me-1"></i>
+                                            <span data-i18n="template">{{ t('template') }}</span>
+                                        </button>
+                                    </div>
+                                    <div class="form-text" data-i18n="csv_format_help">{{ t('csv_format_help') }}</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" data-i18n="sample_csv">{{ t('sample_csv') }}</label>
+                                    <div class="bg-dark p-2 rounded small">
+                                        <code style="font-size: 0.85rem;">
+                                            Model,Quantity,Power,Price,Electricity,Hashrate,DecayRate<br>
+                                            Antminer S19 Pro,10,3250,2500,0.08,110,0.5
+                                        </code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Miners Table -->
+                        <div class="table-responsive">
+                            <table class="table table-dark table-striped" id="minersTable">
+                                <thead>
+                                    <tr>
+                                        <th class="text-center" data-i18n="row_number">{{ t('row_number') }}</th>
+                                        <th data-i18n="model">{{ t('model') }}</th>
+                                        <th class="text-center" data-i18n="qty">{{ t('qty') }}</th>
+                                        <th class="text-center" data-i18n="power_w">{{ t('power_w') }}</th>
+                                        <th class="text-center" data-i18n="price_usd">{{ t('price_usd') }}</th>
+                                        <th class="text-center" data-i18n="electric">{{ t('electric') }}</th>
+                                        <th class="text-center" data-i18n="hashrate">{{ t('hashrate') }}</th>
+                                        <th class="text-center" data-i18n="decay">{{ t('decay') }}</th>
+                                        <th class="text-center">
+                                            <i class="bi bi-gear"></i>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="minersTableBody">
+                                    <!-- Miner rows will be added here -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Add first row button when table is empty -->
+                        <div id="emptyState" class="text-center py-4">
+                            <i class="bi bi-table text-muted" style="font-size: 3rem;"></i>
+                            <p class="text-muted mt-2" data-i18n="no_miners_configured">{{ t('no_miners_configured') }}</p>
+                            <button class="btn btn-primary" onclick="addMinerRow()">
+                                <i class="bi bi-plus-circle me-2"></i>
+                                <span data-i18n="add_first_miner">{{ t('add_first_miner') }}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="col-xl-4 col-lg-5">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-bar-chart me-2"></i>
+                            <span data-i18n="batch_results">{{ t('batch_results') }}</span>
+                        </h6>
+                    </div>
+                    <div class="card-body" id="resultsSection">
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-calculator" style="font-size: 2rem;"></i>
+                            <p class="mt-2" data-i18n="configure_and_calculate">{{ t('configure_and_calculate') }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upgrade Modal -->
+    <div class="modal fade" id="upgradeModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-star me-2"></i>
+                        <span data-i18n="upgrade_required">{{ t('upgrade_required') }}</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center">
+                        <i class="bi bi-exclamation-circle text-warning" style="font-size: 3rem;"></i>
+                        <h6 class="mt-3" data-i18n="quota_exceeded">{{ t('quota_exceeded') }}</h6>
+                        <p class="text-muted" id="upgradeMessage"></p>
+                        
+                        <!-- One-time bypass option for Basic+ users -->
+                        {% if user_plan.id != 'free' %}
+                        <div class="alert alert-info">
+                            <i class="bi bi-gift me-2"></i>
+                            <strong data-i18n="one_time_bypass_available">{{ t('one_time_bypass_available') }}</strong>
+                            <p class="mb-0 small" data-i18n="one_time_bypass_description">{{ t('one_time_bypass_description') }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    {% if user_plan.id != 'free' %}
+                    <button type="button" class="btn btn-outline-secondary" onclick="useBypassOnce()">
+                        <i class="bi bi-shield-check me-1"></i>
+                        <span data-i18n="use_one_time_bypass">{{ t('use_one_time_bypass') }}</span>
+                    </button>
+                    {% endif %}
+                    <a href="#" onclick="alert('订阅计划功能暂时维护中')" class="btn btn-primary">
+                        <i class="bi bi-arrow-up-circle me-1"></i>
+                        <span data-i18n="upgrade_plan">{{ t('upgrade_plan') }}</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Available miner models with specifications (从数据库动态加载)
+        const minerModels = {{ miner_models|tojson|safe }};
+
+        let minerRowCount = 0;
+        let calculationResults = [];
+        let calculationSummary = {};
+        const maxMiners = {{ user_plan.max_miners }};
+        let bypassUsed = false;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            updateQuotaDisplay();
+            updateEmptyState();
+            
+            // Load network data immediately and update price if real-time is enabled
+            loadNetworkData().then(() => {
+                // Ensure price is updated on initial load
+                const useRealtime = document.getElementById('useRealTimeData');
+                if (useRealtime && useRealtime.checked && networkDataCache && networkDataCache.btc_price) {
+                    document.getElementById('globalBtcPrice').value = Math.round(networkDataCache.btc_price);
+                }
+            });
+            
+            // Auto-refresh network data every 30 seconds if real-time is enabled
+            setInterval(() => {
+                const useRealtime = document.getElementById('useRealTimeData');
+                if (useRealtime && useRealtime.checked) {
+                    loadNetworkData();
+                }
+            }, 30000);
+        });
+
+        // Update quota display in the header
+        function updateQuotaDisplay() {
+            const currentCountEl = document.getElementById('currentCount');
+            const progressBarEl = document.getElementById('quotaProgress');
+            
+            if (currentCountEl) {
+                currentCountEl.textContent = '0';
+            }
+            
+            if (progressBarEl) {
+                progressBarEl.style.width = '0%';
+                progressBarEl.className = 'progress-bar bg-primary';
+            }
+        }
+
+        function addMinerRow() {
+            const tbody = document.getElementById('minersTableBody');
+            const rowId = `miner-row-${++minerRowCount}`;
+            
+            const row = document.createElement('tr');
+            row.id = rowId;
+            row.innerHTML = `
+                <td class="text-center">
+                    <span class="badge bg-secondary auto-number" data-number="${minerRowCount}">${minerRowCount}</span>
+                </td>
+                <td>
+                    <select class="form-select form-select-sm" onchange="updateMinerSpecs(this, '${rowId}')">
+                        <option value="">{% if current_lang == 'en' %}Select Model{% else %}选择型号{% endif %}</option>
+                        ${Object.keys(minerModels).map(model => 
+                            `<option value="${model}">${model}</option>`
+                        ).join('')}
+                    </select>
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm" 
+                           min="1" max="1000" value="1" onchange="updateTotalCount()">
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm" 
+                           min="100" max="10000" placeholder="3250" step="10">
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm" 
+                           min="100" max="20000" placeholder="2500" step="100">
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm" 
+                           min="0.01" max="1" value="0.08" step="0.001">
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm" 
+                           min="1" max="500" placeholder="110" step="1" title="{% if current_lang == 'en' %}Custom hashrate (TH/s){% else %}自定义算力(TH/s){% endif %}">
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm" 
+                           min="0" max="5" value="0" step="0.1" placeholder="0.5">
+                </td>
+                <td>
+                    <button class="btn btn-outline-danger btn-sm" onclick="removeMinerRow('${rowId}')">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+            updateEmptyState();
+            updateTotalCount();
+        }
+
+        function removeMinerRow(rowId) {
+            document.getElementById(rowId).remove();
+            reorderMinerNumbers();
+            updateEmptyState();
+            updateTotalCount();
+            // 删除行后触发自动保存
+            autoSaveUserMiners();
+        }
+        
+        function reorderMinerNumbers() {
+            const rows = document.querySelectorAll('#minersTableBody tr');
+            rows.forEach((row, index) => {
+                const numberBadge = row.querySelector('.auto-number');
+                if (numberBadge) {
+                    const newNumber = index + 1;
+                    numberBadge.textContent = newNumber;
+                    numberBadge.setAttribute('data-number', newNumber);
+                }
+            });
+        }
+
+        function updateMinerSpecs(selectElement, rowId) {
+            const selectedModel = selectElement.value;
+            if (selectedModel && minerModels[selectedModel]) {
+                const row = document.getElementById(rowId);
+                const powerInput = row.querySelector('td:nth-child(4) input');
+                const priceInput = row.querySelector('td:nth-child(5) input');
+                const hashrateInput = row.querySelector('td:nth-child(7) input');
+                
+                if (powerInput) {
+                    powerInput.value = minerModels[selectedModel].power;
+                }
+                if (priceInput) {
+                    priceInput.value = minerModels[selectedModel].price;
+                }
+                if (hashrateInput) {
+                    hashrateInput.value = minerModels[selectedModel].hashrate;
+                }
+                
+                // 更新矿机规格后触发自动保存
+                autoSaveUserMiners();
+            }
+        }
+
+        function updateTotalCount() {
+            let totalMiners = 0;
+            
+            // 只从当前表格DOM计算实际显示的矿机数
+            const rows = document.querySelectorAll('#minersTableBody tr');
+            rows.forEach(row => {
+                const quantityInput = row.querySelector('td:nth-child(3) input');
+                if (quantityInput && quantityInput.value) {
+                    totalMiners += parseInt(quantityInput.value) || 0;
+                }
+            });
+            console.log('从DOM计算当前表格总矿机数:', totalMiners);
+            
+            // Update quota display
+            const currentCountSpan = document.getElementById('currentCount');
+            const progressBar = document.getElementById('quotaProgress');
+            
+            if (currentCountSpan && progressBar) {
+                currentCountSpan.textContent = totalMiners.toLocaleString();
+                
+                const progressPercent = Math.min((totalMiners / maxMiners) * 100, 100);
+                progressBar.style.width = progressPercent + '%';
+                
+                // Update progress bar color based on usage
+                if (progressPercent >= 100) {
+                    progressBar.className = 'progress-bar bg-danger';
+                } else if (progressPercent >= 80) {
+                    progressBar.className = 'progress-bar bg-warning';
+                } else {
+                    progressBar.className = 'progress-bar bg-success';
+                }
+            }
+            
+            // Update calculate button state
+            updateCalculateButton(totalMiners);
+            
+            // 触发自动保存
+            autoSaveUserMiners();
+        }
+
+        function updateCalculateButton(totalMiners) {
+            const calculateBtn = document.getElementById('calculateBtn');
+            if (calculateBtn) {
+                if (totalMiners > maxMiners && !bypassUsed) {
+                    calculateBtn.disabled = true;
+                    calculateBtn.innerHTML = '<i class="bi bi-lock me-2"></i>{% if current_lang == "en" %}Upgrade Required{% else %}需要升级{% endif %}';
+                } else {
+                    calculateBtn.disabled = false;
+                    calculateBtn.innerHTML = '<i class="bi bi-calculator me-2"></i>{% if current_lang == "en" %}Calculate Batch Profitability{% else %}计算批量收益{% endif %}';
+                }
+            }
+        }
+
+        function updateEmptyState() {
+            const tbody = document.getElementById('minersTableBody');
+            const emptyState = document.getElementById('emptyState');
+            const table = document.getElementById('minersTable');
+            
+            if (tbody && tbody.children.length === 0) {
+                if (emptyState) emptyState.style.display = 'block';
+                if (table) table.style.display = 'none';
+            } else {
+                if (emptyState) emptyState.style.display = 'none';  
+                if (table) table.style.display = 'table';
+            }
+        }
+
+        function clearAllMiners() {
+            if (confirm('{% if current_lang == "en" %}Are you sure you want to clear all miners and uploaded files?{% else %}确定要清空所有矿机和已上传文件吗？{% endif %}')) {
+                // 清空表格数据
+                document.getElementById('minersTableBody').innerHTML = '';
+                minerRowCount = 0;
+                
+                // 清空CSV文件输入
+                const csvFileInput = document.getElementById('csvFile');
+                if (csvFileInput) {
+                    csvFileInput.value = '';
+                }
+                
+                // 清空CSV数据缓存
+                window.allMinersData = [];
+                
+                // 更新界面状态
+                updateEmptyState();
+                updateTotalCount();
+                hideResults();
+                
+                // 清空所有数据后触发自动保存（保存空状态）
+                autoSaveUserMiners();
+                
+                console.log('已清空所有矿机数据和上传文件');
+            }
+        }
+
+        function calculateBatchProfitability() {
+            // 防止重复点击
+            const calculateBtn = document.getElementById('calculateBtn');
+            if (calculateBtn.disabled) {
+                console.log('按钮已禁用，忽略点击');
+                return;
+            }
+            
+            const miners = collectMinerData();
+            
+            console.log('收集到的矿机数据:', miners.length, '个');
+            
+            if (miners.length === 0) {
+                alert('{% if current_lang == "en" %}Please add at least one miner before calculating.{% else %}请至少添加一台矿机再进行计算。{% endif %}');
+                // 恢复按钮状态
+                calculateBtn.disabled = false;
+                calculateBtn.innerHTML = '<i class="bi bi-calculator me-2"></i>{% if current_lang == "en" %}Calculate Batch Profitability{% else %}计算批量收益{% endif %}';
+                return;
+            }
+            
+            // 临时禁用按钮防止重复点击
+            calculateBtn.disabled = true;
+            calculateBtn.innerHTML = '<i class="bi bi-clock me-2"></i>{% if current_lang == "en" %}Calculating...{% else %}计算中...{% endif %}';
+            
+            // 2秒后恢复按钮（防止卡住）
+            setTimeout(() => {
+                if (calculateBtn.disabled) {
+                    calculateBtn.disabled = false;
+                    calculateBtn.innerHTML = '<i class="bi bi-calculator me-2"></i>{% if current_lang == "en" %}Calculate Batch Profitability{% else %}计算批量收益{% endif %}';
+                }
+            }, 2000);
+
+            // 使用与显示计数器相同的逻辑来计算总矿机数
+            let totalMinersForQuota = 0;
+            const domRows = document.querySelectorAll('#minersTableBody tr');
+            domRows.forEach(row => {
+                const quantityInput = row.querySelector('td:nth-child(3) input');
+                if (quantityInput && quantityInput.value) {
+                    totalMinersForQuota += parseInt(quantityInput.value) || 0;
+                }
+            });
+            
+            console.log('配额检查使用的矿机数:', totalMinersForQuota);
+            
+            // Check quota limits
+            if (totalMinersForQuota > maxMiners && !bypassUsed) {
+                showUpgradeModal(totalMinersForQuota);
+                return;
+            }
+
+            // Show loading state
+            showLoadingResults();
+
+            // Prepare request data with safe defaults
+            const btcPriceEl = document.getElementById('globalBtcPrice');
+            const useRealtimeEl = document.getElementById('useRealTimeData');
+            
+            const requestData = {
+                miners: miners,
+                settings: {
+                    btc_price: btcPriceEl ? btcPriceEl.value : null,
+                    use_realtime: useRealtimeEl ? useRealtimeEl.checked : true
+                }
+            };
+            
+            console.log('发送到后端的矿机数据样例:', JSON.stringify(miners.slice(0, 2), null, 2));
+
+            // Send batch calculation request
+            // 根据矿机数量选择合适的计算接口
+            const totalMinersForApi = miners.reduce((sum, miner) => sum + parseInt(miner.quantity || 1), 0);
+            const apiEndpoint = totalMinersForApi > 1000 ? '/api/batch-calculate-optimized' : '/api/batch-calculate';
+            
+            console.log(`使用${apiEndpoint}处理${totalMinersForApi}台矿机`);
+            
+            fetch(apiEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Received data:', data);
+                
+                // 恢复按钮状态
+                calculateBtn.disabled = false;
+                calculateBtn.innerHTML = '<i class="bi bi-calculator me-2"></i>{% if current_lang == "en" %}Calculate Batch Profitability{% else %}计算批量收益{% endif %}';
+                
+                // 先检查 results section 是否存在
+                const resultsSection = document.getElementById('resultsSection');
+                console.log('Results section found:', !!resultsSection);
+                
+                if (data.success) {
+                    calculationResults = data.results;
+                    calculationSummary = data.summary;
+                    console.log('开始显示结果:', data.results.length, '个结果组');
+                    
+                    // 确保 results section 可见
+                    if (resultsSection) {
+                        resultsSection.style.display = 'block';
+                    }
+                    
+                    displayBatchResults(data.results, data.summary);
+                    showExportOptions();
+                    
+                    console.log('结果显示完成');
+                } else {
+                    if (data.error === 'upgrade_required') {
+                        showUpgradeModal(totalMiners);
+                    } else {
+                        showErrorResults(data.message || 'Unknown error');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Calculation error:', error);
+                console.error('Error details:', error.message);
+                
+                // 恢复按钮状态
+                calculateBtn.disabled = false;
+                calculateBtn.innerHTML = '<i class="bi bi-calculator me-2"></i>{% if current_lang == "en" %}Calculate Batch Profitability{% else %}计算批量收益{% endif %}';
+                
+                showErrorResults('{% if current_lang == "en" %}Calculation failed. Please try again.{% else %}计算失败，请重试。{% endif %}');
+            });
+        }
+
+        function collectMinerData() {
+            // 总是优先使用当前DOM表格中的数据，因为这是用户看到和修改的数据
+            const domRows = document.querySelectorAll('#minersTableBody tr');
+            const hasMeaningfulDomData = domRows.length > 0 && !domRows[0].querySelector('.text-center i.bi-hourglass-split');
+            
+            console.log('数据收集检查:', {
+                domRowsLength: domRows.length,
+                hasMeaningfulDomData: hasMeaningfulDomData,
+                csvDataLength: window.allMinersData ? window.allMinersData.length : 0
+            });
+            
+            // 优先使用DOM表格数据（用户当前看到的数据）
+            if (hasMeaningfulDomData) {
+                console.log('使用DOM表格数据进行计算');
+                return collectFromDomTable();
+            }
+            
+            // 只有在DOM表格为空且有CSV数据时才使用CSV数据
+            if (window.allMinersData && window.allMinersData.length > 0 && !hasMeaningfulDomData) {
+                // 应用配额限制：将矿机数据展开成单个矿机，然后限制数量
+                const expandedMiners = [];
+                for (const data of window.allMinersData) {
+                    const quantity = parseInt(data.quantity) || 1;
+                    for (let i = 0; i < quantity; i++) {
+                        expandedMiners.push({
+                            miner_number: (expandedMiners.length + 1).toString(),
+                            model: data.model,
+                            quantity: 1, // 每台矿机数量为1
+                            power_consumption: data.power,
+                            machine_price: data.price,
+                            electricity_cost: data.electricity,
+                            decay_rate: data.decayRate || 0,
+                            hashrate: data.hashrate
+                        });
+                        
+                        // 达到配额限制时停止
+                        if (expandedMiners.length >= maxMiners && !bypassUsed) {
+                            break;
+                        }
+                    }
+                    if (expandedMiners.length >= maxMiners && !bypassUsed) {
+                        break;
+                    }
+                }
+                
+                console.log('使用CSV数据，应用配额限制:', expandedMiners.length, '台矿机（最大:', maxMiners, '）');
+                
+                // 如果触发了配额限制，显示提示
+                if (expandedMiners.length >= maxMiners && !bypassUsed) {
+                    const totalMinersInCsv = window.allMinersData.reduce((sum, data) => sum + (parseInt(data.quantity) || 1), 0);
+                    if (totalMinersInCsv > maxMiners) {
+                        showQuotaLimitWarning(expandedMiners.length, totalMinersInCsv);
+                    }
+                }
+                
+                return expandedMiners;
+            }
+            
+            // 如果没有任何数据源，返回空数组
+            console.log('没有找到有效数据源');
+            return [];
+        }
+        
+        function collectFromDomTable() {
+            // 从DOM表格收集数据
+            const miners = [];
+            const rows = document.querySelectorAll('#minersTableBody tr');
+            console.log('从DOM表格收集数据，行数:', rows.length);
+            
+            rows.forEach((row, index) => {
+                const cells = row.querySelectorAll('td');
+                const minerNumber = cells[0].querySelector('.auto-number')?.getAttribute('data-number') || (index + 1).toString();  // 获取自动编号
+                const model = cells[1].querySelector('select').value;  // 第2列（编号后）
+                const quantity = parseInt(cells[2].querySelector('input').value) || 0;
+                const power = parseFloat(cells[3].querySelector('input').value) || 0;
+                const price = parseFloat(cells[4].querySelector('input').value) || 0;
+                const electricity = parseFloat(cells[5].querySelector('input').value) || 0;
+                const customHashrate = parseFloat(cells[6].querySelector('input').value) || null;
+                const decayRate = parseFloat(cells[7].querySelector('input').value) || 0;
+                
+                if (model && quantity > 0 && power > 0 && electricity > 0 && price > 0) {
+                    // 使用输入框中的自定义算力，如果没有则使用矿机模型默认值
+                    const hashrateValue = customHashrate || minerModels[model]?.hashrate || 0;
+                    
+                    console.log('收集矿机数据:', {
+                        minerNumber, model, quantity, power, price, electricity, 
+                        customHashrate, hashrateValue, decayRate
+                    });
+                    
+                    miners.push({
+                        miner_number: minerNumber,  // 添加矿机编号
+                        model: model,
+                        quantity: quantity,
+                        power_consumption: power,
+                        machine_price: price,
+                        electricity_cost: electricity,
+                        decay_rate: decayRate,
+                        hashrate: hashrateValue
+                    });
+                } else {
+                    console.warn('数据验证失败，跳过矿机:', {
+                        model, quantity, power, electricity, price,
+                        quantityValid: quantity > 0,
+                        powerValid: power > 0,
+                        electricityValid: electricity > 0,
+                        priceValid: price > 0
+                    });
+                }
+            });
+            
+            return miners;
+        }
+
+        function showUpgradeModal(attemptedMiners) {
+            const modal = new bootstrap.Modal(document.getElementById('upgradeModal'));
+            const message = document.getElementById('upgradeMessage');
+            
+            message.innerHTML = `
+                {% if current_lang == "en" %}
+                You're trying to process <strong>${attemptedMiners} miners</strong>, but your current plan allows only <strong>${maxMiners} miners</strong>.
+                {% else %}
+                您正在尝试处理 <strong>${attemptedMiners} 台矿机</strong>，但您的当前套餐只允许 <strong>${maxMiners} 台矿机</strong>。
+                {% endif %}
+            `;
+            
+            modal.show();
+        }
+
+        function useBypassOnce() {
+            bypassUsed = true;
+            const modal = bootstrap.Modal.getInstance(document.getElementById('upgradeModal'));
+            modal.hide();
+            
+            // Re-enable calculate button and try calculation
+            updateTotalCount();
+            setTimeout(() => calculateBatchProfitability(), 500);
+        }
+
+        function showLoadingResults() {
+            const resultsSection = document.getElementById('resultsSection');
+            resultsSection.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">{% if current_lang == "en" %}Loading...{% else %}加载中...{% endif %}</span>
+                    </div>
+                    <p>{% if current_lang == "en" %}Calculating profitability...{% else %}正在计算收益...{% endif %}</p>
+                </div>
+            `;
+        }
+
+        function displayBatchResults(results, summary) {
+            const resultsSection = document.getElementById('resultsSection');
+            console.log('displayBatchResults called with:', results.length, 'results');
+            console.log('Results section element:', resultsSection);
+            
+            if (!resultsSection) {
+                console.error('Results section not found!');
+                return;
+            }
+            
+            let html = `
+                <!-- Summary -->
+                <div class="mb-4">
+                    <h6 class="text-primary mb-3">
+                        <i class="bi bi-bar-chart me-2"></i>
+                        {% if current_lang == "en" %}Summary{% else %}汇总{% endif %}
+                    </h6>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="bg-dark p-2 rounded text-center">
+                                <div class="small text-muted">{% if current_lang == "en" %}Total Miners{% else %}总矿机数{% endif %}</div>
+                                <div class="fw-bold">${summary.total_miners}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="bg-dark p-2 rounded text-center">
+                                <div class="small text-muted">{% if current_lang == "en" %}Daily Profit{% else %}日收益{% endif %}</div>
+                                <div class="fw-bold ${summary.total_daily_profit >= 0 ? 'text-success' : 'text-danger'}">$${(summary.total_daily_profit || 0).toFixed(3)}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="bg-dark p-2 rounded text-center">
+                                <div class="small text-muted">{% if current_lang == "en" %}Monthly{% else %}月收益{% endif %}</div>
+                                <div class="fw-bold">$${((summary.total_daily_profit || 0) * 30).toFixed(3)}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="bg-dark p-2 rounded text-center">
+                                <div class="small text-muted">{% if current_lang == "en" %}Avg ROI Days{% else %}平均回本天数{% endif %}</div>
+                                <div class="fw-bold text-warning">${summary.average_roi_days && summary.average_roi_days < 999999 ? summary.average_roi_days.toFixed(0) + '{% if current_lang == "en" %} days{% else %}天{% endif %}' : 'N/A'}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 效率分析摘要 -->
+                    ${(() => {
+                        if (results.length > 1) {
+                            const sortedForSummary = [...results].sort((a, b) => (b.daily_profit || 0) - (a.daily_profit || 0));
+                            const best = sortedForSummary[0];
+                            const worst = sortedForSummary[sortedForSummary.length - 1];
+                            
+                            if (best && worst && best.daily_profit !== worst.daily_profit) {
+                                const isEnglish = '{% if current_lang == "en" %}true{% else %}false{% endif %}' === 'true';
+                                const analysisTitle = isEnglish ? 'Performance Analysis:' : '效率分析:';
+                                const bestLabel = isEnglish ? 'Best: Miner #' : '最佳: #';
+                                const worstLabel = isEnglish ? 'Lowest: Miner #' : '最差: #';
+                                const dayUnit = isEnglish ? '/day' : '/天';
+                                const minerUnit = isEnglish ? ' - $' : '号矿机 - $';
+                                
+                                return `
+                                <div class="mt-3 p-2 bg-info bg-opacity-10 border border-info rounded">
+                                    <div class="small">
+                                        <strong>${analysisTitle}</strong><br>
+                                        <span class="text-success">🏆 ${bestLabel}${best.miner_number}${minerUnit}${(best.daily_profit || 0).toFixed(2)}${dayUnit}</span><br>
+                                        <span class="text-warning">📊 ${worstLabel}${worst.miner_number}${minerUnit}${(worst.daily_profit || 0).toFixed(2)}${dayUnit}</span>
+                                    </div>
+                                </div>
+                                `;
+                            }
+                        }
+                        return '';
+                    })()}
+                </div>
+
+                <!-- Individual Results -->
+                <div>
+                    <h6 class="text-primary mb-3">
+                        <i class="bi bi-list-ul me-2"></i>
+                        {% if current_lang == "en" %}Individual Results (Sorted by Performance){% else %}单项结果 (按效率排序){% endif %}
+                    </h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-dark">
+                            <thead>
+                                <tr>
+                                    <th>{% if current_lang == "en" %}#{% else %}编号{% endif %}</th>
+                                    <th>{% if current_lang == "en" %}Model{% else %}型号{% endif %}</th>
+                                    <th>{% if current_lang == "en" %}Qty{% else %}数量{% endif %}</th>
+                                    <th>{% if current_lang == "en" %}Daily{% else %}日收益{% endif %}</th>
+                                    <th>{% if current_lang == "en" %}ROI Days{% else %}回本天数{% endif %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+            `;
+
+            // 按每日收益排序（降序），显示效率最高和最低的矿机
+            const sortedResults = [...results].sort((a, b) => (b.daily_profit || 0) - (a.daily_profit || 0));
+            
+            sortedResults.forEach((result, index) => {
+                const profitClass = result.daily_profit > 0 ? 'text-success' : 'text-danger';
+                let statusBadge = '';
+                
+                // 标记最高和最低效率矿机
+                if (sortedResults.length > 1) {
+                    const isEnglish = '{% if current_lang == "en" %}true{% else %}false{% endif %}' === 'true';
+                    if (index === 0 && result.daily_profit > 0) {
+                        const bestText = isEnglish ? 'BEST' : '最佳';
+                        statusBadge = `<span class="badge bg-success ms-1">${bestText}</span>`;
+                    } else if (index === sortedResults.length - 1 && sortedResults.length > 2) {
+                        const worstText = isEnglish ? 'LOWEST' : '最差';
+                        statusBadge = `<span class="badge bg-warning ms-1">${worstText}</span>`;
+                    }
+                }
+                
+                html += `
+                    <tr>
+                        <td><span class="badge bg-secondary">${result.miner_number || '-'}</span>${statusBadge}</td>
+                        <td class="small">${result.model}</td>
+                        <td>${result.quantity}</td>
+                        <td class="${profitClass}">$${(result.daily_profit || 0).toFixed(3)}</td>
+                        <td>${result.roi_days && result.roi_days < 999999 ? result.roi_days + '{% if current_lang == "en" %} days{% else %}天{% endif %}' : 'N/A'}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+            console.log('Setting results HTML, length:', html.length);
+            resultsSection.innerHTML = html;
+            console.log('Results HTML set successfully');
+            
+            // 强制确保可见性
+            resultsSection.style.display = 'block';
+            resultsSection.parentElement.style.display = 'block';
+            
+            // 确保整个结果卡片可见
+            const resultsCard = resultsSection.closest('.card');
+            if (resultsCard) {
+                resultsCard.style.display = 'block';
+            }
+            
+            // 滚动到结果区域
+            setTimeout(() => {
+                resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        }
+
+        function showErrorResults(message) {
+            const resultsSection = document.getElementById('resultsSection');
+            resultsSection.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="bi bi-exclamation-triangle text-danger" style="font-size: 2rem;"></i>
+                    <p class="text-danger mt-2">${message}</p>
+                </div>
+            `;
+        }
+
+        function hideResults() {
+            const resultsSection = document.getElementById('resultsSection');
+            resultsSection.innerHTML = `
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-calculator" style="font-size: 2rem;"></i>
+                    <p class="mt-2">
+                        {% if current_lang == "en" %}Configure miners and click calculate to see results{% else %}配置矿机并点击计算查看结果{% endif %}
+                    </p>
+                </div>
+            `;
+            document.getElementById('exportCard').style.display = 'none';
+        }
+
+        function showQuotaLimitWarning(calculatedMiners, totalMiners) {
+            const resultsSection = document.getElementById('resultsSection');
+            resultsSection.innerHTML = `
+                <div class="alert alert-warning mb-3">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    {% if current_lang == "en" %}
+                    Your CSV contains ${totalMiners} miners, but your Free plan allows only ${calculatedMiners}. 
+                    Only the first ${calculatedMiners} miners will be calculated.
+                    {% else %}
+                    您的CSV包含${totalMiners}台矿机，但免费计划只允许${calculatedMiners}台。
+                    仅计算前${calculatedMiners}台矿机。
+                    {% endif %}
+                    <br>
+                    <a href="#" onclick="showUpgradeModal(${totalMiners})" class="btn btn-sm btn-primary mt-2">
+                        {% if current_lang == "en" %}Upgrade to Calculate All{% else %}升级以计算全部{% endif %}
+                    </a>
+                </div>
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-calculator" style="font-size: 2rem;"></i>
+                    <p class="mt-2">
+                        {% if current_lang == "en" %}Click calculate to process the first ${calculatedMiners} miners{% else %}点击计算处理前${calculatedMiners}台矿机{% endif %}
+                    </p>
+                </div>
+            `;
+        }
+
+        function showExportOptions() {
+            document.getElementById('exportCard').style.display = 'block';
+        }
+
+        // CSV file processing
+        function processCsvFile(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                console.log('未选择文件');
+                return;
+            }
+
+            // 检查是否有现有数据，如果有则询问用户是否替换
+            const tbody = document.getElementById('minersTableBody');
+            const hasExistingData = tbody && tbody.children.length > 0 && !tbody.querySelector('.text-center i.bi-hourglass-split');
+            const hasExistingCsvData = window.allMinersData && window.allMinersData.length > 0;
+            
+            // 检查是否有实际的表格数据（超过1行且不是加载状态）
+            const hasRealTableData = tbody && tbody.children.length > 1;
+            
+            // 检查是否有实际输入的数据（不是默认空状态）
+            const hasUserInputData = hasExistingData && tbody.children.length > 0;
+            
+            console.log('检查现有数据:', {
+                hasExistingData: hasExistingData,
+                tbodyChildrenCount: tbody ? tbody.children.length : 0,
+                hasExistingCsvData: hasExistingCsvData,
+                csvDataLength: window.allMinersData ? window.allMinersData.length : 0,
+                hasRealTableData: hasRealTableData,
+                hasUserInputData: hasUserInputData
+            });
+            
+            // 只有在真正有用户数据时才显示确认对话框
+            if (hasRealTableData || (hasExistingCsvData && hasUserInputData)) {
+                const confirmMessage = '{% if current_lang == "en" %}You have existing data. Do you want to replace it with the new CSV file?{% else %}您已有现有数据。是否要用新的CSV文件替换？{% endif %}';
+                if (!confirm(confirmMessage)) {
+                    // 用户选择不替换，清空文件输入
+                    event.target.value = '';
+                    console.log('用户取消文件替换');
+                    return;
+                }
+                
+                // 用户确认替换，清空现有数据
+                console.log('用户确认替换现有数据');
+            }
+            
+            // 清空现有数据（无论是否显示确认对话框）
+            tbody.innerHTML = '';
+            window.allMinersData = [];
+            minerRowCount = 0;
+            hideResults();
+            
+            // 清除计算结果
+            const resultsSection = document.getElementById('resultsSection');
+            if (resultsSection) {
+                resultsSection.style.display = 'none';
+                resultsSection.innerHTML = '';
+            }
+            
+            // 重置计数器
+            updateTotalCount();
+
+            console.log('开始处理CSV文件:', file.name, '大小:', file.size);
+            
+            // 显示加载提示
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center"><i class="bi bi-hourglass-split"></i> 正在加载CSV文件...</td></tr>';
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const csv = e.target.result;
+                const lines = csv.split('\n');
+                console.log('CSV文件读取完成, 总行数:', lines.length);
+                
+                // 使用批量DOM更新提升性能
+                const fragment = document.createDocumentFragment();
+                const validLines = [];
+                
+                // 预处理所有有效行
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    
+                    const parts = line.split(',').map(s => s.trim());
+                    
+                    // 支持三种CSV格式:
+                    // 格式1: Model,Quantity,Power,Price,Electricity (老格式)
+                    // 格式2: Model,Quantity,Power,Price,Electricity,DecayRate (旧格式)
+                    // 格式3: Model,Quantity,Power,Price,Electricity,Hashrate,DecayRate (新格式)
+                    let model, quantity, power, price, electricity, hashrate, decayRate;
+                    
+                    if (parts.length === 7) {
+                        // 新格式: Model,Quantity,Power,Price,Electricity,Hashrate,DecayRate
+                        [model, quantity, power, price, electricity, hashrate, decayRate] = parts;
+                        hashrate = parseFloat(hashrate) || null;
+                        decayRate = parseFloat(decayRate) || 0;
+                    } else if (parts.length === 6) {
+                        // 旧格式: Model,Quantity,Power,Price,Electricity,DecayRate
+                        [model, quantity, power, price, electricity, decayRate] = parts;
+                        hashrate = null;
+                        decayRate = parseFloat(decayRate) || 0;
+                    } else if (parts.length === 5) {
+                        // 老格式: Model,Quantity,Power,Price,Electricity
+                        [model, quantity, power, price, electricity] = parts;
+                        hashrate = null;
+                        decayRate = 0;
+                    }
+                    
+                    if (model && quantity && power && price && electricity) {
+                        validLines.push({
+                            model, 
+                            quantity: parseInt(quantity), 
+                            power: parseInt(power), 
+                            price: parseFloat(price), 
+                            electricity: parseFloat(electricity), 
+                            decayRate: decayRate || 0,
+                            hashrate: hashrate
+                        });
+                    }
+                }
+                
+                // 批量创建DOM元素
+                tbody.innerHTML = ''; // 清空加载提示
+                
+                // 显示进度条
+                const progressContainer = document.createElement('div');
+                progressContainer.className = 'text-center mt-3';
+                progressContainer.innerHTML = `
+                    <div class="progress mb-2" style="height: 25px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" id="csvProgress" style="width: 0%">
+                            <span id="csvProgressText">{% if current_lang == "en" %}Loading... 0%{% else %}加载中... 0%{% endif %}</span>
+                        </div>
+                    </div>
+                    <small class="text-muted">{% if current_lang == "en" %}Processing CSV file...{% else %}处理CSV文件...{% endif %}</small>
+                `;
+                tbody.appendChild(progressContainer);
+                
+                // 超快速批量处理 - 大块HTML字符串
+                let processedCount = 0;
+                const batchSize = 200; // 增加批次大小
+                let htmlChunks = [];
+                
+                function processBatch() {
+                    const endIndex = Math.min(processedCount + batchSize, validLines.length);
+                    let batchHTML = '';
+                    
+                    // 预构建HTML字符串
+                    for (let i = processedCount; i < endIndex; i++) {
+                        const data = validLines[i];
+                        minerRowCount++;
+                        const finalHashrate = data.hashrate || (minerModels[data.model]?.hashrate || 110);
+                        
+                        batchHTML += `
+                            <tr id="minerRow${minerRowCount}">
+                                <td class="text-center">
+                                    <span class="badge bg-secondary auto-number" data-number="${minerRowCount}">${minerRowCount}</span>
+                                </td>
+                                <td>
+                                    <select class="form-select form-select-sm" onchange="updateMinerSpecs(this, 'minerRow${minerRowCount}')">
+                                        ${Object.keys(minerModels).map(m => 
+                                            `<option value="${m}" ${m === data.model ? 'selected' : ''}>${m}</option>`
+                                        ).join('')}
+                                    </select>
+                                </td>
+                                <td><input type="number" class="form-control form-control-sm" value="${data.quantity}" min="1" max="1000" onchange="updateTotalCount()"></td>
+                                <td><input type="number" class="form-control form-control-sm" value="${data.power}" min="100" max="10000" step="10"></td>
+                                <td><input type="number" class="form-control form-control-sm" value="${data.price}" min="100" max="20000" step="100"></td>
+                                <td><input type="number" class="form-control form-control-sm" value="${data.electricity}" min="0.01" max="1" step="0.001"></td>
+                                <td><input type="number" class="form-control form-control-sm" value="${finalHashrate}" min="1" max="500" step="1"></td>
+                                <td><input type="number" class="form-control form-control-sm" value="${data.decayRate}" min="0" max="5" step="0.1"></td>
+                                <td>
+                                    <button class="btn btn-outline-danger btn-sm" onclick="removeMinerRow('minerRow${minerRowCount}')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                    
+                    htmlChunks.push(batchHTML);
+                    processedCount = endIndex;
+                    
+                    // 更新进度
+                    const progress = Math.round((processedCount / validLines.length) * 100);
+                    const progressBar = document.getElementById('csvProgress');
+                    const progressText = document.getElementById('csvProgressText');
+                    if (progressBar) progressBar.style.width = progress + '%';
+                    if (progressText) progressText.textContent = `{% if current_lang == "en" %}Loading... ${progress}%{% else %}加载中... ${progress}%{% endif %}`;
+                    
+                    // 继续处理或完成
+                    if (processedCount < validLines.length) {
+                        setTimeout(processBatch, 1); // 最小延迟
+                    } else {
+                        // 直接显示所有行，去掉限制逻辑简化处理
+                        const allRowsHTML = htmlChunks.join('');
+                        console.log('生成的HTML长度:', allRowsHTML.length, '字符');
+                        console.log('HTML前100字符:', allRowsHTML.substring(0, 100));
+                        
+                        // 直接设置HTML内容
+                        tbody.innerHTML = allRowsHTML;
+                        
+                        // 验证DOM是否正确更新
+                        const insertedRows = tbody.querySelectorAll('tr');
+                        console.log('插入后的行数:', insertedRows.length);
+                        
+                        if (insertedRows.length !== validLines.length) {
+                            console.error('DOM插入失败: 期望', validLines.length, '行，实际', insertedRows.length, '行');
+                            // 尝试逐行插入作为后备方案
+                            tbody.innerHTML = '';
+                            validLines.forEach((data, index) => {
+                                const finalHashrate = data.hashrate || (minerModels[data.model]?.hashrate || 110);
+                                const rowHTML = `
+                                    <tr id="minerRow${index + 1}">
+                                        <td class="text-center">
+                                            <span class="badge bg-secondary auto-number" data-number="${index + 1}">${index + 1}</span>
+                                        </td>
+                                        <td>
+                                            <select class="form-select form-select-sm" onchange="updateMinerSpecs(this, 'minerRow${index + 1}'); autoSaveUserMiners();">
+                                                ${Object.keys(minerModels).map(m => 
+                                                    `<option value="${m}" ${m === data.model ? 'selected' : ''}>${m}</option>`
+                                                ).join('')}
+                                            </select>
+                                        </td>
+                                        <td><input type="number" class="form-control form-control-sm" value="${data.quantity}" min="1" max="1000" onchange="updateTotalCount()"></td>
+                                        <td><input type="number" class="form-control form-control-sm" value="${data.power}" min="100" max="10000" step="10" onchange="autoSaveUserMiners()"></td>
+                                        <td><input type="number" class="form-control form-control-sm" value="${data.price}" min="100" max="20000" step="100" onchange="autoSaveUserMiners()"></td>
+                                        <td><input type="number" class="form-control form-control-sm" value="${data.electricity}" min="0.01" max="1" step="0.001" onchange="autoSaveUserMiners()"></td>
+                                        <td><input type="number" class="form-control form-control-sm" value="${finalHashrate}" min="1" max="500" step="1" onchange="autoSaveUserMiners()"></td>
+                                        <td><input type="number" class="form-control form-control-sm" value="${data.decayRate}" min="0" max="5" step="0.1" onchange="autoSaveUserMiners()"></td>
+                                        <td>
+                                            <button class="btn btn-outline-danger btn-sm" onclick="removeMinerRow('minerRow${index + 1}')">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `;
+                                tbody.insertAdjacentHTML('beforeend', rowHTML);
+                            });
+                            console.log('后备方案完成，最终行数:', tbody.querySelectorAll('tr').length);
+                        }
+                        
+                        // 存储所有数据到全局变量供计算使用
+                        window.allMinersData = validLines;
+                        
+                        console.log('CSV处理完成，共处理:', validLines.length, '行，显示:', validLines.length, '行');
+                        
+                        // 强制刷新显示状态，确保DOM完全构建
+                        setTimeout(() => {
+                            // 清除之前的结果显示
+                            hideResults();
+                            
+                            // 确保表格显示
+                            const table = document.querySelector('#minersTableBody')?.closest('table');
+                            const emptyState = document.getElementById('emptyState');
+                            if (emptyState) emptyState.style.display = 'none';
+                            if (table) table.style.display = 'table';
+                            
+                            // 更新计数和状态，但先确保DOM有足够时间更新
+                            updateTotalCount();
+                            
+                            // 检查是否真的有数据
+                            const actualRows = document.querySelectorAll('#minersTableBody tr');
+                            console.log('DOM更新后实际行数:', actualRows.length);
+                            
+                            if (actualRows.length > 0) {
+                                // 有数据，确保表格显示
+                                const emptyState = document.getElementById('emptyState');
+                                const table = document.getElementById('minersTable');
+                                if (emptyState) emptyState.style.display = 'none';
+                                if (table) table.style.display = 'table';
+                                console.log('强制显示表格，隐藏空状态');
+                            } else {
+                                // 没有数据，调用updateEmptyState
+                                console.log('没有数据，调用updateEmptyState');
+                                updateEmptyState();
+                            }
+                            
+                            console.log('CSV处理后DOM状态更新完成');
+                        }, 200);
+                    }
+                }
+                
+                processBatch();
+            };
+            
+            reader.onerror = function(e) {
+                console.error('文件读取错误:', e);
+                alert('文件读取失败，请检查文件格式');
+            };
+            
+            reader.readAsText(file);
+        }
+
+        function createMinerRowElement(data) {
+            const {model, quantity, power, price, electricity, decayRate, hashrate} = data;
+            
+            minerRowCount++;
+            const tr = document.createElement('tr');
+            tr.id = `minerRow${minerRowCount}`;
+            
+            // 优化的算力值
+            const finalHashrate = hashrate || (minerModels[model]?.hashrate || 110);
+            
+            // 直接构建完整的HTML字符串
+            tr.innerHTML = `
+                <td class="text-center">
+                    <span class="badge bg-secondary auto-number" data-number="${minerRowCount}">${minerRowCount}</span>
+                </td>
+                <td>
+                    <select class="form-select form-select-sm" onchange="updateMinerSpecs(this, 'minerRow${minerRowCount}'); autoSaveUserMiners();">
+                        ${Object.keys(minerModels).map(m => 
+                            `<option value="${m}" ${m === model ? 'selected' : ''}>${m}</option>`
+                        ).join('')}
+                    </select>
+                </td>
+                <td><input type="number" class="form-control form-control-sm" value="${quantity}" min="1" max="1000" onchange="updateTotalCount()"></td>
+                <td><input type="number" class="form-control form-control-sm" value="${power}" min="100" max="10000" step="10" onchange="autoSaveUserMiners()"></td>
+                <td><input type="number" class="form-control form-control-sm" value="${price}" min="100" max="20000" step="100" onchange="autoSaveUserMiners()"></td>
+                <td><input type="number" class="form-control form-control-sm" value="${electricity}" min="0.01" max="1" step="0.001" onchange="autoSaveUserMiners()"></td>
+                <td><input type="number" class="form-control form-control-sm" value="${finalHashrate}" min="1" max="500" step="1" onchange="autoSaveUserMiners()"></td>
+                <td><input type="number" class="form-control form-control-sm" value="${decayRate}" min="0" max="5" step="0.1" onchange="autoSaveUserMiners()"></td>
+                <td>
+                    <button class="btn btn-outline-danger btn-sm" onclick="removeMinerRow('minerRow${minerRowCount}')">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            `;
+            
+            return tr;
+        }
+        
+        function addMinerRowFromDataOptimized(data) {
+            const tbody = document.getElementById('minersTableBody');
+            const tr = createMinerRowElement(data);
+            tbody.appendChild(tr);
+        }
+        
+        // 保持向后兼容的函数
+        function addMinerRowFromData(model, quantity, power, price, electricity, decayRate, hashrate) {
+            addMinerRowFromDataOptimized({model, quantity, power, price, electricity, decayRate, hashrate});
+        }
+
+        // Export functions
+        function exportToCSV() {
+            if (calculationResults.length === 0) {
+                alert('{% if current_lang == "en" %}No results to export. Please calculate first.{% else %}没有结果可导出，请先进行计算。{% endif %}');
+                return;
+            }
+            
+            console.log('Exporting to CSV...');
+            
+            // Send request to backend
+            fetch('/api/export/batch-csv', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    results: calculationResults
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                } else {
+                    throw new Error('Export failed');
+                }
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `mining_batch_results_${new Date().getTime()}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            })
+            .catch(error => {
+                console.error('CSV export error:', error);
+                alert('{% if current_lang == "en" %}Export failed. Please try again.{% else %}导出失败，请重试。{% endif %}');
+            });
+        }
+
+        function exportToExcel() {
+            if (calculationResults.length === 0) {
+                alert('{% if current_lang == "en" %}No results to export. Please calculate first.{% else %}没有结果可导出，请先进行计算。{% endif %}');
+                return;
+            }
+            
+            console.log('Exporting to Excel...');
+            
+            fetch('/api/export/batch-excel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    results: calculationResults
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                } else {
+                    throw new Error('Export failed');
+                }
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `mining_batch_results_${new Date().getTime()}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            })
+            .catch(error => {
+                console.error('Excel export error:', error);
+                alert('{% if current_lang == "en" %}Export failed. Please try again.{% else %}导出失败，请重试。{% endif %}');
+            });
+        }
+
+        function exportToPDF() {
+            if (calculationResults.length === 0) {
+                alert('{% if current_lang == "en" %}No results to export. Please calculate first.{% else %}没有结果可导出，请先进行计算。{% endif %}');
+                return;
+            }
+            
+            console.log('Exporting to PDF...');
+            
+            fetch('/api/export/batch-pdf', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    results: calculationResults,
+                    summary: calculationSummary || {}
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                } else {
+                    throw new Error('Export failed');
+                }
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `mining_batch_report_${new Date().getTime()}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            })
+            .catch(error => {
+                console.error('PDF export error:', error);
+                alert('{% if current_lang == "en" %}Export failed. Please try again.{% else %}导出失败，请重试。{% endif %}');
+            });
+        }
+
+        // Handle real-time toggle change
+        function handleRealtimeToggle() {
+            const useRealtime = document.getElementById('useRealTimeData');
+            if (useRealtime && useRealtime.checked) {
+                // Immediately update price when toggled on
+                loadNetworkData();
+            }
+        }
+
+        // Network data loading
+        let networkDataCache = null;
+        let lastNetworkDataUpdate = 0;
+        const CACHE_DURATION = 30000; // 30 seconds
+
+        async function loadNetworkData() {
+            const now = Date.now();
+            
+            // Use cache if data is fresh
+            if (networkDataCache && (now - lastNetworkDataUpdate) < CACHE_DURATION) {
+                updateNetworkDisplay(networkDataCache);
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/analytics-data');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.data) {
+                        networkDataCache = data.data;
+                        lastNetworkDataUpdate = now;
+                        updateNetworkDisplay(data.data);
+                        
+                        // Update BTC price input if real-time is enabled
+                        const useRealtime = document.getElementById('useRealTimeData');
+                        if (useRealtime && useRealtime.checked && data.data.btc_price) {
+                            document.getElementById('globalBtcPrice').value = Math.round(data.data.btc_price);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.warn('Failed to load network data:', error);
+            }
+        }
+
+        function updateNetworkDisplay(data) {
+            // Update network status display with null checks
+            const btcPriceEl = document.getElementById('currentBtcPrice');
+            if (data.btc_price && btcPriceEl) {
+                btcPriceEl.textContent = `$${data.btc_price.toLocaleString()}`;
+            }
+            
+            const difficultyEl = document.getElementById('currentDifficulty');
+            if (data.network_difficulty && difficultyEl) {
+                const difficultyT = (data.network_difficulty / 1e12).toFixed(3);
+                difficultyEl.textContent = `${difficultyT}T`;
+            }
+            
+            const hashrateEl = document.getElementById('currentHashrate');
+            if (data.network_hashrate && hashrateEl) {
+                hashrateEl.textContent = `${data.network_hashrate} EH/s`;
+            }
+            
+            // Update timestamp
+            const timestampEl = document.getElementById('dataUpdateTime');
+            if (timestampEl) {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString();
+                timestampEl.textContent = `(Updated: ${timeStr})`;
+            }
+        }
+
+        // Template download function
+        function downloadTemplate() {
+            const csvContent = `Model,Quantity,Power,Price,Electricity,Hashrate,DecayRate
+Antminer S19 Pro,10,3250,2500,0.08,110,0.5
+WhatsMiner M53S,5,6554,4500,0.07,226,0.3
+Antminer S21,8,3550,3200,0.08,200,0.4
+Antminer S19 XP,12,3010,2800,0.08,140,0.5
+WhatsMiner M50S,6,3276,2200,0.08,126,0.6
+Antminer T19,15,3150,1800,0.08,84,0.4
+AvalonMiner 1366,4,3420,2000,0.08,100,0.5
+Antminer S21 Pro,3,3531,3800,0.08,234,0.3
+WhatsMiner M56S,7,5550,4200,0.08,212,0.4
+Antminer S19j Pro,9,3068,2300,0.08,100,0.5`;
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'batch_calculator_template.csv');
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Show success message
+            const isEnglish = '{% if current_lang == "en" %}true{% else %}false{% endif %}' === 'true';
+            const message = isEnglish ? 'Template downloaded successfully!' : '模板下载成功！';
+            
+            // Create a simple toast notification
+            const toast = document.createElement('div');
+            toast.className = 'alert alert-success position-fixed';
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 250px;';
+            toast.innerHTML = `<i class="bi bi-check-circle me-2"></i>${message}`;
+            
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 3000);
+        }
+
+        // ===== 自动保存/加载功能 =====
+        
+        let autoSaveTimeout = null;
+        let isLoadingUserData = false; // 防止加载时触发保存
+        
+        // 自动保存用户矿机配置
+        function autoSaveUserMiners() {
+            if (isLoadingUserData) {
+                console.log('跳过自动保存：正在加载用户数据');
+                return;
+            }
+            
+            // 防抖：延迟保存，避免频繁调用
+            if (autoSaveTimeout) {
+                clearTimeout(autoSaveTimeout);
+            }
+            
+            autoSaveTimeout = setTimeout(() => {
+                saveUserMinersToDatabase();
+            }, 2000); // 2秒后保存
+        }
+        
+        // 保存用户矿机数据到数据库
+        async function saveUserMinersToDatabase() {
+            try {
+                const minersData = collectCurrentMinersForSaving();
+                if (minersData.length === 0) {
+                    console.log('没有矿机数据需要保存');
+                    return;
+                }
+                
+                const response = await fetch('/api/user-miners', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        miners: minersData
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    console.log(`✅ 自动保存成功：${result.saved_count}台矿机配置`);
+                    showAutoSaveNotification(true, `已保存 ${result.saved_count} 台矿机配置`);
+                } else {
+                    console.error('自动保存失败:', result.message);
+                    showAutoSaveNotification(false, '配置保存失败');
+                }
+                
+            } catch (error) {
+                console.error('自动保存错误:', error);
+                showAutoSaveNotification(false, '网络错误，保存失败');
+            }
+        }
+        
+        // 从当前表格收集数据用于保存
+        function collectCurrentMinersForSaving() {
+            const miners = [];
+            const rows = document.querySelectorAll('#minersTableBody tr');
+            
+            rows.forEach((row) => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 8) {
+                    const modelSelect = cells[1].querySelector('select');
+                    const quantityInput = cells[2].querySelector('input');
+                    const powerInput = cells[3].querySelector('input');
+                    const priceInput = cells[4].querySelector('input');
+                    const electricityInput = cells[5].querySelector('input');
+                    const hashrateInput = cells[6].querySelector('input');
+                    const decayInput = cells[7].querySelector('input');
+                    
+                    if (modelSelect && quantityInput && powerInput && priceInput && 
+                        electricityInput && hashrateInput && decayInput) {
+                        
+                        miners.push({
+                            model: modelSelect.value,
+                            quantity: parseInt(quantityInput.value) || 1,
+                            power: parseInt(powerInput.value) || 0,
+                            price: parseFloat(priceInput.value) || 0,
+                            electricity: parseFloat(electricityInput.value) || 0,
+                            hashrate: parseFloat(hashrateInput.value) || 0,
+                            decayRate: parseFloat(decayInput.value) || 0
+                        });
+                    }
+                }
+            });
+            
+            return miners;
+        }
+        
+        // 加载用户保存的矿机配置
+        async function loadUserMiners() {
+            try {
+                isLoadingUserData = true; // 标记正在加载
+                console.log('开始加载用户保存的矿机配置...');
+                
+                const response = await fetch('/api/user-miners');
+                const result = await response.json();
+                
+                if (result.success && result.miners && result.miners.length > 0) {
+                    console.log(`找到 ${result.miners.length} 个保存的矿机配置`);
+                    
+                    // 清空现有表格
+                    const tbody = document.getElementById('minersTableBody');
+                    tbody.innerHTML = '';
+                    minerRowCount = 0;
+                    
+                    // 加载保存的配置
+                    result.miners.forEach(miner => {
+                        addMinerRowFromDataOptimized({
+                            model: miner.model,
+                            quantity: miner.quantity,
+                            power: miner.power,
+                            price: miner.price,
+                            electricity: miner.electricity,
+                            hashrate: miner.hashrate,
+                            decayRate: miner.decayRate
+                        });
+                    });
+                    
+                    // 更新界面状态
+                    updateEmptyState();
+                    updateTotalCount();
+                    
+                    console.log('✅ 用户矿机配置加载完成');
+                    showAutoSaveNotification(true, `已恢复 ${result.miners.length} 台矿机配置`);
+                    
+                } else {
+                    console.log('没有找到保存的矿机配置');
+                }
+                
+            } catch (error) {
+                console.error('加载用户配置失败:', error);
+            } finally {
+                isLoadingUserData = false; // 加载完成，恢复自动保存
+            }
+        }
+        
+        // 显示自动保存通知
+        function showAutoSaveNotification(isSuccess, message) {
+            // 创建通知元素
+            const notification = document.createElement('div');
+            notification.className = `alert ${isSuccess ? 'alert-success' : 'alert-danger'} position-fixed`;
+            notification.style.cssText = `
+                top: 20px; 
+                right: 20px; 
+                z-index: 9999; 
+                min-width: 250px;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            `;
+            
+            const icon = isSuccess ? 'bi-cloud-check' : 'bi-cloud-slash';
+            notification.innerHTML = `<i class="bi ${icon} me-2"></i>${message}`;
+            
+            document.body.appendChild(notification);
+            
+            // 淡入效果
+            setTimeout(() => {
+                notification.style.opacity = '1';
+            }, 10);
+            
+            // 自动消失
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+        
+        // 页面加载时自动加载用户配置
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('页面加载完成，开始加载用户矿机配置...');
+            setTimeout(() => {
+                loadUserMiners();
+            }, 1000); // 等待1秒让页面完全初始化
+        });
+
+
+    </script>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/i18n.js"></script>
+<script>
+// Additional JavaScript specific to batch calculator
+// (already included above in the main script block)
+</script>
+{% endblock %}

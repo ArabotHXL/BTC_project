@@ -1,0 +1,807 @@
+{% extends "crm/base.html" %}
+
+{% block title %}商机详情 - {{ lead.title }} | BTC Mining CRM{% endblock %}
+
+{% block page_title %}商机详情: {{ lead.title }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('crm.leads') }}">商机列表</a></li>
+<li class="breadcrumb-item active" aria-current="page">{{ lead.title }}</li>
+{% endblock %}
+
+{% block action_buttons %}
+{% if lead.status.name != 'WON' and lead.status.name != 'LOST' %}
+<div class="btn-group me-2">
+    <a href="{{ url_for('crm.new_deal', customer_id=lead.customer.id, lead_id=lead.id) }}" class="btn btn-success">
+        <i class="bi bi-currency-dollar me-1"></i> 创建交易
+    </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* KPI卡片内部结构 */
+    .kpi-card {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    
+    .kpi-icon {
+        font-size: 3rem;
+        color: var(--btc-gold);
+        opacity: 0.8;
+    }
+    
+    .kpi-content {
+        flex: 1;
+    }
+    
+    .kpi-label {
+        font-size: 0.9rem;
+        color: var(--btc-text-secondary);
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .kpi-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--btc-gold);
+        line-height: 1;
+        margin-bottom: 4px;
+    }
+    
+    .kpi-sub {
+        font-size: 0.85rem;
+        color: var(--btc-text-secondary);
+    }
+    
+    /* 时间线样式 */
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 10px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--btc-border);
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 24px;
+        padding-bottom: 24px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .timeline-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+    
+    .timeline-marker {
+        position: absolute;
+        left: -24px;
+        top: 0;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 3px solid var(--btc-card-bg);
+        box-shadow: 0 0 10px rgba(247, 147, 26, 0.3);
+    }
+    
+    .timeline-content {
+        padding-left: 10px;
+    }
+    
+    /* 转化仪表盘 */
+    .conversion-gauge {
+        position: relative;
+    }
+    
+    .conversion-gauge canvas {
+        max-width: 200px;
+        margin: 0 auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 顶部KPI卡片 -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="kpi-card">
+            <div class="kpi-icon">
+                <i class="bi bi-star-fill"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-label">线索得分</div>
+                <div class="kpi-value" id="lead-score">0</div>
+                <div class="kpi-sub">满分100分</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="kpi-card">
+            <div class="kpi-icon">
+                <i class="bi bi-calendar-check"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-label">线索天数</div>
+                <div class="kpi-value" id="lead-days">0</div>
+                <div class="kpi-sub">天</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="kpi-card">
+            <div class="kpi-icon">
+                <i class="bi bi-activity"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-label">活动次数</div>
+                <div class="kpi-value" id="activity-count">0</div>
+                <div class="kpi-sub">次互动</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 左侧主要内容区 -->
+    <div class="col-md-8">
+        <!-- 转化预测卡片 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-graph-up-arrow me-2"></i>转化预测</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="conversion-gauge text-center">
+                            <canvas id="conversionGauge" width="200" height="200"></canvas>
+                            <div class="mt-3">
+                                <h3 class="text-warning" id="conversion-rate">0%</h3>
+                                <p class="text-muted mb-0">成交概率</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted">预测分析</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success me-2"></i>状态: <span id="pred-status">良好</span>
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-calendar-event text-info me-2"></i>预计成交: <span id="pred-close-date">未知</span>
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-clock text-warning me-2"></i>跟进建议: <span id="pred-suggestion">保持跟进</span>
+                            </li>
+                        </ul>
+                        <div class="alert alert-info mt-3 p-2">
+                            <small><i class="bi bi-info-circle me-1"></i>基于线索得分、活动频率和状态历史综合评估</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 活动时间线 -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>活动时间线</h5>
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addActivityModal">
+                    <i class="bi bi-plus-circle me-1"></i>添加活动
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="timeline" id="leadActivitiesList">
+                    {% if lead.activities %}
+                        {% for activity in lead.activities|sort(attribute='created_at', reverse=True) %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-{{ 
+                                'success' if activity.type == '创建' else 
+                                'info' if activity.type == '备注' else 
+                                'warning' if activity.type == '电话' else 
+                                'primary' if activity.type == '会议' else 
+                                'secondary' 
+                            }}"></div>
+                            <div class="timeline-content">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="mb-0">{{ activity.summary }}</h6>
+                                    <small class="text-muted">{{ activity.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                </div>
+                                <span class="badge bg-{{ 
+                                    'success' if activity.type == '创建' else 
+                                    'info' if activity.type == '备注' else 
+                                    'warning' if activity.type == '电话' else 
+                                    'primary' if activity.type == '会议' else 
+                                    'secondary' 
+                                }} mb-2">{{ activity.type }}</span>
+                                {% if activity.created_by %}
+                                <small class="text-muted ms-2">{{ activity.created_by }}</small>
+                                {% endif %}
+                                {% if activity.details %}
+                                <p class="mb-0 text-muted mt-2">{{ activity.details }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center p-4">
+                            <i class="bi bi-clock text-secondary" style="font-size: 2rem;"></i>
+                            <p class="text-muted mt-2 mb-3">暂无活动记录</p>
+                            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addActivityModal">
+                                <i class="bi bi-plus-circle me-1"></i>添加第一条记录
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- 活动分析图表 -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-bar-chart me-2"></i>活动分析</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="activityChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 右侧边栏 -->
+    <div class="col-md-4">
+        <!-- 商机基本信息 -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">商机信息</h5>
+                <span class="badge bg-{{ 
+                    'primary' if lead.status.name == 'NEW' else 
+                    'info' if lead.status.name == 'CONTACTED' else 
+                    'success' if lead.status.name == 'QUALIFIED' else 
+                    'warning' if lead.status.name == 'NEGOTIATION' else 
+                    'secondary' 
+                }}">{{ lead.status.value }}</span>
+            </div>
+            <div class="card-body">
+                {% if lead.customer %}
+                <div class="mb-3">
+                    <h6 class="text-muted">客户:</h6>
+                    <div>
+                        <a href="{{ url_for('crm.customer_detail', customer_id=lead.customer.id) }}" class="text-info">
+                            {{ lead.customer.name }}
+                            {% if lead.customer.company %}
+                            <span class="text-muted">({{ lead.customer.company }})</span>
+                            {% endif %}
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="mb-3">
+                    <h6 class="text-muted">预估价值:</h6>
+                    <div class="h4">${{ "{:,.2f}".format(lead.estimated_value) }}</div>
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="text-muted">来源:</h6>
+                    <div>{{ lead.source or '未知' }}</div>
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="text-muted">负责人:</h6>
+                    <div>{{ lead.assigned_to or '未分配' }}</div>
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="text-muted">下次跟进:</h6>
+                    <div>{{ lead.next_follow_up.strftime('%Y-%m-%d') if lead.next_follow_up else '未设置' }}</div>
+                </div>
+                
+                {% if lead.description %}
+                <div class="mb-3">
+                    <h6 class="text-muted">详细描述:</h6>
+                    <div class="p-3 bg-dark rounded">{{ lead.description }}</div>
+                </div>
+                {% endif %}
+                
+                {% if lead.status.name in ['WON', 'LOST'] %}
+                <div class="alert {{ 'alert-success' if lead.status.name == 'WON' else 'alert-danger' }} mt-3">
+                    <i class="{{ 'bi bi-trophy' if lead.status.name == 'WON' else 'bi bi-x-circle' }} me-2"></i>
+                    此商机已{{ '成交' if lead.status.name == 'WON' else '流失' }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- 状态管理卡片 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">状态管理</h5>
+            </div>
+            <div class="card-body">
+                <div class="status-workflow mb-4">
+                    <div class="d-flex justify-content-between position-relative mb-2">
+                        {% for status in ['NEW', 'CONTACTED', 'QUALIFIED', 'NEGOTIATION', 'WON', 'LOST'] %}
+                            {% set is_current = status == lead.status.name %}
+                            {% set is_completed = (
+                                (status == 'NEW' and lead.status.name != 'NEW') or
+                                (status == 'CONTACTED' and lead.status.name not in ['NEW', 'CONTACTED']) or
+                                (status == 'QUALIFIED' and lead.status.name not in ['NEW', 'CONTACTED', 'QUALIFIED']) or
+                                (status == 'NEGOTIATION' and lead.status.name not in ['NEW', 'CONTACTED', 'QUALIFIED', 'NEGOTIATION']) or
+                                (status == 'WON' and lead.status.name == 'WON') or
+                                (status == 'LOST' and lead.status.name == 'LOST')
+                            ) %}
+                            <div class="status-node 
+                                {{ 'status-current' if is_current else '' }}
+                                {{ 'status-completed' if is_completed else '' }}">
+                                <div class="status-indicator 
+                                    {{ 'bg-success' if is_completed else 'bg-primary' if is_current else 'bg-secondary' }}">
+                                </div>
+                            </div>
+                        {% endfor %}
+                        
+                        <div class="status-line"></div>
+                    </div>
+                    <div class="d-flex justify-content-between small text-muted">
+                        <span>新建</span>
+                        <span>已联系</span>
+                        <span>合格</span>
+                        <span>谈判</span>
+                        <span>成交</span>
+                        <span>流失</span>
+                    </div>
+                </div>
+                
+                <div class="update-status-section">
+                    <form action="{{ url_for('crm.update_lead_status', lead_id=lead.id) }}" method="post">
+                        <div class="mb-3">
+                            <label for="status" class="form-label">更新状态:</label>
+                            <select class="form-select" id="status" name="status">
+                                {% for status_name, status_value in [
+                                    ('NEW', '新建'),
+                                    ('CONTACTED', '已联系'),
+                                    ('QUALIFIED', '合格线索'),
+                                    ('NEGOTIATION', '谈判中'),
+                                    ('WON', '已成交'),
+                                    ('LOST', '已流失')
+                                ] %}
+                                    <option value="{{ status_name }}" {{ 'selected' if status_name == lead.status.name else '' }}>
+                                        {{ status_value }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="status_comment" class="form-label">状态变更说明:</label>
+                            <textarea class="form-control" id="status_comment" name="status_comment" rows="2" placeholder="添加状态变更原因(可选)"></textarea>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">更新商机状态</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 相关交易卡片 -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">相关交易</h5>
+                <a href="{{ url_for('crm.new_deal', customer_id=lead.customer.id, lead_id=lead.id) }}" class="btn btn-sm btn-outline-success">
+                    <i class="bi bi-plus-circle"></i>
+                </a>
+            </div>
+            <div class="card-body p-0">
+                {% if lead.deals %}
+                <div class="list-group list-group-flush">
+                    {% for deal in lead.deals %}
+                    <a href="{{ url_for('crm.deal_detail', deal_id=deal.id) }}" class="list-group-item list-group-item-action bg-dark">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                {{ deal.title }}
+                                <span class="badge bg-{{ 
+                                    'secondary' if deal.status.name == 'DRAFT' else 
+                                    'info' if deal.status.name == 'PENDING' else 
+                                    'primary' if deal.status.name == 'APPROVED' else 
+                                    'warning' if deal.status.name == 'SIGNED' else 
+                                    'success' if deal.status.name == 'COMPLETED' else 
+                                    'danger'
+                                }} ms-2">{{ deal.status.value }}</span>
+                            </div>
+                            <div>${{ "{:,.2f}".format(deal.value) }}</div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center p-4">
+                    <i class="bi bi-currency-dollar text-secondary mb-3" style="font-size: 2rem;"></i>
+                    <p class="text-muted mb-3">暂无相关交易</p>
+                    <a href="{{ url_for('crm.new_deal', customer_id=lead.customer.id, lead_id=lead.id) }}" class="btn btn-sm btn-success">
+                        <i class="bi bi-plus-circle me-1"></i>创建交易
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 添加活动Modal -->
+<div class="modal fade" id="addActivityModal" tabindex="-1" aria-labelledby="addActivityModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addActivityModalLabel">添加活动记录</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="activityForm">
+                    <input type="hidden" id="customer_id" value="{{ lead.customer_id }}">
+                    <input type="hidden" id="lead_id" value="{{ lead.id }}">
+                    <div class="mb-3">
+                        <label for="activity_type" class="form-label">活动类型</label>
+                        <select class="form-select" id="activity_type" required>
+                            <option value="备注">备注</option>
+                            <option value="电话">电话</option>
+                            <option value="会议">会议</option>
+                            <option value="邮件">邮件</option>
+                            <option value="现场拜访">现场拜访</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="activity_summary" class="form-label">摘要</label>
+                        <input type="text" class="form-control" id="activity_summary" required placeholder="活动简短描述">
+                    </div>
+                    <div class="mb-3">
+                        <label for="activity_details" class="form-label">详细内容</label>
+                        <textarea class="form-control" id="activity_details" rows="4" placeholder="记录详细内容..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="saveActivity">保存记录</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('=== Lead Detail Page Initialization ===');
+        
+        // ==================== 计算线索得分（完全防御式编程）====================
+        let leadScore = 0;
+        
+        // 状态得分
+        const statusScores = {
+            'NEW': 20,
+            'CONTACTED': 40,
+            'QUALIFIED': 60,
+            'NEGOTIATION': 80,
+            'WON': 100,
+            'LOST': 0
+        };
+        const statusName = '{{ lead.status.name }}';
+        const statusScore = statusScores[statusName] || 0;
+        console.log('DEBUG: statusName =', statusName, 'statusScore =', statusScore);
+        leadScore += statusScore;
+        
+        // 活动频率得分（每个活动5分，最多20分） - 使用安全解析
+        const activityCountStr = '{{ lead.activities|length if lead.activities else 0 }}';
+        console.log('DEBUG: activityCountStr =', JSON.stringify(activityCountStr), 'type:', typeof activityCountStr);
+        const activityCount = parseInt(activityCountStr, 10) || 0;
+        console.log('DEBUG: activityCount =', activityCount, 'isNaN:', isNaN(activityCount));
+        const activityScore = Math.min(activityCount * 5, 20);
+        console.log('DEBUG: activityScore =', activityScore);
+        leadScore += activityScore;
+        
+        // 时间因素（最近7天内创建的线索加10分） - 使用安全日期计算
+        const createdAtStr = '{{ lead.created_at.isoformat() }}';
+        console.log('DEBUG: createdAtStr =', createdAtStr);
+        const createdAt = new Date(createdAtStr);
+        let leadDays = 0;
+        if (!isNaN(createdAt.getTime())) {
+            leadDays = Math.floor((new Date() - createdAt) / (1000 * 60 * 60 * 24));
+            console.log('DEBUG: leadDays =', leadDays);
+            if (leadDays < 7) {
+                leadScore += 10;
+                console.log('DEBUG: Added 10 for recent lead');
+            }
+        } else {
+            console.error('DEBUG: Invalid createdAt date');
+        }
+        
+        // 预估价值得分（价值超过10000加10分）
+        const estimatedValueStr = '{{ lead.estimated_value or 0 }}';
+        const estimatedValue = parseFloat(estimatedValueStr) || 0;
+        console.log('DEBUG: estimatedValue =', estimatedValue);
+        if (estimatedValue > 10000) {
+            leadScore += 10;
+            console.log('DEBUG: Added 10 for high value');
+        }
+        
+        // 确保得分在0-100之间
+        leadScore = Math.min(Math.max(Math.round(leadScore), 0), 100);
+        console.log('DEBUG: Final leadScore =', leadScore, 'isNaN:', isNaN(leadScore), 'type:', typeof leadScore);
+        
+        // ==================== 计算转化概率 ====================
+        let conversionRate = 0;
+        if ('{{ lead.status.name }}' === 'WON') {
+            conversionRate = 100;
+        } else if ('{{ lead.status.name }}' === 'LOST') {
+            conversionRate = 0;
+        } else {
+            conversionRate = Math.round((leadScore / 100) * 85);
+        }
+        
+        // ==================== 预计成交日期 ====================
+        let estimatedCloseDays = 30;
+        if ('{{ lead.status.name }}' === 'NEGOTIATION') {
+            estimatedCloseDays = 7;
+        } else if ('{{ lead.status.name }}' === 'QUALIFIED') {
+            estimatedCloseDays = 14;
+        } else if ('{{ lead.status.name }}' === 'CONTACTED') {
+            estimatedCloseDays = 21;
+        }
+        
+        const estimatedCloseDate = new Date();
+        estimatedCloseDate.setDate(estimatedCloseDate.getDate() + estimatedCloseDays);
+        const formattedDate = estimatedCloseDate.toLocaleDateString('zh-CN');
+        
+        // ==================== 跟进建议 ====================
+        let suggestion = '保持跟进';
+        if (conversionRate >= 70) {
+            suggestion = '加速推进成交';
+        } else if (conversionRate >= 40) {
+            suggestion = '继续培养关系';
+        } else if (conversionRate < 30 && activityCount < 2) {
+            suggestion = '增加互动频率';
+        }
+        
+        // ==================== 状态评估 ====================
+        let status = '良好';
+        let statusClass = 'text-success';
+        if (conversionRate >= 70) {
+            status = '优秀';
+            statusClass = 'text-success';
+        } else if (conversionRate >= 40) {
+            status = '良好';
+            statusClass = 'text-info';
+        } else {
+            status = '需关注';
+            statusClass = 'text-warning';
+        }
+        
+        // ==================== 更新KPI显示（安全调用）====================
+        const leadScoreEl = document.getElementById('lead-score');
+        const leadDaysEl = document.getElementById('lead-days');
+        const activityCountEl = document.getElementById('activity-count');
+        
+        console.log('DEBUG: Elements found - leadScoreEl:', !!leadScoreEl, 'leadDaysEl:', !!leadDaysEl, 'activityCountEl:', !!activityCountEl);
+        
+        // Helper function to safely update KPI with fallback
+        function updateKPI(elementId, value, label) {
+            const element = document.getElementById(elementId);
+            if (!element) {
+                console.error('ERROR: Element not found:', elementId);
+                return;
+            }
+            
+            console.log(`DEBUG: Updating ${label} - value:`, value, 'type:', typeof value, 'isNaN:', isNaN(value));
+            
+            if (typeof value !== 'number' || isNaN(value)) {
+                console.error(`ERROR: Invalid ${label} value:`, value);
+                element.textContent = '0';
+                return;
+            }
+            
+            const safeValue = Math.max(0, Math.round(value));
+            
+            // Try using initCountUp if available, otherwise fallback to direct text
+            if (typeof initCountUp === 'function') {
+                try {
+                    if (safeValue > 0) {
+                        console.log(`DEBUG: Calling initCountUp for ${label}:`, safeValue);
+                        initCountUp(elementId, safeValue);
+                    } else {
+                        element.textContent = '0';
+                    }
+                } catch (err) {
+                    console.error(`ERROR: initCountUp failed for ${label}:`, err);
+                    element.textContent = safeValue.toString();
+                }
+            } else {
+                console.warn('WARNING: initCountUp function not available, using direct text');
+                element.textContent = safeValue.toString();
+            }
+        }
+        
+        updateKPI('lead-score', leadScore, 'leadScore');
+        updateKPI('lead-days', leadDays, 'leadDays');
+        updateKPI('activity-count', activityCount, 'activityCount');
+        
+        // ==================== 更新转化预测显示 ====================
+        document.getElementById('conversion-rate').textContent = conversionRate + '%';
+        const predStatus = document.getElementById('pred-status');
+        predStatus.textContent = status;
+        predStatus.className = statusClass;
+        document.getElementById('pred-close-date').textContent = formattedDate;
+        document.getElementById('pred-suggestion').textContent = suggestion;
+        
+        // ==================== 创建转化仪表盘图表 ====================
+        const gaugeCtx = document.getElementById('conversionGauge');
+        if (gaugeCtx) {
+            let gaugeColor = '#dc3545'; // 红色
+            if (conversionRate >= 70) {
+                gaugeColor = '#28a745'; // 绿色
+            } else if (conversionRate >= 40) {
+                gaugeColor = '#ffc107'; // 黄色
+            }
+            
+            initChart('conversionGauge', {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [conversionRate, 100 - conversionRate],
+                        backgroundColor: [
+                            gaugeColor,
+                            'rgba(61, 68, 88, 0.3)'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    circumference: 180,
+                    rotation: -90,
+                    cutout: '75%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    }
+                }
+            });
+        }
+        
+        // ==================== 创建活动分析图表 ====================
+        const activityTypes = {};
+        {% for activity in lead.activities %}
+        activityTypes['{{ activity.type }}'] = (activityTypes['{{ activity.type }}'] || 0) + 1;
+        {% endfor %}
+        
+        const activityChartCtx = document.getElementById('activityChart');
+        if (activityChartCtx && Object.keys(activityTypes).length > 0) {
+            initChart('activityChart', {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(activityTypes),
+                    datasets: [{
+                        label: '活动次数',
+                        data: Object.values(activityTypes),
+                        backgroundColor: 'rgba(247, 147, 26, 0.6)',
+                        borderColor: '#f7931a',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        } else if (activityChartCtx) {
+            // 如果没有活动，显示提示信息
+            const parent = activityChartCtx.parentElement;
+            activityChartCtx.style.display = 'none';
+            parent.innerHTML = '<div class="text-center p-4"><p class="text-muted">暂无活动数据</p></div>';
+        }
+        
+        // ==================== 保存活动记录 ====================
+        document.getElementById('saveActivity').addEventListener('click', function() {
+            var customerId = document.getElementById('customer_id').value;
+            var leadId = document.getElementById('lead_id').value;
+            var type = document.getElementById('activity_type').value;
+            var summary = document.getElementById('activity_summary').value;
+            var details = document.getElementById('activity_details').value;
+            
+            if (!summary) {
+                alert('请输入活动摘要');
+                return;
+            }
+            
+            var data = {
+                customer_id: customerId,
+                lead_id: leadId,
+                type: type,
+                summary: summary,
+                details: details
+            };
+            
+            fetch('{{ url_for("crm.new_activity") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    var modal = bootstrap.Modal.getInstance(document.getElementById('addActivityModal'));
+                    modal.hide();
+                    
+                    var activitiesList = document.getElementById('leadActivitiesList');
+                    if (activitiesList.innerHTML.includes('暂无活动记录')) {
+                        activitiesList.innerHTML = '';
+                        activitiesList.className = 'timeline';
+                    }
+                    
+                    var badgeClass = 'secondary';
+                    if (type === '创建') badgeClass = 'success';
+                    else if (type === '备注') badgeClass = 'info';
+                    else if (type === '电话') badgeClass = 'warning';
+                    else if (type === '会议') badgeClass = 'primary';
+                    
+                    var newActivity = document.createElement('div');
+                    newActivity.className = 'timeline-item';
+                    newActivity.innerHTML = `
+                        <div class="timeline-marker bg-${badgeClass}"></div>
+                        <div class="timeline-content">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="mb-0">${summary}</h6>
+                                <small class="text-muted">${result.activity.created_at}</small>
+                            </div>
+                            <span class="badge bg-${badgeClass} mb-2">${type}</span>
+                            ${result.activity.created_by ? `<small class="text-muted ms-2">${result.activity.created_by}</small>` : ''}
+                            ${details ? `<p class="mb-0 text-muted mt-2">${details}</p>` : ''}
+                        </div>
+                    `;
+                    
+                    activitiesList.insertBefore(newActivity, activitiesList.firstChild);
+                    
+                    document.getElementById('activity_summary').value = '';
+                    document.getElementById('activity_details').value = '';
+                    
+                    showToast('活动记录已添加成功！', 'success');
+                    
+                    // 刷新页面以更新KPI和图表
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    alert('添加活动记录失败: ' + result.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('添加活动记录失败，请稍后重试');
+            });
+        });
+    });
+</script>
+{% endblock %}

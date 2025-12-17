@@ -1,0 +1,11 @@
+# Suggested requirements for the analytics dashboard backend
+Flask>=2.3
+Werkzeug>=2.3
+Flask-SQLAlchemy>=3.1
+SQLAlchemy>=2.0
+psycopg2-binary>=2.9
+requests>=2.31
+pandas>=2.2
+numpy>=1.26
+schedule>=1.2
+pytz>=2023.3

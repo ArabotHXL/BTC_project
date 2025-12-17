@@ -1,0 +1,584 @@
+{% extends "crm/base.html" %}
+
+{% block title %}<span data-i18n="broker_deals_management">{{ t('broker_deals_management') }}</span> | BTC Mining CRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="h3 mb-1 text-white">
+                <i class="bi bi-building me-2" style="color: var(--btc-gold);"></i>
+                <span data-i18n="broker_deals">{{ t('broker_deals') }}</span>
+            </h2>
+            <p class="text-muted mb-0"><span data-i18n="broker_deals_description">{{ t('broker_deals_description') }}</span></p>
+        </div>
+        <a href="{{ url_for('crm.deals') }}" class="btn btn-warning">
+            <i class="bi bi-plus-circle me-1"></i>
+            <span data-i18n="new_deal">{{ t('new_deal') }}</span>
+        </a>
+    </div>
+
+    <!-- KPI Cards Row -->
+    <div class="row mb-4" id="kpi-cards">
+        <!-- Total Deals Card -->
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card kpi-card bg-gradient-primary h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50 mb-2"><span data-i18n="total_deals">{{ t('total_deals') }}</span></h6>
+                            <h3 class="mb-0 text-white" id="kpi-total-deals">-</h3>
+                        </div>
+                        <div class="kpi-icon">
+                            <i class="bi bi-briefcase"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Deals Card -->
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card kpi-card bg-gradient-warning h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50 mb-2"><span data-i18n="active_deals">{{ t('active_deals') }}</span></h6>
+                            <h3 class="mb-0 text-white" id="kpi-active-deals">-</h3>
+                        </div>
+                        <div class="kpi-icon">
+                            <i class="bi bi-lightning-charge"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Investment Card -->
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card kpi-card bg-gradient-success h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50 mb-2"><span data-i18n="total_investment">{{ t('total_investment') }}</span></h6>
+                            <h3 class="mb-0 text-white" id="kpi-total-investment">-</h3>
+                        </div>
+                        <div class="kpi-icon">
+                            <i class="bi bi-currency-dollar"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Commission Card -->
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card kpi-card bg-gradient-gold h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50 mb-2"><span data-i18n="total_commission">{{ t('total_commission') }}</span></h6>
+                            <h3 class="mb-0 text-white" id="kpi-total-commission">-</h3>
+                        </div>
+                        <div class="kpi-icon">
+                            <i class="bi bi-wallet2"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Filter Bar -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                <span class="text-muted me-2"><span data-i18n="filter_by_status">{{ t('filter_by_status') }}</span></span>
+                <button class="btn btn-sm btn-outline-secondary filter-btn active" data-status="">
+                    <span data-i18n="all">{{ t('all') }}</span>
+                </button>
+                <button class="btn btn-sm btn-outline-secondary filter-btn" data-status="DRAFT">
+                    <span data-i18n="draft">{{ t('draft') }}</span>
+                </button>
+                <button class="btn btn-sm btn-outline-warning filter-btn" data-status="PENDING">
+                    <span data-i18n="pending">{{ t('pending') }}</span>
+                </button>
+                <button class="btn btn-sm btn-outline-info filter-btn" data-status="SIGNED">
+                    <span data-i18n="signed">{{ t('signed') }}</span>
+                </button>
+                <button class="btn btn-sm btn-outline-success filter-btn" data-status="COMPLETED">
+                    <span data-i18n="completed">{{ t('completed') }}</span>
+                </button>
+                <button class="btn btn-sm btn-outline-danger filter-btn" data-status="CANCELED">
+                    <span data-i18n="cancelled">{{ t('cancelled') }}</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Row -->
+    <div class="row">
+        <!-- Left Column: Deals Table & Revenue Trend -->
+        <div class="col-lg-8 mb-4">
+            <!-- Deals Table Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-table me-2"></i>
+                        <span data-i18n="deals_list">{{ t('deals_list') }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="deals-table">
+                            <thead>
+                                <tr>
+                                    <th><span data-i18n="customer">{{ t('customer') }}</span></th>
+                                    <th><span data-i18n="mining_farm">{{ t('mining_farm') }}</span></th>
+                                    <th><span data-i18n="investment">{{ t('investment') }}</span></th>
+                                    <th><span data-i18n="commission">{{ t('commission') }}</span></th>
+                                    <th><span data-i18n="status">{{ t('status') }}</span></th>
+                                    <th><span data-i18n="date">{{ t('date') }}</span></th>
+                                    <th><span data-i18n="actions">{{ t('actions') }}</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="deals-tbody">
+                                <tr>
+                                    <td colspan="7" class="text-center py-4">
+                                        <div class="spinner-border text-warning" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="text-muted mt-2"><span data-i18n="loading_deals">{{ t('loading_deals') }}</span></p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Revenue Trend Chart Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-graph-up me-2"></i>
+                        <span data-i18n="revenue_trend_12_months">{{ t('revenue_trend_12_months') }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenue-trend-chart" height="80"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Capacity Chart & Farm Ranking -->
+        <div class="col-lg-4 mb-4">
+            <!-- Capacity Distribution Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-pie-chart me-2"></i>
+                        <span data-i18n="capacity_by_farm">{{ t('capacity_by_farm') }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="capacity-chart" height="200"></canvas>
+                </div>
+            </div>
+
+            <!-- Mining Farm Ranking Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-trophy me-2"></i>
+                        <span data-i18n="top_5_farms">{{ t('top_5_farms') }}</span>
+                    </h5>
+                </div>
+                <div class="card-body" id="farm-ranking">
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-warning spinner-border-sm" role="status"></div>
+                        <p class="text-muted small mt-2"><span data-i18n="loading">{{ t('loading') }}</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* KPI Cards Styling */
+.kpi-card {
+    border: none;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.kpi-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-glow);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #f7931a 0%, #ffa500 100%);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.bg-gradient-gold {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+}
+
+.kpi-icon {
+    font-size: 2.5rem;
+    opacity: 0.3;
+    color: white;
+}
+
+/* Filter Buttons */
+.filter-btn.active {
+    background-color: var(--btc-gold);
+    border-color: var(--btc-gold);
+    color: white;
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* Farm Ranking Item */
+.farm-ranking-item {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: var(--btc-card-bg);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--btc-gold);
+}
+
+.farm-ranking-item:hover {
+    background: var(--btc-border);
+}
+
+.farm-rank {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: var(--btc-gold);
+    color: var(--btc-dark-bg);
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let currentStatus = '';
+    
+    // Load KPI Stats
+    function loadKPIStats() {
+        fetch('/crm/api/broker/deals/stats')
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    const data = result.data;
+                    
+                    // Initialize CountUp for KPI cards
+                    initCountUp('kpi-total-deals', parseInt(data.total_deals) || 0);
+                    initCountUp('kpi-active-deals', parseInt(data.active_deals) || 0);
+                    initCountUp('kpi-total-investment', parseFloat(data.total_investment) || 0, {
+                        prefix: '$',
+                        separator: ',',
+                        decimal: '.'
+                    });
+                    initCountUp('kpi-total-commission', parseFloat(data.total_commission) || 0, {
+                        prefix: '$',
+                        separator: ',',
+                        decimal: '.'
+                    });
+                }
+            })
+            .catch(error => console.error('Error loading KPI stats:', error));
+    }
+    
+    // Load Deals List
+    function loadDeals(status = '') {
+        const tbody = document.getElementById('deals-tbody');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center py-4">
+                    <div class="spinner-border text-warning" role="status"></div>
+                    <p class="text-muted mt-2"><span data-i18n="loading_deals">${getTranslation('loading_deals')}</span></p>
+                </td>
+            </tr>
+        `;
+        
+        const url = status ? `/crm/api/broker/deals/list?status=${status}` : '/crm/api/broker/deals/list';
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    const deals = result.data;
+                    
+                    if (deals.length === 0) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <i class="bi bi-inbox display-4 text-muted"></i>
+                                    <p class="text-muted mt-3"><span data-i18n="no_deals_found">${getTranslation('no_deals_found')}</span></p>
+                                </td>
+                            </tr>
+                        `;
+                        return;
+                    }
+                    
+                    tbody.innerHTML = deals.map(deal => {
+                        const statusBadge = getStatusBadge(deal.status);
+                        const commissionType = deal.commission_type === 'percentage' ? 
+                            `${deal.commission_rate}%` : 
+                            `$${deal.commission_amount.toLocaleString()}`;
+                        
+                        return `
+                            <tr>
+                                <td>
+                                    <a href="/crm/customer/${deal.customer_id}" class="text-decoration-none text-warning">
+                                        ${deal.customer_name}
+                                    </a>
+                                </td>
+                                <td>${deal.mining_farm_name}</td>
+                                <td>$${deal.client_investment.toLocaleString()}</td>
+                                <td>
+                                    <div>${commissionType}</div>
+                                    <small class="text-muted">$${deal.commission_amount.toLocaleString()}</small>
+                                </td>
+                                <td>${statusBadge}</td>
+                                <td>${deal.created_at}</td>
+                                <td>
+                                    <a href="/crm/deal/${deal.id}" class="btn btn-sm btn-outline-warning">
+                                        <i class="bi bi-eye"></i> <span data-i18n="view">${getTranslation('view')}</span>
+                                    </a>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading deals:', error);
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-danger">
+                            <i class="bi bi-exclamation-triangle"></i> Error loading deals
+                        </td>
+                    </tr>
+                `;
+            });
+    }
+    
+    // Get Status Badge HTML
+    function getStatusBadge(status) {
+        const badges = {
+            'DRAFT': `<span class="badge bg-secondary" data-i18n="draft">${getTranslation('draft')}</span>`,
+            'PENDING': `<span class="badge bg-warning" data-i18n="pending">${getTranslation('pending')}</span>`,
+            'APPROVED': `<span class="badge bg-info" data-i18n="approved">${getTranslation('approved')}</span>`,
+            'SIGNED': `<span class="badge bg-info" data-i18n="signed">${getTranslation('signed')}</span>`,
+            'COMPLETED': `<span class="badge bg-success" data-i18n="completed">${getTranslation('completed')}</span>`,
+            'CANCELED': `<span class="badge bg-danger" data-i18n="cancelled">${getTranslation('cancelled')}</span>`
+        };
+        return badges[status] || `<span class="badge bg-secondary">${status}</span>`;
+    }
+    
+    // Load Revenue Trend Chart
+    function loadRevenueTrend() {
+        fetch('/crm/api/broker/deals/revenue-trend')
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    const data = result.data;
+                    
+                    const chartConfig = {
+                        type: 'line',
+                        data: {
+                            labels: data.months,
+                            datasets: [
+                                {
+                                    label: getTranslation('investment'),
+                                    data: data.investment,
+                                    borderColor: '#10b981',
+                                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                    tension: 0.4,
+                                    fill: true
+                                },
+                                {
+                                    label: getTranslation('commission_income'),
+                                    data: data.commission,
+                                    borderColor: '#f7931a',
+                                    backgroundColor: 'rgba(247, 147, 26, 0.1)',
+                                    tension: 0.4,
+                                    fill: true
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: {
+                                    labels: { color: '#e0e6ed' }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { 
+                                        color: '#9ca3af',
+                                        callback: function(value) {
+                                            return '$' + value.toLocaleString();
+                                        }
+                                    },
+                                    grid: { color: '#3d4458' }
+                                },
+                                x: {
+                                    ticks: { color: '#9ca3af' },
+                                    grid: { color: '#3d4458' }
+                                }
+                            }
+                        }
+                    };
+                    
+                    initChart('revenue-trend-chart', chartConfig);
+                }
+            })
+            .catch(error => console.error('Error loading revenue trend:', error));
+    }
+    
+    // Load Capacity Chart
+    function loadCapacityChart() {
+        fetch('/crm/api/broker/deals/capacity')
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    const data = result.data;
+                    
+                    const chartConfig = {
+                        type: 'doughnut',
+                        data: {
+                            labels: data.farms,
+                            datasets: [{
+                                data: data.investments,
+                                backgroundColor: [
+                                    '#f7931a',
+                                    '#ffa500',
+                                    '#10b981',
+                                    '#3b82f6',
+                                    '#8b5cf6',
+                                    '#ef4444'
+                                ],
+                                borderWidth: 2,
+                                borderColor: '#1a1d2e'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: { 
+                                        color: '#e0e6ed',
+                                        padding: 10
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const label = context.label || '';
+                                            const value = context.parsed || 0;
+                                            return label + ': $' + value.toLocaleString();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    };
+                    
+                    initChart('capacity-chart', chartConfig);
+                    
+                    // Also update farm ranking
+                    updateFarmRanking(data);
+                }
+            })
+            .catch(error => console.error('Error loading capacity chart:', error));
+    }
+    
+    // Update Farm Ranking
+    function updateFarmRanking(data) {
+        const container = document.getElementById('farm-ranking');
+        
+        if (data.farms.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-3">
+                    <p class="text-muted"><span data-i18n="no_data_available">${getTranslation('no_data_available')}</span></p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Sort and take top 5
+        const sorted = data.farms.map((farm, idx) => ({
+            name: farm,
+            deals: data.deal_counts[idx],
+            investment: data.investments[idx]
+        })).sort((a, b) => b.investment - a.investment).slice(0, 5);
+        
+        container.innerHTML = sorted.map((farm, idx) => `
+            <div class="farm-ranking-item">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="farm-rank">${idx + 1}</span>
+                        <div>
+                            <div class="fw-bold">${farm.name}</div>
+                            <small class="text-muted">${farm.deals} <span data-i18n="deals_count">${getTranslation('deals_count')}</span></small>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <div class="text-warning fw-bold">$${farm.investment.toLocaleString()}</div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    // Status Filter Click Handler
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            currentStatus = this.dataset.status;
+            loadDeals(currentStatus);
+        });
+    });
+    
+    // Initial Load
+    loadKPIStats();
+    loadDeals();
+    loadRevenueTrend();
+    loadCapacityChart();
+});
+</script>
+{% endblock %}

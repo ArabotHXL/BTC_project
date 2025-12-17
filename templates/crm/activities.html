@@ -1,0 +1,617 @@
+{% extends "crm/base.html" %}
+
+{% block title %}活动记录分析 | BTC Mining CRM{% endblock %}
+
+{% block page_title %}客户活动分析{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">活动记录</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .activity-kpi-card {
+        background: linear-gradient(145deg, var(--btc-card-bg) 0%, #1a1d2e 100%);
+        border: 1px solid var(--btc-border);
+        border-radius: var(--radius-md);
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .activity-kpi-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--btc-gold);
+        box-shadow: 0 8px 24px rgba(247, 147, 26, 0.2);
+    }
+    
+    .kpi-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        margin-bottom: 1rem;
+    }
+    
+    .kpi-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--btc-text-primary);
+        margin-bottom: 0.5rem;
+    }
+    
+    .kpi-label {
+        font-size: 0.9rem;
+        color: var(--btc-text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .activity-stream-card {
+        background: var(--btc-card-bg);
+        border: 1px solid var(--btc-border);
+        border-radius: var(--radius-md);
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+    }
+    
+    .activity-stream-card:hover {
+        transform: translateX(5px);
+        border-left: 4px solid var(--btc-gold);
+        box-shadow: 0 4px 12px rgba(247, 147, 26, 0.15);
+    }
+    
+    .activity-type-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        display: inline-block;
+    }
+    
+    .filter-btn {
+        background: rgba(247, 147, 26, 0.1);
+        border: 1px solid var(--btc-border);
+        color: var(--btc-text-secondary);
+        padding: 8px 16px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .filter-btn.active,
+    .filter-btn:hover {
+        background: var(--btc-gold);
+        color: #000;
+        border-color: var(--btc-gold);
+    }
+    
+    .chart-card {
+        background: var(--btc-card-bg);
+        border: 1px solid var(--btc-border);
+        border-radius: var(--radius-md);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        height: 100%;
+    }
+    
+    .chart-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--btc-gold);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .refresh-btn {
+        background: linear-gradient(135deg, var(--btc-gold) 0%, var(--btc-orange) 100%);
+        color: #000;
+        border: none;
+        padding: 8px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .refresh-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(247, 147, 26, 0.4);
+    }
+    
+    .activity-stream {
+        max-height: 600px;
+        overflow-y: auto;
+        padding-right: 10px;
+    }
+    
+    .activity-stream::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .activity-stream::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    
+    .activity-stream::-webkit-scrollbar-thumb {
+        background: var(--btc-border);
+        border-radius: 3px;
+    }
+    
+    .activity-stream::-webkit-scrollbar-thumb:hover {
+        background: var(--btc-gold);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="activity-kpi-card">
+            <div class="kpi-icon" style="background: rgba(247, 147, 26, 0.1); color: var(--btc-gold);">
+                <i class="bi bi-activity"></i>
+            </div>
+            <div class="kpi-value" id="totalActivitiesValue">0</div>
+            <div class="kpi-label">总活动数</div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="activity-kpi-card">
+            <div class="kpi-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                <i class="bi bi-calendar-check"></i>
+            </div>
+            <div class="kpi-value" id="todayActivitiesValue">0</div>
+            <div class="kpi-label">今日活动</div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="activity-kpi-card">
+            <div class="kpi-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+                <i class="bi bi-calendar-week"></i>
+            </div>
+            <div class="kpi-value" id="weekActivitiesValue">0</div>
+            <div class="kpi-label">本周活动</div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="activity-kpi-card">
+            <div class="kpi-icon" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;">
+                <i class="bi bi-star-fill"></i>
+            </div>
+            <div class="kpi-value" id="activeCustomerName" style="font-size: 1.3rem;">加载中...</div>
+            <div class="kpi-label">最活跃客户</div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div class="d-flex gap-2 flex-wrap">
+                <button class="filter-btn active" data-type="all">全部</button>
+                <button class="filter-btn" data-type="备注">备注</button>
+                <button class="filter-btn" data-type="电话">电话</button>
+                <button class="filter-btn" data-type="会议">会议</button>
+                <button class="filter-btn" data-type="邮件">邮件</button>
+                <button class="filter-btn" data-type="现场拜访">现场拜访</button>
+                <button class="filter-btn" data-type="创建">创建</button>
+            </div>
+            
+            <button class="refresh-btn" id="refreshBtn">
+                <i class="bi bi-arrow-clockwise me-2"></i>刷新数据
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="chart-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="chart-title mb-0">
+                    <i class="bi bi-list-ul"></i>
+                    实时活动流
+                </h5>
+                <span class="badge bg-info" id="activityCount">0 条</span>
+            </div>
+            
+            <div class="activity-stream" id="activityStream">
+                <div class="text-center p-5">
+                    <div class="spinner-border text-gold" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="text-muted mt-3">正在加载活动数据...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="chart-card" style="margin-bottom: 1.5rem;">
+            <h5 class="chart-title">
+                <i class="bi bi-pie-chart-fill"></i>
+                活动类型分布
+            </h5>
+            <canvas id="activityTypeChart" style="max-height: 250px;"></canvas>
+        </div>
+        
+        <div class="chart-card" style="margin-bottom: 1.5rem;">
+            <h5 class="chart-title">
+                <i class="bi bi-bar-chart-fill"></i>
+                客户互动热力图
+            </h5>
+            <canvas id="customerHeatmapChart" style="max-height: 300px;"></canvas>
+        </div>
+        
+        <div class="chart-card">
+            <h5 class="chart-title">
+                <i class="bi bi-graph-up"></i>
+                7天活动趋势
+            </h5>
+            <canvas id="activityTrendChart" style="max-height: 250px;"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let allActivities = [];
+    let currentFilter = 'all';
+    
+    const typeColors = {
+        '备注': '#3b82f6',
+        '电话': '#fbbf24',
+        '会议': '#10b981',
+        '邮件': '#8b5cf6',
+        '现场拜访': '#ef4444',
+        '创建': '#f7931a',
+        '其他': '#6b7280'
+    };
+    
+    const typeIcons = {
+        '备注': 'bi-journal-text',
+        '电话': 'bi-telephone-fill',
+        '会议': 'bi-people-fill',
+        '邮件': 'bi-envelope-fill',
+        '现场拜访': 'bi-geo-alt-fill',
+        '创建': 'bi-plus-circle-fill',
+        '其他': 'bi-three-dots'
+    };
+    
+    function loadKPIStats() {
+        fetch('/crm/api/activities/stats')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const total = parseInt(data.total_activities) || 0;
+                    const today = parseInt(data.today_activities) || 0;
+                    const week = parseInt(data.week_activities) || 0;
+                    
+                    initCountUp('totalActivitiesValue', total);
+                    initCountUp('todayActivitiesValue', today);
+                    initCountUp('weekActivitiesValue', week);
+                    
+                    const customerName = data.most_active_customer?.name || 'N/A';
+                    document.getElementById('activeCustomerName').textContent = customerName;
+                } else {
+                    console.error('Failed to load KPI stats:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading KPI stats:', error);
+            });
+    }
+    
+    function loadActivityTypeChart() {
+        fetch('/crm/api/activities/stats')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    fetch('/crm/api/activities/type-trend')
+                        .then(response => response.json())
+                        .then(trendData => {
+                            if (trendData.success) {
+                                const types = Object.keys(trendData.data.types);
+                                
+                                const typesWithTotals = types.map(type => ({
+                                    type: type,
+                                    total: trendData.data.types[type].reduce((a, b) => a + b, 0)
+                                })).filter(item => item.total > 0);
+                                
+                                const filteredTypes = typesWithTotals.map(item => item.type);
+                                const totals = typesWithTotals.map(item => item.total);
+                                
+                                initChart('activityTypeChart', {
+                                    type: 'doughnut',
+                                    data: {
+                                        labels: filteredTypes,
+                                        datasets: [{
+                                            data: totals,
+                                            backgroundColor: filteredTypes.map(type => typeColors[type] || '#6b7280'),
+                                            borderWidth: 2,
+                                            borderColor: '#1a1d2e'
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: true,
+                                        plugins: {
+                                            legend: {
+                                                position: 'bottom',
+                                                labels: {
+                                                    color: '#e0e6ed',
+                                                    padding: 15,
+                                                    font: { size: 11 }
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+                        });
+                }
+            })
+            .catch(error => console.error('Error loading activity type chart:', error));
+    }
+    
+    function loadCustomerHeatmap() {
+        fetch('/crm/api/activities/heatmap')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.data.length > 0) {
+                    const customerNames = data.data.map(item => item.customer_name);
+                    const activityCounts = data.data.map(item => parseInt(item.activity_count) || 0);
+                    
+                    initChart('customerHeatmapChart', {
+                        type: 'bar',
+                        data: {
+                            labels: customerNames,
+                            datasets: [{
+                                label: '活动数量',
+                                data: activityCounts,
+                                backgroundColor: 'rgba(247, 147, 26, 0.7)',
+                                borderColor: '#f7931a',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                x: {
+                                    beginAtZero: true,
+                                    grid: { color: 'rgba(61, 68, 88, 0.3)' },
+                                    ticks: { color: '#9ca3af' }
+                                },
+                                y: {
+                                    grid: { display: false },
+                                    ticks: { 
+                                        color: '#9ca3af',
+                                        font: { size: 10 }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            })
+            .catch(error => console.error('Error loading customer heatmap:', error));
+    }
+    
+    function loadActivityTrend() {
+        fetch('/crm/api/activities/type-trend')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const dates = data.data.dates;
+                    const types = Object.keys(data.data.types);
+                    
+                    const datasets = types.map(type => {
+                        const values = data.data.types[type];
+                        const total = values.reduce((a, b) => a + b, 0);
+                        
+                        if (total === 0) return null;
+                        
+                        return {
+                            label: type,
+                            data: values,
+                            borderColor: typeColors[type] || '#6b7280',
+                            backgroundColor: (typeColors[type] || '#6b7280') + '40',
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 3,
+                            pointHoverRadius: 5
+                        };
+                    }).filter(dataset => dataset !== null);
+                    
+                    initChart('activityTrendChart', {
+                        type: 'line',
+                        data: {
+                            labels: dates,
+                            datasets: datasets
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            interaction: {
+                                mode: 'index',
+                                intersect: false
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        color: '#e0e6ed',
+                                        padding: 10,
+                                        font: { size: 10 }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    grid: { color: 'rgba(61, 68, 88, 0.3)' },
+                                    ticks: { color: '#9ca3af', font: { size: 10 } }
+                                },
+                                y: {
+                                    beginAtZero: true,
+                                    grid: { color: 'rgba(61, 68, 88, 0.3)' },
+                                    ticks: { 
+                                        color: '#9ca3af',
+                                        stepSize: 1
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            })
+            .catch(error => console.error('Error loading activity trend:', error));
+    }
+    
+    function loadActivityStream() {
+        fetch('/crm/api/activities/timeline')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    allActivities = [];
+                    
+                    data.timeline.forEach(day => {
+                        Object.keys(day.types).forEach(type => {
+                            const count = day.types[type];
+                            for (let i = 0; i < count; i++) {
+                                allActivities.push({
+                                    date: day.date,
+                                    type: type,
+                                    summary: `${type}活动`,
+                                    customer: '客户',
+                                    time: day.date
+                                });
+                            }
+                        });
+                    });
+                    
+                    allActivities.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    allActivities = allActivities.slice(0, 20);
+                    
+                    renderActivityStream();
+                }
+            })
+            .catch(error => {
+                console.error('Error loading activity stream:', error);
+                document.getElementById('activityStream').innerHTML = `
+                    <div class="text-center p-5">
+                        <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-3">加载活动数据失败</p>
+                    </div>
+                `;
+            });
+    }
+    
+    function renderActivityStream() {
+        const filteredActivities = currentFilter === 'all' 
+            ? allActivities 
+            : allActivities.filter(a => a.type === currentFilter);
+        
+        document.getElementById('activityCount').textContent = `${filteredActivities.length} 条`;
+        
+        if (filteredActivities.length === 0) {
+            document.getElementById('activityStream').innerHTML = `
+                <div class="text-center p-5">
+                    <i class="bi bi-inbox text-secondary" style="font-size: 3rem;"></i>
+                    <p class="text-muted mt-3">暂无活动记录</p>
+                </div>
+            `;
+            return;
+        }
+        
+        const html = filteredActivities.map(activity => {
+            const color = typeColors[activity.type] || '#6b7280';
+            const icon = typeIcons[activity.type] || 'bi-three-dots';
+            
+            return `
+                <div class="activity-stream-card">
+                    <div class="d-flex align-items-start gap-3">
+                        <div style="width: 40px; height: 40px; background: ${color}20; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="bi ${icon}" style="color: ${color}; font-size: 1.2rem;"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <span class="activity-type-badge" style="background: ${color}30; color: ${color};">
+                                        ${activity.type}
+                                    </span>
+                                </div>
+                                <small class="text-muted">${activity.time}</small>
+                            </div>
+                            <div class="mb-1">
+                                <strong>${activity.summary}</strong>
+                            </div>
+                            <div class="text-muted small">
+                                <i class="bi bi-building me-1"></i>${activity.customer}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        document.getElementById('activityStream').innerHTML = html;
+    }
+    
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentFilter = this.dataset.type;
+            renderActivityStream();
+        });
+    });
+    
+    document.getElementById('refreshBtn').addEventListener('click', function() {
+        const icon = this.querySelector('i');
+        icon.style.animation = 'spin 1s linear';
+        
+        loadKPIStats();
+        loadActivityTypeChart();
+        loadCustomerHeatmap();
+        loadActivityTrend();
+        loadActivityStream();
+        
+        setTimeout(() => {
+            icon.style.animation = '';
+            showToast('数据已刷新', 'success');
+        }, 1000);
+    });
+    
+    loadKPIStats();
+    loadActivityTypeChart();
+    loadCustomerHeatmap();
+    loadActivityTrend();
+    loadActivityStream();
+});
+</script>
+
+<style>
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+</style>
+{% endblock %}

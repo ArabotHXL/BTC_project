@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" style="background:#1a1d2e;">
+  <defs>
+    <style>
+      .chart-bg { fill: #2d3748; }
+      .grid-line { stroke: #495057; stroke-width: 1; stroke-dasharray: 5,5; }
+      .axis-text { fill: #adb5bd; font-family: Arial, sans-serif; font-size: 10px; }
+      .title { fill: #f7931a; font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; }
+      .hashrate-line { stroke: #3498db; stroke-width: 2; fill: none; }
+      .temp-line { stroke: #e74c3c; stroke-width: 2; fill: none; }
+      .legend-text { fill: #ffffff; font-family: Arial, sans-serif; font-size: 12px; }
+      .legend-box-hashrate { fill: #3498db; }
+      .legend-box-temp { fill: #e74c3c; }
+    </style>
+  </defs>
+  
+  <!-- Chart Background -->
+  <rect x="50" y="50" width="700" height="300" class="chart-bg" rx="5"/>
+  
+  <!-- Title -->
+  <text x="400" y="30" text-anchor="middle" class="title">24-Hour Trend Chart / 24小时趋势图表</text>
+  
+  <!-- Grid Lines (vertical) -->
+  <line x1="150" y1="80" x2="150" y2="320" class="grid-line"/>
+  <line x1="250" y1="80" x2="250" y2="320" class="grid-line"/>
+  <line x1="350" y1="80" x2="350" y2="320" class="grid-line"/>
+  <line x1="450" y1="80" x2="450" y2="320" class="grid-line"/>
+  <line x1="550" y1="80" x2="550" y2="320" class="grid-line"/>
+  <line x1="650" y1="80" x2="650" y2="320" class="grid-line"/>
+  
+  <!-- Grid Lines (horizontal) -->
+  <line x1="80" y1="140" x2="720" y2="140" class="grid-line"/>
+  <line x1="80" y1="200" x2="720" y2="200" class="grid-line"/>
+  <line x1="80" y1="260" x2="720" y2="260" class="grid-line"/>
+  
+  <!-- X-Axis Labels (Time) -->
+  <text x="150" y="340" text-anchor="middle" class="axis-text">00:00</text>
+  <text x="250" y="340" text-anchor="middle" class="axis-text">04:00</text>
+  <text x="350" y="340" text-anchor="middle" class="axis-text">08:00</text>
+  <text x="450" y="340" text-anchor="middle" class="axis-text">12:00</text>
+  <text x="550" y="340" text-anchor="middle" class="axis-text">16:00</text>
+  <text x="650" y="340" text-anchor="middle" class="axis-text">20:00</text>
+  
+  <!-- Y-Axis Labels (Hashrate TH/s - Left) -->
+  <text x="70" y="85" text-anchor="end" class="axis-text" fill="#3498db">120</text>
+  <text x="70" y="145" text-anchor="end" class="axis-text" fill="#3498db">110</text>
+  <text x="70" y="205" text-anchor="end" class="axis-text" fill="#3498db">100</text>
+  <text x="70" y="265" text-anchor="end" class="axis-text" fill="#3498db">90</text>
+  <text x="70" y="325" text-anchor="end" class="axis-text" fill="#3498db">80</text>
+  
+  <!-- Y-Axis Labels (Temperature °C - Right) -->
+  <text x="730" y="85" text-anchor="start" class="axis-text" fill="#e74c3c">90</text>
+  <text x="730" y="145" text-anchor="start" class="axis-text" fill="#e74c3c">85</text>
+  <text x="730" y="205" text-anchor="start" class="axis-text" fill="#e74c3c">80</text>
+  <text x="730" y="265" text-anchor="start" class="axis-text" fill="#e74c3c">75</text>
+  <text x="730" y="325" text-anchor="start" class="axis-text" fill="#e74c3c">70</text>
+  
+  <!-- Hashrate Line (Blue) -->
+  <path d="M 80,180 L 150,170 L 250,165 L 350,172 L 450,168 L 550,175 L 650,170 L 720,173" class="hashrate-line"/>
+  
+  <!-- Temperature Line (Red) -->
+  <path d="M 80,220 L 150,215 L 250,210 L 350,205 L 450,218 L 550,225 L 650,220 L 720,215" class="temp-line"/>
+  
+  <!-- Legend -->
+  <rect x="550" y="360" width="15" height="15" class="legend-box-hashrate"/>
+  <text x="570" y="372" class="legend-text">Hashrate (TH/s) / 算力</text>
+  
+  <rect x="680" y="360" width="15" height="15" class="legend-box-temp"/>
+  <text x="700" y="372" class="legend-text">Temperature (°C) / 温度</text>
+</svg>

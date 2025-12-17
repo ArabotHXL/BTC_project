@@ -1,0 +1,169 @@
+下面给你一套把你的 APP（HashInsight/矿场后台）与 Antminer（S21/S19/T 系列等）打通的落地方案，兼顾“快速接入 + 可运维 + 可扩展”。我会给到：网络拓扑、接口方式、示例代码、权限与安全、以及“削峰/限电（Curtailment）联动”的做法。
+
+总体架构（推荐）
+
+矿场局域网（VLAN-ASIC）：矿机接入同一二层网段，DHCP 分配或保留地址。
+
+站点侧采集代理（Miner Agent）：部署在局域网内的一台小型主机（树莓派/工控机/Docker）。它负责：
+
+扫描与发现矿机（IP Reporter/端口 4028 探测）
+
+轮询采集实时指标（算力、温度、风扇、错误率、池连接等）
+
+下发控制命令（切池、启停、低功耗模式*等）
+
+将数据推送到你的云端 APP（HTTPS/WebSocket/MQTT），避免云端反向打洞
+
+云端（你的 APP / calc.hashinsight.net）：
+
+接收各站点数据 → 存入时序库（TimescaleDB/InfluxDB）
+
+仪表盘与告警（离线、过温、算力下坠）
+
+策略编排（按“电价/需量/限电指令”下发批量操作）
+
+先确保你能找到每台矿机的 IP 并能登录 Web 后台：官方 IP Reporter 的下载与使用步骤见 Bitmain 支持文档（Windows 工具，长按矿机 IP Report 按钮约 5 秒至蜂鸣识别；默认 DHCP，浏览器访问显示的 IP 登录，首次默认用户名/密码为 root/root）。
+比特大陆支持
+
+与矿机的三种连接方式（优先级从高到低）
+A. BMminer/CGMiner TCP API（端口 4028）— 采集与控制的“主通道”
+
+大多数 Antminer（含 S21 系列）在控制板上运行 bmminer（兼容 cgminer API）。默认监听 TCP 4028，支持命令如：
+
+summary / stats / devs / pools（读）
+
+enablepool / disablepool / switchpool / addpool / restart（改/控）
+
+4028 为常见的监控接口端口；可用 TCP 工具测试连通性。
+Awesome Miner
+
+如果远程访问被限制，需要在配置里开启 api-listen 并白名单允许你的采集机网段（例如 W:192.168.1.0/24）。这些为 cgminer/bmminer 的标准参数。
+Ubuntu Manpages
++1
+
+示例（Python，直连 4028）：
+
+import socket, json
+
+def cgminer_cmd(host, cmd, timeout=3):
+    s = socket.create_connection((host, 4028), timeout=timeout)
+    s.sendall(('{"command":"%s"}' % cmd).encode('ascii'))
+    data = b''
+    while True:
+        chunk = s.recv(4096)
+        if not chunk: break
+        data += chunk
+        if b'\x00' in chunk: break  # 部分矿机会以 \x00 结尾
+    s.close()
+    text = data.replace(b'\x00', b'').decode('utf-8', errors='ignore')
+    return json.loads(text)  # 大多返回为 JSON
+
+print(cgminer_cmd('192.168.1.123', 'summary'))
+print(cgminer_cmd('192.168.1.123', 'pools'))
+
+
+若你更偏好 Go/Node，这里有成熟库（含 AddPool/Enable/Disable/Restart/Summary 等封装），便于做代理服务：Go 版 & Node 版。
+pkg.go.dev
++2
+pkg.go.dev
++2
+
+开启远程 API 的常见做法（示意）
+（不同固件路径略有差异；要点是打开监听 + 准确的 api-allow 白名单）
+
+# 伪代码/示例：bmminer.conf 或启动参数中加入
+"api-listen": true,
+"api-allow": "W:127.0.0.1,W:192.168.1.0/24"
+
+
+远程 API 一定要只开给内网或特定堡垒机，避免暴露到公网。参考“只允许本地或指定网段”的原则。
+rubydoc.info
+
+B. 矿机 Web 界面（HTTP）— 配置补充通道
+
+用于设置矿池、网络、固件升级等操作（界面路径依固件版本不同）。
+
+你的 Agent 可在受控条件下进行“机器入网后的一次性初始化”（设静态 IP/池/工人名）。
+
+官方“找 IP → 浏览器登录 → 配矿”的流程在 Bitmain 的 IP Reporter 指南中有图文。
+比特大陆支持
+
+C. 局域网扫描/定位
+
+首发现：IP Reporter（官方）或第三方扫描器（例如 minerstat Locator）用于批量发现新机 IP。
+比特大陆支持
++1
+
+站点侧 Miner Agent（你 App 的“连矿桥”）
+
+建议你把下面这个“代理”做成 Docker 服务，托管在每个站点的小主机里：
+
+核心职责
+
+发现：ARP 扫描 + 4028 端口探测；也可接入 IP Reporter 的事件（Windows-only 工具则用人工/脚本辅助）。
+比特大陆支持
+
+采集：每 5–15 秒轮询一次 summary+stats+pools，解析为统一 JSON（字段：model、fw、hashrate、temp、fan、reject%、uptime、pool、worker…）
+
+上报：向云端 /ingest 推送；异常（过温、掉板、掉池）即时上报
+
+控制：接受云端下发的安全指令（如批量切池/低功耗/重启 bmminer）
+
+连通性与权限
+
+4028 仅对 Agent 网段开放（防火墙/VLAN 控制）
+rubydoc.info
+
+Web 界面操作需保管 root 凭证（用站点密钥加密保存），首次登录后立即改密（Antminer 默认是 root/root）
+比特大陆支持
+
+削峰/限电（Curtailment）联动的三种实现
+
+池侧限功 / 低功耗档位：部分固件或 Web 界面支持模式切换（Normal/Low Power）。你的 Agent 可批量切换“低功耗模式”，实现按比例降载。
+
+分组停机：Agent 根据你的“Curtailment %”策略，按机架/行/温度裕度/健康度排序，批量发送 restart/停算指令或通过智能 PDU断电（最稳妥、可审计）。
+
+切代理池：将一部分矿机指向“空转池/降难度代理”，在不完全断电的前提下迅速降载（需自建 Stratum 代理以可控）。
+
+S21 XP 文档中也提到有 Sleep 模式（控制板上电、算力板不供电的工况说明）；实际远程触发需看固件支持程度，工程上通常通过固件低功耗+PDU 组合实现可控降载。
+比特大陆支持
+
+安全与运维清单（强烈建议）
+
+网络：ASIC 独立 VLAN；禁公网暴露 80/4028；只允许 Agent IP 段访问 4028。
+rubydoc.info
+
+账号：首次登录立即改 root 密码；集中保管在 Vault（按站点加密）。
+比特大陆支持
+
+固件：统一版本管理；批量升级请在低负载窗口进行（官方流程强调升级过程中不可断电）。
+比特大陆支持
+
+可观测性：把矿机关键指标写入时序库，设置告警规则（过温、风扇异常、Reject 飙升、池 RTT 激增、算力偏差 ±3–5%）。
+
+合规：保留“操作日志”（谁、何时、对哪组矿机执行了何种变更），用于客户对账与审计。
+
+最小可行对接：一步到位清单
+
+站点里放一台小主机（Docker）→ 部署 hashinsight-miner-agent
+
+打开矿机 4028 的内网白名单（W:你的VLAN/掩码）并验证能 summary/pools。
+Ubuntu Manpages
++1
+
+Agent 扫描网段 → 自动纳管（写入站点、机架、序列号标签）
+
+云端新增 /ingest 与 /control 两个接口（JWT/Sig 校验）
+
+前端把实时算力/温度/功率（若固件提供）显示到仪表盘，并与 calc.hashinsight.net 的收益/电价模型联动（你已有 Curtailment% 模块，直接套用）
+
+你可以直接用的代码/库
+
+Go 封装（含 AddPool/Enable/Disable/Restart/Summary 等）：适合做高性能 Agent。
+pkg.go.dev
+
+Node 封装：若你的云端/Agent 用 Node 更顺手。
+Yarn
+
+连接性测试：用 PsPing/Netcat 验证 4028 连通。
+Awesome Miner

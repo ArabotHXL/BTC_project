@@ -1,0 +1,253 @@
+# 执行摘要（Executive Summary）
+
+目标：在你现有 **Bitcoin Calculator（calc.hashinsight.net）** 的基础上，打造一套“**托管透明 + 对账 + 削峰收益**”的一体化平台（双视角：Hosting/Client），用数据透明、SLA 与自动化运维，解决全球矿场托管的三大痛点（客户体验、运营、技术）。
+
+**推荐路径：先并入，再可抽离。**
+
+* **阶段1（MVP/可商用）**：作为 **Calculator 的新模块**上线（/host 与 /client 主路由），共享登录、数据与品牌，快速起量、降低成本。
+* **阶段2（专业/企业版）**：当用户规模或业务线需要时，**拆分为独立子域**（host.calc.hashinsight.net / app.calc.hashinsight.net），保持同一账号体系与数据层，平滑迁移。
+
+北极星指标（North Star）：**对账争议率 ≤ 1%**、**仪表盘可用性 ≥ 99.9%**、**P1 首响 < 15 分钟/恢复 < 2 小时**。
+
+---
+
+# 1. 定位与差异化（Why Now）
+
+* 市面竞品侧重“监控/自动化/DR”（Foreman、Braiins Manager、Hiveon、minerstat），**鲜有把矿池收益、电力成本、SLA 补偿做成“可审计账单与对账闭环”的平台**。
+* 你现有 Calculator 已具备 **实时 BTC 价格/难度/区块奖励/全网算力** 与 **Curtailment（削峰）** 逻辑，正好补齐从“运营事件→财务结果”的最后一公里。
+
+**核心差异：**
+
+1. 双视角（/host 与 /client）+ 透明账单与对账闭环；
+2. DR/停机补偿与 ROI 一体化；
+3. 托管评分卡（电力/透明度/合规/兼容性）助力选择与销售；
+4. 小客户友好（1 台起托、拼托分摊、可下载证据包）。
+
+---
+
+# 2. 产品范围（Scope）
+
+**Hosting（托管商/运营方）**
+
+* 站点群总览、站点看板、事件与 RCA、工单与 SLA、批量运维（重启/限功率/刷固件）、计费中心、对账中心（矿池+电表）、客户指派、评分卡、DR/削峰模拟器。
+
+**Client（客户/矿机所有者）**
+
+* 资产总览、我的矿机、矿池实收、账单与费用、工单、透明月报、告警中心、ROI 工具（专业版）。
+
+**公开与共享**：站点状态页（可分享）、登录/组织与 RBAC、审计日志。
+
+---
+
+# 3. 信息架构（IA）与路由
+
+* 主路由（无需新域名）：`/host/*`（运营方） 与 `/client/*`（客户）；公开页 `/status/:siteSlug`。
+* 未来可平滑迁移至子域：`host.calc.hashinsight.net` / `app.calc.hashinsight.net`，共用 SSO。
+
+**关键路由（最小集）**
+
+* Hosting：/host/overview, /host/sites/\:id, /host/tickets, /host/billing/preview, /host/reconcile, /host/assignments, /host/tools/curtailment, /host/market/scorecard
+* Client：/client/dashboard, /client/miners, /client/payouts, /client/billing, /client/tickets, /client/reports/monthly, /client/alerts, /client/tools/roi
+* 公开：/status/\:siteSlug
+
+---
+
+# 4. 技术架构与数据流（高层）
+
+* **数据源**：
+
+  1. **矿机侧**：本地 Agent/Hub（Hiveon ASIC Hub、minerstat、NiceHash Manager、或自研轻量 Agent）→ 采集矿机管理接口（常见 4028/厂商协议）→ 站点内网汇聚；
+  2. **平台侧**：对接 Foreman/Braiins/minerstat 等平台 API（若托管商已有）；
+  3. **区块/价格/难度**：沿用你现有实时数据接入；
+  4. **电力/表计**：CSV 导入→曲线分摊→逐步接入物联网电表 API；
+  5. **矿池收益**：矿池 API 或客户上传 CSV；
+* **后端**：PostgreSQL（账单、事件、审计），作业队列（告警/对账/报表），Token/RBAC；
+* **前端**：在 Calculator 站点新增 /host 与 /client 导航；
+* **安全**：组织隔离、多角色 RBAC、全量审计日志、导出水印/追踪ID。
+
+---
+
+# 5. 阶段路线图（Timeline & Deliverables）
+
+> 基于当前日期（2025/08/31）
+
+## Phase 0（MVP，2025/09）——“把透明度立起来”
+
+**页面**：/host/overview、/host/status、/host/tickets、/client/dashboard、/client/billing（预估 v0）、/status/\:siteSlug
+**功能**：实时可见性、公告流、基础工单、费用拆解预估、CSV 导出。
+**KPI/SLA**：仪表盘可用 ≥99.9%，数据延迟 ≤60s，首响 < 15min，账单预估误差 < 5%。
+
+## Phase 1（可商用，2025/10–11）——“把钱算清楚，把问题说清楚”
+
+**页面**：/host/sites/\:id、/host/billing/preview、/host/reconcile、/host/assignments、/client/miners、/client/payouts、/client/reports/monthly
+**功能**：站点看板、计费中心、对账中心（矿池+电表 CSV）、资产指派、矿机明细、透明月报。
+**KPI**：对账差异 ≤ 2%（并在 48h 内闭环）；P1 恢复 < 2h；月报触达 ≥ 95%。
+
+## Phase 2（专业版，2025/12–2026/01）——“把运营效率拉满”
+
+**页面**：/host/miners（批量运维）、/host/tools/curtailment、/host/market/scorecard、/client/alerts、/client/tools/roi（专业版）
+**功能**：批量控制（重启/限功率/刷固件）、DR/削峰模拟器与收益联动、托管评分卡、客户自定义告警、专业 ROI 分析。
+**KPI**：MTTR ↓30%，人工干预 ↓40%，争议率 ≤ 1%。
+
+## Phase 3（企业版，2026/02+）——“把风险与规模化做好”
+
+**页面**：/host/fleet、/risk/policy、/finance/export
+**功能**：多站点调度与容灾、政策/制裁/气候雷达（轻量数据源可半手工）、税务与会计导出。
+**KPI**：迁移/扩容决策周期 ↓50%，企业客户 NRR > 110%。
+
+---
+
+# 6. 并入 Calculator 还是另起 App？（决策矩阵）
+
+| 维度      | 并入 Calculator（推荐起步）                 | 另起 App          |
+| ------- | ----------------------------------- | --------------- |
+| 上线速度/成本 | **快/低**（复用账号/样式/数据与品牌）              | 慢/高（重建登录、样式、部署） |
+| 用户路径    | **一站式**：Calculator → Hosting/Client | 需教育与迁移，漏斗更长     |
+| SEO/品牌  | 共享域名权重，强化 HashInsight 品牌            | 可做独立品牌，但需要再养权重  |
+| 技术耦合    | 适度耦合（可控）                            | 解耦好，但早期负担大      |
+| 长期扩展    | **可平滑拆分至子域**，同一 SSO                 | 独立演进，跨站登录/数据要打通 |
+
+**结论**：
+
+* **Phase 0–2**：并入 Calculator（主域 + 主路由），以速度与体验为先；
+* **Phase 3**：视规模与客户画像，切换为双子域（host./app.），保持同一账号/数据层，避免二次重构。
+
+---
+
+# 7. 验收标准（DoD）与核心指标（KPI/SLA）
+
+* **DoD**：页面可用；RBAC 与多租户过滤正确；接口/导出具追踪ID；错误/空态可见；关键操作写入审计日志。
+* **KPI**：
+
+  * 可用性 ≥ 99.9%；遥测延迟 ≤ 60s；API P95 ≤ 400ms（读）
+  * SLA：首响 < 15min、P1 恢复 < 2h、RCA ≤ 48h
+  * 财务：对账差异 ≤ 1–2%；退款/补偿在 T+5 工作日内完成
+  * 客户：NPS≥40；月报打开率 ≥ 60%；透明度评分 ≥ 90
+
+---
+
+# 8. 两周冲刺计划（Phase 0）
+
+**周1**：/host/overview、/client/dashboard、/status 公告页、tickets v0（首响计时）
+**周2**：/client/billing 预估、/host/billing/preview、/host/reconcile（矿池 CSV 通道）、/client/reports/monthly v0
+
+交付物：前端路由骨架、假数据组件、CSV 模板、API 契约（summary/reconcile/billing）、审计日志中间件（最小）。
+
+---
+
+# 9. 数据与集成优先级
+
+1. **minerstat API**（快速拿设备/事件/收益）→ /client 与 /host 皆可用；
+2. **Hiveon ASIC Hub**（解决“无监控的新机”场景）→ 站点内网采集；
+3. **Foreman/Braiins Manager**（大托管商）→ 企业数据对接；
+4. 物联网电表（CSV 先行→API 后续），矿池 API 与导入并行。
+
+---
+
+# 10. 法务/合规与合同（RFP/SLA 要点）
+
+* 押金入 Escrow；电价上限/下限；DR 补偿公式；资产核验（序列号/入出库视频）；
+* 账单/对账可追溯，差异>0.5% 自动生成争议单；
+* 安全：Token 最小权限、固件白名单、越权告警；
+* 保险与 BI（营业中断）凭证入库；
+* 区域合规画像与一票否决项（供电 SLA、透明度、合规许可）。
+
+---
+
+# 11. 商业化与分层（示例）
+
+* **Free**：计算器、公开状态页（延时数据）
+* **Pro**：实时监控、账单预估、对账中心、SLA 告警、透明月报
+* **Enterprise**：多站点调度、批量运维、政策雷达、API/SSO、定制报表
+
+---
+
+# 12. 风险与缓解
+
+* **数据接入不齐**：先 CSV 与人工注入 + 后续 API；
+* **站点网络/权限**：部署本地 Agent；协议白名单与回退策略；
+* **争议处理复杂**：证据链模板与一键导出；差异闭环 SOP；
+* **扩展与拆分**：从第一天按“可抽离”的包/模块化部署；SSO 统一。
+
+---
+
+# 13. 资源与大致预算（轻量估算）
+
+* 前端（全栈）×1、后端×1、产品/设计×0.5、运维×0.5（或兼职）→ 2 周可推 MVP；
+* 云成本：DB/对象存储/队列/日志（初期 <\$200/月）。
+
+---
+
+# 14. 附录：页面清单与数据表（最小可用）
+
+**页面**：见第 3 节关键路由。
+**数据表**：organizations、users、sites、racks、miners、miner\_telemetry、incidents、tickets、bills、bill\_items、pool\_payouts、miner\_assignments、audit\_logs。
+
+> 以上为 v1.0 完整路线图。若需要，我可以基于该路线图输出：1）API OpenAPI 规范草案；2）CSV 模板与样例数据；3）看板任务列表（Issue 列表与验收标准），供你直接落地执行。
+
+---
+
+## 附加章：Web3 集成（**无金流模式 / No-Money Mode**）
+
+> 你要求 APP **不接任何 money-related 功能**。以下为保持“零支付、零托管、零币的合约流”的增强方案与对路线图的相应调整。
+
+### A. 能力边界（硬性约束）
+
+* 不内置/调用：加密支付、稳定币、Lightning、链上 Escrow、代币交易、空投、收益分发与任何直接/间接金流。
+* 不存取：私钥/助记词/钱包权限。
+* 账单页面改为 **“用量与成本估算（只读）”**，生成对账与证据包供线下/第三方系统结算；本系统不发起收款与结算请求。
+
+### B. 仍可带来价值的 Web3/加密学增强（不涉金流）
+
+1. **可验证月报/事件/对账证据**：
+
+   * 将 `/client/reports/monthly` 导出的 JSON/CSV 与截图打包，生成 Merkle Root 与内容哈希；
+   * 可选：存入去中心化存储（IPFS/Arweave）与**公链时间戳**（仅写入哈希与时间，不含业务明文）；
+   * 页面新增 **“Verify on-chain / Verify via Hash”** 按钮用于校验。
+2. **透明日志（Transparency Log）**：
+
+   * 每日对核心表（incidents、tickets、bills、pool\_payouts 摘要）计算增量哈希并链接成哈希链，发布**每日根哈希**（可选上链时间戳）。
+   * 任何事后改动会导致校验失败，形成“不可抵赖”的审计轨迹。
+3. **设备/指派可验证身份**：
+
+   * 为矿机序列号/指派关系生成\*\*不可转让凭证（SBT 概念）\*\*或 **DID 文档**，仅作身份与变更痕迹标记；
+   * 禁用二级市场流通属性，不含任何面值与金流；
+   * 在 `/host/assignments` 与 `/client/miners` 显示“链上登记编号/离线签名编号”。
+4. **链下签名与可验证导出**（纯 Web2 亦可成立）：
+
+   * 服务器使用 Ed25519/PKCS#7 对导出包签名；
+   * 提供公开公钥用于校验；
+   * 如无需上链，可只使用签名与站点发布的每日根哈希完成验真。
+
+### C. 路线图改动（对应本文第5节的 Phase 0–3）
+
+* **命名调整**：
+
+  * `/client/billing` → **`/client/usage`**（用量与成本估算，仅展示/导出）；
+  * `/host/billing/preview` 保留，但明确“仅估算/生成对账包，不触发收款”。
+* **新增/修改能力**：
+
+  * Phase 0：`/reports/monthly` 增“**可验证月报**”与根哈希公示；`/status` 公告条可附“验证链接”。
+  * Phase 1：上线 **透明日志**（每日根哈希）与 **证据包一键生成**；
+  * Phase 2：设备/DID/SBT 编号（非转让，无金流）；
+  * Phase 3：可选**零知识证明**（如“某月上线率≥99%”的合规声明），仍不公开原始遥测数据。
+
+### D. 数据与隐私
+
+* 上链仅写入**哈希/时间戳/文件 CID**，不含 PII、精确功率曲线与商业敏感明文；
+* 若法规或客户要求**完全不碰链**，保留“**纯 Web2 验真模式**”：离线签名 + 每日根哈希公示。
+
+### E. UI/文案边界（可复制到前端 i18n）
+
+* “本系统不提供支付、收款、托管与收益分发功能；所有财务结算应在合同约定的第三方或线下完成。”
+* “账单为**估算与对账材料**，不构成收付款指令。”
+* “验证功能仅用于**文件/数据完整性**校验，不代表任何价值转移。”
+
+### F. 开发清单（2 周可落地）
+
+1. **导出签名服务**：生成报告 ZIP、Merkle Root、Ed25519 签名与校验端点；
+2. **透明日志作业**：日更任务生成根哈希，保存与展示；
+3. **验证组件**：在 `/client/reports/monthly` 与 `/status/:siteSlug` 加“验证”按钮与结果弹窗；
+4. **路由改名与文案**：`/client/usage` 替换 `/client/billing`；加入“非金流声明”。
+
+> 以上改动已与主体路线图兼容，不影响现有数据结构（仅新增签名/哈希表与轻量配置），同时满足你“**绝不涉金流**”的要求。

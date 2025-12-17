@@ -1,0 +1,34 @@
+浏览器 (矿场主)                                     服务器 (HashInsight)                                     边缘采集器 (Edge Collector)
+┌──────────────────────────────────────┐          ┌──────────────────────────────────────┐                ┌──────────────────────────────────────┐
+│ [0] 选择场地 / Site + 绑定设备 Device │          │ 设备与资产管理（多租户）              │                │ [Init] 首次启动生成设备密钥对(X25519) │
+│                                      │  HTTPS   │ - devices(status/key_version/pubkey) │   HTTPS         │ - privkey 本地安全保存（加密落盘/TPM） │
+│ [1] 输入 IP 范围 / 网段               ├─────────►│ - miners(site_id/miner_id/metadata)  ├───────────────►│ - pubkey 注册 /devices/register        │
+│     192.168.1.100-200                │          │ - secrets(仅密文包)                  │                │ - 获取 device_id + device_token        │
+│                                      │          │                                      │                │                                      │
+│ [2] 点击“扫描/引入”                   │          │ [A] 仅存储密文（No-decrypt）          │                │ [2] 扫描网段（Discovery）              │
+│     （可先不录入密码）                │          │ - PostgreSQL: ciphertext only         │                │ - Ping/HTTP/CGMiner(4028)/SNMP(可选)   │
+│                                      │          │ - Server 无法解密（无私钥/无KEK）      │                │ - 生成/更新资产清单                    │
+│ [3] 选择“隐藏 IP 地址信息”开关        │          │                                      │                │   miner_id, ip, model, fw, last_seen   │
+│     ├─ 默认：UI 脱敏显示              │          │ [B] IP 隐藏策略（可选）               │                │                                      │
+│     │   只显示 192.168.1.xxx          │          │ - 方案1：仅 UI 脱敏 + RBAC + 审计      │                │ [3] 上报资产清单（HTTPS）              │
+│     ├─ 可选：服务器加密 IP（KMS）     │          │ - 方案2：服务器加密 IP（KMS/Envelope）│                │ - 默认 UI 不展示完整 IP                │
+│     └─ 可选：E2EE 加密 IP（与凭证同包）│         │ - 方案3：E2EE：Server 永不见明文 IP    │                │                                      │
+│                                      │          │                                      │                │ [4] 选择能力等级                       │
+│ [4] 选择能力等级                      │          │ [C] 访问控制与审计（贯穿）             │                │   ├─ Level 1：仅发现（无需密码）        │
+│   ├─ Level 1：仅发现（资产盘点）       │          │ - RBAC：谁可看完整 IP / 启用控制       │                │   ├─ Level 2：只读遥测（优先不输密码）  │
+│   ├─ Level 2：只读遥测（优先不输密码） │          │ - 审计：Reveal IP / 更新密文 / 控制指令│                │   └─ Level 3：管理控制（需要凭证+E2EE） │
+│   └─ Level 3：管理控制（需要凭证）     │          │ - 设备吊销：REVOKED 即停止解密         │                │                                      │
+│                                      │          │                                      │                │ [Level 2] 只读遥测路径                  │
+│ [Level 2]（可选）配置网络隔离建议      │          │                                      │                │ - ACL/VLAN：仅允许 Edge 访问矿机端口    │
+│ 仅允许 Edge 访问矿机管理端口           │          │                                      │                │ - 拉取算力/温度/告警 → 上报 Server       │
+│                                      │          │                                      │                │                                      │
+│ [Level 3] 录入矿机凭证（用户名/密码）  │          │                                      │                │ [Level 3] 拉取密文包 + 解密执行          │
+│        ↓                             │  HTTPS   │ [D] 存储密文包（miner_secrets）        │   HTTPS         │ - 校验 device ACTIVE + counter 防回滚   │
+│ 生成随机 DEK（每矿机/每条记录）        ├─────────►│ - encrypted_payload (AES-256-GCM)      ├───────────────►│ - 用 device_privkey unwrap DEK          │
+│        ↓                             │          │ - wrapped_DEK (sealed box / X25519)    │                │ - 用 DEK 解密凭证（仅内存短驻留）         │
+│ AES-256-GCM 加密凭证 JSON（可含IP）    │          │ - nonce/tag + AAD + counter + version  │                │ - 连接矿机（LAN）并执行控制/采集          │
+│        ↓                             │          │                                      │                │ - 上报遥测 + 操作审计（JSONL 事件）        │
+│ 用 device 公钥 wrap DEK               │          └──────────────────────────────────────┘                └──────────────────────────────────────┘
+│        ↓                             │
+│ 上传密文包（Server 永不见明文）        │
+└──────────────────────────────────────┘

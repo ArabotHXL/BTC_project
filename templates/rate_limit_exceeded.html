@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>使用频率限制 - HashInsight</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+        .rate-limit-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .pulse-icon {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .countdown {
+            font-family: 'Courier New', monospace;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card rate-limit-card">
+                    <div class="card-body p-5 text-center">
+                        <div class="mb-4">
+                            <i class="bi bi-hourglass-split display-1 text-warning pulse-icon"></i>
+                        </div>
+                        
+                        <h1 class="h2 mb-4 text-dark">
+                            {% if session.get('language') == 'zh' %}
+                                使用频率超限
+                            {% else %}
+                                Rate Limit Exceeded
+                            {% endif %}
+                        </h1>
+                        
+                        <p class="lead text-muted mb-4">
+                            {% if session.get('language') == 'zh' %}
+                                您的使用频率超过了免费用户限制（{{ max_requests }}次/{{ window_minutes }}分钟）
+                            {% else %}
+                                You've exceeded the free user limit ({{ max_requests }} requests per {{ window_minutes }} minutes)
+                            {% endif %}
+                        </p>
+                        
+                        <div class="alert alert-info d-flex align-items-center mb-4" role="alert">
+                            <i class="bi bi-info-circle-fill me-3"></i>
+                            <div>
+                                {% if session.get('language') == 'zh' %}
+                                    <strong>为什么会有这个限制？</strong><br>
+                                    我们对未注册用户设置使用限制，以确保服务器资源公平使用，并为所有用户提供稳定的服务体验。
+                                {% else %}
+                                    <strong>Why is there a limit?</strong><br>
+                                    We set usage limits for unregistered users to ensure fair server resource usage and provide a stable service experience for all users.
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded">
+                                    <i class="bi bi-person-x display-4 text-danger mb-2"></i>
+                                    <h5 class="text-danger">
+                                        {% if session.get('language') == 'zh' %}未注册用户{% else %}Unregistered{% endif %}
+                                    </h5>
+                                    <p class="small text-muted">
+                                        {% if session.get('language') == 'zh' %}
+                                            {{ max_requests }}次/{{ window_minutes }}分钟
+                                        {% else %}
+                                            {{ max_requests }} uses per {{ window_minutes }} minutes
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 bg-success bg-opacity-10 rounded">
+                                    <i class="bi bi-person-check display-4 text-success mb-2"></i>
+                                    <h5 class="text-success">
+                                        {% if session.get('language') == 'zh' %}注册用户{% else %}Registered User{% endif %}
+                                    </h5>
+                                    <p class="small text-muted">
+                                        {% if session.get('language') == 'zh' %}
+                                            无限制使用
+                                        {% else %}
+                                            Unlimited usage
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                            <a href="{{ url_for('auth.register') }}" class="btn btn-warning btn-lg px-4 me-md-2">
+                                <i class="bi bi-person-plus-fill me-2"></i>
+                                {% if session.get('language') == 'zh' %}立即免费注册{% else %}Sign Up Free Now{% endif %}
+                            </a>
+                            <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary btn-lg px-4">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>
+                                {% if session.get('language') == 'zh' %}已有账户？登录{% else %}Have Account? Login{% endif %}
+                            </a>
+                        </div>
+                        
+                        <div class="mt-4 p-3 bg-light rounded">
+                            <h6 class="text-primary">
+                                {% if session.get('language') == 'zh' %}注册后立即享受：{% else %}Register to unlock:{% endif %}
+                            </h6>
+                            <div class="row text-start">
+                                <div class="col-md-6">
+                                    <small class="d-block mb-1">
+                                        <i class="bi bi-check-circle text-success me-1"></i>
+                                        {% if session.get('language') == 'zh' %}无使用频率限制{% else %}No usage limits{% endif %}
+                                    </small>
+                                    <small class="d-block mb-1">
+                                        <i class="bi bi-check-circle text-success me-1"></i>
+                                        {% if session.get('language') == 'zh' %}批量计算器{% else %}Batch calculator{% endif %}
+                                    </small>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="d-block mb-1">
+                                        <i class="bi bi-check-circle text-success me-1"></i>
+                                        {% if session.get('language') == 'zh' %}技术分析工具{% else %}Technical analysis{% endif %}
+                                    </small>
+                                    <small class="d-block mb-1">
+                                        <i class="bi bi-check-circle text-success me-1"></i>
+                                        {% if session.get('language') == 'zh' %}专业报告导出{% else %}Professional reports{% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <p class="text-muted small">
+                                {% if session.get('language') == 'zh' %}
+                                    或者等待 {{ window_minutes }} 分钟后重新尝试
+                                {% else %}
+                                    Or wait {{ window_minutes }} minutes to try again
+                                {% endif %}
+                            </p>
+                            <a href="{{ url_for('calculator.calculator') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>
+                                {% if session.get('language') == 'zh' %}返回计算器{% else %}Back to Calculator{% endif %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/js/i18n.js"></script>
+    <script>
+        // 自动刷新倒计时
+        setTimeout(function() {
+            window.location.reload();
+        }, {{ window_minutes * 60 * 1000 }});
+    </script>
+</body>
+</html>

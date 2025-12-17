@@ -1,0 +1,242 @@
+小幅建议（在不改大框架的前提下）
+
+Regime 划分尽量离散化（trend ∈ {Up, Side, Down}；vol ∈ {Low, Mid, High}），减少“半分半不分”的抖动，再把离散 regime 映射到分层倍率/止损灵敏度。
+
+共振区强度 = 多源水平位聚类（摆动高低 + Pivot + 价格直方图密度），给一个 0–1 强度分；≥阈值时对分层加配额/抬门槛或触发“谨慎卖”。
+
+自适应分层要有上下限：multiple' = clip(base * (1 + k*(ATRpct−median)), [base*0.9, base*1.4])，避免极端波动下过度拉远或过近。
+
+聚合做“调权/加减配”，不直接改动作：P1 的三个模块只影响“层价/配额/置信度”，最终动作仍由你的核心决策引擎下发，便于灰度。
+
+Phase 1 的“完成定义”（验收标准）
+
+Regime-Aware
+
+正确输出 trend={Up/Side/Down}（由 MA50/MA200 斜率 & 距离）、vol={Low/Mid/High}（由 ATRpct 相对 365d 中位的分位）。
+
+Regime 改变会连续 5 根K内最多只触发 1 次层价/止损参数变更（去抖）。
+
+Adaptive-ATR 分层
+
+对同一日不同波动环境，层价可见地自适应（日志能看到 base 与 adjusted 的差异）；有 clamp 上下限。
+
+S/R 共振
+
+至少合并 3 源：pivot 高低点、摆动点（左/右各 3 根的极值）、价格密度直方图；强度≥阈值触发“谨慎卖/加配/抬门槛”之一。
+
+UI
+
+Signal Panel 显示 3 个模块的分数/状态与一句话解释；Execution 预览单列“由 Adaptive/Confluence 调整 +x%/-y%”。
+
+回测
+
+2019–2025 日线，采用 walk-forward，不看未来；对比“固定分层”基线，至少达到
+
+卖出触发次数 ↓（−15% 以上）
+
+触发后 24–72h 的后悔度（post-sell regret，卖出后价格继续涨幅）↓（−10% 以上）
+
+与现有系统的集成（Python 骨架）
+
+放进你写的 analytics_engine.py，先跑离线，输出中间特征 + 调整后的层价/配额 + 解释文案。
+
+# analytics_engine.py
+
+from dataclasses import dataclass
+import numpy as np
+
+@dataclass
+class MarketData:
+    # arrays length = N (按时间升序)
+    date: np.ndarray
+    open: np.ndarray; high: np.ndarray; low: np.ndarray; close: np.ndarray; volume: np.ndarray
+
+@dataclass
+class RegimeState:
+    trend: str  # 'Up'|'Side'|'Down'
+    vol: str    # 'Low'|'Mid'|'High'
+
+@dataclass
+class P1Outputs:
+    regime: RegimeState
+    adaptive_levels: list[float]      # 调整后的倍数，如 [1.22, 1.55, 2.05]
+    confluence_strength: float        # 0..1
+    notes: list[str]
+
+class AdvancedSignalEngine:
+    def __init__(self, cfg):
+        self.cfg = cfg
+        # cfg: { 'atr_len':14, 'ma_fast':50, 'ma_slow':200, 'atr_window_med':365,
+        #        'k_atr':4.0, 'adj_clip':(0.9,1.4),
+        #        'sr_bin_pct':0.0075, 'sr_min_hits':3 }
+
+    # --------- helpers ---------
+    def _ema(self, x, n):
+        alpha = 2 / (n + 1)
+        y = np.zeros_like(x, dtype=float)
+        y[0] = x[0]
+        for i in range(1, len(x)):
+            y[i] = alpha*x[i] + (1-alpha)*y[i-1]
+        return y
+
+    def _atr(self, md: MarketData, n=14):
+        tr = np.maximum(md.high - md.low,
+                        np.maximum(np.abs(md.high - np.roll(md.close,1)),
+                                   np.abs(md.low  - np.roll(md.close,1))))
+        tr[0] = md.high[0]-md.low[0]
+        # Wilder smoothing
+        atr = np.zeros_like(tr)
+        atr[n-1] = tr[:n].mean()
+        for i in range(n, len(tr)):
+            atr[i] = (atr[i-1]*(n-1) + tr[i]) / n
+        return atr
+
+    # --------- Phase 1 modules ---------
+    def calculate_regime_score(self, md: MarketData) -> RegimeState:
+        ma_fast = self._ema(md.close, self.cfg['ma_fast'])
+        ma_slow = self._ema(md.close, self.cfg['ma_slow'])
+        slope_fast = (ma_fast[-1] - ma_fast[-6]) / max(1e-9, ma_fast[-6])
+        slope_slow = (ma_slow[-1] - ma_slow[-6]) / max(1e-9, ma_slow[-6])
+        ratio = (ma_fast[-1] / max(1e-9, ma_slow[-1])) - 1
+
+        # Trend
+        if ratio > 0 and slope_fast > 0:
+            trend = 'Up'
+        elif ratio < 0 and slope_fast < 0:
+            trend = 'Down'
+        else:
+            trend = 'Side'
+
+        # Volatility (ATR percentile vs rolling median)
+        atr = self._atr(md, self.cfg['atr_len'])
+        atr_pct = atr[-1] / max(1e-9, md.close[-1])
+        # 以近365天 ATR/Price 的中位与IQR作为基准
+        look = self.cfg['atr_window_med']
+        base = atr[-look:] / np.maximum(1e-9, md.close[-look:])
+        med, q3 = np.median(base), np.quantile(base, 0.75)
+        # 简化三段
+        if atr_pct <= med:
+            vol = 'Low'
+        elif atr_pct <= q3:
+            vol = 'Mid'
+        else:
+            vol = 'High'
+
+        return RegimeState(trend=trend, vol=vol)
+
+    def _adaptive_multiples(self, md: MarketData, base_levels: list[float]) -> list[float]:
+        atr = self._atr(md, self.cfg['atr_len'])
+        atr_pct = atr[-1] / max(1e-9, md.close[-1])
+        base_win = atr[-self.cfg['atr_window_med']:] / np.maximum(1e-9, md.close[-self.cfg['atr_window_med']:])
+        med = np.median(base_win)
+        k = self.cfg['k_atr']; lo, hi = self.cfg['adj_clip']
+        factor = 1 + k * max(0.0, (atr_pct - med))
+        factor = np.clip(factor, lo, hi)
+        return [round(b * factor, 4) for b in base_levels]
+
+    def _sr_confluence(self, md: MarketData) -> tuple[float, float]:
+        """返回 (强度0..1, 最近共振中心价)。"""
+        close = md.close
+        px = close[-1]
+        # 1) 枢轴/摆动点
+        def pivots(arr, w=3):
+            tops, bots = [], []
+            for i in range(w, len(arr)-w):
+                if arr[i] == max(arr[i-w:i+w+1]): tops.append(arr[i])
+                if arr[i] == min(arr[i-w:i+w+1]): bots.append(arr[i])
+            return np.array(tops), np.array(bots)
+        tops, bots = pivots(close, w=3)
+
+        # 2) 价格密度直方图
+        bin_pct = self.cfg['sr_bin_pct']   # e.g. 0.75%
+        bin_w = px * bin_pct
+        # 动态分桶中心：围绕现价±5%取样
+        grid = np.arange(px*0.95, px*1.05, bin_w)
+        hits = np.zeros_like(grid)
+        def add_hits(levels, weight):
+            nonlocal hits
+            for lv in levels:
+                idx = np.argmin(np.abs(grid - lv))
+                hits[idx] += weight
+
+        add_hits(tops, 1.0); add_hits(bots, 1.0)
+        # Pivot (H/L/C) 简化：近N日高低
+        add_hits([np.max(close[-60:]), np.min(close[-60:])], 0.5)
+        # 密度：把最近250日 close 映射到格子
+        recent = close[-250:]
+        for lv in recent:
+            idx = np.argmin(np.abs(grid - lv))
+            hits[idx] += 0.2
+
+        # 取现价附近 ±0.3% 的聚类
+        band = px * 0.003
+        mask = np.abs(grid - px) <= band
+        strength_raw = hits[mask].sum()
+        # 归一化：经验上满格≈ 8–10
+        strength = float(np.clip(strength_raw / 10.0, 0.0, 1.0))
+        center = float(np.average(grid[mask], weights=hits[mask])) if strength_raw > 0 else float(px)
+        return strength, center
+
+    def run_phase1(self, md: MarketData, base_levels: list[float]) -> P1Outputs:
+        notes = []
+        regime = self.calculate_regime_score(md)
+
+        adj_levels = self._adaptive_multiples(md, base_levels)
+        if adj_levels != base_levels:
+            notes.append(f"Adaptive-ATR: levels {base_levels} -> {adj_levels}")
+
+        conf_strength, conf_center = self._sr_confluence(md)
+        if conf_strength >= 0.6:
+            notes.append(f"S/R confluence near ${conf_center:,.0f} (strength {conf_strength:.2f})")
+
+        return P1Outputs(regime=regime, adaptive_levels=adj_levels,
+                         confluence_strength=conf_strength, notes=notes)
+
+    # 对接你的执行面板
+    def generate_sell_recommendations(self, md: MarketData, plan, inventory_btc):
+        """
+        plan: 你现有的分层/尾仓/日上限配置
+        这里不直接下结论，只回‘加配/降配/抬门槛’建议与解释文案
+        """
+        p1 = self.run_phase1(md, plan['levels'])
+        adjustments = {
+            "levels": p1.adaptive_levels,
+            "quota_adj_pp": 0  # 例如：若 confluence_strength ≥ 0.6 且位于上沿，quota_adj_pp = +5
+        }
+        if p1.confluence_strength >= 0.6 and md.close[-1] >= np.mean([md.close[-1], p1.adaptive_levels[0]*plan['cost_usd']]):
+            adjustments["quota_adj_pp"] = +5
+        # 组装解释
+        explain = []
+        if p1.regime.trend == 'Up' and p1.regime.vol == 'Low':
+            explain.append("Uptrend & low volatility: keep wider ladders to avoid noise.")
+        if p1.confluence_strength >= 0.6:
+            explain.append("Price near multi-source resistance cluster: consider adding quota +5pp on next layer.")
+        explain += p1.notes
+        return adjustments, explain
+
+
+怎么接你现有引擎：
+
+在生成“今日卖出清单”前，先调用 run_phase1()，把返回的 adaptive_levels 替换你原本的层价倍数；若 confluence_strength≥阈值，对即将命中的那一层 配额+5pp 或加一条“谨慎卖”的提示。
+
+将 explain 展示在 Signal Panel 的“Aggregated Signal & Recommendation”里。
+
+开发与验收流程（7 天冲刺示例）
+
+D1–D2：实现 ATR/MA/分位工具、Regime 划分；单元测试极值/缺口/日历滚动。
+
+D3：实现 Adaptive-ATR（含 clamp）+ 日志；在 2019–2025 样本上跑参数敏感性。
+
+D4：实现 S/R 共振聚类（摆动点+Pivot+密度），调阈值；输出可视化快照（共振区高亮）。
+
+D5：与核心决策引擎对接（只做“调权/加配”），UI 显示模块分/解释文案。
+
+D6–D7：历史回测（walk-forward）、离线 A/B（固定层 vs 自适应），产出验收报告与默认参数。
+
+成功度量（上线后一周）
+
+通知质量：24–72h “后悔度”（post-sell regret）下降 ≥10%。
+
+触发效率：不必要的部分卖出次数下降 ≥15%。
+
+解释可读性：用户点“同意执行/采纳率”提升（基线对比）。

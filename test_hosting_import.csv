@@ -1,0 +1,6 @@
+Site,Client Email,Serial Number,Model Name,Hashrate (TH/s),Power (W),Hosting Fee ($/month),Rack Position,IP Address,Notes
+Texas DC-01,client1@example.com,SN20240001,Antminer S21 XP Hyd,473,5676,150,A1-R1-U12,192.168.1.100,VIP customer
+Texas DC-01,client2@example.com,SN20240002,WhatsMiner M63S+,412,7004,180,A1-R1-U13,192.168.1.101,
+Iceland DC-02,client3@example.com,SN20240003,WhatsMiner M63S,390,7215,120,B2-R3-U05,192.168.2.50,High efficiency
+Iceland DC-02,client1@example.com,SN20240004,WhatsMiner M66S+,356,5500,150,B2-R3-U06,192.168.2.51,
+Beijing DC-03,alice.wang@cryptomining.cn,SN20240005,WhatsMiner M66S,350,5500,,C1-R2-U20,192.168.3.100,No hosting fee

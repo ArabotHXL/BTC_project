@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}电力削减计算器 - BTC挖矿计算器{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="row">
+        <div class="col-12">
+            <h1 class="text-center mb-4">
+                <i class="bi bi-lightning-charge text-warning"></i>
+                电力削减计算器
+            </h1>
+            <p class="text-center text-muted mb-5">
+                分析电力削减对挖矿收益的影响
+            </p>
+        </div>
+    </div>
+
+    <!-- 限电计算表单 -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card bg-dark border-secondary">
+                <div class="card-header bg-warning text-dark">
+                    <h3 class="card-title mb-0">
+                        <i class="bi bi-calculator"></i>
+                        削减参数配置
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form id="curtailment-form" class="needs-validation" novalidate>
+                        <div class="row">
+                            <!-- 矿机配置 -->
+                            <div class="col-md-6">
+                                <h5 class="text-warning mb-3">
+                                    <i class="bi bi-cpu"></i>
+                                    矿机配置
+                                </h5>
+                                
+                                <div class="mb-3">
+                                    <label for="miner_model" class="form-label">矿机型号</label>
+                                    <select class="form-select bg-dark text-light border-secondary" id="miner_model" name="miner_model" required>
+                                        <option value="">选择矿机型号</option>
+                                        <option value="Antminer S19">Antminer S19 (95TH/s, 3250W)</option>
+                                        <option value="Antminer S19 Pro">Antminer S19 Pro (110TH/s, 3250W)</option>
+                                        <option value="Antminer S19 XP">Antminer S19 XP (140TH/s, 3010W)</option>
+                                        <option value="Antminer S21">Antminer S21 (200TH/s, 3550W)</option>
+                                        <option value="Antminer S21 Pro">Antminer S21 Pro (234TH/s, 3531W)</option>
+                                        <option value="Antminer S21 XP">Antminer S21 XP (270TH/s, 3645W)</option>
+                                        <option value="Antminer S21 Hyd">Antminer S21 Hyd (335TH/s, 5360W)</option>
+                                        <option value="Antminer S21 Pro Hyd">Antminer S21 Pro Hyd (319TH/s, 5445W)</option>
+                                        <option value="Antminer S21 XP Hyd">Antminer S21 XP Hyd (473TH/s, 5676W)</option>
+                                        <option value="WhatsMiner M50">WhatsMiner M50 (114TH/s, 3306W)</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="miner_count" class="form-label">矿机数量</label>
+                                    <input type="number" class="form-control bg-dark text-light border-secondary" 
+                                           id="miner_count" name="miner_count" value="100" min="1" max="10000" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="electricity_cost" class="form-label">电费成本 ($/kWh)</label>
+                                    <input type="number" class="form-control bg-dark text-light border-secondary" 
+                                           id="electricity_cost" name="electricity_cost" value="0.05" 
+                                           min="0.01" max="1.00" step="0.001" required>
+                                </div>
+                            </div>
+
+                            <!-- 限电参数 -->
+                            <div class="col-md-6">
+                                <h5 class="text-warning mb-3">
+                                    <i class="bi bi-lightning-charge"></i>
+                                    削减参数配置
+                                </h5>
+                                
+                                <div class="mb-3">
+                                    <label for="curtailment" class="form-label">削减百分比 (%)</label>
+                                    <input type="range" class="form-range" id="curtailment" name="curtailment" 
+                                           value="20" min="0" max="80" step="5" 
+                                           oninput="updateCurtailmentValue(this.value)">
+                                    <div class="d-flex justify-content-between">
+                                        <small class="text-muted">0%</small>
+                                        <span id="curtailment-value" class="text-warning fw-bold">20%</span>
+                                        <small class="text-muted">80%</small>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="shutdown_strategy" class="form-label">关机策略</label>
+                                    <select class="form-select bg-dark text-light border-secondary" id="shutdown_strategy" name="shutdown_strategy">
+                                        <option value="efficiency">基于效率</option>
+                                        <option value="proportional">按比例</option>
+                                        <option value="random">随机</option>
+                                    </select>
+                                    <div class="form-text text-muted">
+                                        选择关机策略
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="btc_price" class="form-label">BTC价格 ($)</label>
+                                    <input type="number" class="form-control bg-dark text-light border-secondary" 
+                                           id="btc_price" name="btc_price" value="100000" 
+                                           min="10000" max="1000000" step="100">
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="checkbox" id="use_real_time_btc" name="use_real_time_btc" checked>
+                                        <label class="form-check-label text-muted" for="use_real_time_btc">
+                                            使用实时数据
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 计算按钮 -->
+                        <div class="row">
+                            <div class="col-12 text-center">
+                                <button type="submit" class="btn btn-warning btn-lg px-5 py-3">
+                                    <i class="bi bi-calculator"></i>
+                                    计算削减影响
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 计算结果 -->
+    <div id="results-section" class="row mt-5" style="display: none;">
+        <div class="col-12">
+            <div class="card bg-dark border-success">
+                <div class="card-header bg-success text-dark">
+                    <h3 class="card-title mb-0">
+                        <i class="bi bi-graph-up"></i>
+                        削减分析结果
+                    </h3>
+                </div>
+                <div class="card-body" id="results-content">
+                    <!-- 结果将通过JavaScript动态插入 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 错误信息 -->
+    <div id="error-section" class="row mt-3" style="display: none;">
+        <div class="col-12">
+            <div class="alert alert-danger" role="alert" id="error-message">
+                <!-- 错误信息将通过JavaScript动态插入 -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateCurtailmentValue(value) {
+    document.getElementById('curtailment-value').textContent = value + '%';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('curtailment-form');
+    const resultsSection = document.getElementById('results-section');
+    const errorSection = document.getElementById('error-section');
+    const resultsContent = document.getElementById('results-content');
+    const errorMessage = document.getElementById('error-message');
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const submitButton = form.querySelector('button[type="submit"]');
+        const originalText = submitButton.innerHTML;
+        
+        try {
+            // 显示加载状态
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> 计算中...';
+            
+            // 隐藏之前的结果和错误
+            resultsSection.style.display = 'none';
+            errorSection.style.display = 'none';
+            
+            const formData = new FormData(form);
+            
+            const response = await fetch('/calculate', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.success && result.curtailment_details) {
+                displayResults(result.curtailment_details);
+                resultsSection.style.display = 'block';
+            } else {
+                showError(result.error || '计算失败');
+            }
+            
+        } catch (error) {
+            console.error('计算请求失败:', error);
+            showError('请求失败');
+        } finally {
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalText;
+        }
+    });
+    
+    function displayResults(curtailmentData) {
+        const html = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h5 class="text-success mb-3">运行概况</h5>
+                    <table class="table table-dark table-striped">
+                        <tr>
+                            <td>总矿机数</td>
+                            <td class="text-warning">${curtailmentData.total_miners || 0}</td>
+                        </tr>
+                        <tr>
+                            <td>运行矿机</td>
+                            <td class="text-success">${curtailmentData.running_miners || 0}</td>
+                        </tr>
+                        <tr>
+                            <td>关机矿机</td>
+                            <td class="text-danger">${curtailmentData.shutdown_miners || 0}</td>
+                        </tr>
+                        <tr>
+                            <td>功率削减</td>
+                            <td class="text-info">${((curtailmentData.power_reduction || 0) * 100).toFixed(1)}%</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h5 class="text-success mb-3">财务影响</h5>
+                    <table class="table table-dark table-striped">
+                        <tr>
+                            <td>月收入损失</td>
+                            <td class="text-danger">$${(curtailmentData.monthly_revenue_loss || 0).toLocaleString()}</td>
+                        </tr>
+                        <tr>
+                            <td>月成本节省</td>
+                            <td class="text-success">$${(curtailmentData.monthly_cost_savings || 0).toLocaleString()}</td>
+                        </tr>
+                        <tr>
+                            <td>月净影响</td>
+                            <td class="${(curtailmentData.net_monthly_impact || 0) >= 0 ? 'text-success' : 'text-danger'}">
+                                $${(curtailmentData.net_monthly_impact || 0).toLocaleString()}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>效率提升</td>
+                            <td class="text-info">${((curtailmentData.efficiency_improvement || 0) * 100).toFixed(2)}%</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        `;
+        resultsContent.innerHTML = html;
+    }
+    
+    function showError(message) {
+        errorMessage.textContent = message;
+        errorSection.style.display = 'block';
+    }
+});
+</script>
+{% endblock %}

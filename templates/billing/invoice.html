@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if current_lang == 'en' %}Invoice #{{ payment.id }} - BTC Mining Calculator{% else %}发票 #{{ payment.id }} - BTC挖矿计算器{% endif %}</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #f7931e;
+            --primary-gradient: linear-gradient(45deg, #f7931e, #ffad33);
+            --secondary-color: #1a1a1a;
+            --accent-color: #f7931e;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --border-color: #333333;
+            --card-bg: rgba(255, 255, 255, 0.05);
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: var(--text-primary);
+        }
+
+        .invoice-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .invoice-header {
+            background: var(--primary-gradient);
+            padding: 2rem;
+            color: white;
+        }
+
+        .invoice-body {
+            padding: 2rem;
+        }
+
+        .invoice-footer {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .company-logo {
+            font-size: 2rem;
+            font-weight: 800;
+            color: white;
+        }
+
+        .invoice-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .invoice-date {
+            opacity: 0.9;
+        }
+
+        .info-section {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .info-value {
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .amount-total {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .payment-details {
+            background: rgba(40, 167, 69, 0.1);
+            border: 1px solid #28a745;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .payment-hash {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.75rem;
+            border-radius: 8px;
+            word-break: break-all;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(247, 147, 30, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .status-paid {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            border: 1px solid #28a745;
+        }
+
+        .blockchain-info {
+            background: rgba(23, 162, 184, 0.1);
+            border: 1px solid #17a2b8;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .print-hidden {
+            display: block;
+        }
+
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            
+            .invoice-container {
+                background: white !important;
+                border: 1px solid #ddd !important;
+                box-shadow: none !important;
+                margin: 0 !important;
+                backdrop-filter: none !important;
+            }
+            
+            .invoice-header {
+                background: #f7931e !important;
+                color: white !important;
+            }
+            
+            .info-section, .payment-details, .blockchain-info {
+                background: #f8f9fa !important;
+                border: 1px solid #ddd !important;
+            }
+            
+            .print-hidden {
+                display: none !important;
+            }
+            
+            .invoice-footer {
+                background: #f8f9fa !important;
+                border-top: 1px solid #ddd !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .invoice-container {
+                margin: 1rem;
+            }
+            
+            .invoice-header, .invoice-body, .invoice-footer {
+                padding: 1.5rem;
+            }
+            
+            .info-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            
+            .info-value {
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-container">
+        <!-- 发票头部 -->
+        <div class="invoice-header">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="company-logo">
+                        <i class="bi bi-cpu me-2"></i>
+                        {% if current_lang == 'en' %}BTC Mining Calculator{% else %}BTC挖矿计算器{% endif %}
+                    </div>
+                    <div class="mt-2">
+                        {% if current_lang == 'en' %}Professional Mining Analytics Platform{% else %}专业挖矿分析平台{% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <div class="invoice-number">
+                        {% if current_lang == 'en' %}INVOICE #{{ payment.id }}{% else %}发票 #{{ payment.id }}{% endif %}
+                    </div>
+                    <div class="invoice-date">
+                        {{ payment.payment_date.strftime('%Y-%m-%d') if payment.payment_date else payment.created_at.strftime('%Y-%m-%d') }}
+                    </div>
+                    <div class="mt-2">
+                        <span class="status-paid">
+                            {% if current_lang == 'en' %}PAID{% else %}已付款{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 发票正文 -->
+        <div class="invoice-body">
+            <!-- 账单信息 -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h5>{% if current_lang == 'en' %}Bill To{% else %}账单地址{% endif %}</h5>
+                    <div class="info-section">
+                        <div><strong>{{ user.email }}</strong></div>
+                        {% if user.username %}
+                        <div>{{ user.username }}</div>
+                        {% endif %}
+                        <div class="text-secondary">
+                            {% if current_lang == 'en' %}Customer ID: #{{ user.id }}{% else %}客户ID：#{{ user.id }}{% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h5>{% if current_lang == 'en' %}Service Provider{% else %}服务提供商{% endif %}</h5>
+                    <div class="info-section">
+                        <div><strong>HashInsight Mining Intelligence</strong></div>
+                        <div>{% if current_lang == 'en' %}Digital Mining Analytics{% else %}数字挖矿分析{% endif %}</div>
+                        <div class="text-secondary">calc.hashinsight.net</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 订阅详情 -->
+            <div class="info-section">
+                <h5 class="mb-3">{% if current_lang == 'en' %}Subscription Details{% else %}订阅详情{% endif %}</h5>
+                
+                <div class="info-row">
+                    <span class="info-label">{% if current_lang == 'en' %}Plan{% else %}计划{% endif %}</span>
+                    <span class="info-value">{{ payment.subscription.plan.name if payment.subscription.plan else 'Unknown Plan' }}</span>
+                </div>
+                
+                {% if payment.subscription.plan %}
+                <div class="info-row">
+                    <span class="info-label">{% if current_lang == 'en' %}Description{% else %}描述{% endif %}</span>
+                    <span class="info-value">{{ payment.subscription.plan.description }}</span>
+                </div>
+                {% endif %}
+                
+                <div class="info-row">
+                    <span class="info-label">{% if current_lang == 'en' %}Billing Period{% else %}计费周期{% endif %}</span>
+                    <span class="info-value">
+                        {% if payment.subscription.started_at and payment.subscription.expires_at %}
+                            {{ payment.subscription.started_at.strftime('%Y-%m-%d') }} - {{ payment.subscription.expires_at.strftime('%Y-%m-%d') }}
+                        {% else %}
+                            {% if current_lang == 'en' %}N/A{% else %}不适用{% endif %}
+                        {% endif %}
+                    </span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">{% if current_lang == 'en' %}Subtotal{% else %}小计{% endif %}</span>
+                    <span class="info-value">${{ payment.amount }}</span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">{% if current_lang == 'en' %}Taxes{% else %}税费{% endif %}</span>
+                    <span class="info-value">$0.00</span>
+                </div>
+                
+                <hr>
+                
+                <div class="info-row">
+                    <span class="info-label h5">{% if current_lang == 'en' %}Total Amount{% else %}总金额{% endif %}</span>
+                    <span class="info-value amount-total">{{ payment.amount }} {{ payment.currency }}</span>
+                </div>
+            </div>
+
+            <!-- 支付详情 -->
+            <div class="payment-details">
+                <h5 class="mb-3">
+                    <i class="bi bi-check-circle me-2"></i>
+                    {% if current_lang == 'en' %}Payment Confirmed{% else %}支付已确认{% endif %}
+                </h5>
+                
+                <div class="info-row">
+                    <span class="info-label">{% if current_lang == 'en' %}Payment Method{% else %}支付方式{% endif %}</span>
+                    <span class="info-value">
+                        <span class="badge bg-warning text-dark">{{ payment.crypto_currency }}</span>
+                        {% if current_lang == 'en' %}Cryptocurrency{% else %}加密货币{% endif %}
+                    </span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">{% if current_lang == 'en' %}Payment Date{% else %}支付日期{% endif %}</span>
+                    <span class="info-value">
+                        {{ payment.confirmed_at.strftime('%Y-%m-%d %H:%M:%S UTC') if payment.confirmed_at else payment.payment_date.strftime('%Y-%m-%d %H:%M:%S UTC') }}
+                    </span>
+                </div>
+                
+                {% if payment.transaction_hash %}
+                <div class="info-row">
+                    <span class="info-label">{% if current_lang == 'en' %}Transaction Hash{% else %}交易哈希{% endif %}</span>
+                    <span class="info-value">
+                        <div class="payment-hash">{{ payment.transaction_hash }}</div>
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- 区块链信息 -->
+            {% if payment.blockchain_network and payment.confirmations %}
+            <div class="blockchain-info">
+                <h6>
+                    <i class="bi bi-shield-check me-2"></i>
+                    {% if current_lang == 'en' %}Blockchain Verification{% else %}区块链验证{% endif %}
+                </h6>
+                
+                <div class="info-row">
+                    <span class="info-label">{% if current_lang == 'en' %}Network{% else %}网络{% endif %}</span>
+                    <span class="info-value">{{ payment.blockchain_network.title() }}</span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">{% if current_lang == 'en' %}Confirmations{% else %}确认数{% endif %}</span>
+                    <span class="info-value">{{ payment.confirmations }}/{{ payment.required_confirmations }}</span>
+                </div>
+                
+                {% if payment.block_number %}
+                <div class="info-row">
+                    <span class="info-label">{% if current_lang == 'en' %}Block Number{% else %}区块号{% endif %}</span>
+                    <span class="info-value">#{{ payment.block_number }}</span>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- 服务条款 -->
+            <div class="mt-4">
+                <h6>{% if current_lang == 'en' %}Terms & Conditions{% else %}条款和条件{% endif %}</h6>
+                <small class="text-secondary">
+                    {% if current_lang == 'en' %}
+                        This invoice represents payment for subscription services provided by HashInsight Mining Intelligence. 
+                        All cryptocurrency payments are final and non-refundable. Service access is granted immediately upon 
+                        payment confirmation on the blockchain.
+                    {% else %}
+                        此发票代表HashInsight挖矿智能提供的订阅服务付款。
+                        所有加密货币支付均为最终付款且不可退款。服务访问权限在区块链确认付款后立即授予。
+                    {% endif %}
+                </small>
+            </div>
+        </div>
+
+        <!-- 发票脚注 -->
+        <div class="invoice-footer">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <small class="text-secondary">
+                        {% if current_lang == 'en' %}
+                            Questions about this invoice? Contact support@hashinsight.net
+                        {% else %}
+                            对此发票有疑问？请联系 support@hashinsight.net
+                        {% endif %}
+                    </small>
+                </div>
+                <div class="col-md-6 text-md-end print-hidden">
+                    <button class="btn btn-primary me-2" onclick="window.print()">
+                        <i class="bi bi-printer me-2"></i>
+                        {% if current_lang == 'en' %}Print Invoice{% else %}打印发票{% endif %}
+                    </button>
+                    <a href="{{ url_for('billing.manage') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>
+                        {% if current_lang == 'en' %}Back to Billing{% else %}返回账单{% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 打印样式优化 -->
+    <script>
+        // 打印前优化
+        window.addEventListener('beforeprint', function() {
+            // 可以在这里添加打印前的处理逻辑
+        });
+
+        // 为移动端优化显示
+        if (window.innerWidth < 768) {
+            document.querySelector('.invoice-container').style.margin = '1rem';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1082 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if current_lang == 'en' %}Web3 Transparency Dashboard{% else %}Web3透明度平台{% endif %} - BTC Mining Calculator
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Web3 Dashboard专用样式 */
+:root {
+    --web3-primary: #00d4ff;
+    --web3-secondary: #7c3aed;
+    --web3-accent: #fbbf24;
+    --web3-success: #10b981;
+    --web3-warning: #f59e0b;
+    --web3-danger: #ef4444;
+    --bg-gradient: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+    --card-bg: rgba(255, 255, 255, 0.08);
+    --card-border: rgba(0, 212, 255, 0.2);
+    --text-primary: #ffffff;
+    --text-secondary: #b8b8b8;
+    --shadow-glow: 0 8px 32px rgba(0, 212, 255, 0.15);
+    --neon-glow: 0 0 20px rgba(0, 212, 255, 0.5);
+}
+
+body {
+    background: var(--bg-gradient);
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.web3-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+    position: relative;
+}
+
+/* Hero Section */
+.web3-hero {
+    text-align: center;
+    margin-bottom: 3rem;
+    position: relative;
+}
+
+.web3-title {
+    font-size: 3.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--web3-primary), var(--web3-secondary), var(--web3-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+    letter-spacing: -0.02em;
+}
+
+.web3-subtitle {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+}
+
+/* Wallet Connection Status */
+.wallet-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 2rem;
+    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid var(--web3-primary);
+    border-radius: 50px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.wallet-status:hover {
+    background: rgba(0, 212, 255, 0.15);
+    box-shadow: var(--neon-glow);
+}
+
+.wallet-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--web3-success);
+    box-shadow: 0 0 10px var(--web3-success);
+    animation: pulse 2s infinite;
+}
+
+.wallet-indicator.disconnected {
+    background: var(--web3-danger);
+    box-shadow: 0 0 10px var(--web3-danger);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.wallet-text {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.wallet-address {
+    color: var(--web3-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+}
+
+/* Dashboard Grid */
+.web3-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+/* Card Styles */
+.web3-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    padding: 2rem;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.web3-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: var(--shadow-glow);
+    border-color: var(--web3-primary);
+}
+
+.web3-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, transparent, rgba(0, 212, 255, 0.05), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.web3-card:hover::before {
+    opacity: 1;
+}
+
+/* Card Headers */
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    position: relative;
+    z-index: 2;
+}
+
+.card-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.card-icon {
+    font-size: 2rem;
+    color: var(--web3-primary);
+    filter: drop-shadow(0 0 10px currentColor);
+}
+
+/* Statistics */
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+    background: rgba(0, 212, 255, 0.1);
+    border-color: var(--web3-primary);
+}
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--web3-primary);
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.btn-web3 {
+    flex: 1;
+    padding: 0.75rem 1.5rem;
+    border: 1px solid var(--web3-primary);
+    background: rgba(0, 212, 255, 0.1);
+    color: var(--web3-primary);
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-web3:hover {
+    background: var(--web3-primary);
+    color: #000;
+    box-shadow: var(--neon-glow);
+    transform: translateY(-2px);
+}
+
+.btn-web3::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-web3:hover::before {
+    left: 100%;
+}
+
+.btn-secondary {
+    border-color: var(--web3-secondary);
+    background: rgba(124, 58, 237, 0.1);
+    color: var(--web3-secondary);
+}
+
+.btn-secondary:hover {
+    background: var(--web3-secondary);
+    color: white;
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.5);
+}
+
+/* Status Indicators */
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-connected {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--web3-success);
+    border: 1px solid var(--web3-success);
+}
+
+.status-disconnected {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--web3-danger);
+    border: 1px solid var(--web3-danger);
+}
+
+.status-pending {
+    background: rgba(245, 158, 11, 0.2);
+    color: var(--web3-warning);
+    border: 1px solid var(--web3-warning);
+}
+
+/* Network Status */
+.network-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.network-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.network-details {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* Progress Bars */
+.progress-container {
+    margin-top: 1rem;
+}
+
+.progress-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--web3-primary), var(--web3-secondary));
+    border-radius: 4px;
+    transition: width 0.8s ease;
+    position: relative;
+}
+
+.progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .web3-container {
+        padding: 1rem;
+    }
+    
+    .web3-title {
+        font-size: 2.5rem;
+    }
+    
+    .web3-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .stat-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .wallet-status {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+}
+
+/* Loading Animation */
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: var(--web3-primary);
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Tooltip */
+.tooltip {
+    position: relative;
+    cursor: help;
+}
+
+.tooltip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    z-index: 1000;
+}
+
+.tooltip:hover::after {
+    opacity: 1;
+}
+
+/* Special Card Themes */
+.blockchain-card {
+    border-color: var(--web3-primary);
+}
+
+.nft-card {
+    border-color: var(--web3-secondary);
+}
+
+.payment-card {
+    border-color: var(--web3-accent);
+}
+
+.transparency-card {
+    border-color: var(--web3-success);
+}
+
+.tools-card {
+    border-color: var(--web3-warning);
+}
+
+.verification-card {
+    border-color: var(--web3-danger);
+}
+
+/* Gradient text effects */
+.gradient-text {
+    background: linear-gradient(135deg, var(--web3-primary), var(--web3-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Floating elements */
+.floating {
+    animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="web3-container">
+    <!-- Hero Section -->
+    <div class="web3-hero">
+        <h1 class="web3-title">
+            {% if current_lang == 'en' %}
+                Web3 Transparency Platform
+            {% else %}
+                Web3透明度平台
+            {% endif %}
+        </h1>
+        <p class="web3-subtitle">
+            {% if current_lang == 'en' %}
+                Advanced blockchain verification, SLA NFT certificates, and crypto payment integration for mining transparency
+            {% else %}
+                先进的区块链验证、SLA NFT证书以及加密货币支付集成，为挖矿透明度提供全方位解决方案
+            {% endif %}
+        </p>
+        
+        <!-- Wallet Connection Status -->
+        <div class="wallet-status">
+            <div class="wallet-indicator {{ 'connected' if wallet_address else 'disconnected' }}"></div>
+            <div class="wallet-text">
+                {% if wallet_address %}
+                    {% if current_lang == 'en' %}Wallet Connected{% else %}钱包已连接{% endif %}
+                    <div class="wallet-address">{{ wallet_address[:8] }}...{{ wallet_address[-6:] }}</div>
+                {% else %}
+                    {% if current_lang == 'en' %}Connect Wallet{% else %}连接钱包{% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Grid -->
+    <div class="web3-grid">
+        <!-- Blockchain Data Verification Panel -->
+        <div class="web3-card blockchain-card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    {% if current_lang == 'en' %}Blockchain Verification{% else %}区块链数据验证{% endif %}
+                </h3>
+                <div class="card-icon">🔗</div>
+            </div>
+            
+            <div class="network-info">
+                <div class="network-name">{{ blockchain_status.network }}</div>
+                <div class="status-indicator {{ 'status-connected' if blockchain_status.connected else 'status-disconnected' }}">
+                    {% if blockchain_status.connected %}
+                        {% if current_lang == 'en' %}Connected{% else %}已连接{% endif %}
+                    {% else %}
+                        {% if current_lang == 'en' %}Disconnected{% else %}未连接{% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if blockchain_status.connected %}
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <span class="stat-value">{{ blockchain_status.block_number or 'N/A' }}</span>
+                    <span class="stat-label">{% if current_lang == 'en' %}Block Height{% else %}区块高度{% endif %}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ transparency_stats.blockchain_verifications }}</span>
+                    <span class="stat-label">{% if current_lang == 'en' %}Verifications{% else %}验证次数{% endif %}</span>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="action-buttons">
+                <a href="#" class="btn-web3" onclick="verifyMiningData()">
+                    {% if current_lang == 'en' %}Verify Data{% else %}验证数据{% endif %}
+                </a>
+                <a href="#" class="btn-web3 btn-secondary" onclick="viewIPFSData()">
+                    {% if current_lang == 'en' %}View IPFS{% else %}查看IPFS{% endif %}
+                </a>
+            </div>
+        </div>
+
+        <!-- SLA NFT Certificate Management -->
+        <div class="web3-card nft-card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    {% if current_lang == 'en' %}SLA NFT Certificates{% else %}SLA NFT证书{% endif %}
+                </h3>
+                <div class="card-icon">🏆</div>
+            </div>
+            
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <span class="stat-value">{{ sla_stats.total_certificates }}</span>
+                    <span class="stat-label">{% if current_lang == 'en' %}Total Certificates{% else %}总证书数{% endif %}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ sla_stats.verified_certificates }}</span>
+                    <span class="stat-label">{% if current_lang == 'en' %}Verified{% else %}已验证{% endif %}</span>
+                </div>
+            </div>
+            
+            {% if sla_stats.latest_score %}
+            <div class="progress-container">
+                <div class="progress-label">
+                    <span>{% if current_lang == 'en' %}Latest SLA Score{% else %}最新SLA评分{% endif %}</span>
+                    <span>{{ "%.1f"|format(sla_stats.latest_score) }}%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ sla_stats.latest_score }}%"></div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="action-buttons">
+                <a href="/api/sla/certificates" class="btn-web3">
+                    {% if current_lang == 'en' %}View Certificates{% else %}查看证书{% endif %}
+                </a>
+                <a href="#" class="btn-web3 btn-secondary" onclick="mintNewCertificate()">
+                    {% if current_lang == 'en' %}Mint New{% else %}铸造新证书{% endif %}
+                </a>
+            </div>
+        </div>
+
+        <!-- Crypto Payment Interface -->
+        <div class="web3-card payment-card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    {% if current_lang == 'en' %}Crypto Payments{% else %}加密货币支付{% endif %}
+                </h3>
+                <div class="card-icon">💰</div>
+            </div>
+            
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <span class="stat-value">{{ payment_stats.successful_payments }}</span>
+                    <span class="stat-label">{% if current_lang == 'en' %}Successful{% else %}成功支付{% endif %}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ payment_stats.pending_payments }}</span>
+                    <span class="stat-label">{% if current_lang == 'en' %}Pending{% else %}待处理{% endif %}</span>
+                </div>
+            </div>
+            
+            <div style="margin-top: 1rem;">
+                <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                    {% if current_lang == 'en' %}Supported Currencies:{% else %}支持的币种:{% endif %}
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    {% for currency in payment_stats.supported_currencies %}
+                    <span style="background: rgba(251, 191, 36, 0.2); color: var(--web3-accent); padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">{{ currency }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <a href="#" class="btn-web3" onclick="createPayment()">
+                    {% if current_lang == 'en' %}Create Payment{% else %}创建支付{% endif %}
+                </a>
+                <a href="#" class="btn-web3 btn-secondary" onclick="viewPaymentHistory()">
+                    {% if current_lang == 'en' %}Payment History{% else %}支付历史{% endif %}
+                </a>
+            </div>
+        </div>
+
+        <!-- Transparency Verification Center -->
+        <div class="web3-card transparency-card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    {% if current_lang == 'en' %}Transparency Center{% else %}透明度验证中心{% endif %}
+                </h3>
+                <div class="card-icon">🔍</div>
+            </div>
+            
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <span class="stat-value">{{ transparency_stats.ipfs_uploads }}</span>
+                    <span class="stat-label">{% if current_lang == 'en' %}IPFS Uploads{% else %}IPFS上传{% endif %}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ "%.1f"|format(transparency_stats.audit_score) }}</span>
+                    <span class="stat-label">{% if current_lang == 'en' %}Audit Score{% else %}审计评分{% endif %}</span>
+                </div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-label">
+                    <span>{% if current_lang == 'en' %}Trust Score{% else %}信任度评分{% endif %}</span>
+                    <span>{{ "%.1f"|format(transparency_stats.audit_score) }}/100</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ transparency_stats.audit_score }}%"></div>
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <a href="#" class="btn-web3" onclick="runAudit()">
+                    {% if current_lang == 'en' %}Run Audit{% else %}执行审计{% endif %}
+                </a>
+                <a href="#" class="btn-web3 btn-secondary" onclick="viewAuditReports()">
+                    {% if current_lang == 'en' %}View Reports{% else %}查看报告{% endif %}
+                </a>
+            </div>
+        </div>
+
+        <!-- Web3 Tools Integration -->
+        <div class="web3-card tools-card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    {% if current_lang == 'en' %}Web3 Tools{% else %}Web3工具集成{% endif %}
+                </h3>
+                <div class="card-icon">🛠️</div>
+            </div>
+            
+            <div class="network-info">
+                <div class="network-name">MetaMask</div>
+                <div class="status-indicator {{ 'status-connected' if wallet_address else 'status-disconnected' }}">
+                    {% if wallet_address %}
+                        {% if current_lang == 'en' %}Connected{% else %}已连接{% endif %}
+                    {% else %}
+                        {% if current_lang == 'en' %}Disconnected{% else %}未连接{% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div style="margin-top: 1rem;">
+                <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                    {% if current_lang == 'en' %}Available Tools:{% else %}可用工具:{% endif %}
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.85rem; color: var(--text-primary);">{% if current_lang == 'en' %}Transaction History{% else %}交易历史{% endif %}</span>
+                        <span style="color: var(--web3-success); font-size: 0.8rem;">✓</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.85rem; color: var(--text-primary);">{% if current_lang == 'en' %}Network Monitor{% else %}网络监控{% endif %}</span>
+                        <span style="color: var(--web3-success); font-size: 0.8rem;">✓</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.85rem; color: var(--text-primary);">{% if current_lang == 'en' %}Asset Viewer{% else %}资产查看器{% endif %}</span>
+                        <span style="color: var(--web3-success); font-size: 0.8rem;">✓</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                {% if not wallet_address %}
+                <a href="#" class="btn-web3" onclick="connectWallet()">
+                    {% if current_lang == 'en' %}Connect Wallet{% else %}连接钱包{% endif %}
+                </a>
+                {% else %}
+                <a href="#" class="btn-web3" onclick="viewTransactionHistory()">
+                    {% if current_lang == 'en' %}View Transactions{% else %}查看交易{% endif %}
+                </a>
+                {% endif %}
+                <a href="#" class="btn-web3 btn-secondary" onclick="viewNetworkStatus()">
+                    {% if current_lang == 'en' %}Network Status{% else %}网络状态{% endif %}
+                </a>
+            </div>
+        </div>
+
+        <!-- Live Market Data -->
+        <div class="web3-card verification-card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    {% if current_lang == 'en' %}Market Data{% else %}市场数据{% endif %}
+                </h3>
+                <div class="card-icon">📊</div>
+            </div>
+            
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <span class="stat-value">${{ "{:,}".format(btc_price) }}</span>
+                    <span class="stat-label">BTC {% if current_lang == 'en' %}Price{% else %}价格{% endif %}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ blockchain_status.network }}</span>
+                    <span class="stat-label">{% if current_lang == 'en' %}Network{% else %}网络{% endif %}</span>
+                </div>
+            </div>
+            
+            {% if blockchain_status.connected and blockchain_status.gas_price %}
+            <div style="margin-top: 1rem; padding: 1rem; background: rgba(255, 255, 255, 0.03); border-radius: 12px;">
+                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                    {% if current_lang == 'en' %}Gas Price:{% else %}Gas价格:{% endif %}
+                </div>
+                <div style="font-family: 'JetBrains Mono', monospace; color: var(--web3-primary); font-weight: 600;">
+                    {{ blockchain_status.gas_price }} Wei
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="action-buttons">
+                <a href="/calculator" class="btn-web3">
+                    {% if current_lang == 'en' %}Mining Calculator{% else %}挖矿计算器{% endif %}
+                </a>
+                <a href="/analytics" class="btn-web3 btn-secondary">
+                    {% if current_lang == 'en' %}Analytics{% else %}数据分析{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div id="loadingModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+        <div class="modal-content" style="background: var(--card-bg); border: 1px solid var(--card-border); backdrop-filter: blur(20px);">
+            <div class="modal-body text-center" style="padding: 2rem;">
+                <div class="loading-spinner" style="margin-bottom: 1rem;"></div>
+                <div style="color: var(--text-primary); font-weight: 600;">
+                    {% if current_lang == 'en' %}Processing...{% else %}处理中...{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Web3 Utils Library -->
+<script src="/static/js/web3_utils.js"></script>
+<script>
+// Web3 Dashboard JavaScript Functions
+
+// MetaMask 钱包连接
+async function connectWallet() {
+    if (typeof window.ethereum !== 'undefined') {
+        try {
+            showLoading();
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            
+            if (accounts.length > 0) {
+                const walletAddress = accounts[0];
+                
+                // 获取nonce
+                const nonceResponse = await fetch('/api/wallet/nonce', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ wallet_address: walletAddress })
+                });
+                
+                const nonceData = await nonceResponse.json();
+                
+                if (nonceData.success) {
+                    // 签名消息
+                    const message = nonceData.message;
+                    const signature = await window.ethereum.request({
+                        method: 'personal_sign',
+                        params: [message, walletAddress]
+                    });
+                    
+                    // 登录验证
+                    const loginResponse = await fetch('/api/wallet/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({
+                            wallet_address: walletAddress,
+                            signature: signature,
+                            nonce: nonceData.nonce
+                        })
+                    });
+                    
+                    const loginData = await loginResponse.json();
+                    hideLoading();
+                    
+                    if (loginData.success) {
+                        window.location.reload();
+                    } else {
+                        alert(loginData.error || 'Wallet login failed');
+                    }
+                } else {
+                    hideLoading();
+                    alert(nonceData.error || 'Failed to get nonce');
+                }
+            }
+        } catch (error) {
+            hideLoading();
+            console.error('Wallet connection error:', error);
+            alert('Failed to connect wallet: ' + error.message);
+        }
+    } else {
+        const lang = '{{ current_lang }}';
+        const message = lang === 'en' 
+            ? `MetaMask Extension Required
+
+To connect your wallet, please follow these steps:
+
+1. Install MetaMask Extension
+   - Chrome: Visit chrome.google.com/webstore and search for "MetaMask"
+   - Firefox: Visit addons.mozilla.org and search for "MetaMask"
+   - Or visit metamask.io directly
+
+2. Create or Import Wallet
+   - Follow the setup wizard
+   - Securely store your recovery phrase
+
+3. Connect to This App
+   - Click "Connect Wallet" button again
+   - Select your account in MetaMask
+   - Approve the connection request
+
+Need help? Visit: metamask.io/support`
+            : `需要安装 MetaMask 钱包扩展
+
+连接钱包需要以下步骤：
+
+1. 安装 MetaMask 扩展
+   - Chrome: 访问 chrome.google.com/webstore 搜索 "MetaMask"
+   - Firefox: 访问 addons.mozilla.org 搜索 "MetaMask"
+   - 或直接访问 metamask.io
+
+2. 创建或导入钱包
+   - 按照设置向导操作
+   - 安全保存您的恢复短语
+
+3. 连接到本应用
+   - 再次点击"连接钱包"按钮
+   - 在 MetaMask 中选择您的账户
+   - 批准连接请求
+
+需要帮助？访问: metamask.io/support`;
+        
+        if (confirm(message + '\n\n' + (lang === 'en' ? 'Open MetaMask website now?' : '现在打开 MetaMask 官网？'))) {
+            window.open('https://metamask.io', '_blank');
+        }
+    }
+}
+
+// 验证挖矿数据
+async function verifyMiningData() {
+    showLoading();
+    try {
+        const response = await fetch('/api/blockchain/verify-data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        const data = await response.json();
+        hideLoading();
+        
+        if (data.success) {
+            alert('{% if current_lang == "en" %}Data verification initiated successfully!{% else %}数据验证已成功启动！{% endif %}');
+        } else {
+            alert(data.error || '{% if current_lang == "en" %}Verification failed{% else %}验证失败{% endif %}');
+        }
+    } catch (error) {
+        hideLoading();
+        console.error('Verification error:', error);
+        alert('{% if current_lang == "en" %}Verification error{% else %}验证错误{% endif %}');
+    }
+}
+
+// 查看IPFS数据
+function viewIPFSData() {
+    window.open('/api/ipfs/browser', '_blank');
+}
+
+// 铸造新的SLA NFT证书
+async function mintNewCertificate() {
+    showLoading();
+    try {
+        const response = await fetch('/api/sla/mint-certificate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        const data = await response.json();
+        hideLoading();
+        
+        if (data.success) {
+            alert('{% if current_lang == "en" %}Certificate minting initiated!{% else %}证书铸造已启动！{% endif %}');
+            setTimeout(() => window.location.reload(), 2000);
+        } else {
+            alert(data.error || '{% if current_lang == "en" %}Minting failed{% else %}铸造失败{% endif %}');
+        }
+    } catch (error) {
+        hideLoading();
+        console.error('Minting error:', error);
+        alert('{% if current_lang == "en" %}Minting error{% else %}铸造错误{% endif %}');
+    }
+}
+
+// 创建加密货币支付
+function createPayment() {
+    window.location.href = '/billing/payment-options';
+}
+
+// 查看支付历史
+function viewPaymentHistory() {
+    window.location.href = '/billing/payment-history';
+}
+
+// 运行透明度审计
+async function runAudit() {
+    showLoading();
+    try {
+        const response = await fetch('/api/transparency/audit', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        const data = await response.json();
+        hideLoading();
+        
+        if (data.success) {
+            alert('{% if current_lang == "en" %}Audit initiated successfully!{% else %}审计已成功启动！{% endif %}');
+        } else {
+            alert(data.error || '{% if current_lang == "en" %}Audit failed{% else %}审计失败{% endif %}');
+        }
+    } catch (error) {
+        hideLoading();
+        console.error('Audit error:', error);
+        alert('{% if current_lang == "en" %}Audit error{% else %}审计错误{% endif %}');
+    }
+}
+
+// 查看审计报告
+function viewAuditReports() {
+    window.location.href = '/api/sla/reports';
+}
+
+// 查看交易历史
+function viewTransactionHistory() {
+    if (window.ethereum) {
+        window.open('https://etherscan.io/address/' + '{{ wallet_address }}', '_blank');
+    }
+}
+
+// 查看网络状态
+function viewNetworkStatus() {
+    window.location.href = '/network-history';
+}
+
+// 显示加载动画
+function showLoading() {
+    const modalElement = document.getElementById('loadingModal');
+    const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+    modal.show();
+}
+
+// 隐藏加载动画
+function hideLoading() {
+    const modalElement = document.getElementById('loadingModal');
+    const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+    modal.hide();
+}
+
+// 初始化
+document.addEventListener('DOMContentLoaded', function() {
+    // 添加浮动动画
+    const cards = document.querySelectorAll('.web3-card');
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+        card.classList.add('floating');
+    });
+    
+    // 检查MetaMask连接状态
+    if (typeof window.ethereum !== 'undefined') {
+        window.ethereum.on('accountsChanged', function (accounts) {
+            if (accounts.length === 0) {
+                // 用户断开了连接
+                window.location.reload();
+            }
+        });
+        
+        window.ethereum.on('chainChanged', function (chainId) {
+            // 网络切换
+            window.location.reload();
+        });
+    }
+});
+</script>
+{% endblock %}

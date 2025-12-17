@@ -1,0 +1,1450 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if current_lang == 'en' %}Crypto Payment Dashboard{% else %}加密货币支付管理{% endif %} - Web3 Dashboard
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* 加密货币支付管理专用样式 */
+:root {
+    --crypto-primary: #f7931a; /* Bitcoin橙色 */
+    --crypto-secondary: #627eea; /* Ethereum蓝色 */
+    --crypto-accent: #3c3c3d; /* USDC深色 */
+    --crypto-success: #00d4aa;
+    --crypto-warning: #ffa500;
+    --crypto-danger: #ff6b6b;
+    --crypto-gold: #ffd700;
+    --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
+    --card-bg: rgba(255, 255, 255, 0.08);
+    --card-border: rgba(247, 147, 26, 0.3);
+    --text-primary: #ffffff;
+    --text-secondary: #b8b8b8;
+    --shadow-glow: 0 8px 32px rgba(247, 147, 26, 0.2);
+    --neon-glow: 0 0 25px rgba(247, 147, 26, 0.6);
+}
+
+body {
+    background: var(--bg-gradient);
+    min-height: 100vh;
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.crypto-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* 页面头部 */
+.crypto-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    position: relative;
+}
+
+.crypto-title {
+    font-size: 3rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--crypto-primary), var(--crypto-secondary), var(--crypto-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 30px rgba(247, 147, 26, 0.3);
+}
+
+.crypto-subtitle {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* 快速操作面板 */
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 3rem;
+}
+
+.action-btn {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(20px);
+    position: relative;
+    overflow: hidden;
+}
+
+.action-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-glow);
+    border-color: var(--crypto-primary);
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.action-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, transparent, rgba(247, 147, 26, 0.1), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.action-btn:hover::before {
+    opacity: 1;
+}
+
+.action-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    position: relative;
+    z-index: 2;
+}
+
+.action-text {
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: relative;
+    z-index: 2;
+}
+
+/* 加密货币支持面板 */
+.currency-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    padding: 2rem;
+    margin-bottom: 3rem;
+    backdrop-filter: blur(20px);
+}
+
+.currency-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.currency-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.currency-card.btc {
+    border-color: var(--crypto-primary);
+}
+
+.currency-card.eth {
+    border-color: var(--crypto-secondary);
+}
+
+.currency-card.usdc {
+    border-color: var(--crypto-accent);
+}
+
+.currency-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.currency-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 2;
+}
+
+.currency-icon.btc {
+    color: var(--crypto-primary);
+    filter: drop-shadow(0 0 15px var(--crypto-primary));
+}
+
+.currency-icon.eth {
+    color: var(--crypto-secondary);
+    filter: drop-shadow(0 0 15px var(--crypto-secondary));
+}
+
+.currency-icon.usdc {
+    color: var(--crypto-accent);
+    filter: drop-shadow(0 0 15px var(--crypto-accent));
+}
+
+.currency-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.currency-symbol {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.currency-price {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.currency-price.btc {
+    color: var(--crypto-primary);
+}
+
+.currency-price.eth {
+    color: var(--crypto-secondary);
+}
+
+.currency-price.usdc {
+    color: var(--crypto-accent);
+}
+
+.currency-change {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.currency-change.positive {
+    color: var(--crypto-success);
+}
+
+.currency-change.negative {
+    color: var(--crypto-danger);
+}
+
+.currency-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.currency-btn {
+    flex: 1;
+    padding: 0.75rem;
+    border: 1px solid currentColor;
+    background: rgba(255, 255, 255, 0.05);
+    color: inherit;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    text-align: center;
+}
+
+.currency-btn:hover {
+    background: currentColor;
+    color: #000;
+    transform: translateY(-2px);
+}
+
+/* 支付历史 */
+.payment-history {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    padding: 2rem;
+    margin-bottom: 3rem;
+    backdrop-filter: blur(20px);
+}
+
+.history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+}
+
+.history-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.history-filter {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.filter-select {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--crypto-primary);
+}
+
+.payment-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.payment-table th {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.payment-table td {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    vertical-align: middle;
+}
+
+.payment-table tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.payment-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.payment-status.completed {
+    background: rgba(0, 212, 170, 0.2);
+    color: var(--crypto-success);
+    border: 1px solid var(--crypto-success);
+}
+
+.payment-status.pending {
+    background: rgba(255, 165, 0, 0.2);
+    color: var(--crypto-warning);
+    border: 1px solid var(--crypto-warning);
+}
+
+.payment-status.failed {
+    background: rgba(255, 107, 107, 0.2);
+    color: var(--crypto-danger);
+    border: 1px solid var(--crypto-danger);
+}
+
+.payment-amount {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+}
+
+.payment-hash {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.payment-hash:hover {
+    color: var(--crypto-primary);
+}
+
+/* 统计卡片 */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 2rem;
+    text-align: center;
+    backdrop-filter: blur(20px);
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-glow);
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: var(--crypto-primary);
+    filter: drop-shadow(0 0 10px var(--crypto-primary));
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* 钱包余额 */
+.wallet-balances {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    padding: 2rem;
+    margin-bottom: 3rem;
+    backdrop-filter: blur(20px);
+}
+
+.balance-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.balance-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.balance-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--crypto-primary);
+}
+
+.balance-currency {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.balance-amount {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.balance-usd {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* 支付创建模态框 */
+.payment-modal .modal-content {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    backdrop-filter: blur(20px);
+    color: var(--text-primary);
+}
+
+.payment-modal .modal-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.payment-form {
+    padding: 1rem 0;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.form-input, .form-select {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-input:focus, .form-select:focus {
+    outline: none;
+    border-color: var(--crypto-primary);
+    box-shadow: 0 0 0 3px rgba(247, 147, 26, 0.1);
+}
+
+.qr-container {
+    text-align: center;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    margin: 1rem 0;
+}
+
+.qr-code {
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 1rem;
+    background: #fff;
+    border-radius: 12px;
+    padding: 1rem;
+}
+
+.payment-address {
+    font-family: 'JetBrains Mono', monospace;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.75rem;
+    border-radius: 8px;
+    word-break: break-all;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.payment-address:hover {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .crypto-container {
+        padding: 1rem;
+    }
+    
+    .crypto-title {
+        font-size: 2.5rem;
+    }
+    
+    .quick-actions {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .currency-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .payment-table {
+        font-size: 0.8rem;
+    }
+    
+    .payment-table th,
+    .payment-table td {
+        padding: 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .quick-actions {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .balance-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 加载动画 */
+.loading-spinner {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    border: 3px solid rgba(247, 147, 26, 0.3);
+    border-radius: 50%;
+    border-top-color: var(--crypto-primary);
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(5px);
+}
+
+/* 浮动效果 */
+.floating {
+    animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+/* 脉冲效果 */
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="crypto-container">
+    <!-- 页面头部 -->
+    <div class="crypto-header">
+        <h1 class="crypto-title floating">
+            {% if current_lang == 'en' %}
+                Crypto Payment Dashboard
+            {% else %}
+                加密货币支付管理
+            {% endif %}
+        </h1>
+        <p class="crypto-subtitle">
+            {% if current_lang == 'en' %}
+                Secure cryptocurrency payments with multi-chain support and real-time tracking
+            {% else %}
+                安全的加密货币支付，支持多链和实时追踪
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- 快速操作 -->
+    <div class="quick-actions">
+        <a href="#" class="action-btn" onclick="createNewPayment()">
+            <div class="action-icon">💰</div>
+            <div class="action-text">
+                {% if current_lang == 'en' %}Create Payment{% else %}创建支付{% endif %}
+            </div>
+        </a>
+        
+        <a href="#" class="action-btn" onclick="checkBalances()">
+            <div class="action-icon">👛</div>
+            <div class="action-text">
+                {% if current_lang == 'en' %}Check Balances{% else %}查看余额{% endif %}
+            </div>
+        </a>
+        
+        <a href="#" class="action-btn" onclick="viewPaymentHistory()">
+            <div class="action-icon">📋</div>
+            <div class="action-text">
+                {% if current_lang == 'en' %}Payment History{% else %}支付历史{% endif %}
+            </div>
+        </a>
+        
+        <a href="#" class="action-btn" onclick="downloadReceipts()">
+            <div class="action-icon">📄</div>
+            <div class="action-text">
+                {% if current_lang == 'en' %}Download Receipt{% else %}下载收据{% endif %}
+            </div>
+        </a>
+    </div>
+
+    <!-- 统计概览 -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">💳</div>
+            <div class="stat-value" id="totalPayments">0</div>
+            <div class="stat-label">
+                {% if current_lang == 'en' %}Total Payments{% else %}总支付数{% endif %}
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-value" id="successfulPayments">0</div>
+            <div class="stat-label">
+                {% if current_lang == 'en' %}Successful{% else %}成功支付{% endif %}
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-value" id="pendingPayments">0</div>
+            <div class="stat-label">
+                {% if current_lang == 'en' %}Pending{% else %}待处理{% endif %}
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">💎</div>
+            <div class="stat-value" id="totalVolume">$0</div>
+            <div class="stat-label">
+                {% if current_lang == 'en' %}Total Volume{% else %}总交易额{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 支持的加密货币 -->
+    <div class="currency-panel">
+        <h2 style="color: var(--text-primary); margin-bottom: 2rem; text-align: center;">
+            {% if current_lang == 'en' %}Supported Cryptocurrencies{% else %}支持的加密货币{% endif %}
+        </h2>
+        <div class="currency-grid">
+            <div class="currency-card btc">
+                <div class="currency-icon btc">₿</div>
+                <div class="currency-name">Bitcoin</div>
+                <div class="currency-symbol">BTC</div>
+                <div class="currency-price btc" id="btcPrice">$0</div>
+                <div class="currency-change" id="btcChange">+0.00%</div>
+                <div class="currency-actions">
+                    <button class="currency-btn" onclick="createPayment('BTC')">
+                        {% if current_lang == 'en' %}Pay with BTC{% else %}使用BTC支付{% endif %}
+                    </button>
+                </div>
+            </div>
+            
+            <div class="currency-card eth">
+                <div class="currency-icon eth">Ξ</div>
+                <div class="currency-name">Ethereum</div>
+                <div class="currency-symbol">ETH</div>
+                <div class="currency-price eth" id="ethPrice">$0</div>
+                <div class="currency-change" id="ethChange">+0.00%</div>
+                <div class="currency-actions">
+                    <button class="currency-btn" onclick="createPayment('ETH')">
+                        {% if current_lang == 'en' %}Pay with ETH{% else %}使用ETH支付{% endif %}
+                    </button>
+                </div>
+            </div>
+            
+            <div class="currency-card usdc">
+                <div class="currency-icon usdc">$</div>
+                <div class="currency-name">USD Coin</div>
+                <div class="currency-symbol">USDC</div>
+                <div class="currency-price usdc" id="usdcPrice">$1.00</div>
+                <div class="currency-change" id="usdcChange">+0.00%</div>
+                <div class="currency-actions">
+                    <button class="currency-btn" onclick="createPayment('USDC')">
+                        {% if current_lang == 'en' %}Pay with USDC{% else %}使用USDC支付{% endif %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 钱包余额 -->
+    <div class="wallet-balances">
+        <h2 style="color: var(--text-primary); margin-bottom: 2rem; text-align: center;">
+            {% if current_lang == 'en' %}Wallet Balances{% else %}钱包余额{% endif %}
+        </h2>
+        <div class="balance-grid" id="balanceGrid">
+            <!-- 余额卡片将通过JavaScript动态加载 -->
+        </div>
+    </div>
+
+    <!-- 支付历史 -->
+    <div class="payment-history">
+        <div class="history-header">
+            <h2 class="history-title">
+                {% if current_lang == 'en' %}Payment History{% else %}支付历史{% endif %}
+            </h2>
+            <div class="history-filter">
+                <select class="filter-select" id="statusFilter" onchange="filterPayments()">
+                    <option value="">{% if current_lang == 'en' %}All Status{% else %}所有状态{% endif %}</option>
+                    <option value="COMPLETED">{% if current_lang == 'en' %}Completed{% else %}已完成{% endif %}</option>
+                    <option value="PENDING">{% if current_lang == 'en' %}Pending{% else %}待处理{% endif %}</option>
+                    <option value="FAILED">{% if current_lang == 'en' %}Failed{% else %}失败{% endif %}</option>
+                </select>
+                
+                <select class="filter-select" id="currencyFilter" onchange="filterPayments()">
+                    <option value="">{% if current_lang == 'en' %}All Currencies{% else %}所有币种{% endif %}</option>
+                    <option value="BTC">Bitcoin (BTC)</option>
+                    <option value="ETH">Ethereum (ETH)</option>
+                    <option value="USDC">USD Coin (USDC)</option>
+                </select>
+            </div>
+        </div>
+        
+        <table class="payment-table">
+            <thead>
+                <tr>
+                    <th>{% if current_lang == 'en' %}Date{% else %}日期{% endif %}</th>
+                    <th>{% if current_lang == 'en' %}Amount{% else %}金额{% endif %}</th>
+                    <th>{% if current_lang == 'en' %}Currency{% else %}币种{% endif %}</th>
+                    <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                    <th>{% if current_lang == 'en' %}Transaction{% else %}交易哈希{% endif %}</th>
+                    <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
+                </tr>
+            </thead>
+            <tbody id="paymentTableBody">
+                <!-- 支付记录将通过JavaScript动态加载 -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 创建支付模态框 -->
+<div class="modal fade payment-modal" id="paymentModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    {% if current_lang == 'en' %}Create Crypto Payment{% else %}创建加密货币支付{% endif %}
+                </h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span style="color: var(--text-primary);">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="payment-form" id="paymentForm">
+                    <div class="form-group">
+                        <label class="form-label">
+                            {% if current_lang == 'en' %}Amount (USD){% else %}金额 (USD){% endif %}
+                        </label>
+                        <input type="number" class="form-input" id="paymentAmount" 
+                               placeholder="100.00" min="10" step="0.01" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            {% if current_lang == 'en' %}Cryptocurrency{% else %}加密货币{% endif %}
+                        </label>
+                        <select class="form-select" id="paymentCurrency" required>
+                            <option value="BTC">Bitcoin (BTC)</option>
+                            <option value="ETH">Ethereum (ETH)</option>
+                            <option value="USDC">USD Coin (USDC)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            {% if current_lang == 'en' %}Purpose{% else %}支付用途{% endif %}
+                        </label>
+                        <select class="form-select" id="paymentPurpose" required>
+                            <option value="subscription">
+                                {% if current_lang == 'en' %}Subscription Payment{% else %}订阅支付{% endif %}
+                            </option>
+                            <option value="upgrade">
+                                {% if current_lang == 'en' %}Plan Upgrade{% else %}计划升级{% endif %}
+                            </option>
+                            <option value="addon">
+                                {% if current_lang == 'en' %}Add-on Service{% else %}附加服务{% endif %}
+                            </option>
+                        </select>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            {% if current_lang == 'en' %}Generate Payment Address{% else %}生成支付地址{% endif %}
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- 支付地址显示区域 -->
+                <div id="paymentAddressSection" style="display: none;">
+                    <div class="qr-container">
+                        <div class="qr-code" id="paymentQR"></div>
+                        <div class="payment-address" id="paymentAddress" onclick="copyToClipboard(this.textContent)">
+                            <!-- 支付地址将在这里显示 -->
+                        </div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
+                            {% if current_lang == 'en' %}Click address to copy{% else %}点击地址复制{% endif %}
+                        </div>
+                        <div style="color: var(--crypto-warning); font-size: 0.9rem;">
+                            {% if current_lang == 'en' %}Payment will expire in 24 hours{% else %}支付将在24小时后过期{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 加载覆盖层 -->
+<div class="loading-overlay" id="loadingOverlay" style="display: none;">
+    <div>
+        <div class="loading-spinner"></div>
+        <div style="color: var(--text-primary); margin-top: 1rem; text-align: center;">
+            {% if current_lang == 'en' %}Processing...{% else %}处理中...{% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 加密货币支付管理JavaScript
+
+// 全局变量
+let payments = [];
+let allPayments = [];
+let cryptoPrices = {};
+let walletBalances = {};
+
+// 页面初始化
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCryptoPaymentDashboard();
+    loadCryptoPrices();
+    loadPaymentStats();
+    loadPaymentHistory();
+    loadWalletBalances();
+    
+    // 设置定期更新
+    setInterval(updatePrices, 60000); // 每分钟更新价格
+    setInterval(loadPaymentHistory, 30000); // 每30秒更新支付历史
+});
+
+// 初始化加密货币支付管理面板
+function initializeCryptoPaymentDashboard() {
+    console.log('Initializing Crypto Payment Dashboard...');
+    
+    // 设置支付表单提交事件
+    document.getElementById('paymentForm').addEventListener('submit', handlePaymentFormSubmit);
+    
+    // 添加浮动动画
+    const cards = document.querySelectorAll('.stat-card, .currency-card');
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+        card.classList.add('floating');
+    });
+}
+
+// 加载加密货币价格
+async function loadCryptoPrices() {
+    try {
+        // 模拟加密货币价格数据
+        // 实际应用中应该从API获取
+        cryptoPrices = {
+            BTC: { price: 113332, change: 2.45 },
+            ETH: { price: 3678, change: -1.23 },
+            USDC: { price: 1.00, change: 0.01 }
+        };
+        
+        updatePriceDisplay();
+    } catch (error) {
+        console.error('Failed to load crypto prices:', error);
+    }
+}
+
+// 更新价格显示
+function updatePriceDisplay() {
+    Object.entries(cryptoPrices).forEach(([currency, data]) => {
+        const priceElement = document.getElementById(`${currency.toLowerCase()}Price`);
+        const changeElement = document.getElementById(`${currency.toLowerCase()}Change`);
+        
+        if (priceElement) {
+            if (currency === 'USDC') {
+                priceElement.textContent = `$${data.price.toFixed(2)}`;
+            } else {
+                priceElement.textContent = `$${data.price.toLocaleString()}`;
+            }
+        }
+        
+        if (changeElement) {
+            const changeText = data.change >= 0 ? `+${data.change.toFixed(2)}%` : `${data.change.toFixed(2)}%`;
+            changeElement.textContent = changeText;
+            changeElement.className = `currency-change ${data.change >= 0 ? 'positive' : 'negative'}`;
+        }
+    });
+}
+
+// 更新价格（定期调用）
+function updatePrices() {
+    // 模拟价格波动
+    Object.keys(cryptoPrices).forEach(currency => {
+        if (currency !== 'USDC') {
+            const currentPrice = cryptoPrices[currency].price;
+            const fluctuation = (Math.random() - 0.5) * 0.02; // ±1%的波动
+            cryptoPrices[currency].price = currentPrice * (1 + fluctuation);
+            cryptoPrices[currency].change += fluctuation * 100;
+        }
+    });
+    
+    updatePriceDisplay();
+}
+
+// 加载支付统计
+async function loadPaymentStats() {
+    try {
+        // 模拟支付统计数据
+        // 实际应用中应该从API获取
+        const stats = {
+            total: 42,
+            successful: 38,
+            pending: 3,
+            volume: 15678.90
+        };
+        
+        document.getElementById('totalPayments').textContent = stats.total;
+        document.getElementById('successfulPayments').textContent = stats.successful;
+        document.getElementById('pendingPayments').textContent = stats.pending;
+        document.getElementById('totalVolume').textContent = `$${stats.volume.toLocaleString()}`;
+        
+    } catch (error) {
+        console.error('Failed to load payment stats:', error);
+    }
+}
+
+// 加载支付历史
+async function loadPaymentHistory() {
+    try {
+        const response = await fetch('/billing/payment-history', {
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+                payments = data.payments || [];
+                allPayments = [...payments];
+            }
+        } else {
+            // 如果API不可用，使用模拟数据
+            payments = generateMockPayments();
+            allPayments = [...payments];
+        }
+        
+        renderPaymentHistory();
+        
+    } catch (error) {
+        console.error('Error loading payment history:', error);
+        // 使用模拟数据
+        payments = generateMockPayments();
+        allPayments = [...payments];
+        renderPaymentHistory();
+    }
+}
+
+// 生成模拟支付数据
+function generateMockPayments() {
+    return [
+        {
+            id: 1,
+            amount: 0.00088,
+            currency: 'BTC',
+            status: 'COMPLETED',
+            transaction_hash: '1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z',
+            created_at: new Date(Date.now() - 86400000).toISOString(),
+            usd_amount: 100.00
+        },
+        {
+            id: 2,
+            amount: 0.027,
+            currency: 'ETH',
+            status: 'PENDING',
+            transaction_hash: 'pending',
+            created_at: new Date(Date.now() - 3600000).toISOString(),
+            usd_amount: 99.45
+        },
+        {
+            id: 3,
+            amount: 250.00,
+            currency: 'USDC',
+            status: 'COMPLETED',
+            transaction_hash: '9z8y7x6w5v4u3t2s1r0q9p8o7n6m5l4k3j2i1h0g9f8e7d6c5b4a',
+            created_at: new Date(Date.now() - 172800000).toISOString(),
+            usd_amount: 250.00
+        }
+    ];
+}
+
+// 渲染支付历史
+function renderPaymentHistory() {
+    const tbody = document.getElementById('paymentTableBody');
+    tbody.innerHTML = '';
+    
+    if (payments.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                    {% if current_lang == 'en' %}No payment history found{% else %}未找到支付记录{% endif %}
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    payments.forEach(payment => {
+        const row = document.createElement('tr');
+        const date = new Date(payment.created_at).toLocaleDateString();
+        const statusClass = getPaymentStatusClass(payment.status);
+        const statusText = getPaymentStatusText(payment.status);
+        
+        row.innerHTML = `
+            <td>${date}</td>
+            <td class="payment-amount">${payment.amount} ${payment.currency}<br>
+                <small style="color: var(--text-secondary);">≈ $${(payment.usd_amount || 0).toFixed(2)}</small>
+            </td>
+            <td>
+                <span style="font-weight: 600; color: var(--crypto-${payment.currency.toLowerCase()});">
+                    ${payment.currency}
+                </span>
+            </td>
+            <td>
+                <span class="payment-status ${statusClass}">${statusText}</span>
+            </td>
+            <td>
+                ${payment.transaction_hash !== 'pending' ? `
+                    <span class="payment-hash" onclick="viewTransaction('${payment.transaction_hash}', '${payment.currency}')">
+                        ${payment.transaction_hash.substring(0, 8)}...${payment.transaction_hash.substring(-6)}
+                    </span>
+                ` : '<span style="color: var(--text-secondary);">Pending</span>'}
+            </td>
+            <td>
+                <button class="currency-btn" onclick="viewPaymentDetails(${payment.id})" style="padding: 0.5rem 1rem; font-size: 0.8rem;">
+                    {% if current_lang == 'en' %}Details{% else %}详情{% endif %}
+                </button>
+            </td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+}
+
+// 获取支付状态样式类
+function getPaymentStatusClass(status) {
+    switch (status.toUpperCase()) {
+        case 'COMPLETED': return 'completed';
+        case 'PENDING': return 'pending';
+        case 'FAILED': return 'failed';
+        default: return 'pending';
+    }
+}
+
+// 获取支付状态文本
+function getPaymentStatusText(status) {
+    const texts = {
+        en: {
+            'COMPLETED': 'Completed',
+            'PENDING': 'Pending',
+            'FAILED': 'Failed'
+        },
+        zh: {
+            'COMPLETED': '已完成',
+            'PENDING': '待处理',
+            'FAILED': '失败'
+        }
+    };
+    
+    const lang = '{{ current_lang }}' === 'en' ? 'en' : 'zh';
+    return texts[lang][status.toUpperCase()] || texts[lang]['PENDING'];
+}
+
+// 加载钱包余额
+async function loadWalletBalances() {
+    try {
+        // 检查是否连接了Web3钱包
+        if (window.Web3Utils && typeof window.ethereum !== 'undefined') {
+            const connectionStatus = await window.Web3Utils.checkWalletConnection();
+            
+            if (connectionStatus.connected) {
+                // 获取真实余额
+                await loadRealWalletBalances(connectionStatus.account);
+            } else {
+                // 显示模拟余额
+                loadMockWalletBalances();
+            }
+        } else {
+            // 显示模拟余额
+            loadMockWalletBalances();
+        }
+    } catch (error) {
+        console.error('Error loading wallet balances:', error);
+        loadMockWalletBalances();
+    }
+}
+
+// 加载真实钱包余额
+async function loadRealWalletBalances(account) {
+    try {
+        if (window.Web3Utils && window.Web3Utils.getWeb3Instance()) {
+            const web3 = window.Web3Utils.getWeb3Instance();
+            
+            // 获取ETH余额
+            const ethBalance = await web3.eth.getBalance(account);
+            const ethBalanceEth = parseFloat(web3.utils.fromWei(ethBalance, 'ether'));
+            
+            walletBalances = {
+                BTC: { amount: 0, usd: 0 }, // BTC需要其他API
+                ETH: { 
+                    amount: ethBalanceEth, 
+                    usd: ethBalanceEth * (cryptoPrices.ETH?.price || 3678)
+                },
+                USDC: { amount: 0, usd: 0 } // USDC需要合约调用
+            };
+        }
+        
+        renderWalletBalances();
+    } catch (error) {
+        console.error('Error loading real wallet balances:', error);
+        loadMockWalletBalances();
+    }
+}
+
+// 加载模拟钱包余额
+function loadMockWalletBalances() {
+    walletBalances = {
+        BTC: { amount: 0.00123456, usd: 139.67 },
+        ETH: { amount: 0.789, usd: 2903.14 },
+        USDC: { amount: 1250.50, usd: 1250.50 }
+    };
+    
+    renderWalletBalances();
+}
+
+// 渲染钱包余额
+function renderWalletBalances() {
+    const grid = document.getElementById('balanceGrid');
+    grid.innerHTML = '';
+    
+    Object.entries(walletBalances).forEach(([currency, balance]) => {
+        const card = document.createElement('div');
+        card.className = 'balance-card';
+        
+        card.innerHTML = `
+            <div class="balance-currency">${currency}</div>
+            <div class="balance-amount">${balance.amount.toFixed(currency === 'USDC' ? 2 : 8)}</div>
+            <div class="balance-usd">≈ $${balance.usd.toFixed(2)}</div>
+        `;
+        
+        grid.appendChild(card);
+    });
+}
+
+// 筛选支付记录
+function filterPayments() {
+    const statusFilter = document.getElementById('statusFilter').value;
+    const currencyFilter = document.getElementById('currencyFilter').value;
+    
+    payments = allPayments.filter(payment => {
+        const statusMatch = !statusFilter || payment.status === statusFilter;
+        const currencyMatch = !currencyFilter || payment.currency === currencyFilter;
+        return statusMatch && currencyMatch;
+    });
+    
+    renderPaymentHistory();
+}
+
+// 创建新支付
+function createNewPayment() {
+    document.getElementById('paymentForm').reset();
+    document.getElementById('paymentAddressSection').style.display = 'none';
+    $('#paymentModal').modal('show');
+}
+
+// 创建指定币种的支付
+function createPayment(currency) {
+    document.getElementById('paymentForm').reset();
+    document.getElementById('paymentCurrency').value = currency;
+    document.getElementById('paymentAddressSection').style.display = 'none';
+    $('#paymentModal').modal('show');
+}
+
+// 处理支付表单提交
+async function handlePaymentFormSubmit(event) {
+    event.preventDefault();
+    
+    const amount = parseFloat(document.getElementById('paymentAmount').value);
+    const currency = document.getElementById('paymentCurrency').value;
+    const purpose = document.getElementById('paymentPurpose').value;
+    
+    if (!amount || amount < 10) {
+        alert('{% if current_lang == "en" %}Minimum payment amount is $10{% else %}最小支付金额为$10{% endif %}');
+        return;
+    }
+    
+    showLoading();
+    
+    try {
+        // 模拟生成支付地址
+        const paymentData = await generatePaymentAddress(amount, currency, purpose);
+        
+        if (paymentData.success) {
+            displayPaymentAddress(paymentData);
+        } else {
+            alert(paymentData.error || '{% if current_lang == "en" %}Failed to generate payment address{% else %}生成支付地址失败{% endif %}');
+        }
+    } catch (error) {
+        console.error('Error creating payment:', error);
+        alert('{% if current_lang == "en" %}Error creating payment{% else %}创建支付时发生错误{% endif %}');
+    } finally {
+        hideLoading();
+    }
+}
+
+// 生成支付地址
+async function generatePaymentAddress(amount, currency, purpose) {
+    try {
+        const response = await fetch('/billing/create-crypto-payment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                amount: amount,
+                currency: 'USD',
+                crypto_currency: currency,
+                purpose: purpose
+            })
+        });
+        
+        if (response.ok) {
+            return await response.json();
+        } else {
+            // 如果API不可用，生成模拟地址
+            return generateMockPaymentAddress(amount, currency);
+        }
+    } catch (error) {
+        console.error('Error generating payment address:', error);
+        return generateMockPaymentAddress(amount, currency);
+    }
+}
+
+// 生成模拟支付地址
+function generateMockPaymentAddress(amount, currency) {
+    const addresses = {
+        BTC: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+        ETH: '0x742d35cc6cf7f9eb6c1f7e4b1a0a4c8e8b3f5d1a',
+        USDC: '0x742d35cc6cf7f9eb6c1f7e4b1a0a4c8e8b3f5d1a'
+    };
+    
+    return {
+        success: true,
+        payment_address: addresses[currency],
+        amount: amount,
+        currency: currency,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    };
+}
+
+// 显示支付地址
+function displayPaymentAddress(paymentData) {
+    const addressSection = document.getElementById('paymentAddressSection');
+    const addressElement = document.getElementById('paymentAddress');
+    const qrElement = document.getElementById('paymentQR');
+    
+    addressElement.textContent = paymentData.payment_address;
+    
+    // 生成二维码
+    try {
+        // 简单的二维码显示，实际应该使用QR库
+        qrElement.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f0f0f0; color: #333; font-size: 0.8rem; text-align: center; padding: 1rem;">
+                QR Code<br>
+                ${paymentData.payment_address.substring(0, 8)}...
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error generating QR code:', error);
+    }
+    
+    addressSection.style.display = 'block';
+}
+
+// 检查余额
+function checkBalances() {
+    loadWalletBalances();
+    alert('{% if current_lang == "en" %}Wallet balances refreshed{% else %}钱包余额已刷新{% endif %}');
+}
+
+// 查看支付历史
+function viewPaymentHistory() {
+    loadPaymentHistory();
+    document.querySelector('.payment-history').scrollIntoView({ behavior: 'smooth' });
+}
+
+// 下载收据
+function downloadReceipts() {
+    alert('{% if current_lang == "en" %}Receipt download feature coming soon{% else %}收据下载功能即将推出{% endif %}');
+}
+
+// 查看交易详情
+function viewTransaction(hash, currency) {
+    const explorerUrls = {
+        BTC: 'https://mempool.space/tx/',
+        ETH: 'https://etherscan.io/tx/',
+        USDC: 'https://etherscan.io/tx/'
+    };
+    
+    const url = explorerUrls[currency] + hash;
+    window.open(url, '_blank');
+}
+
+// 查看支付详情
+function viewPaymentDetails(paymentId) {
+    const payment = allPayments.find(p => p.id === paymentId);
+    if (payment) {
+        alert(`Payment Details:\nID: ${payment.id}\nAmount: ${payment.amount} ${payment.currency}\nStatus: ${payment.status}\nDate: ${new Date(payment.created_at).toLocaleString()}`);
+    }
+}
+
+// 复制到剪贴板
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        alert('{% if current_lang == "en" %}Address copied to clipboard{% else %}地址已复制到剪贴板{% endif %}');
+    }).catch(err => {
+        console.error('Failed to copy text: ', err);
+    });
+}
+
+// 显示/隐藏加载动画
+function showLoading() {
+    document.getElementById('loadingOverlay').style.display = 'flex';
+}
+
+function hideLoading() {
+    document.getElementById('loadingOverlay').style.display = 'none';
+}
+</script>
+{% endblock %}

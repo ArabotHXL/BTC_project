@@ -1,0 +1,805 @@
+{% extends "crm/base.html" %}
+
+{% block title %}<span data-i18n="broker_dashboard">{{ t('broker_dashboard') }}</span>{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">
+            <i class="bi bi-graph-up-arrow me-2"></i>
+            <span data-i18n="broker_business_dashboard">{{ t('broker_business_dashboard') }}</span>
+        </h2>
+        <a href="{{ url_for('crm.deals') }}" class="btn btn-gradient-primary">
+            <i class="bi bi-plus-circle me-2"></i>
+            <span data-i18n="new_deal">{{ t('new_deal') }}</span>
+        </a>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="kpi-card">
+                <div class="kpi-icon bg-gradient-primary">
+                    <i class="bi bi-briefcase"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-label">
+                        <span data-i18n="total_deals">{{ t('total_deals') }}</span>
+                    </div>
+                    <div class="kpi-value" id="kpi-total-deals">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="kpi-card">
+                <div class="kpi-icon bg-gradient-success">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-label">
+                        <span data-i18n="active_deals">{{ t('active_deals') }}</span>
+                    </div>
+                    <div class="kpi-value" id="kpi-active-deals">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="kpi-card">
+                <div class="kpi-icon bg-gradient-btc">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-label">
+                        <span data-i18n="total_commission">{{ t('total_commission') }}</span>
+                    </div>
+                    <div class="kpi-value" id="kpi-total-commission">$0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="kpi-card">
+                <div class="kpi-icon bg-gradient-warning">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-label">
+                        <span data-i18n="pending_commission">{{ t('pending_commission') }}</span>
+                    </div>
+                    <div class="kpi-value" id="kpi-pending-commission">$0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row g-3 mb-4">
+        <!-- Left Column: Charts and Table -->
+        <div class="col-lg-8">
+            <!-- Commission Trend Chart -->
+            <div class="card shadow-sm mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-graph-up me-2"></i>
+                        <span data-i18n="commission_trend_12_months">{{ t('commission_trend_12_months') }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="commissionTrendChart" height="80"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Deals Table -->
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history me-2"></i>
+                        <span data-i18n="recent_deals">{{ t('recent_deals') }}</span>
+                    </h5>
+                    <a href="{{ url_for('crm.broker_deals') }}" class="btn btn-sm btn-outline-primary">
+                        <span data-i18n="view_all">{{ t('view_all') }}</span>
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="recentDealsTable">
+                            <thead>
+                                <tr>
+                                    <th><span data-i18n="customer">{{ t('customer') }}</span></th>
+                                    <th><span data-i18n="farm">{{ t('farm') }}</span></th>
+                                    <th><span data-i18n="investment">{{ t('investment') }}</span></th>
+                                    <th><span data-i18n="type">{{ t('type') }}</span></th>
+                                    <th><span data-i18n="commission">{{ t('commission') }}</span></th>
+                                    <th><span data-i18n="status">{{ t('status') }}</span></th>
+                                    <th><span data-i18n="date">{{ t('date') }}</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentDealsBody">
+                                <tr>
+                                    <td colspan="7" class="text-center py-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Distribution and Ranking -->
+        <div class="col-lg-4">
+            <!-- Customer Distribution Map -->
+            <div class="card shadow-sm mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-geo-alt me-2"></i>
+                        <span data-i18n="customer_distribution_map">{{ t('customer_distribution_map') }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="customer-distribution-map" style="height: 300px;"></div>
+                </div>
+            </div>
+
+            <!-- Customer Ranking -->
+            <div class="card shadow-sm mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-trophy me-2"></i>
+                        <span data-i18n="top_customers">{{ t('top_customers') }}</span>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div id="topCustomersRanking" class="p-3">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mining Farm Ranking -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightning-charge me-2"></i>
+                        <span data-i18n="top_mining_farms">{{ t('top_mining_farms') }}</span>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div id="topMiningFarmsRanking" class="p-3">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* KPI Cards */
+.kpi-card {
+    background: var(--btc-card-bg);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border: 1px solid var(--btc-border);
+    transition: all 0.3s ease;
+}
+
+.kpi-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.kpi-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    color: white;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.bg-gradient-btc {
+    background: linear-gradient(135deg, #f7931a 0%, #ff6b35 100%);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #feca57 0%, #ff9ff3 100%);
+}
+
+.kpi-content {
+    flex: 1;
+}
+
+.kpi-label {
+    font-size: 0.875rem;
+    color: var(--btc-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.kpi-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--btc-text-primary);
+}
+
+/* Cards */
+.card {
+    background: var(--btc-card-bg);
+    border: 1px solid var(--btc-border);
+    border-radius: var(--radius-md);
+}
+
+.card-header {
+    background: transparent;
+    border-bottom: 1px solid var(--btc-border);
+    padding: 1rem 1.5rem;
+}
+
+.card-header h5 {
+    color: var(--btc-text-primary);
+    font-weight: 600;
+}
+
+/* Table */
+.table {
+    color: var(--btc-text-primary);
+}
+
+.table thead th {
+    border-bottom: 2px solid var(--btc-border);
+    color: var(--btc-text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    padding: 1rem;
+}
+
+.table tbody td {
+    border-bottom: 1px solid var(--btc-border);
+    padding: 0.875rem 1rem;
+    vertical-align: middle;
+}
+
+.table tbody tr:hover {
+    background: rgba(247, 147, 26, 0.05);
+}
+
+/* Ranking List */
+.ranking-item {
+    display: flex;
+    align-items: center;
+    padding: 0.875rem 0;
+    border-bottom: 1px solid var(--btc-border);
+}
+
+.ranking-item:last-child {
+    border-bottom: none;
+}
+
+.ranking-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--btc-gold);
+    color: var(--btc-dark-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.875rem;
+    margin-right: 1rem;
+}
+
+.ranking-info {
+    flex: 1;
+}
+
+.ranking-name {
+    font-weight: 600;
+    color: var(--btc-text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.ranking-amount {
+    font-size: 0.875rem;
+    color: var(--btc-text-secondary);
+}
+
+.ranking-value {
+    font-weight: 700;
+    color: var(--btc-gold);
+    font-size: 1.125rem;
+}
+
+/* Status Badges */
+.badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+/* Button */
+.btn-gradient-primary {
+    background: linear-gradient(135deg, var(--btc-gold) 0%, var(--btc-orange) 100%);
+    border: none;
+    color: var(--btc-dark-bg);
+    font-weight: 600;
+    padding: 0.625rem 1.25rem;
+    transition: all 0.3s ease;
+}
+
+.btn-gradient-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow);
+    color: var(--btc-dark-bg);
+}
+
+/* Leaflet Map Styling */
+#customer-distribution-map {
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--btc-card-bg);
+}
+
+.leaflet-popup-content-wrapper {
+    background: var(--btc-card-bg);
+    color: var(--btc-text-primary);
+    border: 1px solid var(--btc-border);
+    border-radius: var(--radius-sm);
+}
+
+.leaflet-popup-tip {
+    background: var(--btc-card-bg);
+    border: 1px solid var(--btc-border);
+}
+
+.leaflet-popup-content {
+    margin: 0.75rem;
+    font-size: 0.875rem;
+}
+
+.leaflet-popup-content b {
+    color: var(--btc-gold);
+    font-size: 1rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+</style>
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+    crossorigin=""/>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""></script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/countup@1.8.2/dist/countUp.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load all data
+    loadBrokerStats();
+    loadCommissionTrend();
+    loadCustomerDistribution();
+    loadPerformanceRanking();
+    loadRecentDeals();
+});
+
+// Load Broker Stats (KPIs)
+async function loadBrokerStats() {
+    try {
+        const response = await fetch('/crm/api/broker/stats');
+        const result = await response.json();
+        
+        if (result.success) {
+            const data = result.data;
+            
+            // Animate counters
+            initCountUp('kpi-total-deals', parseInt(data.total_deals) || 0);
+            initCountUp('kpi-active-deals', parseInt(data.active_deals) || 0);
+            initCountUp('kpi-total-commission', parseFloat(data.total_commission) || 0, {prefix: '$', decimals: 2});
+            initCountUp('kpi-pending-commission', parseFloat(data.pending_commission) || 0, {prefix: '$', decimals: 2});
+        }
+    } catch (error) {
+        console.error('Error loading broker stats:', error);
+    }
+}
+
+// Load Commission Trend Chart
+async function loadCommissionTrend() {
+    try {
+        const response = await fetch('/crm/api/broker/commission-trend');
+        const result = await response.json();
+        
+        if (result.success) {
+            const data = result.data;
+            
+            const config = {
+                type: 'line',
+                data: {
+                    labels: data.months,
+                    datasets: [
+                        {
+                            label: window.getTranslation ? window.getTranslation('paid') : '{{ t("paid") }}',
+                            data: data.paid,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: window.getTranslation ? window.getTranslation('unpaid') : '{{ t("unpaid") }}',
+                            data: data.unpaid,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#e0e6ed',
+                                usePointStyle: true,
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(26, 29, 46, 0.95)',
+                            titleColor: '#e0e6ed',
+                            bodyColor: '#9ca3af',
+                            borderColor: '#3d4458',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: true,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': $' + context.parsed.y.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#9ca3af',
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(61, 68, 88, 0.3)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#9ca3af'
+                            },
+                            grid: {
+                                color: 'rgba(61, 68, 88, 0.3)'
+                            }
+                        }
+                    }
+                }
+            };
+            
+            initChart('commissionTrendChart', config);
+        }
+    } catch (error) {
+        console.error('Error loading commission trend:', error);
+    }
+}
+
+// Load Customer Distribution Map
+async function loadCustomerDistribution() {
+    try {
+        const response = await fetch('/crm/api/broker/customer-distribution');
+        const result = await response.json();
+        
+        if (result.success) {
+            const data = result.data;
+            
+            // Predefined city coordinates (lat, lng)
+            const cityCoordinates = {
+                'Beijing': [39.9042, 116.4074],
+                'Shanghai': [31.2304, 121.4737],
+                'Shenzhen': [22.5431, 114.0579],
+                'Guangzhou': [23.1291, 113.2644],
+                'Chengdu': [30.5728, 104.0668],
+                'Hangzhou': [30.2741, 120.1551],
+                'Nanjing': [32.0603, 118.7969],
+                'Wuhan': [30.5928, 114.3055],
+                'Chongqing': [29.4316, 106.9123],
+                'Xi\'an': [34.3416, 108.9398],
+                'Tianjin': [39.3434, 117.3616],
+                'Suzhou': [31.2989, 120.5853],
+                'Dalian': [38.9140, 121.6147],
+                'Qingdao': [36.0671, 120.3826],
+                'Xiamen': [24.4798, 118.0894],
+                'Hong Kong': [22.3193, 114.1694],
+                'Taipei': [25.0330, 121.5654],
+                'Singapore': [1.3521, 103.8198],
+                'Tokyo': [35.6762, 139.6503],
+                'Seoul': [37.5665, 126.9780],
+                'New York': [40.7128, -74.0060],
+                'London': [51.5074, -0.1278],
+                'Paris': [48.8566, 2.3522],
+                'Dubai': [25.2048, 55.2708],
+                'San Francisco': [37.7749, -122.4194],
+                'Los Angeles': [34.0522, -118.2437],
+                'Sydney': [-33.8688, 151.2093],
+                'Toronto': [43.6532, -79.3832],
+                'Vancouver': [49.2827, -123.1207]
+            };
+            
+            // Initialize map centered on China
+            const map = L.map('customer-distribution-map').setView([35.0, 105.0], 4);
+            
+            // Add OpenStreetMap tile layer
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 18
+            }).addTo(map);
+            
+            // Add markers for each location
+            const locations = data.locations || [];
+            const counts = data.counts || [];
+            const investments = data.investments || [];
+            
+            const noDataText = window.getTranslation ? window.getTranslation('no_customer_data_available') : '{{ t("no_customer_data_available") }}';
+            const customersText = window.getTranslation ? window.getTranslation('customer_count') : '{{ t("customer_count") }}';
+            const investmentText = window.getTranslation ? window.getTranslation('investment_amount') : '{{ t("investment_amount") }}';
+            
+            if (locations.length === 0) {
+                // Show message if no data
+                const popup = L.popup()
+                    .setLatLng([35.0, 105.0])
+                    .setContent(noDataText)
+                    .openOn(map);
+            } else {
+                locations.forEach((location, index) => {
+                    const count = counts[index] || 0;
+                    const investment = investments[index] || 0;
+                    
+                    // Try to find coordinates for the location
+                    let coords = null;
+                    
+                    // Try exact match first
+                    if (cityCoordinates[location]) {
+                        coords = cityCoordinates[location];
+                    } else {
+                        // Try case-insensitive match
+                        const locationLower = location.toLowerCase();
+                        for (const [city, latLng] of Object.entries(cityCoordinates)) {
+                            if (city.toLowerCase() === locationLower) {
+                                coords = latLng;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // If coordinates found, add marker
+                    if (coords && count > 0) {
+                        // Calculate circle radius based on customer count (50km per customer, min 20km, max 200km)
+                        const radius = Math.min(Math.max(count * 50000, 20000), 200000);
+                        
+                        // Create circle marker
+                        const circle = L.circle(coords, {
+                            color: '#f7931a',
+                            fillColor: '#ffa500',
+                            fillOpacity: 0.5,
+                            radius: radius,
+                            weight: 2
+                        }).addTo(map);
+                        
+                        // Add popup with location info
+                        const popupContent = `
+                            <b>${location}</b><br>
+                            ${customersText}: ${count}<br>
+                            ${investmentText}: $${investment.toLocaleString()}
+                        `;
+                        
+                        circle.bindPopup(popupContent);
+                    }
+                });
+                
+                // Adjust map view to fit all markers
+                setTimeout(() => {
+                    map.invalidateSize();
+                }, 100);
+            }
+        }
+    } catch (error) {
+        console.error('Error loading customer distribution:', error);
+    }
+}
+
+// Load Performance Ranking
+async function loadPerformanceRanking() {
+    try {
+        const response = await fetch('/crm/api/broker/performance-ranking');
+        const result = await response.json();
+        
+        if (result.success) {
+            const customers = result.data.top_customers || [];
+            const miningFarms = result.data.top_mining_farms || [];
+            
+            const customersContainer = document.getElementById('topCustomersRanking');
+            const farmsContainer = document.getElementById('topMiningFarmsRanking');
+            
+            const noDataText = window.getTranslation ? window.getTranslation('no_data_available') : '{{ t("no_data_available") }}';
+            const investmentText = window.getTranslation ? window.getTranslation('investment') : '{{ t("investment") }}';
+            const dealsText = window.getTranslation ? window.getTranslation('deal_count') : '{{ t("deal_count") }}';
+            
+            if (customers.length === 0) {
+                customersContainer.innerHTML = '<p class="text-center text-muted py-3">' + noDataText + '</p>';
+            } else {
+                let customerHtml = '';
+                customers.forEach((customer, index) => {
+                    customerHtml += `
+                        <div class="ranking-item">
+                            <div class="ranking-number">${index + 1}</div>
+                            <div class="ranking-info">
+                                <div class="ranking-name">${customer.name}</div>
+                                <div class="ranking-amount">
+                                    ${investmentText}: $${customer.investment.toLocaleString()}
+                                </div>
+                            </div>
+                            <div class="ranking-value">$${customer.commission.toLocaleString()}</div>
+                        </div>
+                    `;
+                });
+                customersContainer.innerHTML = customerHtml;
+            }
+            
+            if (miningFarms.length === 0) {
+                farmsContainer.innerHTML = '<p class="text-center text-muted py-3">' + noDataText + '</p>';
+            } else {
+                let farmHtml = '';
+                miningFarms.forEach((farm, index) => {
+                    farmHtml += `
+                        <div class="ranking-item">
+                            <div class="ranking-number">${index + 1}</div>
+                            <div class="ranking-info">
+                                <div class="ranking-name">${farm.name}</div>
+                                <div class="ranking-amount">
+                                    ${dealsText}: ${farm.deal_count}
+                                </div>
+                            </div>
+                            <div class="ranking-value">${farm.deal_count}</div>
+                        </div>
+                    `;
+                });
+                farmsContainer.innerHTML = farmHtml;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading performance ranking:', error);
+    }
+}
+
+// Load Recent Deals
+async function loadRecentDeals() {
+    try {
+        const response = await fetch('/crm/api/broker/recent-deals');
+        const result = await response.json();
+        
+        if (result.success) {
+            const deals = result.data;
+            const tbody = document.getElementById('recentDealsBody');
+            
+            const noDealsText = window.getTranslation ? window.getTranslation('no_deals_yet') : '{{ t("no_deals_yet") }}';
+            const percentageText = window.getTranslation ? window.getTranslation('percentage') : '{{ t("percentage") }}';
+            const fixedText = window.getTranslation ? window.getTranslation('fixed') : '{{ t("fixed") }}';
+            
+            if (deals.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <i class="bi bi-inbox display-4 text-muted"></i>
+                            <p class="text-muted mt-2">${noDealsText}</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let html = '';
+            deals.forEach(deal => {
+                // Status badge
+                let statusBadge = '';
+                const statusLower = deal.status.toLowerCase();
+                if (statusLower.includes('草稿') || statusLower.includes('draft')) {
+                    statusBadge = '<span class="badge bg-secondary">' + deal.status + '</span>';
+                } else if (statusLower.includes('待定') || statusLower.includes('pending')) {
+                    statusBadge = '<span class="badge bg-warning">' + deal.status + '</span>';
+                } else if (statusLower.includes('已批准') || statusLower.includes('approved')) {
+                    statusBadge = '<span class="badge bg-info">' + deal.status + '</span>';
+                } else if (statusLower.includes('已签署') || statusLower.includes('signed')) {
+                    statusBadge = '<span class="badge bg-primary">' + deal.status + '</span>';
+                } else if (statusLower.includes('已完成') || statusLower.includes('completed')) {
+                    statusBadge = '<span class="badge bg-success">' + deal.status + '</span>';
+                } else if (statusLower.includes('已取消') || statusLower.includes('canceled')) {
+                    statusBadge = '<span class="badge bg-danger">' + deal.status + '</span>';
+                } else {
+                    statusBadge = '<span class="badge bg-secondary">' + deal.status + '</span>';
+                }
+                
+                // Commission type badge
+                let commissionBadge = '';
+                if (deal.commission_type === 'percentage') {
+                    commissionBadge = '<span class="badge bg-primary">' + percentageText + '</span>';
+                } else if (deal.commission_type === 'fixed') {
+                    commissionBadge = '<span class="badge bg-success">' + fixedText + '</span>';
+                }
+                
+                html += `
+                    <tr>
+                        <td>
+                            <a href="/crm/customer/${deal.customer_id}" class="text-decoration-none text-btc-gold">
+                                ${deal.customer_name}
+                            </a>
+                        </td>
+                        <td>${deal.mining_farm_name}</td>
+                        <td>$${deal.client_investment.toLocaleString()}</td>
+                        <td>${commissionBadge}</td>
+                        <td>
+                            ${deal.commission_type === 'percentage' ? 
+                                deal.commission_rate + '%' : 
+                                '$' + deal.commission_amount.toLocaleString()}
+                        </td>
+                        <td>${statusBadge}</td>
+                        <td>${deal.created_at}</td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+        }
+    } catch (error) {
+        console.error('Error loading recent deals:', error);
+    }
+}
+</script>
+{% endblock %}

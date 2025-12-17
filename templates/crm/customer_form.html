@@ -1,0 +1,180 @@
+{% extends "crm/base.html" %}
+
+{% block title %}{{ customer and '编辑客户 - ' + customer.name or '新建客户' }} | BTC Mining CRM{% endblock %}
+
+{% block page_title %}{{ customer and '编辑客户: ' + customer.name or '新建客户' }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('crm.customers') }}">客户列表</a></li>
+<li class="breadcrumb-item active" aria-current="page">{{ customer and '编辑客户' or '新建客户' }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="bi bi-{{ customer and 'pencil' or 'plus-circle' }} me-2"></i>
+            {{ customer and '编辑客户信息' or '客户信息录入' }}
+        </h5>
+    </div>
+    <div class="card-body">
+        <form method="post" action="{{ customer and url_for('crm.edit_customer', customer_id=customer.id) or url_for('crm.new_customer') }}">
+            <div class="row">
+                <!-- 基本信息 -->
+                <div class="col-md-6">
+                    <h5 class="mb-3">基本信息</h5>
+                    
+                    <div class="mb-3">
+                        <label for="name" class="form-label">客户名称 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ customer.name if customer else '' }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="company" class="form-label">公司名称</label>
+                        <input type="text" class="form-control" id="company" name="company" value="{{ customer.company if customer else '' }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="customer_type" class="form-label">客户类型</label>
+                        <select class="form-select" id="customer_type" name="customer_type">
+                            <option value="企业" {{ 'selected' if customer and customer.customer_type == '企业' else '' }}>企业</option>
+                            <option value="个人" {{ 'selected' if customer and customer.customer_type == '个人' else '' }}>个人</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="tags" class="form-label">标签</label>
+                        <input type="text" class="form-control" id="tags" name="tags" value="{{ customer.tags if customer else '' }}" placeholder="以逗号分隔多个标签">
+                        <div class="form-text">多个标签请用逗号分隔，例如：重要,VIP,挖矿</div>
+                    </div>
+                </div>
+                
+                <!-- 联系方式和其他信息 -->
+                <div class="col-md-6">
+                    <h5 class="mb-3">联系方式</h5>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">电子邮箱</label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ customer.email if customer else '' }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">电话</label>
+                        <input type="tel" class="form-control" id="phone" name="phone" value="{{ customer.phone if customer else '' }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="address" class="form-label">地址</label>
+                        <textarea class="form-control" id="address" name="address" rows="2">{{ customer.address if customer else '' }}</textarea>
+                    </div>
+                    
+                    <h5 class="mb-3 mt-4">挖矿相关信息</h5>
+                    
+                    <div class="mb-3">
+                        <label for="mining_capacity" class="form-label">挖矿容量 (MW)</label>
+                        <input type="number" class="form-control" id="mining_capacity" name="mining_capacity" 
+                               value="{{ customer.mining_capacity if customer and customer.mining_capacity else '' }}" step="0.01" min="0">
+                        <div class="form-text">客户的挖矿设施总容量，单位：兆瓦 (MW)</div>
+                    </div>
+                    
+                    <!-- 计算器访问权限设置 -->
+                    <div class="mb-3 mt-4">
+                        <h5 class="mb-3">计算器访问设置</h5>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="grant_calculator_access" name="grant_calculator_access" value="yes" 
+                            {% if has_calculator_access %}checked{% elif customer is none %}checked{% endif %}>
+                            <label class="form-check-label" for="grant_calculator_access">
+                                提供计算器访问权限
+                            </label>
+                        </div>
+                        <div class="form-text mb-2">
+                            如勾选，客户将能够登录并使用计算器。
+                            {% if has_calculator_access and expires_at %}
+                                <span class="text-success">
+                                    <i class="bi bi-check-circle-fill"></i> 
+                                    此客户已有计算器访问权限，到期日期: {{ expires_at.strftime('%Y-%m-%d') }}
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3 calculator-access-option">
+                        <label for="access_days" class="form-label">访问期限（天）</label>
+                        <input type="number" class="form-control" id="access_days" name="access_days" value="30" min="1" max="365" required>
+                        <div class="form-text">
+                            {% if has_calculator_access %}
+                                将延长客户的访问期限天数。
+                            {% else %}
+                                客户可以访问计算器的天数。
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-12 d-flex justify-content-between">
+                    <a href="{{ url_for('crm.customers') if not customer else url_for('crm.customer_detail', customer_id=customer.id) }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>取消
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-1"></i>保存客户信息
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize form validation
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        const calculatorAccessSwitch = document.getElementById('grant_calculator_access');
+        const accessDaysField = document.querySelector('.calculator-access-option');
+        
+        // 控制访问天数字段的显示/隐藏
+        function toggleAccessDaysField() {
+            if (calculatorAccessSwitch.checked) {
+                accessDaysField.style.display = 'block';
+                document.getElementById('access_days').required = true;
+            } else {
+                accessDaysField.style.display = 'none';
+                document.getElementById('access_days').required = false;
+            }
+        }
+        
+        // 初始化时调用一次
+        toggleAccessDaysField();
+        
+        // 添加切换事件
+        calculatorAccessSwitch.addEventListener('change', toggleAccessDaysField);
+        
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+                
+                // Highlight invalid fields
+                const invalidFields = form.querySelectorAll(':invalid');
+                invalidFields.forEach(field => {
+                    field.classList.add('is-invalid');
+                    
+                    // Add event listener to remove is-invalid class when field is edited
+                    field.addEventListener('input', function() {
+                        field.classList.remove('is-invalid');
+                    }, { once: true });
+                });
+                
+                // Scroll to the first invalid field
+                if (invalidFields.length > 0) {
+                    invalidFields[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    invalidFields[0].focus();
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

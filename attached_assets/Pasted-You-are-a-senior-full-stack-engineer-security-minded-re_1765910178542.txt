@@ -1,0 +1,240 @@
+You are a senior full-stack engineer + security-minded release manager.
+Repo: https://github.com/ArabotHXL/BTC_project
+Goal: Implement “Remote Miner Control” end-to-end (Cloud Control Plane + Edge Execution + UI + RBAC + Audit/Events + Envelope Encryption integration), with tests and safe local demo mode.
+
+## 0) GLOBAL CONSTRAINTS / 全局约束
+- DO NOT commit secrets. Add/extend .env.example only.
+- Reuse existing project conventions and folder structure in this repo (Flask routes/services/modules, events/, audit/, edge_collector/, monitoring/, database/migrations).
+- All remote-control actions MUST write:
+  1) Audit log entry (who/when/what/target/result)
+  2) Event record JSONL under events/YYYY-MM-DD/*.jsonl (append-only)
+- Provide a SAFE “demo/simulated miner” adapter so feature can be tested without real miners.
+- All timestamps: ISO8601 (UTC ‘Z’), and UI may optionally display local ET note.
+- Implement idempotency for commands (command_id UUID + dedupe on edge).
+- Add feature flags:
+  - EDGE_EXECUTION_ENABLED=true/false (edge can refuse to execute)
+  - REMOTE_CONTROL_ENABLED=true/false (cloud can refuse to accept commands)
+- Prefer minimal dependencies. If adding any, justify and pin versions.
+
+## 1) FEATURE SCOPE (User Story)
+Users can remotely control miners from the web (not at the site):
+- 🔄 Reboot miner (soft/hard)
+- ⚡ Power mode: high/normal/eco
+- 🏊 Change pool: pool URL + worker name (+ optional password)
+- 🔧 Frequency: overclock/underclock (target freq or profile)
+- 🌡️ Thermal control: fan policy + temp thresholds
+- 💡 LED: on/off (locate miner)
+
+Architecture:
+[Browser] -> [Cloud API] -> [Edge Collector] -> [Miner CGMiner/Vendor API]
+                           <- ack/result feedback <-
+
+Security requirement:
+“Device Envelope Encryption” protects miner control credentials; only authorized Edge device can decrypt and execute.
+- Locate existing encryption modules in repo. If already present, integrate; if absent, implement:
+  - Envelope encryption (data key encrypted by master key)
+  - Store only ciphertext server-side
+  - Edge holds device private key / secret to decrypt
+
+## 2) BRANCHES & PRs
+Create 4 feature branches and open PRs:
+1) feat/remote-control-plane
+2) feat/edge-command-runner
+3) feat/rbac-approval-audit
+4) feat/ui-remote-control
+Each PR must include tests + screenshots (for UI PR) + short migration notes.
+
+## 3) CLOUD: DATA MODEL + MIGRATIONS (PostgreSQL)
+Add migrations under database/migrations:
+
+Table: remote_commands
+- id (uuid, pk)
+- tenant_id (uuid or string consistent with existing tenancy)
+- site_id
+- requested_by_user_id
+- requested_by_role
+- command_type (enum/string: REBOOT, POWER_MODE, CHANGE_POOL, SET_FREQ, THERMAL_POLICY, LED)
+- payload_json (jsonb)  # validated schema per command type
+- target_scope (string: MINER | GROUP | SITE)
+- target_ids (jsonb array of miner_ids/group_ids)
+- status (string: PENDING | PENDING_APPROVAL | QUEUED | RUNNING | SUCCEEDED | FAILED | CANCELLED | EXPIRED)
+- require_approval (bool default false)
+- approved_by_user_id nullable
+- created_at, updated_at
+- expires_at nullable
+- idempotency_key (string nullable, unique per (tenant_id, requested_by_user_id))
+
+Table: remote_command_results
+- id (uuid pk)
+- command_id (uuid fk -> remote_commands.id)
+- edge_device_id (string)
+- miner_id (string)
+- started_at, finished_at
+- result_status (string: SUCCEEDED | FAILED | SKIPPED)
+- result_message (text)
+- metrics_json (jsonb: e.g., hashrate_before/after, temp_before/after)
+- created_at
+
+Ensure indexes:
+- remote_commands(site_id, status, created_at)
+- remote_command_results(command_id)
+- unique idempotency key if provided
+
+## 4) CLOUD: API ENDPOINTS (Flask)
+Implement in existing routes structure (e.g., routes/remote_control.py or api/remote_control/*).
+
+### 4.1 User-facing endpoints (requires user auth + RBAC)
+POST /api/sites/{site_id}/commands
+- body:
+  - command_type
+  - payload
+  - target_scope + target_ids
+  - optional idempotency_key
+- validation:
+  - schema per command_type
+  - enforce RBAC permission: miner:control
+  - enforce safety rules (e.g., max batch size per role, require approval for risky/bulk)
+- behavior:
+  - if require_approval -> status=PENDING_APPROVAL
+  - else status=QUEUED
+  - write audit + event jsonl record
+- response: command object
+
+GET /api/sites/{site_id}/commands?status=&limit=&cursor=
+- list commands + aggregated result summary
+
+POST /api/commands/{command_id}/cancel
+- allow if status in PENDING/PENDING_APPROVAL/QUEUED
+
+POST /api/commands/{command_id}/approve
+- only role=admin (permission: miner:control:approve)
+- sets approved_by_user_id and status=QUEUED
+- audit + event
+
+### 4.2 Edge-facing endpoints (device auth)
+Decide device auth approach based on existing code:
+- If repo already has device tokens / edge auth, reuse it.
+- If not, implement a minimal “Edge Device Token”:
+  - edge_devices table OR config mapping (tenant_id/site_id/device_id/token_hash)
+  - token sent as Authorization: Bearer <token>
+  - token stored hashed server-side
+
+GET /api/edge/v1/commands/poll?site_id=...&device_id=...
+- returns next N commands with status=QUEUED and not expired
+- transition QUEUED -> RUNNING when leased by a device (lease TTL 60s)
+- include minimal info needed by edge to execute:
+  - command_id, command_type, payload, target_ids
+  - encrypted credential blocks for each miner if needed (see encryption section)
+
+POST /api/edge/v1/commands/{command_id}/ack
+- body: results[] per miner (miner_id, result_status, message, metrics)
+- server:
+  - insert into remote_command_results
+  - update remote_commands status to SUCCEEDED/FAILED based on results
+  - audit + event jsonl
+
+## 5) ENVELOPE ENCRYPTION INTEGRATION (Device-bound)
+Goal: cloud stores only ciphertext of miner credentials; only Edge device can decrypt.
+
+### 5.1 Credential storage model
+For each miner record (existing miner table/model), add fields if missing:
+- control_credentials_ciphertext (text/base64)
+- control_credentials_key_encrypted (text/base64)  # encrypted data key
+- control_credentials_alg (string)
+- control_credentials_version (int)
+- bound_edge_device_id (string) OR allowed_device_ids (jsonb)
+Do NOT store plaintext passwords.
+
+### 5.2 Crypto flow
+- On miner add/update (cloud UI/API):
+  - If current system already does Device Envelope Encryption, reuse exactly.
+  - Otherwise implement:
+    - Generate random data key (DEK)
+    - Encrypt credentials JSON with DEK (AES-GCM)
+    - Encrypt DEK with device public key OR device secret (preferred asymmetric if available)
+    - Store ciphertext + encrypted DEK
+- On Edge execution:
+  - Edge authenticates to cloud, pulls command + encrypted credential block
+  - Edge decrypts DEK using its device secret/private key
+  - Edge decrypts credentials and executes against miner API locally
+- Add audit record: “credential decrypted on edge” SHOULD NOT log plaintext; only log that decrypt occurred.
+
+## 6) EDGE COLLECTOR: COMMAND POLLER + EXECUTOR
+Under edge_collector/ implement:
+- command_poller.py (or similar):
+  - loop every N seconds
+  - GET poll endpoint
+  - for each command:
+    - check EDGE_EXECUTION_ENABLED
+    - dedupe command_id (store last executed IDs in local file or sqlite)
+    - execute per target miner using adapter
+    - POST ack/results
+- adapters/
+  - base.py: abstract interface (reboot/power_mode/change_pool/set_freq/thermal/led)
+  - cgminer_adapter.py: implement minimal calls (or stub if protocol not present)
+  - simulated_adapter.py: always succeeds and generates fake metrics (for local demo)
+- local config:
+  - EDGE_DEVICE_ID
+  - EDGE_SITE_ID
+  - EDGE_API_BASE_URL
+  - EDGE_AUTH_TOKEN
+  - EDGE_MINER_MODE=simulated|cgminer|vendor (default simulated)
+
+Edge must never print decrypted credentials in logs.
+
+## 7) UI: REMOTE CONTROL PAGE
+Implement a minimal UI under Hosting/Miner Management:
+- Select Site -> list miners
+- Per miner “Actions” dropdown:
+  - Reboot (soft/hard)
+  - Power mode (high/normal/eco)
+  - Change pool (url/worker)
+  - Set frequency (profile/number)
+  - Thermal policy (fan mode + thresholds)
+  - LED on/off
+- Bulk actions:
+  - select multiple miners -> action -> confirm modal (shows impacted miners count)
+- Command Center panel:
+  - recent commands list + status + success/fail counts
+  - command detail view shows per-miner results
+
+If project uses Flask templates: add templates + endpoints.
+If project uses a separate dashboard app: follow its existing routing/components.
+Provide screenshots in PR.
+
+## 8) RBAC + APPROVAL
+- Add permissions:
+  - miner:control (create commands)
+  - miner:control:approve (approve bulk/risky)
+- Rules:
+  - Non-admin:
+    - max 10 miners per command; above requires approval
+    - “hard reboot” always requires approval if > 1 miner
+  - Admin bypass (configurable)
+- Every create/approve/cancel/execute must write audit + events.
+
+## 9) TESTS
+Add tests for:
+- API validation (schema per command_type)
+- RBAC/approval transitions
+- Idempotency (same idempotency_key returns same command)
+- Edge poll leasing logic (two devices should not run same command simultaneously)
+- Ack updates status correctly
+
+Provide an end-to-end demo:
+- Run cloud locally
+- Run edge in simulated mode
+- Create a command from UI
+- Observe status change + results
+
+## 10) DELIVERABLES CHECKLIST
+- [ ] DB migrations applied cleanly
+- [ ] .env.example updated for new vars
+- [ ] API docs: add to README or docs/remote_control.md with curl examples
+- [ ] Events JSONL appended under events/YYYY-MM-DD/
+- [ ] Audit entries created for every action
+- [ ] UI page functional + screenshots
+- [ ] Edge runner works in simulated mode
+- [ ] No secrets committed
+
+Now implement. Start by scanning the repo structure, existing auth/tenancy models, existing audit/events/encryption utilities, and align with existing patterns before coding new ones.

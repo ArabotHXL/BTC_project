@@ -1,0 +1,186 @@
+You are a senior full-stack engineer and security reviewer.
+Repo: https://github.com/ArabotHXL/BTC_project
+
+Goal
+
+Run a comprehensive self-check to verify whether the current codebase can connect to Antminer miners (read telemetry via CGMiner API and optionally web UI), and whether the end-to-end pipeline (collector → backend API → DB/Redis → UI) is correct. Produce a written report plus concrete PRs that fix issues found.
+
+Constraints
+
+DO NOT ask for or require any real miner credentials.
+
+DO NOT connect to public internet miners or attempt scanning. Only implement local test harnesses and safe mocks.
+
+NEVER commit secrets. Add .env.example only.
+
+Prefer minimal, incremental PRs with tests.
+
+Phase 0 — Repo discovery (must do)
+
+Print the repo tree and identify:
+
+backend entrypoint(s): app.py, main.py, WSGI/gunicorn configs
+
+any collector modules: search for cgminer, antminer, miner, collector, scheduler
+
+routes/endpoints relevant to miners + network stats
+
+database models & migrations: models.py, db.py, migrations/
+
+caching layer: redis, cache_manager.py
+
+Produce a short “runtime topology” summary: processes/services expected, ports, dependencies.
+
+Deliverable: docs/selfcheck/00_discovery.md
+
+Phase 1 — CGMiner connectivity self-check (core)
+
+Implement a safe CGMiner client that can:
+
+open TCP to <host>:4028
+
+send CGMiner command JSON (e.g., {"command":"summary"}, {"command":"stats"}, {"command":"pools"}, {"command":"devs"})
+
+parse responses robustly (CGMiner sometimes returns non-standard JSON fragments; handle trailing nulls, missing commas, etc.)
+
+return a normalized Python dict with fields:
+
+hashrate_5s, hashrate_avg, uptime, accepted/rejected, temp summary, fan speeds, pool url, worker, status
+
+implement strict timeouts and defensive error handling
+
+Add this as: services/cgminer_client.py (or appropriate module location if one already exists).
+
+Deliverables:
+
+services/cgminer_client.py
+
+Unit tests with a mock TCP server that simulates CGMiner responses:
+
+tests/test_cgminer_client.py
+
+CLI tool for local validation (no secrets):
+python tools/cgminer_probe.py --host 192.168.1.10 --port 4028 --cmd summary
+
+This CLI must:
+
+fail safely (clear error messages)
+
+never log credentials
+
+print a one-line readiness summary: OK|FAIL, latency ms, parsed key metrics, and as_of timestamp.
+
+Phase 2 — End-to-end path check (collector → API → DB/Redis → UI)
+2A API endpoints
+
+Locate or create endpoints (whichever fits existing patterns) to ingest miner telemetry:
+
+POST /api/miners/<miner_id>/telemetry (auth optional behind feature flag for local dev)
+
+Validate payload schema
+
+Store latest telemetry snapshot in Redis with TTL (e.g., 60–120s)
+
+Append an audit/event record (JSONL or DB) containing:
+
+tenant/user (if present), miner_id, as_of, payload_hash, result_hash, outcome
+
+2B DB models
+
+Ensure DB has tables or models to support:
+
+miners inventory (miner_id, name, ip/port, model, site, tenant_id)
+
+telemetry snapshots (miner_id, as_of, key metrics, raw payload optional)
+
+audit/event log
+
+If models exist, verify:
+
+tenant scoping enforced
+
+indexes on (miner_id, as_of) and (tenant_id, miner_id)
+
+migrations consistent and runnable
+
+2C UI contract
+
+Locate UI page(s) for miner management or monitoring. Ensure:
+
+UI reads from a single API endpoint for “latest telemetry”
+
+UI displays as_of timestamp + stale indicator if older than threshold
+
+UI does not expose secrets
+
+Deliverables:
+
+docs/selfcheck/01_e2e_flow.md containing:
+
+current flow diagram (Mermaid)
+
+the exact API contracts (request/response examples)
+
+where each data artifact is stored (DB vs Redis) and why
+
+Phase 3 — Security & correctness checks
+
+Run and fix:
+
+input validation gaps (IP/port formats, out-of-range hashrate/power)
+
+rate limiting for telemetry ingestion (to prevent abuse)
+
+any hardcoded secrets or unsafe defaults
+
+ensure session/auth config uses env vars only
+
+ensure audit logs are append-only and do not store sensitive secrets
+
+Deliverable: docs/selfcheck/02_security_findings.md with severity levels and remediation.
+
+Phase 4 — Performance & reliability checks (quick wins)
+
+Add connection pooling or reuse strategy for repeated miner polls
+
+Add jitter/backoff for polling schedule (avoid thundering herd)
+
+Ensure Redis caching avoids stampedes (singleflight/coalescing if needed)
+
+Add basic metrics counters (success/fail, latency)
+
+Deliverable: docs/selfcheck/03_reliability.md
+
+Output requirements
+
+Create PRs (separate branches) with clear scope:
+
+chore/selfcheck-discovery
+
+feat/cgminer-client-selfcheck
+
+feat/miner-telemetry-e2e
+
+sec/hardening-selfcheck
+
+Each PR must include:
+
+tests
+
+updated docs under docs/selfcheck/
+
+.env.example additions if needed (no real values)
+
+Definition of Done
+
+Running python tools/cgminer_probe.py --host 127.0.0.1 against a mock server passes tests
+
+E2E API contracts documented and validated
+
+Clear conclusion in report:
+
+“Can connect to Antminer via CGMiner API if network path exists” + exact prerequisites
+
+If not, list what’s missing and how to fix
+
+Start now.

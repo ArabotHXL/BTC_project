@@ -1,0 +1,804 @@
+{% extends "crm/base.html" %}
+
+{% block title %}交易详情 - {{ deal.title }} | BTC Mining CRM{% endblock %}
+
+{% block page_title %}交易详情: {{ deal.title }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('crm.deals') }}">交易列表</a></li>
+<li class="breadcrumb-item active" aria-current="page">{{ deal.title }}</li>
+{% endblock %}
+
+{% block content %}
+<style>
+    /* KPI Cards Styling */
+    .kpi-card {
+        background: linear-gradient(135deg, var(--btc-card-bg) 0%, #2a2f45 100%);
+        border: 1px solid var(--btc-border);
+        border-radius: var(--radius-md);
+        padding: var(--spacing-lg);
+        height: 100%;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .kpi-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100px;
+        background: radial-gradient(circle, rgba(247, 147, 26, 0.1) 0%, transparent 70%);
+        border-radius: 50%;
+        transform: translate(30%, -30%);
+    }
+    
+    .kpi-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg);
+        border-color: var(--btc-gold);
+    }
+    
+    .kpi-icon {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, var(--btc-gold) 0%, var(--btc-orange) 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: #000;
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .kpi-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--btc-gold);
+        margin: var(--spacing-sm) 0;
+    }
+    
+    .kpi-label {
+        color: var(--btc-text-secondary);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    /* Info Card Styling */
+    .info-card {
+        background: var(--btc-card-bg);
+        border: 1px solid var(--btc-border);
+        border-radius: var(--radius-md);
+        padding: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .info-card-header {
+        border-bottom: 2px solid var(--btc-gold);
+        padding-bottom: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .info-card-header h5 {
+        margin: 0;
+        color: var(--btc-text-primary);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-sm) 0;
+        border-bottom: 1px solid rgba(61, 68, 88, 0.3);
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        color: var(--btc-text-secondary);
+        font-size: 0.9rem;
+    }
+    
+    .info-value {
+        color: var(--btc-text-primary);
+        font-weight: 500;
+    }
+    
+    /* Timeline Styling */
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 10px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--btc-border);
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-bottom: var(--spacing-lg);
+    }
+    
+    .timeline-icon {
+        position: absolute;
+        left: -24px;
+        width: 24px;
+        height: 24px;
+        background: var(--btc-gold);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        color: #000;
+        z-index: 1;
+    }
+    
+    .timeline-item.pending .timeline-icon {
+        background: var(--btc-text-secondary);
+    }
+    
+    .timeline-content {
+        background: rgba(255, 255, 255, 0.03);
+        padding: var(--spacing-md);
+        border-radius: var(--radius-sm);
+        border-left: 3px solid var(--btc-gold);
+    }
+    
+    .timeline-item.pending .timeline-content {
+        border-left-color: var(--btc-text-secondary);
+    }
+    
+    .timeline-date {
+        color: var(--btc-gold);
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    
+    .timeline-title {
+        color: var(--btc-text-primary);
+        font-weight: 600;
+        margin: var(--spacing-xs) 0;
+    }
+    
+    .timeline-desc {
+        color: var(--btc-text-secondary);
+        font-size: 0.9rem;
+    }
+    
+    /* Progress Bar */
+    .progress {
+        height: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    
+    .progress-bar {
+        background: linear-gradient(90deg, var(--btc-gold) 0%, var(--btc-orange) 100%);
+        transition: width 0.6s ease;
+    }
+    
+    /* Chart Container */
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin: var(--spacing-lg) 0;
+    }
+    
+    /* Sensitivity Table */
+    .sensitivity-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .sensitivity-table th {
+        background: rgba(247, 147, 26, 0.1);
+        color: var(--btc-gold);
+        padding: var(--spacing-md);
+        text-align: left;
+        font-weight: 600;
+        border-bottom: 2px solid var(--btc-gold);
+    }
+    
+    .sensitivity-table td {
+        padding: var(--spacing-md);
+        border-bottom: 1px solid var(--btc-border);
+        color: var(--btc-text-primary);
+    }
+    
+    .sensitivity-table tr:hover {
+        background: rgba(255, 255, 255, 0.03);
+    }
+    
+    .positive {
+        color: #10b981;
+    }
+    
+    .negative {
+        color: #ef4444;
+    }
+</style>
+
+<!-- KPI Cards Row -->
+<div class="row mb-4" id="kpiCards">
+    <div class="col-md-3 mb-3">
+        <div class="kpi-card">
+            <div class="kpi-icon">
+                <i class="bi bi-cash-stack"></i>
+            </div>
+            <div class="kpi-label">交易价值</div>
+            <div class="kpi-value">
+                $<span id="kpiDealValue">0</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="kpi-card">
+            <div class="kpi-icon">
+                <i class="bi bi-graph-up-arrow"></i>
+            </div>
+            <div class="kpi-label">预期月利润</div>
+            <div class="kpi-value">
+                $<span id="kpiMonthlyProfit">0</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="kpi-card">
+            <div class="kpi-icon">
+                <i class="bi bi-percent"></i>
+            </div>
+            <div class="kpi-label">ROI 百分比</div>
+            <div class="kpi-value">
+                <span id="kpiROI">0</span>%
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="kpi-card">
+            <div class="kpi-icon">
+                <i class="bi bi-speedometer2"></i>
+            </div>
+            <div class="kpi-label">合同进度</div>
+            <div class="kpi-value">
+                <span id="kpiProgress">0</span>%
+            </div>
+            <div class="progress mt-2">
+                <div class="progress-bar" id="progressBar" role="progressbar" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Left Column (8 cols) -->
+    <div class="col-lg-8">
+        <!-- Basic Info Card -->
+        <div class="info-card">
+            <div class="info-card-header">
+                <h5><i class="bi bi-info-circle"></i> 交易基本信息</h5>
+            </div>
+            <div class="info-row">
+                <span class="info-label">客户名称</span>
+                <span class="info-value">
+                    {% if deal.customer %}
+                        <a href="{{ url_for('crm.customer_detail', customer_id=deal.customer.id) }}" class="text-info">
+                            {{ deal.customer.name }}
+                        </a>
+                    {% else %}
+                        未关联
+                    {% endif %}
+                </span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">交易状态</span>
+                <span class="info-value">
+                    <span class="badge bg-{{ 
+                        'secondary' if deal.status.name == 'DRAFT' else 
+                        'info' if deal.status.name == 'PENDING' else 
+                        'primary' if deal.status.name == 'APPROVED' else 
+                        'warning' if deal.status.name == 'SIGNED' else 
+                        'success' if deal.status.name == 'COMPLETED' else 
+                        'danger'
+                    }}">{{ deal.status.value }}</span>
+                </span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">创建日期</span>
+                <span class="info-value">{{ deal.created_at.strftime('%Y-%m-%d') if deal.created_at else '未设置' }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">预计完成日期</span>
+                <span class="info-value">{{ deal.expected_close_date.strftime('%Y-%m-%d') if deal.expected_close_date else '未设置' }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">负责人</span>
+                <span class="info-value">{{ deal.assigned_to or '未分配' }}</span>
+            </div>
+        </div>
+        
+        <!-- Mining Config Card -->
+        <div class="info-card">
+            <div class="info-card-header">
+                <h5><i class="bi bi-lightning-charge-fill"></i> 矿场配置信息</h5>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="info-row">
+                        <span class="info-label">挖矿容量</span>
+                        <span class="info-value">{{ deal.mining_capacity if deal.mining_capacity else 0 }} MW</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="info-row">
+                        <span class="info-label">电费价格</span>
+                        <span class="info-value">${{ "{:,.4f}".format(deal.electricity_cost) if deal.electricity_cost else '0.0500' }}/kWh</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="info-row">
+                        <span class="info-label">合同期限</span>
+                        <span class="info-value">{{ deal.contract_term if deal.contract_term else 12 }} 个月</span>
+                    </div>
+                </div>
+            </div>
+            {% if session.role == 'owner' and deal.client_investment %}
+            <div class="info-row mt-3">
+                <span class="info-label">客户投资额</span>
+                <span class="info-value text-warning">${{ "{:,.2f}".format(deal.client_investment) }}</span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Profitability Chart -->
+        <div class="info-card">
+            <div class="info-card-header">
+                <h5><i class="bi bi-graph-up"></i> 收益预测（12个月）</h5>
+            </div>
+            <div class="chart-container">
+                <canvas id="profitabilityChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- Sensitivity Analysis -->
+        <div class="info-card">
+            <div class="info-card-header">
+                <h5><i class="bi bi-sliders"></i> BTC价格敏感性分析</h5>
+            </div>
+            <div id="sensitivityChart" class="chart-container" style="height: 250px;">
+                <canvas id="sensitivityBarChart"></canvas>
+            </div>
+            <table class="sensitivity-table mt-3" id="sensitivityTable">
+                <thead>
+                    <tr>
+                        <th>价格场景</th>
+                        <th>月利润</th>
+                        <th>ROI (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data loaded via JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Activity Records -->
+        <div class="info-card">
+            <div class="info-card-header d-flex justify-content-between align-items-center">
+                <h5><i class="bi bi-journal-text"></i> 活动记录</h5>
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addActivityModal">
+                    <i class="bi bi-plus-circle me-1"></i>添加活动
+                </button>
+            </div>
+            <div id="dealActivitiesList">
+                {% if deal.activities %}
+                    {% for activity in deal.activities|sort(attribute='created_at', reverse=True)|slice(0, 5) %}
+                    <div class="info-row">
+                        <div>
+                            <span class="badge bg-{{ 
+                                'success' if activity.type == '创建' else 
+                                'info' if activity.type == '备注' else 
+                                'warning' if activity.type == '电话' else 
+                                'primary' if activity.type == '会议' else 
+                                'secondary' 
+                            }}">{{ activity.type }}</span>
+                            <span class="info-value ms-2">{{ activity.summary }}</span>
+                        </div>
+                        <small class="text-muted">{{ activity.created_at.strftime('%Y-%m-%d') }}</small>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted text-center my-3">暂无活动记录</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Column (4 cols) -->
+    <div class="col-lg-4">
+        <!-- Timeline Card -->
+        <div class="info-card">
+            <div class="info-card-header">
+                <h5><i class="bi bi-clock-history"></i> 交易时间线</h5>
+            </div>
+            <div class="timeline" id="dealTimeline">
+                <!-- Timeline loaded via JavaScript -->
+            </div>
+        </div>
+        
+        <!-- Power Analysis Card -->
+        <div class="info-card">
+            <div class="info-card-header">
+                <h5><i class="bi bi-lightning-fill"></i> 功耗分析</h5>
+            </div>
+            <div id="powerAnalysisContent">
+                <!-- Loaded via JavaScript -->
+            </div>
+        </div>
+        
+        <!-- Cost Breakdown Pie Chart -->
+        <div class="info-card">
+            <div class="info-card-header">
+                <h5><i class="bi bi-pie-chart-fill"></i> 成本结构</h5>
+            </div>
+            <div class="chart-container" style="height: 250px;">
+                <canvas id="costPieChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="info-card">
+            <div class="info-card-header">
+                <h5><i class="bi bi-lightning-charge"></i> 快速操作</h5>
+            </div>
+            <div class="d-grid gap-2">
+                {# Edit Deal功能暂未实现，使用Jinja2注释避免BuildError #}
+                {# <a href="{{ url_for('crm.edit_deal', deal_id=deal.id) }}" class="btn btn-outline-primary">
+                    <i class="bi bi-pencil-square me-1"></i>编辑交易
+                </a> #}
+                <a href="{{ url_for('crm.deals') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>返回列表
+                </a>
+                {% if deal.customer %}
+                <a href="{{ url_for('crm.customer_detail', customer_id=deal.customer.id) }}" class="btn btn-outline-info">
+                    <i class="bi bi-person me-1"></i>查看客户
+                </a>
+                {% endif %}
+                <a href="{{ url_for('index') }}" class="btn btn-outline-warning">
+                    <i class="bi bi-calculator me-1"></i>挖矿计算器
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Activity Modal -->
+<div class="modal fade" id="addActivityModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title">添加活动记录</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="activityForm">
+                    <input type="hidden" id="customer_id" value="{{ deal.customer_id }}">
+                    <input type="hidden" id="deal_id" value="{{ deal.id }}">
+                    <div class="mb-3">
+                        <label for="activity_type" class="form-label">活动类型</label>
+                        <select class="form-select" id="activity_type" required>
+                            <option value="备注">备注</option>
+                            <option value="电话">电话</option>
+                            <option value="会议">会议</option>
+                            <option value="邮件">邮件</option>
+                            <option value="现场拜访">现场拜访</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="activity_summary" class="form-label">摘要</label>
+                        <input type="text" class="form-control" id="activity_summary" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="activity_details" class="form-label">详细内容</label>
+                        <textarea class="form-control" id="activity_details" rows="4"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="saveActivity">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dealId = {{ deal.id }};
+    
+    // Load Overview KPIs
+    fetch(`/crm/api/deals/${dealId}/overview`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const d = data.data;
+                
+                // Initialize CountUp for KPIs with NaN protection
+                const dealValue = parseFloat(d.deal_value) || 0;
+                const monthlyProfit = parseFloat(d.monthly_profit) || 0;
+                const roi = parseFloat(d.roi_percent) || 0;
+                const progress = parseFloat(d.contract_progress) || 0;
+                
+                if (!isNaN(dealValue)) {
+                    initCountUp('kpiDealValue', dealValue, {decimalPlaces: 0});
+                }
+                if (!isNaN(monthlyProfit)) {
+                    initCountUp('kpiMonthlyProfit', monthlyProfit, {decimalPlaces: 0});
+                }
+                if (!isNaN(roi)) {
+                    initCountUp('kpiROI', roi, {decimalPlaces: 2});
+                }
+                if (!isNaN(progress)) {
+                    initCountUp('kpiProgress', progress, {decimalPlaces: 1});
+                    document.getElementById('progressBar').style.width = progress + '%';
+                }
+            }
+        })
+        .catch(err => console.error('Error loading overview:', err));
+    
+    // Load Timeline
+    fetch(`/crm/api/deals/${dealId}/timeline`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.milestones) {
+                const timeline = document.getElementById('dealTimeline');
+                timeline.innerHTML = data.milestones.map(m => `
+                    <div class="timeline-item ${m.status}">
+                        <div class="timeline-icon">
+                            <i class="bi bi-${m.icon}"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <div class="timeline-date">${m.date}</div>
+                            <div class="timeline-title">${m.title}</div>
+                            <div class="timeline-desc">${m.description}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        })
+        .catch(err => console.error('Error loading timeline:', err));
+    
+    // Load Profitability Chart
+    fetch(`/crm/api/deals/${dealId}/profitability`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const d = data.data;
+                
+                initChart('profitabilityChart', {
+                    type: 'line',
+                    data: {
+                        labels: d.months,
+                        datasets: [{
+                            label: '月收入',
+                            data: d.revenues.map(v => parseFloat(v) || 0),
+                            borderColor: '#f7931a',
+                            backgroundColor: 'rgba(247, 147, 26, 0.1)',
+                            yAxisID: 'y',
+                            tension: 0.4
+                        }, {
+                            label: '累计利润',
+                            data: d.cumulative_profits.map(v => parseFloat(v) || 0),
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            yAxisID: 'y1',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                type: 'linear',
+                                position: 'left',
+                                ticks: {
+                                    callback: function(value) {
+                                        return '$' + value.toLocaleString();
+                                    }
+                                }
+                            },
+                            y1: {
+                                type: 'linear',
+                                position: 'right',
+                                grid: {
+                                    drawOnChartArea: false
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return '$' + value.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        })
+        .catch(err => console.error('Error loading profitability:', err));
+    
+    // Load Power Analysis
+    fetch(`/crm/api/deals/${dealId}/power-analysis`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const d = data.data;
+                const powerKw = parseFloat(d.total_power_kw) || 0;
+                const monthlyCost = parseFloat(d.monthly_electricity_cost) || 0;
+                const ratio = parseFloat(d.electricity_ratio) || 0;
+                const comparison = parseFloat(d.market_comparison) || 0;
+                
+                document.getElementById('powerAnalysisContent').innerHTML = `
+                    <div class="info-row">
+                        <span class="info-label">总功耗</span>
+                        <span class="info-value">${powerKw.toLocaleString()} kW</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">月电费成本</span>
+                        <span class="info-value">$${monthlyCost.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">电费占收入比</span>
+                        <span class="info-value">${ratio.toFixed(2)}%</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">市场对比</span>
+                        <span class="info-value ${comparison < 0 ? 'positive' : 'negative'}">
+                            ${comparison > 0 ? '+' : ''}${comparison.toFixed(1)}%
+                        </span>
+                    </div>
+                `;
+                
+                // Cost Pie Chart
+                const monthlyRevenue = powerKw * 24 * 30 * 50 * 60000 / 1000000; // Simplified
+                initChart('costPieChart', {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['电费成本', '净利润'],
+                        datasets: [{
+                            data: [monthlyCost, monthlyRevenue - monthlyCost],
+                            backgroundColor: ['#ef4444', '#10b981'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+        })
+        .catch(err => console.error('Error loading power analysis:', err));
+    
+    // Load Sensitivity Analysis
+    fetch(`/crm/api/deals/${dealId}/sensitivity`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const d = data.data;
+                
+                // Bar Chart
+                initChart('sensitivityBarChart', {
+                    type: 'bar',
+                    data: {
+                        labels: d.price_scenarios,
+                        datasets: [{
+                            label: '月利润',
+                            data: d.monthly_profits.map(v => parseFloat(v) || 0),
+                            backgroundColor: d.monthly_profits.map((v, i) => {
+                                if (i === 2) return '#f7931a';
+                                return i < 2 ? '#ef4444' : '#10b981';
+                            })
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                ticks: {
+                                    callback: function(value) {
+                                        return '$' + value.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                // Table
+                const tbody = document.querySelector('#sensitivityTable tbody');
+                tbody.innerHTML = d.price_scenarios.map((scenario, i) => {
+                    const profit = parseFloat(d.monthly_profits[i]) || 0;
+                    const roi = parseFloat(d.roi_values[i]) || 0;
+                    return `
+                        <tr>
+                            <td>${scenario}</td>
+                            <td>$${profit.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                            <td class="${roi > 0 ? 'positive' : 'negative'}">${roi.toFixed(2)}%</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        })
+        .catch(err => console.error('Error loading sensitivity:', err));
+    
+    // Save Activity
+    document.getElementById('saveActivity').addEventListener('click', function() {
+        const customerId = document.getElementById('customer_id').value;
+        const dealId = document.getElementById('deal_id').value;
+        const type = document.getElementById('activity_type').value;
+        const summary = document.getElementById('activity_summary').value;
+        const details = document.getElementById('activity_details').value;
+        
+        if (!summary) {
+            alert('请输入活动摘要');
+            return;
+        }
+        
+        fetch('{{ url_for("crm.new_activity") }}', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                customer_id: customerId,
+                deal_id: dealId,
+                type: type,
+                summary: summary,
+                details: details
+            })
+        })
+        .then(res => res.json())
+        .then(result => {
+            if (result.success) {
+                bootstrap.Modal.getInstance(document.getElementById('addActivityModal')).hide();
+                location.reload();
+            } else {
+                alert('添加失败: ' + result.message);
+            }
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            alert('添加失败，请稍后重试');
+        });
+    });
+});
+</script>
+{% endblock %}

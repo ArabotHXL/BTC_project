@@ -1,0 +1,443 @@
+{% extends "hosting/hosting_base.html" %}
+
+{% block page_title %}{% if current_lang == 'en' %}Global Status{% else %}全球状态{% endif %}{% endblock %}
+{% block page_subtitle %}{% if current_lang == 'en' %}Real-time status of all hosting sites and services{% else %}所有托管站点和服务的实时状态{% endif %}{% endblock %}
+
+{% block content %}
+
+<!-- 全球概览统计 -->
+<div class="hosting-stats-grid">
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="total-sites">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Global Sites{% else %}全球站点{% endif %}</div>
+        <i class="bi bi-globe hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="online-sites">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Online{% else %}在线{% endif %}</div>
+        <i class="bi bi-check-circle hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="total-capacity">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Total Capacity{% else %}总容量{% endif %}</div>
+        <i class="bi bi-lightning hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="global-uptime">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Global Uptime{% else %}全球可用率{% endif %}</div>
+        <i class="bi bi-graph-up hosting-stat-icon"></i>
+    </div>
+</div>
+
+<!-- 服务状态 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-shield-check me-2"></i>{% if current_lang == 'en' %}Service Status{% else %}服务状态{% endif %}
+        </h5>
+        <button class="btn btn-hosting-secondary btn-sm" onclick="refreshStatus()">
+            <i class="bi bi-arrow-clockwise me-1"></i>{% if current_lang == 'en' %}Refresh{% else %}刷新{% endif %}
+        </button>
+    </div>
+    <div class="hosting-card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="service-status-item p-3 rounded bg-dark">
+                    <div class="d-flex align-items-center">
+                        <div class="status-indicator bg-success me-3"></div>
+                        <div>
+                            <div class="fw-bold">{% if current_lang == 'en' %}API Services{% else %}API服务{% endif %}</div>
+                            <small class="text-success">{% if current_lang == 'en' %}Operational{% else %}正常运行{% endif %}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="service-status-item p-3 rounded bg-dark">
+                    <div class="d-flex align-items-center">
+                        <div class="status-indicator bg-success me-3"></div>
+                        <div>
+                            <div class="fw-bold">{% if current_lang == 'en' %}Monitoring{% else %}监控系统{% endif %}</div>
+                            <small class="text-success">{% if current_lang == 'en' %}Operational{% else %}正常运行{% endif %}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="service-status-item p-3 rounded bg-dark">
+                    <div class="d-flex align-items-center">
+                        <div class="status-indicator bg-warning me-3"></div>
+                        <div>
+                            <div class="fw-bold">{% if current_lang == 'en' %}Payment System{% else %}支付系统{% endif %}</div>
+                            <small class="text-warning">{% if current_lang == 'en' %}Maintenance{% else %}维护中{% endif %}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="service-status-item p-3 rounded bg-dark">
+                    <div class="d-flex align-items-center">
+                        <div class="status-indicator bg-success me-3"></div>
+                        <div>
+                            <div class="fw-bold">{% if current_lang == 'en' %}Support{% else %}客户支持{% endif %}</div>
+                            <small class="text-success">{% if current_lang == 'en' %}Available{% else %}可用{% endif %}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 站点状态地图 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-geo-alt me-2"></i>{% if current_lang == 'en' %}Global Sites{% else %}全球站点{% endif %}
+        </h5>
+        <div class="btn-group" role="group">
+            <button class="btn btn-hosting-outline btn-sm active" onclick="filterSites('all')">{% if current_lang == 'en' %}All{% else %}全部{% endif %}</button>
+            <button class="btn btn-hosting-outline btn-sm" onclick="filterSites('online')">{% if current_lang == 'en' %}Online{% else %}在线{% endif %}</button>
+            <button class="btn btn-hosting-outline btn-sm" onclick="filterSites('offline')">{% if current_lang == 'en' %}Issues{% else %}故障{% endif %}</button>
+        </div>
+    </div>
+    <div class="hosting-card-body">
+        <div class="row g-4" id="sites-grid">
+            <!-- 站点卡片将通过JavaScript动态生成 -->
+        </div>
+    </div>
+</div>
+
+<!-- 实时指标 -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="hosting-card">
+            <div class="hosting-card-header">
+                <h5 class="hosting-card-title">
+                    <i class="bi bi-activity me-2"></i>{% if current_lang == 'en' %}Real-time Metrics{% else %}实时指标{% endif %}
+                </h5>
+            </div>
+            <div class="hosting-card-body">
+                <canvas id="metricsChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="hosting-card">
+            <div class="hosting-card-header">
+                <h5 class="hosting-card-title">
+                    <i class="bi bi-exclamation-triangle me-2"></i>{% if current_lang == 'en' %}Recent Incidents{% else %}最近事件{% endif %}
+                </h5>
+            </div>
+            <div class="hosting-card-body">
+                <div id="incidents-list">
+                    <div class="incident-item p-3 mb-3 rounded border-start border-warning border-3 bg-dark">
+                        <div class="d-flex justify-content-between">
+                            <small class="text-warning">{% if current_lang == 'en' %}Maintenance{% else %}维护{% endif %}</small>
+                            <small class="text-muted">2h ago</small>
+                        </div>
+                        <div class="fw-bold">{% if current_lang == 'en' %}Payment System Update{% else %}支付系统更新{% endif %}</div>
+                        <small class="text-muted">{% if current_lang == 'en' %}Scheduled maintenance in progress{% else %}计划维护进行中{% endif %}</small>
+                    </div>
+                    
+                    <div class="incident-item p-3 mb-3 rounded border-start border-success border-3 bg-dark">
+                        <div class="d-flex justify-content-between">
+                            <small class="text-success">{% if current_lang == 'en' %}Resolved{% else %}已解决{% endif %}</small>
+                            <small class="text-muted">6h ago</small>
+                        </div>
+                        <div class="fw-bold">{% if current_lang == 'en' %}Site connectivity issue{% else %}站点连接问题{% endif %}</div>
+                        <small class="text-muted">{% if current_lang == 'en' %}Texas facility back online{% else %}德州设施恢复在线{% endif %}</small>
+                    </div>
+                    
+                    <div class="incident-item p-3 mb-3 rounded border-start border-info border-3 bg-dark">
+                        <div class="d-flex justify-content-between">
+                            <small class="text-info">{% if current_lang == 'en' %}Update{% else %}更新{% endif %}</small>
+                            <small class="text-muted">1d ago</small>
+                        </div>
+                        <div class="fw-bold">{% if current_lang == 'en' %}New monitoring features{% else %}新监控功能{% endif %}</div>
+                        <small class="text-muted">{% if current_lang == 'en' %}Enhanced real-time alerts{% else %}增强实时告警{% endif %}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 性能统计 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-bar-chart me-2"></i>{% if current_lang == 'en' %}Performance Statistics{% else %}性能统计{% endif %}
+        </h5>
+    </div>
+    <div class="hosting-card-body">
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="text-center">
+                    <div class="display-6 text-warning">99.9%</div>
+                    <small class="text-muted">{% if current_lang == 'en' %}Global Uptime{% else %}全球可用率{% endif %}</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <div class="display-6 text-warning">2.1s</div>
+                    <small class="text-muted">{% if current_lang == 'en' %}Avg Response{% else %}平均响应{% endif %}</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <div class="display-6 text-warning">847</div>
+                    <small class="text-muted">{% if current_lang == 'en' %}Active Devices{% else %}活跃设备{% endif %}</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <div class="display-6 text-warning">12</div>
+                    <small class="text-muted">{% if current_lang == 'en' %}Global Sites{% else %}全球站点{% endif %}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadGlobalStatus();
+    initMetricsChart();
+    setInterval(loadGlobalStatus, 30000); // 每30秒刷新
+});
+
+function loadGlobalStatus() {
+    fetch('/hosting/api/global/status')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateGlobalStats(data.stats);
+                updateSitesGrid(data.sites);
+                updateIncidents(data.incidents);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading global status:', error);
+        });
+}
+
+function updateGlobalStats(stats) {
+    document.getElementById('total-sites').textContent = stats.total_sites;
+    document.getElementById('online-sites').textContent = stats.online_sites;
+    document.getElementById('total-capacity').textContent = `${stats.total_capacity} MW`;
+    document.getElementById('global-uptime').textContent = `${stats.global_uptime}%`;
+}
+
+function updateSitesGrid(sites) {
+    const grid = document.getElementById('sites-grid');
+    grid.innerHTML = '';
+    
+    sites.forEach(site => {
+        const card = `
+            <div class="col-lg-4 col-md-6 site-card" data-status="${site.status}">
+                <div class="hosting-card">
+                    <div class="hosting-card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h6 class="fw-bold mb-1">${site.name}</h6>
+                                <small class="text-muted">${site.location}</small>
+                            </div>
+                            <span class="status-indicator status-${site.status}"></span>
+                        </div>
+                        
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="text-warning fw-bold">${site.capacity}</div>
+                                <small class="text-muted">MW</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-warning fw-bold">${site.devices}</div>
+                                <small class="text-muted">${getLanguage() === 'en' ? 'Devices' : '设备'}</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-warning fw-bold">${site.uptime}%</div>
+                                <small class="text-muted">${getLanguage() === 'en' ? 'Uptime' : '可用率'}</small>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small>${getLanguage() === 'en' ? 'Utilization' : '利用率'}</small>
+                                <small>${site.utilization}%</small>
+                            </div>
+                            <div class="utilization-bar">
+                                <div class="utilization-fill" style="width: ${site.utilization}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                ${getLanguage() === 'en' ? 'Last Update' : '最后更新'}: ${site.last_update}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        grid.insertAdjacentHTML('beforeend', card);
+    });
+}
+
+function updateIncidents(incidents) {
+    // 如果需要动态更新事件列表，可以在这里实现
+    // 目前使用静态内容作为示例
+}
+
+function initMetricsChart() {
+    const ctx = document.getElementById('metricsChart').getContext('2d');
+    window.metricsChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: getLanguage() === 'en' ? 'Response Time (ms)' : '响应时间 (ms)',
+                data: [],
+                borderColor: '#f7931e',
+                backgroundColor: 'rgba(247, 147, 30, 0.1)',
+                tension: 0.4,
+                fill: true
+            }, {
+                label: getLanguage() === 'en' ? 'Active Connections' : '活跃连接',
+                data: [],
+                borderColor: '#ffc107',
+                backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                tension: 0.4,
+                yAxisID: 'y1'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: { color: '#ffffff' }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: '#adb5bd' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    ticks: { color: '#adb5bd' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    ticks: { color: '#adb5bd' },
+                    grid: { drawOnChartArea: false }
+                }
+            }
+        }
+    });
+    
+    // 加载实时数据
+    loadMetricsData();
+    setInterval(loadMetricsData, 10000); // 每10秒更新
+}
+
+function loadMetricsData() {
+    fetch('/hosting/api/global/metrics')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.metricsChart.data.labels = data.labels;
+                window.metricsChart.data.datasets[0].data = data.response_times;
+                window.metricsChart.data.datasets[1].data = data.connections;
+                window.metricsChart.update('none'); // 无动画更新
+            }
+        })
+        .catch(error => {
+            console.error('Error loading metrics data:', error);
+        });
+}
+
+function filterSites(filter) {
+    // 更新按钮状态
+    document.querySelectorAll('.btn-hosting-outline').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // 过滤站点卡片
+    const cards = document.querySelectorAll('.site-card');
+    cards.forEach(card => {
+        if (filter === 'all') {
+            card.style.display = 'block';
+        } else if (filter === 'online') {
+            card.style.display = card.dataset.status === 'online' ? 'block' : 'none';
+        } else if (filter === 'offline') {
+            card.style.display = card.dataset.status !== 'online' ? 'block' : 'none';
+        }
+    });
+}
+
+function refreshStatus() {
+    loadGlobalStatus();
+    showToast(getLanguage() === 'en' ? 'Status refreshed' : '状态已刷新', 'success');
+}
+
+function getLanguage() {
+    return document.querySelector('meta[name="language"]').content;
+}
+
+function showToast(message, type) {
+    console.log(`[${type.toUpperCase()}] ${message}`);
+}
+</script>
+
+<style>
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-online { background-color: #22c55e; }
+.status-offline { background-color: #ef4444; }
+.status-maintenance { background-color: #f59e0b; }
+
+.utilization-bar {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.utilization-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #22c55e 0%, #f59e0b 70%, #ef4444 90%);
+    transition: width 0.3s ease;
+}
+
+.service-status-item {
+    transition: var(--hosting-transition);
+}
+
+.service-status-item:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.incident-item {
+    transition: var(--hosting-transition);
+}
+
+.incident-item:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+</style>
+{% endblock %}

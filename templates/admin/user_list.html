@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户管理 - BTC Mining Calculator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body class="bg-dark text-light">
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card bg-secondary">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h3><i class="bi bi-people-fill me-2"></i>用户管理</h3>
+                        <div>
+                            <button type="button" data-lang-switch="zh" data-lang="zh" 
+                                    class="btn btn-sm btn-outline-light {{ 'active' if current_lang == 'zh' else '' }} lang-switch-btn me-1">
+                                中文
+                            </button>
+                            <button type="button" data-lang-switch="en" data-lang="en" 
+                                    class="btn btn-sm btn-outline-light {{ 'active' if current_lang == 'en' else '' }} lang-switch-btn me-2">
+                                EN
+                            </button>
+                            <a href="/performance-monitor" class="btn btn-warning me-2">
+                                <i class="bi bi-activity me-1"></i>系统监控
+                            </a>
+                            <a href="{{ url_for('admin.admin_create_user') }}" class="btn btn-primary me-2">
+                                <i class="bi bi-plus-circle me-1"></i>创建用户
+                            </a>
+                            <a href="{{ url_for('index') }}" class="btn btn-outline-light">
+                                <i class="bi bi-house-door me-1"></i>主页
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-striped mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>邮箱</th>
+                                        <th>用户名</th>
+                                        <th>显示名</th>
+                                        <th>角色</th>
+                                        <th>验证状态</th>
+                                        <th>访问状态</th>
+                                        <th>剩余天数</th>
+                                        <th>最后登录</th>
+                                        <th>创建时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in users %}
+                                    <tr>
+                                        <td>{{ user.id }}</td>
+                                        <td>
+                                            {{ user.email }}
+                                            {% if user.password_hash %}
+                                                <i class="bi bi-shield-check text-success" title="已设置密码"></i>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ user.username or '-' }}</td>
+                                        <td>{{ user.name }}</td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if user.role == 'owner' %}bg-danger
+                                                {% elif user.role == 'admin' %}bg-warning
+                                                {% elif user.role == 'user' %}bg-primary
+                                                {% else %}bg-secondary
+                                                {% endif %}">
+                                                {{ user.role.upper() }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if user.is_email_verified %}
+                                                <span class="badge bg-success">已验证</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">未验证</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if user.has_access %}
+                                                <span class="badge bg-success">有效</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">已过期</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if user.has_access %}
+                                                {{ user.days_remaining }} 天
+                                            {% else %}
+                                                <span class="text-danger">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if user.last_login %}
+                                                {{ user.last_login.strftime('%Y-%m-%d %H:%M') }}
+                                            {% else %}
+                                                <span class="text-muted">从未登录</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                {% if not user.is_email_verified %}
+                                                <button class="btn btn-outline-success btn-sm" 
+                                                        onclick="verifyUser({{ user.id }})" 
+                                                        title="验证邮箱">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </button>
+                                                {% endif %}
+                                                {% if not user.has_access %}
+                                                <button class="btn btn-outline-primary btn-sm" 
+                                                        onclick="extendAccess({{ user.id }})" 
+                                                        title="延长访问">
+                                                    <i class="bi bi-clock"></i>
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer text-center">
+                        <small class="text-muted">
+                            共 {{ users|length }} 个用户 | 
+                            已验证: {{ users|selectattr('is_email_verified')|list|length }} | 
+                            有效访问: {{ users|selectattr('has_access')|list|length }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/i18n.js"></script>
+    <script>
+        async function verifyUser(userId) {
+            if (confirm('确认验证此用户的邮箱？')) {
+                try {
+                    const response = await fetch(`/admin/verify-user/${userId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert('操作失败，请重试');
+                    }
+                } catch (error) {
+                    alert('网络错误，请重试');
+                }
+            }
+        }
+
+        async function extendAccess(userId) {
+            const days = prompt('延长访问天数:', '30');
+            if (days && !isNaN(days) && parseInt(days) > 0) {
+                try {
+                    const response = await fetch(`/admin/extend-access/${userId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({days: parseInt(days)})
+                    });
+                    
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert('操作失败，请重试');
+                    }
+                } catch (error) {
+                    alert('网络错误，请重试');
+                }
+            }
+        }
+    </script>
+</body>
+</html>

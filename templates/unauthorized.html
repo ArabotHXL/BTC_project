@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if current_lang == 'en' %}Access Denied - BTC Mining Calculator{% else %}访问被拒绝 - BTC挖矿计算器{% endif %}</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <link rel="stylesheet" href="/static/css/responsive.css">
+    <style>
+        body {
+            background-color: #121212;
+            color: #f8f9fa;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .unauthorized-container {
+            width: 100%;
+            max-width: 500px;
+            padding: 2rem;
+            background-color: rgba(33, 37, 41, 0.9);
+            border-radius: 0.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+        .error-icon {
+            font-size: 4rem;
+            color: #dc3545;
+            margin-bottom: 1rem;
+        }
+        .error-title {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: #dc3545;
+        }
+        .error-message {
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+        .btc-icon {
+            display: inline-block;
+            width: 60px;
+            height: 60px;
+            background-color: #dc3545;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 60px;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            transform: rotate(12deg);
+            position: relative;
+        }
+        .btc-icon:after {
+            content: "×";
+            position: absolute;
+            top: 0;
+            right: -10px;
+            font-size: 2rem;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="unauthorized-container">
+            <div class="btc-icon">₿</div>
+            <h1 class="error-title">
+                {% if current_lang == 'en' %}Access Denied{% else %}访问被拒绝{% endif %}
+            </h1>
+            
+            <!-- 消息提示 -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <div class="error-message">
+                {% if current_lang == 'en' %}
+                    <p>You do not have permission to access the BTC Mining Calculator. This tool requires authorized access.</p>
+                    <p>Please contact the administrator to request access permissions, or log in again using an authorized email address.</p>
+                {% else %}
+                    <p>您没有权限访问BTC挖矿计算器。此工具需要授权访问。</p>
+                    <p>请联系管理员申请访问权限，或使用已获授权的邮箱地址重新登录。</p>
+                {% endif %}
+            </div>
+            
+            <div class="d-grid gap-2">
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary">
+                    {% if current_lang == 'en' %}Back to Login{% else %}返回登录{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+    <script src="/static/js/i18n.js"></script>
+</body>
+</html>

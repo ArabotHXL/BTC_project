@@ -1,0 +1,470 @@
+{% extends "hosting/hosting_base.html" %}
+
+{% block page_title %}<span data-i18n="my_dashboard">{% if current_lang == 'en' %}My Dashboard{% else %}我的资产{% endif %}</span>{% endblock %}
+{% block page_subtitle %}<span data-i18n="manage_hosted_devices">{% if current_lang == 'en' %}Manage your hosted mining devices{% else %}管理您的托管矿机设备{% endif %}</span>{% endblock %}
+
+{% block content %}
+
+<!-- 资产概览统计 -->
+<div class="hosting-stats-grid">
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="total-miners">--</div>
+        <div class="hosting-stat-label" data-i18n="my_miners">{% if current_lang == 'en' %}My Miners{% else %}我的矿机{% endif %}</div>
+        <i class="bi bi-cpu hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="active-miners">--</div>
+        <div class="hosting-stat-label" data-i18n="running">{% if current_lang == 'en' %}Running{% else %}运行中{% endif %}</div>
+        <i class="bi bi-play-circle hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="total-hashrate">--</div>
+        <div class="hosting-stat-label" data-i18n="total_hashrate">{% if current_lang == 'en' %}Total Hashrate{% else %}总算力{% endif %}</div>
+        <i class="bi bi-lightning hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="monthly-revenue">--</div>
+        <div class="hosting-stat-label" data-i18n="monthly_revenue">{% if current_lang == 'en' %}Monthly Revenue{% else %}月收益估算{% endif %}</div>
+        <i class="bi bi-currency-bitcoin hosting-stat-icon"></i>
+    </div>
+</div>
+
+<!-- 快捷操作 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-lightning-charge me-2"></i><span data-i18n="quick_actions">{% if current_lang == 'en' %}Quick Actions{% else %}快捷操作{% endif %}</span>
+        </h5>
+    </div>
+    <div class="hosting-card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <a href="/hosting/client/miners" class="btn btn-hosting-primary w-100 py-3">
+                    <i class="bi bi-cpu fs-4 d-block mb-2"></i>
+                    <span data-i18n="my_devices">{% if current_lang == 'en' %}My Devices{% else %}我的设备{% endif %}</span>
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="/hosting/client/usage" class="btn btn-hosting-secondary w-100 py-3">
+                    <i class="bi bi-activity fs-4 d-block mb-2"></i>
+                    <span data-i18n="usage_tracking">{% if current_lang == 'en' %}Usage Tracking{% else %}使用记录{% endif %}</span>
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="/hosting/client/reports" class="btn btn-hosting-secondary w-100 py-3">
+                    <i class="bi bi-graph-up fs-4 d-block mb-2"></i>
+                    <span data-i18n="reports">{% if current_lang == 'en' %}Reports{% else %}收益报告{% endif %}</span>
+                </a>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-hosting-secondary w-100 py-3" data-bs-toggle="modal" data-bs-target="#registerMinerModal">
+                    <i class="bi bi-plus-circle fs-4 d-block mb-2"></i>
+                    <span data-i18n="register_miner">{% if current_lang == 'en' %}Register Miner{% else %}注册矿机{% endif %}</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 最近的矿机 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-clock-history me-2"></i><span data-i18n="recent_miners">{% if current_lang == 'en' %}Recent Miners{% else %}最近的矿机{% endif %}</span>
+        </h5>
+        <a href="/hosting/client/miners" class="btn btn-hosting-primary btn-sm">
+            <i class="bi bi-list me-1"></i><span data-i18n="view_all">{% if current_lang == 'en' %}View All{% else %}查看全部{% endif %}</span>
+        </a>
+    </div>
+    <div class="hosting-card-body">
+        <div class="hosting-table">
+            <table class="table table-hover" id="recent-miners-table">
+                <thead>
+                    <tr>
+                        <th data-i18n="serial_number">{% if current_lang == 'en' %}Serial Number{% else %}序列号{% endif %}</th>
+                        <th data-i18n="model">{% if current_lang == 'en' %}Model{% else %}型号{% endif %}</th>
+                        <th data-i18n="site">{% if current_lang == 'en' %}Site{% else %}站点{% endif %}</th>
+                        <th data-i18n="hashrate">{% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}</th>
+                        <th data-i18n="status">{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                        <th data-i18n="daily_revenue">{% if current_lang == 'en' %}Daily Revenue{% else %}日收益{% endif %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 数据通过JavaScript加载 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 收益图表 -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="hosting-card">
+            <div class="hosting-card-header">
+                <h5 class="hosting-card-title">
+                    <i class="bi bi-graph-up me-2"></i><span data-i18n="revenue_trend">{% if current_lang == 'en' %}Revenue Trend{% else %}收益趋势{% endif %}</span>
+                </h5>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-hosting-outline btn-sm active" onclick="switchPeriod('7d')">7<span data-i18n="days_short">{% if current_lang == 'en' %}D{% else %}天{% endif %}</span></button>
+                    <button class="btn btn-hosting-outline btn-sm" onclick="switchPeriod('30d')">30<span data-i18n="days_short">{% if current_lang == 'en' %}D{% else %}天{% endif %}</span></button>
+                    <button class="btn btn-hosting-outline btn-sm" onclick="switchPeriod('90d')">90<span data-i18n="days_short">{% if current_lang == 'en' %}D{% else %}天{% endif %}</span></button>
+                </div>
+            </div>
+            <div class="hosting-card-body">
+                <canvas id="revenueChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="hosting-card">
+            <div class="hosting-card-header">
+                <h5 class="hosting-card-title">
+                    <i class="bi bi-pie-chart me-2"></i><span data-i18n="miner_distribution">{% if current_lang == 'en' %}Miner Distribution{% else %}矿机分布{% endif %}</span>
+                </h5>
+            </div>
+            <div class="hosting-card-body text-center">
+                <canvas id="minerDistributionChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 自助注册矿机模态框 -->
+<div class="modal fade" id="registerMinerModal" tabindex="-1" aria-labelledby="registerMinerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
+                <h5 class="modal-title" id="registerMinerModalLabel">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    {% if current_lang == 'en' %}Register New Miner{% else %}注册新矿机{% endif %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    {% if current_lang == 'en' %}Your miner registration will be pending approval by the hosting provider.{% else %}您的矿机注册将等待托管商审核批准。{% endif %}
+                </div>
+                
+                <form id="registerMinerForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="reg_serial_number" class="form-label">
+                                {% if current_lang == 'en' %}Serial Number{% else %}矿机序列号{% endif %} <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="reg_serial_number" name="serial_number" required>
+                            <div class="form-text">{% if current_lang == 'en' %}Found on the miner label{% else %}在矿机标签上找到{% endif %}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="reg_miner_model" class="form-label">
+                                {% if current_lang == 'en' %}Miner Model{% else %}矿机型号{% endif %} <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="reg_miner_model" name="miner_model" required>
+                                <option value="">{% if current_lang == 'en' %}Select Model{% else %}选择型号{% endif %}</option>
+                                <option value="Antminer S19 Pro">Antminer S19 Pro</option>
+                                <option value="Antminer S19j Pro">Antminer S19j Pro</option>
+                                <option value="WhatsMiner M30S++">WhatsMiner M30S++</option>
+                                <option value="WhatsMiner M31S+">WhatsMiner M31S+</option>
+                                <option value="AvalonMiner 1246">AvalonMiner 1246</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="reg_hosting_site" class="form-label">
+                                {% if current_lang == 'en' %}Preferred Hosting Site{% else %}首选托管站点{% endif %} <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="reg_hosting_site" name="hosting_site" required>
+                                <option value="">{% if current_lang == 'en' %}Select Site{% else %}选择站点{% endif %}</option>
+                                <!-- 动态加载站点选项 -->
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="reg_purchase_date" class="form-label">
+                                {% if current_lang == 'en' %}Purchase Date{% else %}购买日期{% endif %}
+                            </label>
+                            <input type="date" class="form-control" id="reg_purchase_date" name="purchase_date">
+                        </div>
+                        <div class="col-12">
+                            <label for="reg_notes" class="form-label">
+                                {% if current_lang == 'en' %}Additional Notes{% else %}补充说明{% endif %}
+                            </label>
+                            <textarea class="form-control" id="reg_notes" name="notes" rows="3" 
+                                placeholder="{% if current_lang == 'en' %}Any special requirements or notes about your miner...{% else %}关于矿机的特殊要求或说明...{% endif %}"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-hosting-secondary" data-bs-dismiss="modal">
+                    {% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}
+                </button>
+                <button type="button" class="btn btn-hosting-primary" onclick="registerMiner()">
+                    {% if current_lang == 'en' %}Submit Registration{% else %}提交注册{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadClientDashboard();
+    loadHostingSites();
+    initCharts();
+});
+
+function loadClientDashboard() {
+    // 加载客户的矿机统计
+    fetch('/hosting/api/client/dashboard')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateDashboardStats(data.stats);
+                displayRecentMiners(data.recent_miners);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading dashboard:', error);
+        });
+}
+
+function updateDashboardStats(stats) {
+    document.getElementById('total-miners').textContent = (stats.total_miners || 0).toLocaleString();
+    document.getElementById('active-miners').textContent = (stats.active_miners || 0).toLocaleString();
+    // 格式化算力：大数值用逗号分隔，保留1位小数
+    const hashrate = parseFloat(stats.total_hashrate || 0).toLocaleString(undefined, {maximumFractionDigits: 1});
+    document.getElementById('total-hashrate').textContent = hashrate + ' TH/s';
+    document.getElementById('monthly-revenue').textContent = '$' + parseFloat(stats.monthly_revenue || 0).toLocaleString(undefined, {maximumFractionDigits: 0});
+}
+
+function displayRecentMiners(miners) {
+    const tbody = document.querySelector('#recent-miners-table tbody');
+    tbody.innerHTML = '';
+    
+    if (miners.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center text-muted py-4">
+                    <i class="bi bi-inbox fs-1 mb-2 d-block"></i>
+                    <span data-i18n="hosting.no_miners_yet">${getLanguage() === 'en' ? 'No miners registered yet' : '暂未注册矿机'}</span>
+                    <br>
+                    <button class="btn btn-hosting-primary btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#registerMinerModal">
+                        <span data-i18n="hosting.register_first_miner">${getLanguage() === 'en' ? 'Register Your First Miner' : '注册您的第一台矿机'}</span>
+                    </button>
+                </td>
+            </tr>
+        `;
+        if (window.I18n) {
+            I18n.updatePageTranslations();
+        }
+        return;
+    }
+    
+    miners.forEach(miner => {
+        const row = `
+            <tr>
+                <td><strong>${miner.serial_number}</strong></td>
+                <td>${miner.miner_model}</td>
+                <td>${miner.site_name || '-'}</td>
+                <td>${miner.hashrate || '-'} TH/s</td>
+                <td><span class="badge bg-${getStatusColor(miner.status)}" data-i18n="hosting.status.${miner.status}">${getStatusText(miner.status)}</span></td>
+                <td>$${(miner.daily_revenue || 0).toFixed(2)}</td>
+            </tr>
+        `;
+        tbody.insertAdjacentHTML('beforeend', row);
+    });
+    
+    if (window.I18n) {
+        I18n.updatePageTranslations();
+    }
+}
+
+function loadHostingSites() {
+    fetch('/hosting/api/sites')
+        .then(response => response.json())
+        .then(data => {
+            const siteSelect = document.getElementById('reg_hosting_site');
+            data.sites.forEach(site => {
+                const option = `<option value="${site.id}">${site.name} - ${site.location}</option>`;
+                siteSelect.insertAdjacentHTML('beforeend', option);
+            });
+        });
+}
+
+function registerMiner() {
+    const form = document.getElementById('registerMinerForm');
+    const formData = new FormData(form);
+    
+    fetch('/hosting/api/client/register-miner', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('registerMinerModal')).hide();
+            form.reset();
+            loadClientDashboard();
+            showToast(getLanguage() === 'en' ? 'Miner registration submitted successfully' : '矿机注册提交成功', 'success');
+        } else {
+            showToast(data.message || (getLanguage() === 'en' ? 'Registration failed' : '注册失败'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error registering miner:', error);
+        showToast(getLanguage() === 'en' ? 'Registration failed' : '注册失败', 'error');
+    });
+}
+
+function initCharts() {
+    // 初始化收益趋势图表
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    window.revenueChart = new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: getLanguage() === 'en' ? 'Daily Revenue' : '日收益',
+                data: [],
+                borderColor: '#f7931e',
+                backgroundColor: 'rgba(247, 147, 30, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#ffffff'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: '#adb5bd' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                y: {
+                    ticks: { color: '#adb5bd' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                }
+            }
+        }
+    });
+    
+    // 初始化矿机分布图表
+    const distributionCtx = document.getElementById('minerDistributionChart').getContext('2d');
+    window.minerDistributionChart = new Chart(distributionCtx, {
+        type: 'doughnut',
+        data: {
+            labels: [],
+            datasets: [{
+                data: [],
+                backgroundColor: [
+                    'rgba(247, 147, 30, 0.8)',
+                    'rgba(255, 193, 7, 0.8)',
+                    'rgba(108, 117, 125, 0.8)',
+                    'rgba(40, 167, 69, 0.8)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#ffffff'
+                    }
+                }
+            }
+        }
+    });
+    
+    // 加载图表数据
+    loadRevenueChart('7d');
+    loadMinerDistribution();
+}
+
+function switchPeriod(period) {
+    // 更新按钮状态
+    document.querySelectorAll('.btn-hosting-outline').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // 加载对应时期的数据
+    loadRevenueChart(period);
+}
+
+function loadRevenueChart(period) {
+    fetch(`/hosting/api/client/revenue-chart?period=${period}`)
+        .then(response => response.json())
+        .then(data => {
+            window.revenueChart.data.labels = data.labels;
+            window.revenueChart.data.datasets[0].data = data.data;
+            window.revenueChart.update();
+        })
+        .catch(error => {
+            console.error('Error loading revenue chart:', error);
+        });
+}
+
+function loadMinerDistribution() {
+    fetch('/hosting/api/client/miner-distribution')
+        .then(response => response.json())
+        .then(data => {
+            window.minerDistributionChart.data.labels = data.labels;
+            window.minerDistributionChart.data.datasets[0].data = data.data;
+            window.minerDistributionChart.update();
+        })
+        .catch(error => {
+            console.error('Error loading miner distribution:', error);
+        });
+}
+
+function getStatusColor(status) {
+    const colorMap = {
+        'active': 'success',
+        'offline': 'danger',
+        'maintenance': 'warning',
+        'error': 'danger',
+        'pending_approval': 'warning'
+    };
+    return colorMap[status] || 'secondary';
+}
+
+function getStatusText(status) {
+    if (window.I18n && I18n.initialized) {
+        const translated = I18n.t('hosting.status.' + status);
+        if (translated !== 'hosting.status.' + status) {
+            return translated;
+        }
+    }
+    const language = getLanguage();
+    const statusMap = {
+        'active': language === 'en' ? 'Running' : '运行中',
+        'offline': language === 'en' ? 'Offline' : '离线',
+        'maintenance': language === 'en' ? 'Maintenance' : '维护中',
+        'error': language === 'en' ? 'Error' : '故障',
+        'pending_approval': language === 'en' ? 'Pending' : '待审核'
+    };
+    return statusMap[status] || status;
+}
+
+function getLanguage() {
+    if (window.I18n && I18n.initialized) {
+        return I18n.getLang();
+    }
+    return document.querySelector('meta[name="language"]').content;
+}
+
+function showToast(message, type) {
+    console.log(`[${type.toUpperCase()}] ${message}`);
+}
+</script>
+{% endblock %}

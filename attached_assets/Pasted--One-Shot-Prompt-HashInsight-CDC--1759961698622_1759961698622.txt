@@ -1,0 +1,148 @@
+🟢 One-Shot Prompt —— HashInsight（CDC 事件总线 · 最优解）
+
+你现在扮演资深平台架构师 + 全栈工程师。
+请一次性给出完整可运行的项目，不要向我提问；不明确之处用“稳健默认”，并在文末列出“假设”。
+
+背景与目标
+
+参考页面：https://calc.hashinsight.net/
+
+目标：把现有页面/API/数据表与Transactional Outbox → Debezium CDC → Kafka总线打通，消费者用Inbox 幂等 + 分布式锁重算派生表并失效缓存，实现P95≤3s的“写库到页面可见”。
+
+关键链路：POST /api/miners → 同事务写 outbox(miner.added) → Debezium 捕获 → Kafka topic(events.miner, key=user_id) → Portfolio-Consumer 幂等重算 → 失效 user_portfolio:{uid} → /analytics/main 命中。
+
+技术栈（必须）
+
+Python 3.10+ / Flask / SQLAlchemy / Pydantic
+
+PostgreSQL 15 + TimescaleDB（时序表）
+
+Redis（缓存 + 分布式锁）
+
+Kafka（KRaft 或 Zookeeper 二选一） + Kafka Connect（Debezium Postgres Source）
+
+kafka-python 或 confluent-kafka（消费者）
+
+Docker Compose 一键起全栈；可选 Kafka UI。
+
+统一时区：UTC；多租户键：tenant_id；认证：JWT + Scopes；DB 启用 RLS。
+
+交付要求（全部必须给出）
+
+目录结构（树形）
+
+docker-compose.yml
+
+services：web(Flask)、worker-portfolio、worker-intel(占位)、postgres(启用 Timescale)、redis、kafka、connect(Debezium)、可选 kafka-ui。
+
+预创建主题：events.miner, events.treasury, events.ops, events.crm, events.dlq（分区数、保留策略）。
+
+.env.example（DATABASE_URL, REDIS_URL, KAFKA_BROKERS, CONNECT_URL, JWT_SECRET…）
+
+数据库迁移 SQL（Alembic 或纯 SQL）
+
+基础表：users, roles, permissions, user_miners, miners, miner_models, inventory, forecast_daily, event_outbox, consumer_inbox, audit_logs。
+
+Timescale：为 miner_telemetry, network_snapshots, forecast_daily 建分区（daily）。
+
+Outbox：如下注释/索引；Inbox 复合主键（consumer_name, event_id）。
+
+RLS 策略样例（tenant_id = current_setting('app.tenant_id')）。
+
+Flask 应用（API Gateway + Domain Services）
+
+端点：
+
+POST /api/miners（新增矿机，事务内插入 outbox，事件 miner.added 带 idempotency_key）
+
+PATCH /api/miners/:id/status（miner.status_changed）
+
+POST /api/miners/bulk（仅写一条 miner.bulk_imported{count}）
+
+GET /api/intelligence/forecast（读 forecast_daily，SWR 缓存）
+
+POST /api/treasury/execute（treasury.trade_executed 占位）
+
+GET /api/health（见指标项）
+
+统一 JWT + Scope 中间件（miners:write, intel:read, treasury:trade…）
+
+速率限制与 user_subscriptions 范例。
+
+所有写操作写入 audit_logs。
+
+每个端点附 curl 示例。
+
+Outbox 写入钩子
+
+SQLAlchemy 事务提交点/服务层函数：与业务写入同一事务插入 event_outbox：
+
+CREATE TABLE event_outbox(
+  id text PRIMARY KEY,
+  kind text NOT NULL,
+  user_id text NOT NULL,
+  entity_id text,
+  payload jsonb NOT NULL,
+  idempotency_key text UNIQUE,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  processed boolean NOT NULL DEFAULT false
+);
+CREATE INDEX ON event_outbox (processed, created_at);
+CREATE INDEX ON event_outbox (user_id, created_at);
+
+
+Debezium Postgres Source 连接器配置（connectors/outbox.json）
+
+table.include.list=public.event_outbox
+
+transforms=unwrap,route；message.key.columns=user_id；按 kind 路由到 events.* 主题（示例配置完整 JSON）。
+
+Kafka 消费者（Python）
+
+workers/portfolio_consumer.py：订阅 events.miner，分布式锁 lock:recalc:{user_id}，Inbox 去重，调用 recalc_user_portfolio(user_id)，成功后失效 user_portfolio:{uid}；失败重试+入 DLQ。
+
+workers/intel_consumer.py（占位）：响应 miner.* 触发预测刷新写 forecast_daily。
+
+通用重试/回放工具（按时间窗重放）。
+
+缓存策略
+
+键：user_portfolio:{uid}, user_analytics:{uid}, forecast:{uid}, ops_schedule:{uid}:{yyyymmdd}；SWR：先回旧值，后台刷新；TTL 示例（portfolio 600s / forecast 1800s）。
+
+/api/health 指标
+
+outbox_backlog, kafka_consumer_lag(按 consumer), dlq_count, forecast_freshness_sec, cache_hit_rate, version。
+
+Mermaid 架构图（放在 docs/，3 张：总体拓扑、端到端时序、分域 ER）。
+
+Makefile（make up/down/logs/migrate/seed/connect/register）与README（启动步骤、验证脚本）。
+
+验收脚本
+
+启动 Compose；2) POST /api/miners；3) 观察 connector 日志、Kafka 消费、消费者日志；4) /api/health 指标达标；5) GET /analytics/main 能命中/刷新。
+
+安全与合规
+
+KMS/Envelope 加密占位（矿机密码/交易所 key）；Secret 轮转策略；RLS 示例策略；审计日志格式。
+
+假设与说明（列出默认端口、镜像、账号密码、样例数据规模与性能预期）。
+
+输出格式要求（严格遵守）
+
+先给项目结构树，随后逐文件输出；每个文件使用单独代码块，第一行写路径，如：
+
+# app/api/miners.py
+<code...>
+
+
+代码可复制即跑；关键处附中文注释。
+
+docker-compose.yml 与连接器 JSON 必须完整可用。
+
+每个 API 给出最少 1 条 curl 示例。
+
+文末附：启动步骤（一步步命令） + 验收 checklist + 假设清单。
+
+不要省略核心逻辑；不要向我提问；不要等待我确认。
+
+按以上要求，现在开始完整输出项目所需的所有文件与内容。

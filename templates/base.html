@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="user-role" content="{{ session.role }}">
+    <meta name="language" content="{{ current_lang }}">
+    <title>{% block title %}BTC Mining Calculator{% endblock %}</title>
+    <!-- Bootstrap CSS from Replit CDN -->
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Web3.js CDN for blockchain functionality -->
+    <script src="https://cdn.jsdelivr.net/npm/web3@4.2.0/dist/web3.min.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <!-- Animation CSS -->
+    <link rel="stylesheet" href="/static/css/animations.css">
+    <!-- Responsive CSS -->
+    <link rel="stylesheet" href="/static/css/responsive.css">
+    <!-- i18n 无刷新语言切换 -->
+    <script src="/static/js/i18n.js"></script>
+    {% block extra_css %}{% endblock %}
+    {% block extra_head %}{% endblock %}
+    
+    <!-- Global Language Switcher Styles -->
+    <style>
+        .global-lang-switcher {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 9999;
+            display: flex;
+            gap: 4px;
+            background: rgba(26, 29, 46, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid #f7931a;
+            border-radius: 25px;
+            padding: 4px;
+            box-shadow: 0 4px 15px rgba(247, 147, 26, 0.2);
+        }
+        .global-lang-switcher .lang-btn {
+            padding: 6px 14px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .global-lang-switcher .lang-btn.inactive {
+            background: transparent;
+            color: #adb5bd;
+        }
+        .global-lang-switcher .lang-btn.inactive:hover {
+            background: rgba(247, 147, 26, 0.15);
+            color: #f7931a;
+        }
+        .global-lang-switcher .lang-btn.active {
+            background: linear-gradient(135deg, #f7931a 0%, #ffc107 100%);
+            color: #000;
+        }
+        @media (max-width: 576px) {
+            .global-lang-switcher {
+                top: 10px;
+                right: 10px;
+                padding: 3px;
+            }
+            .global-lang-switcher .lang-btn {
+                padding: 5px 10px;
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Global Language Switcher (无刷新切换) -->
+    <div class="global-lang-switcher">
+        <button type="button" data-lang-switch="zh" data-lang="zh"
+           class="lang-btn lang-switch-btn {{ 'active' if current_lang == 'zh' else 'inactive' }}">
+            中文
+        </button>
+        <button type="button" data-lang-switch="en" data-lang="en"
+           class="lang-btn lang-switch-btn {{ 'active' if current_lang == 'en' else 'inactive' }}">
+            EN
+        </button>
+    </div>
+
+    <div class="container-fluid">
+        <!-- Header navigation removed -->
+
+        <main class="container mb-5">
+            <!-- Flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endwith %}
+            
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- Legal Footer -->
+        <footer class="py-4 my-4 border-top bg-dark">
+            <div class="container text-center">
+                <div class="row">
+                    <div class="col-12 mb-3">
+                        <a href="{{ url_for('legal_terms') }}" class="btn btn-outline-warning btn-sm me-3">
+                            <i class="bi bi-shield-check me-1"></i>
+                            {% if current_lang == 'zh' %}服务条款和隐私政策{% else %}Terms of Use & Privacy Notice{% endif %}
+                        </a>
+                        <a href="mailto:cryptocalculator123@gmail.com" class="btn btn-outline-info btn-sm">
+                            <i class="bi bi-envelope me-1"></i>
+                            {% if current_lang == 'zh' %}联系我们{% else %}Contact Us{% endif %}
+                        </a>
+                    </div>
+                    <div class="col-12">
+                        <p class="text-muted mb-0">
+                            <small>© 2025 HashInsight Mining Intelligence. {% if current_lang == 'zh' %}最后更新{% else %}Last Updated{% endif %}: 22 August 2025</small>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    {% block scripts %}{% endblock %}
+    
+    <!-- Language Switcher Handler -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.I18n) {
+            I18n.onLangChange(function(newLang, oldLang) {
+                // 更新全局语言切换按钮样式
+                document.querySelectorAll('.lang-switch-btn').forEach(btn => {
+                    if (btn.dataset.lang === newLang) {
+                        btn.classList.remove('inactive');
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                        btn.classList.add('inactive');
+                    }
+                });
+            });
+        }
+    });
+    </script>
+</body>
+</html>

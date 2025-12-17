@@ -1,0 +1,252 @@
+{% extends "crm/base.html" %}
+
+{% block title %}{{ t('dashboard') }} | BTC Mining CRM{% endblock %}
+
+{% block page_title %}{{ t('dashboard') }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">{{ t('dashboard') }}</li>
+{% endblock %}
+
+{% block content %}
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card bg-dark">
+            <div class="card-body text-center">
+                <i class="bi bi-building icon"></i>
+                <div class="value">{{ customers_count }}</div>
+                <div class="label" data-i18n="customers">{{ t('customers') }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-dark">
+            <div class="card-body text-center">
+                <i class="bi bi-lightbulb icon"></i>
+                <div class="value">{{ leads_count }}</div>
+                <div class="label" data-i18n="leads">{{ t('leads') }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-dark">
+            <div class="card-body text-center">
+                <i class="bi bi-currency-dollar icon"></i>
+                <div class="value">{{ deals_count }}</div>
+                <div class="label" data-i18n="deals">{{ t('deals') }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-dark">
+            <div class="card-body text-center">
+                <i class="bi bi-cash-stack icon"></i>
+                <div class="value">${{ "{:,.2f}".format(deals_value) }}</div>
+                <div class="label" data-i18n="total_value">{{ t('total_value') }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Activity and Tasks Section -->
+<div class="row">
+    <!-- Recent Activities -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i><span data-i18n="recent_activities">{{ t('recent_activities') }}</span></h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% if recent_activities %}
+                        {% for activity in recent_activities %}
+                        <div class="list-group-item bg-dark">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ activity.summary }}</h6>
+                                <small class="text-muted">{{ activity.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                            </div>
+                            <p class="mb-1 small">
+                                <span class="badge bg-{{ 
+                                    'success' if activity.type == '创建' else 
+                                    'info' if activity.type == '备注' else 
+                                    'warning' if activity.type == '电话' else 
+                                    'primary' if activity.type == '会议' else 
+                                    'secondary' 
+                                }}">{{ activity.type }}</span>
+                                {% if activity.customer %}
+                                    <a href="{{ url_for('crm.customer_detail', customer_id=activity.customer.id) }}" class="text-info">
+                                        {{ activity.customer.name }}
+                                    </a>
+                                {% endif %}
+                            </p>
+                            {% if activity.details %}
+                            <small class="text-truncate d-block" style="max-width: 100%;">{{ activity.details[:100] }}{% if activity.details|length > 100 %}...{% endif %}</small>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="list-group-item bg-dark text-center py-5">
+                            <i class="bi bi-calendar-x text-secondary mb-3" style="font-size: 2rem;"></i>
+                            <p class="text-muted mb-0" data-i18n="no_activities">{{ t('no_activities') }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{{ url_for('crm.activities') }}" class="btn btn-sm btn-outline-info" data-i18n="view_all_activities">{{ t('view_all_activities') }}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Follow Up Leads -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-calendar-check me-2"></i><span data-i18n="follow_up_leads">{{ t('follow_up_leads') }}</span></h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% if follow_up_leads %}
+                        {% for lead in follow_up_leads %}
+                        <div class="list-group-item bg-dark">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">
+                                    <a href="{{ url_for('crm.lead_detail', lead_id=lead.id) }}" class="text-info">
+                                        {{ lead.title }}
+                                    </a>
+                                </h6>
+                                <small class="text-muted">
+                                    <span data-i18n="follow_up_date">{{ t('follow_up_date') }}</span>: {{ lead.next_follow_up.strftime('%Y-%m-%d') if lead.next_follow_up else t('not_set') }}
+                                </small>
+                            </div>
+                            <p class="mb-1 small">
+                                <span class="badge bg-{{ 
+                                    'primary' if lead.status.name == 'NEW' else 
+                                    'info' if lead.status.name == 'CONTACTED' else 
+                                    'success' if lead.status.name == 'QUALIFIED' else 
+                                    'warning' if lead.status.name == 'NEGOTIATION' else 
+                                    'secondary' 
+                                }}">{{ lead.status.value }}</span>
+                                <span data-i18n="customer">{{ t('customer') }}</span>: 
+                                {% if lead.customer %}
+                                    <a href="{{ url_for('crm.customer_detail', customer_id=lead.customer.id) }}" class="text-info">
+                                        {{ lead.customer.name }}
+                                    </a>
+                                {% else %}
+                                    <span data-i18n="unknown_customer">{{ t('unknown_customer') }}</span>
+                                {% endif %}
+                            </p>
+                            {% if lead.assigned_to %}
+                            <small class="text-muted"><span data-i18n="assigned_to">{{ t('assigned_to') }}</span>: {{ lead.assigned_to }}</small>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="list-group-item bg-dark text-center py-5">
+                            <i class="bi bi-check-circle text-secondary mb-3" style="font-size: 2rem;"></i>
+                            <p class="text-muted mb-0" data-i18n="no_follow_up_leads">{{ t('no_follow_up_leads') }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{{ url_for('crm.leads') }}" class="btn btn-sm btn-outline-info" data-i18n="view_all_leads">{{ t('view_all_leads') }}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Deals -->
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-currency-dollar me-2"></i><span data-i18n="recent_deals">{{ t('recent_deals') }}</span></h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th data-i18n="deal_name">{{ t('deal_name') }}</th>
+                                <th data-i18n="customer">{{ t('customer') }}</th>
+                                <th data-i18n="status">{{ t('status') }}</th>
+                                <th data-i18n="amount">{{ t('amount') }}</th>
+                                <th data-i18n="expected_close_date">{{ t('expected_close_date') }}</th>
+                                <th data-i18n="assigned_to">{{ t('assigned_to') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if recent_deals %}
+                                {% for deal in recent_deals %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('crm.deal_detail', deal_id=deal.id) }}" class="text-info">
+                                            {{ deal.title }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        {% if deal.customer %}
+                                        <a href="{{ url_for('crm.customer_detail', customer_id=deal.customer.id) }}" class="text-info">
+                                            {{ deal.customer.name }}
+                                        </a>
+                                        {% else %}
+                                        <span data-i18n="unknown_customer">{{ t('unknown_customer') }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 
+                                            'secondary' if deal.status.name == 'DRAFT' else 
+                                            'info' if deal.status.name == 'PENDING' else 
+                                            'primary' if deal.status.name == 'APPROVED' else 
+                                            'warning' if deal.status.name == 'SIGNED' else 
+                                            'success' if deal.status.name == 'COMPLETED' else 
+                                            'danger'
+                                        }}">{{ deal.status.value }}</span>
+                                    </td>
+                                    <td>${{ "{:,.2f}".format(deal.value) }}</td>
+                                    <td>{{ deal.expected_close_date.strftime('%Y-%m-%d') if deal.expected_close_date else t('not_set') }}</td>
+                                    <td>{{ deal.assigned_to if deal.assigned_to else t('not_assigned') }}</td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">
+                                        <i class="bi bi-cash-coin text-secondary mb-3" style="font-size: 2rem;"></i>
+                                        <p class="text-muted mb-0" data-i18n="no_deals">{{ t('no_deals') }}</p>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{{ url_for('crm.deals') }}" class="btn btn-sm btn-outline-info" data-i18n="view_all_deals">{{ t('view_all_deals') }}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions Buttons -->
+<div class="row my-4">
+    <div class="col-12 text-center">
+        <a href="{{ url_for('crm.customers') }}" class="btn btn-outline-primary mx-2">
+            <i class="bi bi-building me-2"></i><span data-i18n="manage_customers">{{ t('manage_customers') }}</span>
+        </a>
+        <a href="{{ url_for('crm.leads') }}" class="btn btn-outline-info mx-2">
+            <i class="bi bi-lightbulb me-2"></i><span data-i18n="view_leads">{{ t('view_leads') }}</span>
+        </a>
+        <a href="{{ url_for('crm.deals') }}" class="btn btn-outline-success mx-2">
+            <i class="bi bi-currency-dollar me-2"></i><span data-i18n="manage_deals">{{ t('manage_deals') }}</span>
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Any additional JavaScript specific to the dashboard can go here
+</script>
+{% endblock %}

@@ -1,0 +1,143 @@
+P0 – Single Miner Dashboard MVP（必须做）
+A. UX / Product
+
+Define page goal
+
+One sentence spec:
+
+“In 3 seconds, user can see if this miner is healthy and profitable today.”
+
+Finalize sections & fields
+
+Header: Miner name, status, model, location, last seen.
+
+KPI cards (4):
+
+Hashrate (current vs expected)
+
+Temperature range
+
+Power (kW, estimated)
+
+Net Profit / Day
+
+24h chart:
+
+Left axis: Hashrate (TH/s)
+
+Right axis: Net Profit (USD)
+
+Mining Pool block:
+
+Pool URL, Worker name, Latency, Accepted/Rejected (24h)
+
+Optional: Board Health summary (4/4 healthy)
+
+Draw a simple wireframe
+
+One mobile view + one desktop view (hand sketch or Figma, anything is fine).
+
+B. Data / Backend
+
+Define MinerStatus data model
+
+Fields:
+hashrate_current, hashrate_expected, temp_min, temp_max,
+power_kw, efficiency_j_per_th, error_rate, boards_healthy,
+pool_url, worker_name, latency_ms, shares_accepted_24h, shares_rejected_24h.
+
+Implement Antminer status collector (read-only)
+
+Connect to miner API (HTTP JSON or existing adapter).
+
+Map raw fields → MinerStatus model.
+
+Store last N samples (e.g., 24h, 5 min interval).
+
+Compute business metrics
+
+From existing ROI engine, expose:
+
+revenue_day_usd
+
+power_cost_day_usd
+
+net_profit_day_usd
+
+Attach to MinerStatus.
+
+Create API endpoint
+
+GET /api/miner/:id/status → returns MinerStatus + 24h timeseries.
+
+C. Frontend
+
+Build Single Miner page route
+
+URL pattern: /miners/:id.
+
+Implement header block
+
+Show name, status badge (Online/Warning/Offline), model, location, last seen.
+
+Implement KPI row
+
+4 cards with:
+
+Big number
+
+Unit
+
+Small subtext (e.g. Expected 194.3 TH/s, Rev $23.5 – Power $11.2).
+
+Implement combined 24h chart
+
+X: time (24h)
+
+Y-left: Hashrate
+
+Y-right: Net Profit
+
+Toggle not needed yet (only 24h).
+
+Implement Mining Pool block
+
+Show: Pool URL, Worker, Latency, Accepted/Rejected (24h).
+
+Style simple, no extra graphs.
+
+Optional: Board Health (collapsible)
+
+Default: one line Boards: 4 / 4 healthy.
+
+Expand: small list per board (TH/s + temp range).
+
+D. Quality / Polish
+
+Define health rules
+
+Online/Warning/Offline based on:
+
+Last seen time
+
+Temperature thresholds
+
+Error rate
+
+Hashrate deviation from expected
+
+Add basic tests
+
+Backend unit test: mapping raw miner data → MinerStatus.
+
+Frontend snapshot / simple render tests for KPI row and chart.
+
+Review on real device
+
+Open one real miner from test site.
+
+Check:
+
+Loads under 2–3s.
+
+Numbers look reasonable vs existing panels (Foreman / Super Saiyan).

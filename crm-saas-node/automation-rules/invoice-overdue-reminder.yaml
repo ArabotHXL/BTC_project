@@ -1,0 +1,28 @@
+name: "Invoice Overdue Collection Reminder"
+description: "Send collection reminders for overdue invoices"
+trigger:
+  type: INVOICE_OVERDUE
+  schedule: "0 10 * * *" # Daily at 10 AM
+
+conditions:
+  - field: "invoice.status"
+    operator: "in"
+    value: ["ISSUED", "OVERDUE"]
+  - field: "invoice.due_date"
+    operator: "before"
+    value: "today"
+  - field: "invoice.days_overdue"
+    operator: "in"
+    value: [7, 14, 30] # Escalation at 7, 14, 30 days
+
+actions:
+  - type: "send_email"
+    params:
+      to: "{{invoice.account.billing_email}}"
+      subject: "Payment Reminder: Invoice {{invoice.number}} ({{invoice.days_overdue}} days overdue)"
+      template: "invoice_overdue_{{invoice.days_overdue}}"
+  - type: "create_task"
+    params:
+      title: "Collection call required: {{invoice.account.name}}"
+      assigned_to_id: "{{invoice.account.owner_id}}"
+      priority: "HIGH"

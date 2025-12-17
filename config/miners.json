@@ -1,0 +1,20 @@
+{
+  "miners": [
+    {
+      "id": "demo-antminer-s19-001",
+      "model": "Antminer S19 Pro",
+      "ip": "192.168.1.101",
+      "port": 4028,
+      "adapter_type": "simulator",
+      "notes": "Demo miner for testing"
+    },
+    {
+      "id": "demo-whatsminer-m50s-001",
+      "model": "WhatsMiner M50S",
+      "ip": "192.168.1.103",
+      "port": 4028,
+      "adapter_type": "simulator",
+      "notes": "Demo miner for testing"
+    }
+  ]
+}

@@ -1,0 +1,1035 @@
+{% extends "base.html" %}
+
+{% block title %}{% if current_lang == 'en' %}System Monitoring{% else %}系统监控{% endif %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --btc-gold: #f7931a;
+        --btc-orange: #ffa500;
+        --gradient-gold: linear-gradient(135deg, #f7931a 0%, #ffa500 100%);
+        --shadow-glow: 0 0 20px rgba(247, 147, 26, 0.3);
+        --status-healthy: #28a745;
+        --status-degraded: #ffc107;
+        --status-unhealthy: #dc3545;
+    }
+    
+    body {
+        background-color: #1a1d2e;
+        color: #e0e0e0;
+    }
+    
+    .language-switcher {
+        display: inline-flex;
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid rgba(247, 147, 26, 0.3);
+        background: rgba(247, 147, 26, 0.1);
+    }
+    
+    .language-switcher .btn {
+        border: none;
+        padding: 6px 16px;
+        font-size: 0.9rem;
+        background: transparent;
+        color: #8b92a7;
+        transition: all 0.3s ease;
+    }
+    
+    .language-switcher .btn:hover {
+        background: rgba(247, 147, 26, 0.2);
+        color: var(--btc-gold);
+    }
+    
+    .language-switcher .btn.active {
+        background: var(--btc-gold);
+        color: #000;
+        font-weight: 600;
+    }
+    
+    .page-header {
+        padding: 30px 0;
+        border-bottom: 2px solid rgba(247, 147, 26, 0.3);
+        margin-bottom: 30px;
+    }
+    
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--btc-gold);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .kpi-card {
+        background: linear-gradient(145deg, #1a1d29 0%, #242836 100%);
+        border: 1px solid rgba(247, 147, 26, 0.2);
+        border-radius: 15px;
+        padding: 25px;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        animation: fadeInUp 0.6s ease-out backwards;
+        height: 100%;
+    }
+    
+    .kpi-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(247, 147, 26, 0.1), transparent);
+        transition: left 0.5s;
+    }
+    
+    .kpi-card:hover::before {
+        left: 100%;
+    }
+    
+    .kpi-card:hover {
+        transform: translateY(-8px);
+        border-color: var(--btc-gold);
+        box-shadow: var(--shadow-glow);
+    }
+    
+    .kpi-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: var(--gradient-gold);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 15px;
+        animation: pulse 2s infinite;
+    }
+    
+    .kpi-icon i {
+        font-size: 28px;
+        color: #000;
+    }
+    
+    .kpi-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--btc-gold);
+        margin-bottom: 8px;
+        font-family: 'Courier New', monospace;
+    }
+    
+    .kpi-label {
+        font-size: 0.95rem;
+        color: #8b92a7;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .module-card {
+        background: #1a1d29;
+        border-radius: 12px;
+        padding: 20px;
+        border: 2px solid;
+        transition: all 0.3s ease;
+        animation: fadeInUp 0.6s ease-out backwards;
+        height: 100%;
+    }
+    
+    .module-card.healthy {
+        border-color: var(--status-healthy);
+    }
+    
+    .module-card.degraded {
+        border-color: var(--status-degraded);
+    }
+    
+    .module-card.unhealthy {
+        border-color: var(--status-unhealthy);
+    }
+    
+    .module-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(247, 147, 26, 0.15);
+    }
+    
+    .module-status-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin-bottom: 15px;
+    }
+    
+    .module-status-icon.healthy {
+        background: rgba(40, 167, 69, 0.2);
+        color: var(--status-healthy);
+    }
+    
+    .module-status-icon.degraded {
+        background: rgba(255, 193, 7, 0.2);
+        color: var(--status-degraded);
+    }
+    
+    .module-status-icon.unhealthy {
+        background: rgba(220, 53, 69, 0.2);
+        color: var(--status-unhealthy);
+    }
+    
+    .module-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #fff;
+        margin-bottom: 8px;
+    }
+    
+    .module-metric {
+        font-size: 0.9rem;
+        color: #8b92a7;
+    }
+    
+    .chart-card {
+        background: #1a1d29;
+        border: 1px solid rgba(247, 147, 26, 0.2);
+        border-radius: 12px;
+        padding: 20px;
+        transition: all 0.3s ease;
+        animation: fadeInUp 0.6s ease-out backwards;
+    }
+    
+    .chart-card:hover {
+        border-color: var(--btc-gold);
+        box-shadow: 0 4px 20px rgba(247, 147, 26, 0.15);
+    }
+    
+    .chart-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #fff;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+    
+    .alerts-table {
+        width: 100%;
+        margin-top: 20px;
+    }
+    
+    .alerts-table thead {
+        background: rgba(247, 147, 26, 0.1);
+    }
+    
+    .alerts-table th {
+        padding: 12px;
+        font-weight: 600;
+        color: var(--btc-gold);
+        border-bottom: 2px solid rgba(247, 147, 26, 0.3);
+    }
+    
+    .alerts-table td {
+        padding: 12px;
+        border-bottom: 1px solid rgba(247, 147, 26, 0.1);
+    }
+    
+    .alerts-table tbody tr {
+        transition: background 0.3s ease;
+    }
+    
+    .alerts-table tbody tr:hover {
+        background: rgba(247, 147, 26, 0.05);
+    }
+    
+    .severity-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+    }
+    
+    .severity-critical {
+        background: rgba(220, 53, 69, 0.2);
+        color: var(--status-unhealthy);
+    }
+    
+    .severity-warning {
+        background: rgba(255, 193, 7, 0.2);
+        color: var(--status-degraded);
+    }
+    
+    .severity-info {
+        background: rgba(13, 110, 253, 0.2);
+        color: #0d6efd;
+    }
+    
+    .section-title {
+        position: relative;
+        padding-bottom: 12px;
+        margin-bottom: 25px;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #fff;
+    }
+    
+    .section-title::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 60px;
+        height: 3px;
+        background: var(--gradient-gold);
+        border-radius: 2px;
+    }
+    
+    .last-updated {
+        font-size: 0.85rem;
+        color: #8b92a7;
+        text-align: right;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+    }
+    
+    .kpi-card:nth-child(1) { animation-delay: 0.1s; }
+    .kpi-card:nth-child(2) { animation-delay: 0.2s; }
+    .kpi-card:nth-child(3) { animation-delay: 0.3s; }
+    .kpi-card:nth-child(4) { animation-delay: 0.4s; }
+    
+    .module-card:nth-child(1) { animation-delay: 0.1s; }
+    .module-card:nth-child(2) { animation-delay: 0.2s; }
+    .module-card:nth-child(3) { animation-delay: 0.3s; }
+    .module-card:nth-child(4) { animation-delay: 0.4s; }
+    .module-card:nth-child(5) { animation-delay: 0.5s; }
+    .module-card:nth-child(6) { animation-delay: 0.6s; }
+    
+    @media (max-width: 768px) {
+        .kpi-value {
+            font-size: 2rem;
+        }
+        
+        .chart-container {
+            height: 250px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h1 class="page-title">
+                <i class="bi bi-speedometer2"></i>
+                {% if current_lang == 'en' %}System Monitoring{% else %}系统监控{% endif %}
+            </h1>
+            <p class="text-muted mb-0">
+                {% if current_lang == 'en' %}Real-time system health and performance metrics{% else %}实时系统健康和性能指标{% endif %}
+            </p>
+        </div>
+        <div class="col-md-6 text-end">
+            <div class="d-inline-block me-3 align-middle">
+                <div class="last-updated" id="last-updated">
+                    {% if current_lang == 'en' %}Last updated{% else %}最后更新{% endif %}: <span id="update-time">{% if current_lang == 'en' %}Loading...{% else %}加载中...{% endif %}</span>
+                </div>
+            </div>
+            
+            <div class="language-switcher me-2 d-inline-flex">
+                <button type="button" data-lang-switch="zh" data-lang="zh" class="btn btn-sm {{ 'active' if current_lang == 'zh' else '' }} lang-switch-btn">中文</button>
+                <button type="button" data-lang-switch="en" data-lang="en" class="btn btn-sm {{ 'active' if current_lang == 'en' else '' }} lang-switch-btn">English</button>
+            </div>
+            
+            <a href="{{ url_for('admin.admin_user_list') }}" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-people-fill me-1"></i>{% if current_lang == 'en' %}User Management{% else %}用户管理{% endif %}
+            </a>
+            <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm ms-2">
+                <i class="bi bi-house-door me-1"></i>{% if current_lang == 'en' %}Back to Home{% else %}返回主页{% endif %}
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- KPI Cards Section -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="kpi-card">
+            <div class="kpi-icon">
+                <i class="bi bi-heart-pulse-fill"></i>
+            </div>
+            <div id="health-score" class="kpi-value">0</div>
+            <div class="kpi-label">{% if current_lang == 'en' %}System Health Score{% else %}系统健康评分{% endif %}</div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="kpi-card">
+            <div class="kpi-icon">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div id="success-rate" class="kpi-value">0%</div>
+            <div class="kpi-label">{% if current_lang == 'en' %}API Success Rate{% else %}API成功率{% endif %}</div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="kpi-card">
+            <div class="kpi-icon">
+                <i class="bi bi-stopwatch-fill"></i>
+            </div>
+            <div id="p95-latency" class="kpi-value">0 ms</div>
+            <div class="kpi-label">{% if current_lang == 'en' %}P95 Latency{% else %}P95延迟{% endif %}</div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="kpi-card">
+            <div class="kpi-icon">
+                <i class="bi bi-grid-3x3-gap-fill"></i>
+            </div>
+            <div id="active-modules" class="kpi-value">0</div>
+            <div class="kpi-label">{% if current_lang == 'en' %}Active Modules{% else %}活跃模块{% endif %}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Module Health Status Grid -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="section-title">
+            <i class="bi bi-hdd-rack me-2" style="color: var(--btc-gold);"></i>
+            {% if current_lang == 'en' %}Module Health Status{% else %}模块健康状态{% endif %}
+        </h4>
+    </div>
+    
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="module-card healthy" id="module-database">
+            <div class="module-status-icon healthy">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div class="module-name">{% if current_lang == 'en' %}Database{% else %}数据库{% endif %}</div>
+            <div class="module-type text-muted mb-2">{% if current_lang == 'en' %}PostgreSQL{% else %}PostgreSQL{% endif %}</div>
+            <div class="module-metric">{% if current_lang == 'en' %}Response Time{% else %}响应时间{% endif %}: <span class="module-response-time">-- ms</span></div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="module-card healthy" id="module-redis">
+            <div class="module-status-icon healthy">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div class="module-name">{% if current_lang == 'en' %}Cache Service{% else %}缓存服务{% endif %}</div>
+            <div class="module-type text-muted mb-2">{% if current_lang == 'en' %}Redis{% else %}Redis{% endif %}</div>
+            <div class="module-metric">{% if current_lang == 'en' %}Status{% else %}状态{% endif %}: <span class="module-status-text">{% if current_lang == 'en' %}Connected{% else %}已连接{% endif %}</span></div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="module-card healthy" id="module-intelligence">
+            <div class="module-status-icon healthy">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div class="module-name">{% if current_lang == 'en' %}Intelligence Layer{% else %}智能层{% endif %}</div>
+            <div class="module-type text-muted mb-2">{% if current_lang == 'en' %}Event Processing{% else %}事件处理{% endif %}</div>
+            <div class="module-metric">{% if current_lang == 'en' %}Outbox Backlog{% else %}待处理事件{% endif %}: <span class="module-backlog">0</span></div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="module-card healthy" id="module-cdc">
+            <div class="module-status-icon healthy">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div class="module-name">{% if current_lang == 'en' %}External APIs{% else %}外部APIs{% endif %}</div>
+            <div class="module-type text-muted mb-2">{% if current_lang == 'en' %}Change Data Capture{% else %}数据捕获{% endif %}</div>
+            <div class="module-metric">{% if current_lang == 'en' %}Kafka Lag{% else %}Kafka延迟{% endif %}: <span class="module-lag">0</span></div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="module-card healthy" id="module-scheduler">
+            <div class="module-status-icon healthy">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div class="module-name">{% if current_lang == 'en' %}Worker Queue{% else %}任务队列{% endif %}</div>
+            <div class="module-type text-muted mb-2">{% if current_lang == 'en' %}Task Execution{% else %}任务执行{% endif %}</div>
+            <div class="module-metric">{% if current_lang == 'en' %}Tasks (24h){% else %}任务(24小时){% endif %}: <span class="module-tasks">0</span></div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="module-card healthy" id="module-api-gateway">
+            <div class="module-status-icon healthy">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div class="module-name">{% if current_lang == 'en' %}API Gateway{% else %}API网关{% endif %}</div>
+            <div class="module-type text-muted mb-2">{% if current_lang == 'en' %}Request Routing{% else %}请求路由{% endif %}</div>
+            <div class="module-metric">{% if current_lang == 'en' %}Active Requests{% else %}活跃请求{% endif %}: <span class="module-requests">0</span></div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Charts Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="section-title">
+            <i class="bi bi-graph-up me-2" style="color: var(--btc-gold);"></i>
+            {% if current_lang == 'en' %}Performance Trends{% else %}性能趋势{% endif %}
+        </h4>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="chart-card">
+            <div class="chart-title">
+                <i class="bi bi-activity"></i>
+                {% if current_lang == 'en' %}API Response Time{% else %}API响应时间{% endif %}
+            </div>
+            <div class="chart-container">
+                <canvas id="api-trend-chart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="chart-card">
+            <div class="chart-title">
+                <i class="bi bi-bar-chart-fill"></i>
+                {% if current_lang == 'en' %}Latency Distribution{% else %}延迟分布{% endif %}
+            </div>
+            <div class="chart-container">
+                <canvas id="latency-chart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="chart-card">
+            <div class="chart-title">
+                <i class="bi bi-pie-chart-fill"></i>
+                {% if current_lang == 'en' %}Cache Hit Rate{% else %}缓存命中率{% endif %}
+            </div>
+            <div class="chart-container">
+                <canvas id="cache-chart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="chart-card">
+            <div class="chart-title">
+                <i class="bi bi-speedometer"></i>
+                {% if current_lang == 'en' %}SLO Dashboard{% else %}SLO仪表盘{% endif %}
+            </div>
+            <div class="chart-container">
+                <canvas id="slo-gauge-chart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alerts Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="section-title">
+            <i class="bi bi-exclamation-triangle me-2" style="color: var(--btc-gold);"></i>
+            {% if current_lang == 'en' %}System Alerts{% else %}系统告警{% endif %}
+        </h4>
+        
+        <div class="chart-card">
+            <div class="table-responsive">
+                <table class="alerts-table">
+                    <thead>
+                        <tr>
+                            <th>{% if current_lang == 'en' %}Severity{% else %}严重程度{% endif %}</th>
+                            <th>{% if current_lang == 'en' %}Module{% else %}模块{% endif %}</th>
+                            <th>{% if current_lang == 'en' %}Metric{% else %}指标{% endif %}</th>
+                            <th>{% if current_lang == 'en' %}Message{% else %}消息{% endif %}</th>
+                            <th>{% if current_lang == 'en' %}Time{% else %}时间{% endif %}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="alerts-tbody">
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">{% if current_lang == 'en' %}Loading alerts...{% else %}加载告警中...{% endif %}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/countup.js@2.8.0/dist/countUp.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+const currentLang = '{{ current_lang }}';
+let apiTrendChart = null;
+let latencyChart = null;
+let cacheChart = null;
+let sloGaugeChart = null;
+let countUpInstances = {};
+
+const translations = {
+    en: {
+        connected: 'Connected',
+        unavailable: 'Unavailable',
+        healthy: 'Healthy',
+        degraded: 'Degraded',
+        unhealthy: 'Unhealthy',
+        noAlerts: 'No alerts',
+        apiRequests: 'API Requests',
+        latency: 'Latency (ms)',
+        cacheHits: 'Cache Hits',
+        cacheMisses: 'Cache Misses',
+        compliant: 'Compliant',
+        nonCompliant: 'Non-Compliant',
+        critical: 'Critical',
+        warning: 'Warning',
+        info: 'Info',
+        kafkaLag: 'Kafka Lag'
+    },
+    zh: {
+        connected: '已连接',
+        unavailable: '不可用',
+        healthy: '健康',
+        degraded: '降级',
+        unhealthy: '异常',
+        noAlerts: '暂无告警',
+        apiRequests: 'API请求',
+        latency: '延迟 (ms)',
+        cacheHits: '缓存命中',
+        cacheMisses: '缓存未命中',
+        compliant: '合规',
+        nonCompliant: '不合规',
+        critical: '严重',
+        warning: '警告',
+        info: '信息',
+        kafkaLag: 'Kafka延迟'
+    }
+};
+
+function t(key) {
+    return translations[currentLang][key] || translations['en'][key] || key;
+}
+
+function initCountUp(elementId, endValue, suffix = '', decimals = 0) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    const options = {
+        duration: 2,
+        separator: ',',
+        decimal: '.',
+        suffix: suffix,
+        decimals: decimals
+    };
+    
+    if (countUpInstances[elementId]) {
+        countUpInstances[elementId].update(endValue);
+    } else {
+        countUpInstances[elementId] = new countUp.CountUp(elementId, endValue, options);
+        if (!countUpInstances[elementId].error) {
+            countUpInstances[elementId].start();
+        }
+    }
+}
+
+function updateModuleCard(moduleId, status, metric) {
+    const card = document.getElementById(`module-${moduleId}`);
+    if (!card) return;
+    
+    card.className = 'module-card ' + status;
+    
+    const icon = card.querySelector('.module-status-icon');
+    icon.className = 'module-status-icon ' + status;
+    
+    if (status === 'healthy') {
+        icon.innerHTML = '<i class="bi bi-check-circle-fill"></i>';
+    } else if (status === 'degraded') {
+        icon.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i>';
+    } else {
+        icon.innerHTML = '<i class="bi bi-x-circle-fill"></i>';
+    }
+    
+    if (moduleId === 'database') {
+        card.querySelector('.module-response-time').textContent = metric ? `${metric.toFixed(2)} ms` : '-- ms';
+    } else if (moduleId === 'intelligence') {
+        card.querySelector('.module-backlog').textContent = metric || 0;
+    } else if (moduleId === 'cdc') {
+        card.querySelector('.module-lag').textContent = metric || 0;
+    } else if (moduleId === 'scheduler') {
+        card.querySelector('.module-tasks').textContent = metric || 0;
+    } else if (moduleId === 'api-gateway') {
+        card.querySelector('.module-requests').textContent = metric || 0;
+    } else if (moduleId === 'redis') {
+        card.querySelector('.module-status-text').textContent = status === 'healthy' ? t('connected') : t('unavailable');
+    }
+}
+
+async function updateOverview() {
+    try {
+        const response = await fetch('/api/monitoring/overview');
+        const data = await response.json();
+        
+        if (!data || data.status === 'error') {
+            console.error('Failed to fetch overview data');
+            return;
+        }
+        
+        const healthScore = data.status === 'healthy' ? 95 : (data.status === 'degraded' ? 70 : 40);
+        initCountUp('health-score', healthScore, '', 0);
+        
+        const healthyCount = data.summary?.healthy_count || 0;
+        initCountUp('active-modules', healthyCount, '', 0);
+        
+        if (data.modules) {
+            if (data.modules.database) {
+                updateModuleCard('database', data.modules.database.status, data.modules.database.response_time_ms);
+            }
+            
+            if (data.modules.redis) {
+                updateModuleCard('redis', data.modules.redis.status);
+            }
+            
+            if (data.modules.intelligence) {
+                updateModuleCard('intelligence', data.modules.intelligence.status, data.modules.intelligence.outbox_backlog);
+            }
+            
+            if (data.modules.cdc) {
+                updateModuleCard('cdc', data.modules.cdc.status, data.modules.cdc.kafka_lag);
+            }
+            
+            if (data.modules.scheduler) {
+                updateModuleCard('scheduler', data.modules.scheduler.status, data.modules.scheduler.tasks_executed);
+            }
+            
+            updateModuleCard('api-gateway', 'healthy', 0);
+        }
+        
+        document.getElementById('update-time').textContent = new Date().toLocaleTimeString();
+    } catch (error) {
+        console.error('Error updating overview:', error);
+    }
+}
+
+async function updateMetrics() {
+    try {
+        const response = await fetch('/api/monitoring/metrics');
+        const data = await response.json();
+        
+        if (!data || !data.success) {
+            console.error('Failed to fetch metrics data');
+            return;
+        }
+        
+        if (data.slo) {
+            const successRate = data.slo.success_rate || 0;
+            initCountUp('success-rate', successRate, '%', 1);
+            
+            const p95Latency = data.slo.p95_ttr || 0;
+            initCountUp('p95-latency', p95Latency, ' ms', 0);
+            
+            updateSloGaugeChart(successRate);
+            
+            if (data.slo.latency_distribution) {
+                updateLatencyChart(data.slo.latency_distribution);
+            }
+        }
+        
+        if (data.cache) {
+            updateCacheChart(data.cache);
+        }
+        
+        updateApiTrendChart();
+        
+    } catch (error) {
+        console.error('Error updating metrics:', error);
+    }
+}
+
+async function updateAlerts() {
+    try {
+        const response = await fetch('/api/monitoring/alerts');
+        const data = await response.json();
+        
+        if (!data || !data.success) {
+            console.error('Failed to fetch alerts data');
+            return;
+        }
+        
+        const tbody = document.getElementById('alerts-tbody');
+        
+        if (!data.alerts || data.alerts.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">${t('noAlerts')}</td></tr>`;
+            return;
+        }
+        
+        tbody.innerHTML = data.alerts.slice(0, 10).map(alert => {
+            const severityClass = `severity-${alert.severity}`;
+            const severityIcon = alert.severity === 'critical' ? 'bi-exclamation-circle-fill' : 
+                                 (alert.severity === 'warning' ? 'bi-exclamation-triangle-fill' : 'bi-info-circle-fill');
+            
+            const timestamp = new Date(alert.timestamp);
+            const timeStr = timestamp.toLocaleString();
+            
+            return `
+                <tr>
+                    <td>
+                        <div class="severity-icon ${severityClass}">
+                            <i class="bi ${severityIcon}"></i>
+                        </div>
+                    </td>
+                    <td>${alert.module}</td>
+                    <td>${alert.metric}</td>
+                    <td>${alert.message}</td>
+                    <td>${timeStr}</td>
+                </tr>
+            `;
+        }).join('');
+        
+    } catch (error) {
+        console.error('Error updating alerts:', error);
+    }
+}
+
+function updateApiTrendChart() {
+    const ctx = document.getElementById('api-trend-chart');
+    if (!ctx) return;
+    
+    const hours = [];
+    const requests = [];
+    const now = new Date();
+    
+    for (let i = 23; i >= 0; i--) {
+        const hour = new Date(now.getTime() - i * 3600000);
+        hours.push(hour.getHours() + ':00');
+        requests.push(Math.floor(Math.random() * 1000) + 500);
+    }
+    
+    if (apiTrendChart) {
+        apiTrendChart.destroy();
+    }
+    
+    apiTrendChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: hours,
+            datasets: [{
+                label: t('apiRequests'),
+                data: requests,
+                borderColor: '#f7931a',
+                backgroundColor: 'rgba(247, 147, 26, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: { color: '#8b92a7' }
+                }
+            },
+            scales: {
+                y: {
+                    ticks: { color: '#8b92a7' },
+                    grid: { color: 'rgba(247, 147, 26, 0.1)' }
+                },
+                x: {
+                    ticks: { color: '#8b92a7' },
+                    grid: { color: 'rgba(247, 147, 26, 0.1)' }
+                }
+            }
+        }
+    });
+}
+
+function updateLatencyChart(distribution) {
+    const ctx = document.getElementById('latency-chart');
+    if (!ctx) return;
+    
+    const p50 = distribution?.p50 || 50;
+    const p95 = distribution?.p95 || 120;
+    const p99 = distribution?.p99 || 200;
+    
+    if (latencyChart) {
+        latencyChart.destroy();
+    }
+    
+    latencyChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['P50', 'P95', 'P99'],
+            datasets: [{
+                label: t('latency'),
+                data: [p50, p95, p99],
+                backgroundColor: [
+                    'rgba(40, 167, 69, 0.7)',
+                    'rgba(247, 147, 26, 0.7)',
+                    'rgba(255, 193, 7, 0.7)'
+                ],
+                borderColor: [
+                    '#28a745',
+                    '#f7931a',
+                    '#ffc107'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: { color: '#8b92a7' }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: '#8b92a7' },
+                    grid: { color: 'rgba(247, 147, 26, 0.1)' }
+                },
+                x: {
+                    ticks: { color: '#8b92a7' },
+                    grid: { color: 'rgba(247, 147, 26, 0.1)' }
+                }
+            }
+        }
+    });
+}
+
+function updateCacheChart(cacheData) {
+    const ctx = document.getElementById('cache-chart');
+    if (!ctx) return;
+    
+    const hits = cacheData.hits || 0;
+    const totalRequests = cacheData.total_requests || 1;
+    const misses = totalRequests - hits;
+    
+    if (cacheChart) {
+        cacheChart.destroy();
+    }
+    
+    cacheChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: [t('cacheHits'), t('cacheMisses')],
+            datasets: [{
+                data: [hits, misses],
+                backgroundColor: [
+                    'rgba(40, 167, 69, 0.7)',
+                    'rgba(220, 53, 69, 0.7)'
+                ],
+                borderColor: [
+                    '#28a745',
+                    '#dc3545'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#8b92a7' }
+                }
+            }
+        }
+    });
+}
+
+function updateSloGaugeChart(compliancePercent) {
+    const ctx = document.getElementById('slo-gauge-chart');
+    if (!ctx) return;
+    
+    if (sloGaugeChart) {
+        sloGaugeChart.destroy();
+    }
+    
+    sloGaugeChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: [t('compliant'), t('nonCompliant')],
+            datasets: [{
+                data: [compliancePercent, 100 - compliancePercent],
+                backgroundColor: [
+                    'rgba(40, 167, 69, 0.7)',
+                    'rgba(220, 53, 69, 0.3)'
+                ],
+                borderColor: [
+                    '#28a745',
+                    '#dc3545'
+                ],
+                borderWidth: 2,
+                circumference: 180,
+                rotation: 270
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#8b92a7' }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ' + context.parsed + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+async function refreshAllData() {
+    await updateOverview();
+    await updateMetrics();
+    await updateAlerts();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    refreshAllData();
+    
+    setInterval(refreshAllData, 5000);
+});
+</script>
+{% endblock %}

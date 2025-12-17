@@ -1,0 +1,426 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if current_lang == 'en' %}Register{% else %}用户注册{% endif %} - BTC Mining Calculator
+{% endblock %}
+
+{% block header_title %}
+    {% if current_lang == 'en' %}Create Account{% else %}创建账户{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* CSS Variables for consistent theming */
+:root {
+    --primary-gold: #ffc107;
+    --primary-dark: #1a1a2e;
+    --secondary-dark: #16213e;
+    --accent-purple: #6c5ce7;
+    --text-primary: #f8f9fa;
+    --text-secondary: #adb5bd;
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 193, 7, 0.2);
+}
+
+body {
+    background: linear-gradient(135deg, 
+        #1a1a2e 0%, 
+        #16213e 25%, 
+        #0f3460 50%, 
+        #16213e 75%, 
+        #1a1a2e 100%);
+    background-attachment: fixed;
+    color: var(--text-primary);
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    overflow-x: hidden;
+}
+
+/* Animated background particles */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(2px 2px at 20px 30px, rgba(255, 193, 7, 0.3), transparent),
+        radial-gradient(2px 2px at 40px 70px, rgba(108, 92, 231, 0.3), transparent),
+        radial-gradient(1px 1px at 90px 40px, rgba(255, 193, 7, 0.2), transparent),
+        radial-gradient(1px 1px at 130px 80px, rgba(108, 92, 231, 0.2), transparent);
+    background-repeat: repeat;
+    background-size: 150px 150px;
+    animation: float 20s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(180deg); }
+}
+
+.register-container {
+    width: 100%;
+    max-width: 500px;
+    padding: 3rem 2.5rem;
+    background: rgba(26, 26, 46, 0.9);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(255, 193, 7, 0.1);
+    position: relative;
+    overflow: hidden;
+    animation: slideInUp 0.8s ease-out;
+    margin: 2rem auto;
+}
+
+.register-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, transparent, rgba(255, 193, 7, 0.05), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.register-container:hover::before {
+    opacity: 1;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.register-logo {
+    text-align: center;
+    margin-bottom: 2rem;
+    position: relative;
+    z-index: 2;
+}
+
+.register-title {
+    color: var(--primary-gold);
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-top: 1rem;
+    text-shadow: 0 0 20px rgba(255, 193, 7, 0.3);
+}
+
+.register-subtitle {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    margin-top: 0.5rem;
+    opacity: 0.8;
+}
+
+.btc-icon {
+    display: inline-block;
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--primary-gold), #e67e22);
+    border-radius: 50%;
+    text-align: center;
+    line-height: 80px;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    transform: rotate(12deg);
+    color: #ffffff;
+    box-shadow: 
+        0 15px 35px rgba(255, 193, 7, 0.3),
+        0 0 0 3px rgba(255, 193, 7, 0.2);
+    transition: all 0.3s ease;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.btc-icon:hover {
+    transform: rotate(12deg) scale(1.1);
+    box-shadow: 
+        0 20px 50px rgba(255, 193, 7, 0.5),
+        0 0 0 5px rgba(255, 193, 7, 0.3);
+}
+
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 15px 35px rgba(255, 193, 7, 0.3), 0 0 0 3px rgba(255, 193, 7, 0.2); }
+    50% { box-shadow: 0 20px 45px rgba(255, 193, 7, 0.4), 0 0 0 6px rgba(255, 193, 7, 0.3); }
+}
+
+/* Form Styling */
+.form-label {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+}
+
+.form-label i {
+    color: var(--primary-gold);
+    margin-right: 0.5rem;
+}
+
+.form-control {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 193, 7, 0.2);
+    border-radius: 16px;
+    color: var(--text-primary);
+    padding: 1rem 1.25rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.form-control:focus {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--primary-gold);
+    box-shadow: 
+        0 0 0 4px rgba(255, 193, 7, 0.15),
+        0 8px 25px rgba(255, 193, 7, 0.2);
+    color: var(--text-primary);
+    transform: translateY(-2px);
+}
+
+.form-control::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+/* Primary Button */
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-gold), #e67e22);
+    border: none;
+    border-radius: 16px;
+    color: #000;
+    font-weight: 700;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(255, 193, 7, 0.3);
+}
+
+.btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #e67e22, var(--primary-gold));
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(255, 193, 7, 0.4);
+}
+
+.btn-primary:hover::before {
+    left: 100%;
+}
+
+.btn-primary:active {
+    transform: translateY(-1px);
+}
+
+/* Alert Styling */
+.alert {
+    border-radius: 16px;
+    border: none;
+    backdrop-filter: blur(10px);
+    font-weight: 500;
+    animation: slideInDown 0.5s ease-out;
+    margin-bottom: 1.5rem;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.alert-danger {
+    background: rgba(220, 53, 85, 0.2);
+    color: #ff6b8a;
+    border-left: 4px solid #dc3545;
+}
+
+.alert-success {
+    background: rgba(40, 167, 69, 0.2);
+    color: #6bcf7f;
+    border-left: 4px solid #28a745;
+}
+
+/* Links */
+.text-primary {
+    color: var(--primary-gold) !important;
+    transition: all 0.3s ease;
+}
+
+.text-primary:hover {
+    color: #e67e22 !important;
+    text-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+}
+
+.form-text {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .register-container {
+        margin: 1rem;
+        padding: 2rem 1.5rem;
+        max-width: none;
+    }
+    
+    .btc-icon {
+        width: 70px;
+        height: 70px;
+        line-height: 70px;
+        font-size: 2rem;
+    }
+    
+    .register-title {
+        font-size: 1.5rem;
+    }
+}
+
+/* Additional modern touches */
+.card {
+    background: transparent !important;
+    border: none !important;
+}
+
+.card-body {
+    padding: 0 !important;
+}
+
+/* Smooth transitions for all interactive elements */
+* {
+    transition: all 0.3s ease;
+}
+
+/* Ensure links are clickable */
+a, a:hover, a:focus, a:active {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    z-index: 1000;
+    position: relative;
+}
+
+/* Fix specific register link styling */
+.text-primary.text-decoration-none {
+    display: inline-block;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    z-index: 1001;
+    position: relative;
+    text-decoration: none !important;
+}
+
+.text-primary.text-decoration-none:hover {
+    text-decoration: underline !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="container min-vh-100 d-flex align-items-center justify-content-center">
+        <div class="row w-100 justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="register-container">
+                    <div class="register-logo">
+                        <div class="btc-icon">₿</div>
+                        <div class="register-title">
+                            {{ t('create_account') }}
+                        </div>
+                        <div class="register-subtitle">
+                            {{ t('join_platform') }}
+                        </div>
+                    </div>
+
+                        <!-- Flash Messages -->
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                        {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+                        {% endwith %}
+
+                        <form method="POST">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}"/>
+                            <div class="mb-3">
+                                <label for="email" class="form-label">
+                                    <i class="bi bi-envelope me-1"></i>
+                                    {{ t('email_address') }}
+                                </label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="username" class="form-label">
+                                    <i class="bi bi-person me-1"></i>
+                                    {{ t('username_optional') }}
+                                </label>
+                                <input type="text" class="form-control" id="username" name="username" 
+                                       placeholder="{{ t('username_placeholder') }}">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="password" class="form-label">
+                                    <i class="bi bi-lock me-1"></i>
+                                    {{ t('password') }}
+                                </label>
+                                <input type="password" class="form-control" id="password" name="password" 
+                                       placeholder="{{ t('password_placeholder_register') }}" minlength="6" required>
+                                <div class="form-text text-muted">
+                                    {{ t('password_requirements') }}
+                                </div>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-person-plus me-2"></i>
+                                    {{ t('create_account') }}
+                                </button>
+                            </div>
+                        </form>
+
+                        <div class="text-center mt-4">
+                            <p class="text-muted">
+                                {{ t('already_have_account') }}
+                                <a href="{{ url_for('auth.login') }}" class="text-primary text-decoration-none">
+                                    {{ t('login') }}
+                                </a>
+                            </p>
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

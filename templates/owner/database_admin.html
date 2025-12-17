@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if current_lang == 'en' %}Database Administration{% else %}数据库管理{% endif %} - BTC Mining Calculator
+{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --primary-gold: #ffc107;
+    --bg-gradient: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+    --card-bg: rgba(255, 255, 255, 0.05);
+    --card-border: rgba(255, 255, 255, 0.1);
+}
+
+body {
+    background: var(--bg-gradient);
+    min-height: 100vh;
+}
+
+.db-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.db-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.db-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #28a745, #17a2b8, #6f42c1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1rem;
+}
+
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+    backdrop-filter: blur(10px);
+}
+
+.stat-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #ffffff;
+    display: block;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #b8b8b8;
+    margin-top: 0.25rem;
+}
+
+.tables-section {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.table-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.table-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.table-item:hover {
+    border-color: var(--primary-gold);
+    background: rgba(255, 193, 7, 0.05);
+}
+
+.table-name {
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 0.5rem;
+}
+
+.table-info {
+    font-size: 0.9rem;
+    color: #b8b8b8;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+
+.btn-db {
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    border: none;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-primary { background: #007bff; color: white; }
+.btn-success { background: #28a745; color: white; }
+.btn-warning { background: #ffc107; color: black; }
+.btn-danger { background: #dc3545; color: white; }
+
+.btn-db:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.connection-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.status-connected {
+    background: rgba(40, 167, 69, 0.2);
+    border: 1px solid #28a745;
+    color: #28a745;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="db-container">
+    <div class="db-header">
+        <h1 class="db-title">
+            <i class="bi bi-server me-3"></i>
+            {% if current_lang == 'en' %}Database Administration{% else %}数据库管理中心{% endif %}
+        </h1>
+        <div class="connection-status status-connected">
+            <i class="bi bi-check-circle-fill"></i>
+            {% if current_lang == 'en' %}Database Connected{% else %}数据库已连接{% endif %}
+        </div>
+    </div>
+
+    <!-- 数据库统计 -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <i class="bi bi-table stat-icon text-primary"></i>
+            <span class="stat-value">{{ table_info|length }}</span>
+            <div class="stat-label">
+                {% if current_lang == 'en' %}Total Tables{% else %}数据表总数{% endif %}
+            </div>
+        </div>
+        <div class="stat-card">
+            <i class="bi bi-database stat-icon text-success"></i>
+            <span class="stat-value">{{ db_stats.database_size }}</span>
+            <div class="stat-label">
+                {% if current_lang == 'en' %}Database Size{% else %}数据库大小{% endif %}
+            </div>
+        </div>
+        <div class="stat-card">
+            <i class="bi bi-cloud-upload stat-icon text-warning"></i>
+            <span class="stat-value">{{ db_stats.last_backup }}</span>
+            <div class="stat-label">
+                {% if current_lang == 'en' %}Last Backup{% else %}最后备份{% endif %}
+            </div>
+        </div>
+        <div class="stat-card">
+            <i class="bi bi-activity stat-icon text-info"></i>
+            <span class="stat-value">{{ db_stats.connection_status }}</span>
+            <div class="stat-label">
+                {% if current_lang == 'en' %}Connection{% else %}连接状态{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 数据表列表 -->
+    <div class="tables-section">
+        <h2 class="section-title">
+            <i class="bi bi-list-ul"></i>
+            {% if current_lang == 'en' %}Database Tables{% else %}数据表列表{% endif %}
+        </h2>
+        
+        {% if table_info %}
+        <div class="table-grid">
+            {% for table in table_info %}
+            <div class="table-item">
+                <div class="table-name">
+                    <i class="bi bi-table me-2"></i>
+                    {{ table.name }}
+                </div>
+                <div class="table-info">
+                    {% if current_lang == 'en' %}Schema{% else %}模式{% endif %}: {{ table.schema }}<br>
+                    {% if current_lang == 'en' %}Est. Rows{% else %}预计行数{% endif %}: {{ table.estimated_rows }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-4">
+            <i class="bi bi-info-circle me-2"></i>
+            {% if current_lang == 'en' %}No table information available{% else %}无法获取表信息{% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 操作按钮 -->
+    <div class="action-buttons">
+        <a href="{{ url_for('admin.backup_recovery') }}" class="btn-db btn-success">
+            <i class="bi bi-cloud-upload"></i>
+            {% if current_lang == 'en' %}Backup & Recovery{% else %}备份恢复{% endif %}
+        </a>
+        <button class="btn-db btn-primary" onclick="refreshTables()">
+            <i class="bi bi-arrow-clockwise"></i>
+            {% if current_lang == 'en' %}Refresh Tables{% else %}刷新表列表{% endif %}
+        </button>
+        <a href="{{ url_for('system_config') }}" class="btn-db btn-warning">
+            <i class="bi bi-gear"></i>
+            {% if current_lang == 'en' %}System Config{% else %}系统配置{% endif %}
+        </a>
+    </div>
+</div>
+
+<script>
+function refreshTables() {
+    // 刷新表列表的功能
+    location.reload();
+}
+</script>
+{% endblock %}

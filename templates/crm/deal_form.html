@@ -1,0 +1,296 @@
+{% extends "crm/base.html" %}
+
+{% block title %}{{ "编辑交易" if deal else "新建交易" }} | BTC Mining CRM{% endblock %}
+
+{% block page_title %}{{ "编辑交易" if deal else "新建交易" }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('crm.customers') }}">客户列表</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('crm.customer_detail', customer_id=customer.id) }}">{{ customer.name }}</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('crm.deals') }}">交易列表</a></li>
+<li class="breadcrumb-item active" aria-current="page">{{ "编辑交易" if deal else "新建交易" }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="card bg-dark shadow-sm">
+    <div class="card-header">
+        <h5 class="mb-0">交易信息</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" class="needs-validation" novalidate>
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h6 class="mb-3 text-muted">基本信息</h6>
+                    <div class="mb-3">
+                        <label for="title" class="form-label">交易标题 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="title" name="title" value="{{ deal.title if deal else '' }}" required>
+                        <div class="invalid-feedback">请输入交易标题</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="status" class="form-label">交易状态</label>
+                        <select class="form-select" id="status" name="status">
+                            {% for status in all_statuses %}
+                            <option value="{{ status.name }}" {% if deal and deal.status.name == status.name %}selected{% endif %}>
+                                {{ status.value }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="value" class="form-label">交易金额</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="value" name="value" min="0" step="0.01" value="{{ deal.value if deal else '0.00' }}">
+                            <select class="form-select" name="currency" style="max-width: 100px;">
+                                <option value="USD" {% if deal and deal.currency == 'USD' %}selected{% endif %}>USD</option>
+                                <option value="CNY" {% if deal and deal.currency == 'CNY' %}selected{% endif %}>CNY</option>
+                                <option value="BTC" {% if deal and deal.currency == 'BTC' %}selected{% endif %}>BTC</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="assigned_to" class="form-label">负责人</label>
+                        <input type="text" class="form-control" id="assigned_to" name="assigned_to" value="{{ deal.assigned_to if deal else session.get('email', '') }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="expected_close_date" class="form-label">预计结束日期</label>
+                        <input type="date" class="form-control" id="expected_close_date" name="expected_close_date" 
+                               value="{{ deal.expected_close_date.strftime('%Y-%m-%d') if deal and deal.expected_close_date else '' }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="lead_id" class="form-label">关联商机</label>
+                        <select class="form-select" id="lead_id" name="lead_id">
+                            <option value="">-- 不关联商机 --</option>
+                            {% for lead in leads %}
+                            <option value="{{ lead.id }}" {% if lead_id and lead_id|int == lead.id %}selected{% endif %}>
+                                {{ lead.title }} ({{ lead.status.value }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <h6 class="mb-3 text-muted">挖矿相关信息</h6>
+                    <div class="mb-3">
+                        <label for="mining_capacity" class="form-label">挖矿容量 (MW)</label>
+                        <input type="number" class="form-control" id="mining_capacity" name="mining_capacity" min="0" step="0.01" 
+                               value="{{ deal.mining_capacity if deal and deal.mining_capacity else '' }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="electricity_cost" class="form-label">电费价格 ($/kWh)</label>
+                        <input type="number" class="form-control" id="electricity_cost" name="electricity_cost" min="0" step="0.001" 
+                               value="{{ deal.electricity_cost if deal and deal.electricity_cost else '' }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="contract_term" class="form-label">合同期限 (月)</label>
+                        <input type="number" class="form-control" id="contract_term" name="contract_term" min="1" step="1" 
+                               value="{{ deal.contract_term if deal and deal.contract_term else '' }}">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 中介业务专用字段 -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h6 class="mb-3 text-muted">
+                        <i class="bi bi-building me-2"></i>中介业务信息
+                        <small class="text-info">(仅所有者可见，用于追踪佣金收入)</small>
+                    </h6>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="mining_farm_name" class="form-label">矿场名称</label>
+                        <input type="text" class="form-control" id="mining_farm_name" name="mining_farm_name" 
+                               value="{{ deal.mining_farm_name if deal else '' }}" 
+                               placeholder="例如：德克萨斯矿场A">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="client_investment" class="form-label">客户投资金额 ($)</label>
+                        <input type="number" class="form-control" id="client_investment" name="client_investment" 
+                               min="0" step="0.01" value="{{ deal.client_investment if deal else '' }}"
+                               placeholder="客户实际投资的金额">
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="commission_type" class="form-label">佣金类型</label>
+                        <select class="form-select" id="commission_type" name="commission_type" onchange="toggleCommissionFields()">
+                            <option value="">选择佣金类型</option>
+                            <option value="percentage" {% if deal and deal.commission_type == 'percentage' %}selected{% endif %}>
+                                月收益百分比
+                            </option>
+                            <option value="fixed" {% if deal and deal.commission_type == 'fixed' %}selected{% endif %}>
+                                固定服务费
+                            </option>
+                        </select>
+                        <div class="form-text">选择您的收费模式</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="commission_rate" class="form-label">
+                            <span id="commission_rate_label">佣金率</span>
+                        </label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="commission_rate" name="commission_rate" 
+                                   min="0" step="0.01" value="{{ deal.commission_rate if deal else '10' }}">
+                            <span class="input-group-text" id="commission_unit">%</span>
+                        </div>
+                        <div class="form-text" id="commission_help">
+                            <span id="commission_percentage_help" style="display: none;">
+                                推荐：10%为标准佣金率，即每月收取客户净收益的10%
+                            </span>
+                            <span id="commission_fixed_help" style="display: none;">
+                                例如：输入1000表示一次性收取$1000服务费
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="mb-3">
+                        <label for="description" class="form-label">交易描述</label>
+                        <textarea class="form-control" id="description" name="description" rows="5">{{ deal.description if deal else '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+            
+            {% if is_edit %}
+            <!-- 编辑时需要填写修改原因 -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>编辑提醒:</strong> 为了保证数据追踪，请说明本次修改的原因
+                    </div>
+                    <div class="mb-3">
+                        <label for="change_reason" class="form-label">
+                            <i class="bi bi-chat-left-text me-1"></i>
+                            修改原因 <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="change_reason" 
+                               name="change_reason" required
+                               placeholder="请说明此次修改的原因，例如：客户要求调整投资金额">
+                        <div class="form-text">此信息将被记录在活动历史中</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="d-flex justify-content-between">
+                <a href="{{ url_for('crm.customer_detail', customer_id=customer.id) }}" class="btn btn-secondary">取消</a>
+                <button type="submit" class="btn btn-primary">{{ "保存修改" if is_edit else "创建交易" }}</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 佣金类型切换功能
+    function toggleCommissionFields() {
+        const commissionType = document.getElementById('commission_type').value;
+        const commissionUnit = document.getElementById('commission_unit');
+        const commissionRateLabel = document.getElementById('commission_rate_label');
+        const percentageHelp = document.getElementById('commission_percentage_help');
+        const fixedHelp = document.getElementById('commission_fixed_help');
+        
+        if (commissionType === 'percentage') {
+            commissionUnit.textContent = '%';
+            commissionRateLabel.textContent = '月收益百分比';
+            percentageHelp.style.display = 'block';
+            fixedHelp.style.display = 'none';
+        } else if (commissionType === 'fixed') {
+            commissionUnit.textContent = '$';
+            commissionRateLabel.textContent = '固定服务费';
+            percentageHelp.style.display = 'none';
+            fixedHelp.style.display = 'block';
+        } else {
+            commissionUnit.textContent = '%';
+            commissionRateLabel.textContent = '佣金率';
+            percentageHelp.style.display = 'none';
+            fixedHelp.style.display = 'none';
+        }
+    }
+    
+    // 页面加载时初始化佣金字段
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleCommissionFields();
+        
+        // 计算预期收入
+        const clientInvestmentInput = document.getElementById('client_investment');
+        const commissionRateInput = document.getElementById('commission_rate');
+        const commissionTypeSelect = document.getElementById('commission_type');
+        
+        function updateCommissionPreview() {
+            const investment = parseFloat(clientInvestmentInput.value) || 0;
+            const rate = parseFloat(commissionRateInput.value) || 0;
+            const type = commissionTypeSelect.value;
+            
+            let preview = '';
+            if (type === 'percentage' && investment > 0 && rate > 0) {
+                const monthlyCommission = (investment * rate / 100);
+                preview = `预期月收入: $${monthlyCommission.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            } else if (type === 'fixed' && rate > 0) {
+                preview = `一次性收入: $${rate.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            }
+            
+            // 显示预期收入
+            let previewElement = document.getElementById('commission_preview');
+            if (!previewElement) {
+                previewElement = document.createElement('div');
+                previewElement.id = 'commission_preview';
+                previewElement.className = 'alert alert-info mt-2';
+                document.getElementById('commission_help').appendChild(previewElement);
+            }
+            
+            if (preview) {
+                previewElement.innerHTML = `<i class="bi bi-calculator me-2"></i>${preview}`;
+                previewElement.style.display = 'block';
+            } else {
+                previewElement.style.display = 'none';
+            }
+        }
+        
+        // 绑定事件监听器
+        [clientInvestmentInput, commissionRateInput, commissionTypeSelect].forEach(element => {
+            if (element) {
+                element.addEventListener('input', updateCommissionPreview);
+                element.addEventListener('change', updateCommissionPreview);
+            }
+        });
+        
+        // 初始更新
+        updateCommissionPreview();
+    });
+
+    // 表单验证
+    (function() {
+        'use strict';
+        window.addEventListener('load', function() {
+            var forms = document.getElementsByClassName('needs-validation');
+            var validation = Array.prototype.filter.call(forms, function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+</script>
+{% endblock %}

@@ -1,0 +1,811 @@
+{% extends "crm/base.html" %}
+
+{% block title %}{{ t('dashboard') }} | BTC Mining CRM{% endblock %}
+
+{% block page_title %}<span data-i18n="dashboard">{{ t('dashboard') }}</span> - <span data-i18n="mining_intelligence">{% if current_lang == 'en' %}Mining Intelligence{% else %}矿场智能中心{% endif %}</span>{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">{{ t('dashboard') }}</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --btc-gold: #f7931a;
+        --btc-orange: #ffa500;
+        --gradient-gold: linear-gradient(135deg, #f7931a 0%, #ffa500 100%);
+        --shadow-glow: 0 0 20px rgba(247, 147, 26, 0.3);
+    }
+    
+    /* KPI卡片动画效果 */
+    .kpi-card {
+        background: linear-gradient(145deg, #1a1d29 0%, #242836 100%);
+        border: 1px solid rgba(247, 147, 26, 0.2);
+        border-radius: 15px;
+        padding: 25px;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        animation: fadeInUp 0.6s ease-out backwards;
+    }
+    
+    .kpi-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(247, 147, 26, 0.1), transparent);
+        transition: left 0.5s;
+    }
+    
+    .kpi-card:hover::before {
+        left: 100%;
+    }
+    
+    .kpi-card:hover {
+        transform: translateY(-8px);
+        border-color: var(--btc-gold);
+        box-shadow: var(--shadow-glow);
+    }
+    
+    .kpi-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: var(--gradient-gold);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 15px;
+        animation: pulse 2s infinite;
+    }
+    
+    .kpi-icon i {
+        font-size: 28px;
+        color: #000;
+    }
+    
+    .kpi-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--btc-gold);
+        margin-bottom: 8px;
+        font-family: 'Courier New', monospace;
+    }
+    
+    .kpi-label {
+        font-size: 0.95rem;
+        color: #8b92a7;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .kpi-trend {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 10px;
+        font-size: 0.9rem;
+    }
+    
+    .trend-up { color: #10b981; }
+    .trend-down { color: #ef4444; }
+    
+    /* 图表容器样式 */
+    .chart-container {
+        position: relative;
+        height: 350px;
+        background: #1a1d29;
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid rgba(247, 147, 26, 0.15);
+    }
+    
+    .chart-card {
+        background: #1a1d29;
+        border: 1px solid rgba(247, 147, 26, 0.2);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+    
+    .chart-card:hover {
+        border-color: var(--btc-gold);
+        box-shadow: 0 4px 20px rgba(247, 147, 26, 0.15);
+    }
+    
+    /* 矿场业务排行榜 */
+    .ranking-item {
+        display: flex;
+        align-items: center;
+        padding: 12px;
+        margin-bottom: 10px;
+        background: rgba(247, 147, 26, 0.05);
+        border-radius: 8px;
+        border-left: 3px solid var(--btc-gold);
+        transition: all 0.3s ease;
+    }
+    
+    .ranking-item:hover {
+        background: rgba(247, 147, 26, 0.12);
+        transform: translateX(5px);
+    }
+    
+    .ranking-number {
+        width: 35px;
+        height: 35px;
+        background: var(--gradient-gold);
+        color: #000;
+        font-weight: 700;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+    }
+    
+    .ranking-content {
+        flex: 1;
+    }
+    
+    .ranking-label {
+        font-size: 0.95rem;
+        color: #fff;
+        margin-bottom: 3px;
+    }
+    
+    .ranking-value {
+        font-size: 0.85rem;
+        color: var(--btc-gold);
+    }
+    
+    /* 智能提醒区 */
+    .alert-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 12px;
+        margin-bottom: 10px;
+        background: rgba(239, 68, 68, 0.1);
+        border-left: 3px solid #ef4444;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+    }
+    
+    .alert-item.urgent {
+        background: rgba(239, 68, 68, 0.15);
+        animation: alertPulse 2s infinite;
+    }
+    
+    .alert-icon {
+        width: 28px;
+        height: 28px;
+        background: #ef4444;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+        flex-shrink: 0;
+    }
+    
+    /* 快速操作按钮 */
+    .quick-action-btn {
+        background: var(--gradient-gold);
+        color: #000;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .quick-action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(247, 147, 26, 0.4);
+        color: #000;
+    }
+    
+    /* 动画定义 */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+    }
+    
+    @keyframes alertPulse {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.7;
+        }
+    }
+    
+    /* 渐变线条装饰 */
+    .section-title {
+        position: relative;
+        padding-bottom: 12px;
+        margin-bottom: 20px;
+    }
+    
+    .section-title::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 60px;
+        height: 3px;
+        background: var(--gradient-gold);
+        border-radius: 2px;
+    }
+    
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+        .kpi-value {
+            font-size: 2rem;
+        }
+        
+        .chart-container {
+            height: 280px;
+        }
+    }
+    
+    /* 卡片动画延迟 */
+    .kpi-card:nth-child(1) { animation-delay: 0.1s; }
+    .kpi-card:nth-child(2) { animation-delay: 0.2s; }
+    .kpi-card:nth-child(3) { animation-delay: 0.3s; }
+    .kpi-card:nth-child(4) { animation-delay: 0.4s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- KPI指标卡片区 -->
+<div class="row mb-4">
+    <!-- 总客户数 -->
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="kpi-card" data-api-endpoint="/crm/api/kpi/customers">
+            <div class="kpi-icon">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <div id="dashboard-customers-kpi" class="kpi-value" data-countup="{{ customers_count|default(0) }}">{{ customers_count|default(0) }}</div>
+            <div class="kpi-label" data-i18n="total_customers">{{ t('total_customers') }}</div>
+            <div class="kpi-trend trend-up">
+                <i class="bi bi-arrow-up-circle-fill"></i>
+                <span>+{{ (customers_count * 0.12)|int }} {% if current_lang == 'en' %}This Month{% else %}本月新增{% endif %}</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 交易总额 -->
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="kpi-card" data-api-endpoint="/crm/api/kpi/deals">
+            <div class="kpi-icon">
+                <i class="bi bi-cash-stack"></i>
+            </div>
+            <div id="dashboard-deals-value-kpi" class="kpi-value" data-countup="{{ deals_value|default(0) }}" data-decimals="0" data-prefix="$">${{ "{:,.0f}".format(deals_value|default(0)) }}</div>
+            <div class="kpi-label" data-i18n="total_deals_value">{{ t('total_deals_value') }}</div>
+            <div class="kpi-trend trend-up">
+                <i class="bi bi-graph-up-arrow"></i>
+                <span>{% if current_lang == 'en' %}+15.3% YoY{% else %}年同比 +15.3%{% endif %}</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 托管容量 -->
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="kpi-card" data-api-endpoint="/crm/api/kpi/capacity">
+            <div class="kpi-icon">
+                <i class="bi bi-lightning-charge-fill"></i>
+            </div>
+            <div id="dashboard-capacity-kpi" class="kpi-value" data-countup="85.6" data-decimals="1">85.6 <small style="font-size:1.2rem;">MW</small></div>
+            <div class="kpi-label" data-i18n="hosting_capacity">{{ t('hosting_capacity') }}</div>
+            <div class="kpi-trend trend-up">
+                <i class="bi bi-speedometer"></i>
+                <span>{% if current_lang == 'en' %}92% Utilization{% else %}利用率 92%{% endif %}</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 活跃交易 -->
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="kpi-card" data-api-endpoint="/crm/api/kpi/active-deals">
+            <div class="kpi-icon">
+                <i class="bi bi-activity"></i>
+            </div>
+            <div id="dashboard-active-deals-kpi" class="kpi-value" data-countup="{{ deals_count|default(0) }}">{{ deals_count|default(0) }}</div>
+            <div class="kpi-label" data-i18n="active_deals">{{ t('active_deals') }}</div>
+            <div class="kpi-trend trend-up">
+                <i class="bi bi-percent"></i>
+                <span>{% if current_lang == 'en' %}68% Conversion{% else %}转化率 68%{% endif %}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 数据可视化中心 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="section-title">
+            <i class="bi bi-graph-up me-2" style="color: var(--btc-gold);"></i>
+            <span data-i18n="data_analytics_center">{{ t('data_analytics_center') }}</span>
+        </h4>
+    </div>
+    
+    <!-- 收入趋势图 -->
+    <div class="col-lg-8 mb-4">
+        <div class="card chart-card">
+            <div class="card-header bg-transparent border-0">
+                <h6 class="mb-0">
+                    <i class="bi bi-graph-up-arrow me-2" style="color: var(--btc-gold);"></i>
+                    <span data-i18n="revenue_trend_analysis">{{ t('revenue_trend_analysis') }}</span>
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" data-api-endpoint="/crm/api/analytics/revenue-trend">
+                    <canvas id="revenueTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 销售漏斗图 -->
+    <div class="col-lg-4 mb-4">
+        <div class="card chart-card">
+            <div class="card-header bg-transparent border-0">
+                <h6 class="mb-0">
+                    <i class="bi bi-funnel-fill me-2" style="color: var(--btc-gold);"></i>
+                    <span data-i18n="sales_funnel">{{ t('sales_funnel') }}</span>
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" data-api-endpoint="/crm/api/analytics/sales-funnel">
+                    <canvas id="salesFunnelChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 矿场容量分布 -->
+    <div class="col-lg-6 mb-4">
+        <div class="card chart-card">
+            <div class="card-header bg-transparent border-0">
+                <h6 class="mb-0">
+                    <i class="bi bi-pie-chart-fill me-2" style="color: var(--btc-gold);"></i>
+                    <span data-i18n="capacity_distribution">{{ t('capacity_distribution') }}</span>
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" data-api-endpoint="/crm/api/analytics/capacity-distribution">
+                    <canvas id="capacityDistributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 客户类型分布 -->
+    <div class="col-lg-6 mb-4">
+        <div class="card chart-card">
+            <div class="card-header bg-transparent border-0">
+                <h6 class="mb-0">
+                    <i class="bi bi-diagram-3-fill me-2" style="color: var(--btc-gold);"></i>
+                    <span data-i18n="customer_type_distribution">{{ t('customer_type_distribution') }}</span>
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" data-api-endpoint="/crm/api/analytics/customer-type">
+                    <canvas id="customerTypeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 矿场业务专区 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="section-title">
+            <i class="bi bi-cpu me-2" style="color: var(--btc-gold);"></i>
+            {% if current_lang == 'en' %}Mining Business Zone{% else %}矿场业务专区{% endif %}
+        </h4>
+    </div>
+    
+    <!-- 矿机型号销售排行榜 -->
+    <div class="col-lg-6 mb-4">
+        <div class="card chart-card">
+            <div class="card-header bg-transparent border-0">
+                <h6 class="mb-0">
+                    <i class="bi bi-trophy-fill me-2" style="color: var(--btc-gold);"></i>
+                    {% if current_lang == 'en' %}Top 5 Miner Models{% else %}矿机型号销售 TOP 5{% endif %}
+                </h6>
+            </div>
+            <div class="card-body" data-api-endpoint="/crm/api/rankings/miners">
+                <div class="ranking-item">
+                    <div class="ranking-number">1</div>
+                    <div class="ranking-content">
+                        <div class="ranking-label">Antminer S19 XP</div>
+                        <div class="ranking-value">320 units · 140 TH/s · $1.28M</div>
+                    </div>
+                </div>
+                <div class="ranking-item">
+                    <div class="ranking-number">2</div>
+                    <div class="ranking-content">
+                        <div class="ranking-label">WhatsMiner M50S</div>
+                        <div class="ranking-value">256 units · 126 TH/s · $980K</div>
+                    </div>
+                </div>
+                <div class="ranking-item">
+                    <div class="ranking-number">3</div>
+                    <div class="ranking-content">
+                        <div class="ranking-label">Antminer S21</div>
+                        <div class="ranking-value">180 units · 200 TH/s · $850K</div>
+                    </div>
+                </div>
+                <div class="ranking-item">
+                    <div class="ranking-number">4</div>
+                    <div class="ranking-content">
+                        <div class="ranking-label">Avalon A1366</div>
+                        <div class="ranking-value">145 units · 130 TH/s · $620K</div>
+                    </div>
+                </div>
+                <div class="ranking-item">
+                    <div class="ranking-number">5</div>
+                    <div class="ranking-content">
+                        <div class="ranking-label">WhatsMiner M60</div>
+                        <div class="ranking-value">128 units · 172 TH/s · $580K</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 客户挖矿容量TOP榜 -->
+    <div class="col-lg-6 mb-4">
+        <div class="card chart-card">
+            <div class="card-header bg-transparent border-0">
+                <h6 class="mb-0">
+                    <i class="bi bi-lightning-charge-fill me-2" style="color: var(--btc-gold);"></i>
+                    {% if current_lang == 'en' %}Top 5 Customer Capacity{% else %}客户挖矿容量 TOP 5{% endif %}
+                </h6>
+            </div>
+            <div class="card-body" data-api-endpoint="/crm/api/rankings/customer-capacity">
+                <div class="ranking-item">
+                    <div class="ranking-number">1</div>
+                    <div class="ranking-content">
+                        <div class="ranking-label">BTC Mining Corp</div>
+                        <div class="ranking-value">18.5 MW · 1,250 miners · Enterprise</div>
+                    </div>
+                </div>
+                <div class="ranking-item">
+                    <div class="ranking-number">2</div>
+                    <div class="ranking-content">
+                        <div class="ranking-label">HashPower Solutions</div>
+                        <div class="ranking-value">12.8 MW · 890 miners · Enterprise</div>
+                    </div>
+                </div>
+                <div class="ranking-item">
+                    <div class="ranking-number">3</div>
+                    <div class="ranking-content">
+                        <div class="ranking-label">CryptoFarm Ltd</div>
+                        <div class="ranking-value">9.2 MW · 640 miners · Enterprise</div>
+                    </div>
+                </div>
+                <div class="ranking-item">
+                    <div class="ranking-number">4</div>
+                    <div class="ranking-content">
+                        <div class="ranking-label">Digital Assets Inc</div>
+                        <div class="ranking-value">6.5 MW · 425 miners · Corporate</div>
+                    </div>
+                </div>
+                <div class="ranking-item">
+                    <div class="ranking-number">5</div>
+                    <div class="ranking-content">
+                        <div class="ranking-label">BlockChain Ventures</div>
+                        <div class="ranking-value">4.8 MW · 320 miners · Corporate</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 智能操作区 -->
+<div class="row">
+    <div class="col-12">
+        <h4 class="section-title">
+            <i class="bi bi-bell-fill me-2" style="color: var(--btc-gold);"></i>
+            {% if current_lang == 'en' %}Smart Operations{% else %}智能操作区{% endif %}
+        </h4>
+    </div>
+    
+    <!-- 今日待跟进客户 -->
+    <div class="col-lg-6 mb-4">
+        <div class="card chart-card">
+            <div class="card-header bg-transparent border-0">
+                <h6 class="mb-0">
+                    <i class="bi bi-calendar-check me-2" style="color: var(--btc-gold);"></i>
+                    {% if current_lang == 'en' %}Today's Follow-ups{% else %}今日待跟进客户{% endif %}
+                    <span class="badge bg-danger ms-2">3</span>
+                </h6>
+            </div>
+            <div class="card-body" data-api-endpoint="/crm/api/followups/today">
+                {% if follow_up_leads %}
+                    {% for lead in follow_up_leads[:3] %}
+                    <div class="alert-item {% if loop.index == 1 %}urgent{% endif %}">
+                        <div class="alert-icon">
+                            <i class="bi bi-exclamation-triangle-fill text-white" style="font-size: 14px;"></i>
+                        </div>
+                        <div>
+                            <div class="text-white fw-semibold">{{ lead.title }}</div>
+                            <small class="text-muted">
+                                {% if lead.customer %}{{ lead.customer.name }}{% else %}未知客户{% endif %} · 
+                                {% if lead.next_follow_up %}{{ lead.next_follow_up.strftime('%H:%M') }}{% else %}今天{% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="alert-item">
+                        <div class="alert-icon" style="background: #10b981;">
+                            <i class="bi bi-check-circle-fill text-white" style="font-size: 14px;"></i>
+                        </div>
+                        <div>
+                            <div class="text-white">{% if current_lang == 'en' %}All caught up!{% else %}今日无待跟进客户{% endif %}</div>
+                            <small class="text-muted">{% if current_lang == 'en' %}Great job!{% else %}干得漂亮！{% endif %}</small>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- 紧急订单/交易提醒 -->
+    <div class="col-lg-6 mb-4">
+        <div class="card chart-card">
+            <div class="card-header bg-transparent border-0">
+                <h6 class="mb-0">
+                    <i class="bi bi-exclamation-octagon me-2" style="color: var(--btc-gold);"></i>
+                    {% if current_lang == 'en' %}Urgent Alerts{% else %}紧急订单提醒{% endif %}
+                    <span class="badge bg-warning ms-2">2</span>
+                </h6>
+            </div>
+            <div class="card-body" data-api-endpoint="/crm/api/alerts/urgent">
+                <div class="alert-item urgent">
+                    <div class="alert-icon">
+                        <i class="bi bi-lightning-fill text-white" style="font-size: 14px;"></i>
+                    </div>
+                    <div>
+                        <div class="text-white fw-semibold">{% if current_lang == 'en' %}Payment Pending{% else %}付款待确认{% endif %}</div>
+                        <small class="text-muted">BTC Mining Corp · $250K · {% if current_lang == 'en' %}2 hours ago{% else %}2小时前{% endif %}</small>
+                    </div>
+                </div>
+                <div class="alert-item">
+                    <div class="alert-icon" style="background: #f59e0b;">
+                        <i class="bi bi-clock-fill text-white" style="font-size: 14px;"></i>
+                    </div>
+                    <div>
+                        <div class="text-white fw-semibold">{% if current_lang == 'en' %}Contract Expiring{% else %}合同即将到期{% endif %}</div>
+                        <small class="text-muted">HashPower Solutions · {% if current_lang == 'en' %}5 days left{% else %}还有5天{% endif %}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 快速操作按钮 -->
+<div class="row mb-4">
+    <div class="col-12 text-center">
+        <div class="d-flex flex-wrap justify-content-center gap-3">
+            <a href="{{ url_for('crm.customers') }}" class="quick-action-btn">
+                <i class="bi bi-person-plus-fill me-2"></i>
+                {% if current_lang == 'en' %}New Customer{% else %}新建客户{% endif %}
+            </a>
+            <a href="{{ url_for('crm.deals') }}" class="quick-action-btn">
+                <i class="bi bi-plus-circle-fill me-2"></i>
+                {% if current_lang == 'en' %}New Deal{% else %}新建交易{% endif %}
+            </a>
+            <button class="quick-action-btn" onclick="generateQuote()">
+                <i class="bi bi-file-earmark-text-fill me-2"></i>
+                {% if current_lang == 'en' %}Generate Quote{% else %}生成报价{% endif %}
+            </button>
+            <a href="{{ url_for('index') }}" class="quick-action-btn">
+                <i class="bi bi-calculator-fill me-2"></i>
+                {% if current_lang == 'en' %}Mining Calculator{% else %}挖矿计算器{% endif %}
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- CountUp.js is loaded in base.html -->
+
+<script>
+// Note: CountUp initialization is handled by base.html's initCountUp function
+// KPI elements have IDs and data-countup attributes for automatic initialization
+
+// Chart.js 配置
+const chartConfig = {
+    colors: {
+        gold: '#f7931a',
+        orange: '#ffa500',
+        gradient: function(ctx) {
+            const gradient = ctx.createLinearGradient(0, 0, 0, 350);
+            gradient.addColorStop(0, 'rgba(247, 147, 26, 0.8)');
+            gradient.addColorStop(1, 'rgba(255, 165, 0, 0.2)');
+            return gradient;
+        }
+    },
+    defaults: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                labels: { color: '#8b92a7' }
+            }
+        },
+        scales: {
+            y: {
+                ticks: { color: '#8b92a7' },
+                grid: { color: 'rgba(139, 146, 167, 0.1)' }
+            },
+            x: {
+                ticks: { color: '#8b92a7' },
+                grid: { color: 'rgba(139, 146, 167, 0.1)' }
+            }
+        }
+    }
+};
+
+// 收入趋势图
+const revenueTrendCtx = document.getElementById('revenueTrendChart');
+if (revenueTrendCtx) {
+    new Chart(revenueTrendCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            datasets: [
+                {
+                    label: '{% if current_lang == "en" %}Miner Sales{% else %}矿机销售{% endif %}',
+                    data: [120, 190, 170, 250, 280, 320, 350, 380, 420, 460, 490, 520],
+                    borderColor: chartConfig.colors.gold,
+                    backgroundColor: 'rgba(247, 147, 26, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: '{% if current_lang == "en" %}Hosting Fees{% else %}托管费用{% endif %}',
+                    data: [80, 110, 130, 150, 170, 190, 210, 230, 250, 270, 290, 310],
+                    borderColor: chartConfig.colors.orange,
+                    backgroundColor: 'rgba(255, 165, 0, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }
+            ]
+        },
+        options: chartConfig.defaults
+    });
+}
+
+// 销售漏斗图
+const salesFunnelCtx = document.getElementById('salesFunnelChart');
+if (salesFunnelCtx) {
+    new Chart(salesFunnelCtx, {
+        type: 'bar',
+        data: {
+            labels: ['{% if current_lang == "en" %}Leads{% else %}潜在客户{% endif %}', '{% if current_lang == "en" %}Qualified{% else %}合格线索{% endif %}', '{% if current_lang == "en" %}Signed{% else %}签约{% endif %}', '{% if current_lang == "en" %}Delivered{% else %}交付{% endif %}'],
+            datasets: [{
+                label: '{% if current_lang == "en" %}Count{% else %}数量{% endif %}',
+                data: [450, 320, 180, 120],
+                backgroundColor: [
+                    'rgba(247, 147, 26, 0.9)',
+                    'rgba(247, 147, 26, 0.7)',
+                    'rgba(247, 147, 26, 0.5)',
+                    'rgba(247, 147, 26, 0.3)'
+                ],
+                borderColor: chartConfig.colors.gold,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            ...chartConfig.defaults,
+            indexAxis: 'y'
+        }
+    });
+}
+
+// 矿场容量分布图
+const capacityDistCtx = document.getElementById('capacityDistributionChart');
+if (capacityDistCtx) {
+    new Chart(capacityDistCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['BTC Mining Corp', 'HashPower Solutions', 'CryptoFarm Ltd', 'Digital Assets Inc', '{% if current_lang == "en" %}Others{% else %}其他{% endif %}'],
+            datasets: [{
+                data: [21.6, 15.0, 10.7, 7.6, 30.7],
+                backgroundColor: [
+                    'rgba(247, 147, 26, 0.9)',
+                    'rgba(255, 165, 0, 0.8)',
+                    'rgba(247, 147, 26, 0.6)',
+                    'rgba(255, 165, 0, 0.5)',
+                    'rgba(139, 146, 167, 0.3)'
+                ],
+                borderColor: '#1a1d29',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            ...chartConfig.defaults,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: { color: '#8b92a7', padding: 10 }
+                }
+            }
+        }
+    });
+}
+
+// 客户类型分布图
+const customerTypeCtx = document.getElementById('customerTypeChart');
+if (customerTypeCtx) {
+    new Chart(customerTypeCtx, {
+        type: 'pie',
+        data: {
+            labels: ['{% if current_lang == "en" %}Enterprise{% else %}企业客户{% endif %}', '{% if current_lang == "en" %}Individual{% else %}个人客户{% endif %}'],
+            datasets: [{
+                data: [65, 35],
+                backgroundColor: [
+                    chartConfig.colors.gold,
+                    chartConfig.colors.orange
+                ],
+                borderColor: '#1a1d29',
+                borderWidth: 3
+            }]
+        },
+        options: {
+            ...chartConfig.defaults,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#8b92a7', padding: 15 }
+                }
+            }
+        }
+    });
+}
+
+// 生成报价功能
+function generateQuote() {
+    alert('{% if current_lang == "en" %}Quote generation feature coming soon!{% else %}报价生成功能即将推出！{% endif %}');
+}
+
+// 定期刷新数据 (可选)
+function refreshDashboardData() {
+    // 从API获取最新数据并更新图表
+    console.log('Refreshing dashboard data...');
+}
+
+// 每5分钟刷新一次数据
+// setInterval(refreshDashboardData, 300000);
+</script>
+{% endblock %}

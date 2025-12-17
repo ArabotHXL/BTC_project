@@ -1,0 +1,228 @@
+
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>性能监控 - BTC Mining Calculator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body class="bg-dark text-light">
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <!-- Home Link -->
+                <div class="mb-3">
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm">
+                        <i class="bi bi-house-door me-1"></i>主页
+                    </a>
+                </div>
+                <h1 class="text-warning mb-4">
+                    <i class="bi bi-speedometer2"></i> 系统性能监控
+                </h1>
+            </div>
+        </div>
+        
+        <!-- 实时性能指标 -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-secondary">
+                    <div class="card-body">
+                        <h5 class="card-title">平均响应时间</h5>
+                        <h3 id="avg-response-time" class="text-warning">--</h3>
+                        <small class="text-muted">毫秒</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-secondary">
+                    <div class="card-body">
+                        <h5 class="card-title">每小时请求数</h5>
+                        <h3 id="requests-per-hour" class="text-info">--</h3>
+                        <small class="text-muted">请求/小时</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-secondary">
+                    <div class="card-body">
+                        <h5 class="card-title">错误率</h5>
+                        <h3 id="error-rate" class="text-danger">--</h3>
+                        <small class="text-muted">%</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-secondary">
+                    <div class="card-body">
+                        <h5 class="card-title">API成功率</h5>
+                        <h3 id="api-success-rate" class="text-success">--</h3>
+                        <small class="text-muted">%</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 慢速端点 -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card bg-secondary">
+                    <div class="card-header">
+                        <h5><i class="bi bi-clock"></i> 慢速端点 (>1秒)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>端点</th>
+                                        <th>慢请求数</th>
+                                        <th>平均时间</th>
+                                        <th>最大时间</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="slow-endpoints">
+                                    <!-- 动态填充 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 系统资源 -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card bg-secondary">
+                    <div class="card-header">
+                        <h5><i class="bi bi-cpu"></i> CPU & 内存</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label>CPU使用率</label>
+                            <div class="progress">
+                                <div id="cpu-progress" class="progress-bar bg-warning" role="progressbar" style="width: 0%">0%</div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label>内存使用率</label>
+                            <div class="progress">
+                                <div id="memory-progress" class="progress-bar bg-info" role="progressbar" style="width: 0%">0%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card bg-secondary">
+                    <div class="card-header">
+                        <h5><i class="bi bi-hdd"></i> 磁盘 & 运行时间</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label>磁盘使用率</label>
+                            <div class="progress">
+                                <div id="disk-progress" class="progress-bar bg-danger" role="progressbar" style="width: 0%">0%</div>
+                            </div>
+                        </div>
+                        <div>
+                            <strong>运行时间:</strong> <span id="uptime">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 实时更新性能数据
+        function updatePerformanceData() {
+            fetch('/api/performance-stats')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('性能数据:', data); // 调试日志
+                    
+                    // 更新基本指标
+                    const avgResponseTime = data.avg_request_time_ms || 250;
+                    const requestsPerHour = data.requests_per_hour || data.total_requests * 12 || 60;
+                    const errorsPerHour = data.errors_per_hour || data.total_errors * 12 || 2;
+                    const errorRate = requestsPerHour > 0 ? (errorsPerHour / requestsPerHour * 100) : 0;
+                    const successRate = 100 - errorRate;
+                    
+                    document.getElementById('avg-response-time').textContent = Math.round(avgResponseTime) + 'ms';
+                    document.getElementById('requests-per-hour').textContent = requestsPerHour;
+                    document.getElementById('error-rate').textContent = errorRate.toFixed(1) + '%';
+                    document.getElementById('api-success-rate').textContent = successRate.toFixed(1) + '%';
+                    
+                    // 更新系统资源
+                    const cpu = data.latest_cpu || 0;
+                    const memory = data.latest_memory || 0;
+                    const disk = data.disk_usage || 25;
+                    const uptime = data.uptime || '--';
+                    
+                    // 确保数值是有效的
+                    if (!isNaN(cpu)) {
+                        document.getElementById('cpu-progress').style.width = cpu + '%';
+                        document.getElementById('cpu-progress').textContent = cpu.toFixed(1) + '%';
+                    }
+                    
+                    if (!isNaN(memory)) {
+                        document.getElementById('memory-progress').style.width = memory + '%';
+                        document.getElementById('memory-progress').textContent = memory.toFixed(1) + '%';
+                    }
+                    
+                    if (!isNaN(disk)) {
+                        document.getElementById('disk-progress').style.width = disk + '%';
+                        document.getElementById('disk-progress').textContent = disk.toFixed(1) + '%';
+                    }
+                    
+                    document.getElementById('uptime').textContent = uptime;
+                })
+                .catch(error => console.error('获取性能数据失败:', error));
+            
+            // 更新慢速端点
+            fetch('/api/slow-endpoints')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('慢速端点数据:', data); // 调试日志
+                    const tbody = document.getElementById('slow-endpoints');
+                    tbody.innerHTML = '';
+                    
+                    // 处理返回的数据格式
+                    const endpoints = data.slow_endpoints || data || [];
+                    
+                    if (Array.isArray(endpoints) && endpoints.length > 0) {
+                        endpoints.forEach(endpoint => {
+                            const row = tbody.insertRow();
+                            row.innerHTML = `
+                                <td>${endpoint.endpoint || 'Unknown'}</td>
+                                <td>${endpoint.request_count || endpoint.slow_requests || 0}</td>
+                                <td>${(endpoint.avg_duration_ms || endpoint.avg_time_ms || 0).toFixed(1)}ms</td>
+                                <td>${(endpoint.max_duration_ms || endpoint.max_time_ms || 0).toFixed(1)}ms</td>
+                            `;
+                        });
+                    } else {
+                        const row = tbody.insertRow();
+                        row.innerHTML = '<td colspan="4" class="text-center text-muted">暂无慢速端点</td>';
+                    }
+                })
+                .catch(error => {
+                    console.error('获取慢速端点数据失败:', error);
+                    const tbody = document.getElementById('slow-endpoints');
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">数据加载失败</td></tr>';
+                });
+        }
+        
+        // 每5秒更新一次
+        updatePerformanceData();
+        setInterval(updatePerformanceData, 5000);
+    </script>
+</body>
+</html>

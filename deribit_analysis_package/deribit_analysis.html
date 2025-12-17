@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deribit交易数据分析 - BTC Mining Calculator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+        }
+        
+        .navbar {
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+            border: none;
+            border-radius: 25px;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #e67e22, #d35400);
+            transform: translateY(-2px);
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, rgba(243, 156, 18, 0.2), rgba(230, 126, 34, 0.2));
+            border: 1px solid rgba(243, 156, 18, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .price-range-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 4px solid #f39c12;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .price-range-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(10px);
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .status-online { background-color: #27ae60; }
+        .status-offline { background-color: #e74c3c; }
+        
+        .loading-spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid #f39c12;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-graph-up"></i> BTC Mining Calculator
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/analytics_dashboard">分析仪表盘</a>
+                <a class="nav-link active" href="/deribit-analysis">Deribit分析</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h2><i class="bi bi-bar-chart-line"></i> Deribit交易数据分析系统</h2>
+                            <div>
+                                <span id="connectionStatus" class="status-indicator status-offline"></span>
+                                <span id="statusText">连接中...</span>
+                            </div>
+                        </div>
+                        <p class="text-muted">实时采集Deribit交易数据，分析价格区间的交易量分布</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 控制面板 -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5><i class="bi bi-gear"></i> 数据采集控制</h5>
+                        <div class="mb-3">
+                            <label for="instrumentSelect" class="form-label">选择合约:</label>
+                            <select id="instrumentSelect" class="form-select">
+                                <option value="BTC-PERPETUAL">BTC-PERPETUAL (永续合约)</option>
+                                <option value="auto">自动选择活跃期权</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="intervalSelect" class="form-label">采集间隔:</label>
+                            <select id="intervalSelect" class="form-select">
+                                <option value="1">1分钟</option>
+                                <option value="5">5分钟</option>
+                                <option value="15" selected>15分钟</option>
+                                <option value="30">30分钟</option>
+                                <option value="60">1小时</option>
+                            </select>
+                        </div>
+                        <button id="startCollection" class="btn btn-primary me-2">
+                            <i class="bi bi-play-fill"></i> 开始采集
+                        </button>
+                        <button id="stopCollection" class="btn btn-secondary me-2" disabled>
+                            <i class="bi bi-stop-fill"></i> 停止采集
+                        </button>
+                        <button id="manualAnalysis" class="btn btn-warning">
+                            <i class="bi bi-arrow-clockwise"></i> 手动分析
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5><i class="bi bi-info-circle"></i> 系统状态</h5>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="metric-card">
+                                    <h6>API状态</h6>
+                                    <span id="apiStatus" class="h4">检查中...</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="metric-card">
+                                    <h6>数据库记录</h6>
+                                    <span id="dbRecords" class="h4">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 多交易所数据收集控制面板 -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-info">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="bi bi-globe"></i> 多交易所数据收集 (Deribit + OKX + Binance)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-2">
+                                <label for="timeWindowSelect" class="form-label">时间窗口</label>
+                                <select class="form-select" id="timeWindowSelect">
+                                    <option value="15" selected>15分钟</option>
+                                    <option value="30">30分钟</option>
+                                    <option value="60">1小时</option>
+                                    <option value="120">2小时</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="bucketWidthInput" class="form-label">分桶宽度</label>
+                                <input type="number" class="form-control" id="bucketWidthInput" 
+                                       value="5.0" min="0.1" step="0.1" max="100">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="bucketTypeSelect" class="form-label">分桶类型</label>
+                                <select class="form-select" id="bucketTypeSelect">
+                                    <option value="price" selected>按价格</option>
+                                    <option value="strike">按行权价</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="maxOkxInput" class="form-label">OKX合约数</label>
+                                <input type="number" class="form-control" id="maxOkxInput" 
+                                       value="400" min="10" max="1000">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="maxBinanceInput" class="form-label">Binance合约数</label>
+                                <input type="number" class="form-control" id="maxBinanceInput" 
+                                       value="400" min="10" max="1000">
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-check mt-4">
+                                    <input class="form-check-input" type="checkbox" id="callPutSeparate" checked>
+                                    <label class="form-check-label" for="callPutSeparate">
+                                        CALL/PUT分离
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <button type="button" class="btn btn-info btn-lg" id="multiExchangeBtn">
+                                    <i class="bi bi-collection"></i> 收集多交易所数据
+                                </button>
+                                <button type="button" class="btn btn-outline-info" id="viewMultiAnalysisBtn">
+                                    <i class="bi bi-graph-up"></i> 查看分析结果
+                                </button>
+                                <button type="button" class="btn btn-outline-success" id="exportCsvBtn">
+                                    <i class="bi bi-download"></i> 导出CSV
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div id="multiExchangeStatus" class="alert alert-info" style="display: none;">
+                                <div class="d-flex align-items-center">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <span>正在收集多交易所数据，请稍候...</span>
+                                </div>
+                            </div>
+                            <div id="multiExchangeResults" style="display: none;">
+                                <!-- 动态生成结果 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据概览 -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <h6><i class="bi bi-graph-up"></i> 总交易数</h6>
+                    <div id="totalTrades" class="h3">-</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <h6><i class="bi bi-currency-bitcoin"></i> 总交易量</h6>
+                    <div id="totalVolume" class="h3">-</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <h6><i class="bi bi-calculator"></i> 平均价格</h6>
+                    <div id="avgPrice" class="h3">-</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <h6><i class="bi bi-clock"></i> 最新更新</h6>
+                    <div id="lastUpdate" class="h6">-</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 图表和分析 -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body">
+                        <h5><i class="bi bi-bar-chart"></i> 价格区间交易量分布</h5>
+                        <canvas id="priceRangeChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5><i class="bi bi-pie-chart"></i> 交易方向分布</h5>
+                        <canvas id="directionChart" width="200" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 价格区间详细数据 -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5><i class="bi bi-table"></i> 价格区间分析详情</h5>
+                        <div id="loadingIndicator" class="text-center p-4">
+                            <div class="loading-spinner mx-auto mb-2"></div>
+                            <p>正在加载数据...</p>
+                        </div>
+                        <div id="priceRangeDetails" style="display: none;">
+                            <!-- 动态生成内容 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let priceRangeChart = null;
+        let directionChart = null;
+        let collectionInterval = null;
+        
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            checkApiStatus();
+            loadInitialData();
+            
+            // 绑定事件
+            document.getElementById('startCollection').addEventListener('click', startDataCollection);
+            document.getElementById('stopCollection').addEventListener('click', stopDataCollection);
+            document.getElementById('manualAnalysis').addEventListener('click', performManualAnalysis);
+            document.getElementById('multiExchangeBtn').addEventListener('click', collectMultiExchangeData);
+            document.getElementById('viewMultiAnalysisBtn').addEventListener('click', viewMultiExchangeAnalysis);
+            document.getElementById('exportCsvBtn').addEventListener('click', exportMultiExchangeCsv);
+        });
+        
+        function initializeCharts() {
+            // 初始化价格区间图表
+            const priceCtx = document.getElementById('priceRangeChart').getContext('2d');
+            priceRangeChart = new Chart(priceCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '交易量',
+                        data: [],
+                        backgroundColor: 'rgba(243, 156, 18, 0.6)',
+                        borderColor: 'rgba(243, 156, 18, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { labels: { color: '#fff' } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#fff' } },
+                        y: { ticks: { color: '#fff' } }
+                    }
+                }
+            });
+            
+            // 初始化交易方向图表
+            const dirCtx = document.getElementById('directionChart').getContext('2d');
+            directionChart = new Chart(dirCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['买入', '卖出'],
+                    datasets: [{
+                        data: [0, 0],
+                        backgroundColor: ['#27ae60', '#e74c3c'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { labels: { color: '#fff' } }
+                    }
+                }
+            });
+        }
+        
+        async function checkApiStatus() {
+            try {
+                const response = await fetch('/api/deribit/status');
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateConnectionStatus(true);
+                    document.getElementById('apiStatus').textContent = '正常';
+                } else {
+                    updateConnectionStatus(false);
+                    document.getElementById('apiStatus').textContent = '异常';
+                }
+            } catch (error) {
+                updateConnectionStatus(false);
+                document.getElementById('apiStatus').textContent = '连接失败';
+            }
+        }
+        
+        function updateConnectionStatus(isOnline) {
+            const indicator = document.getElementById('connectionStatus');
+            const statusText = document.getElementById('statusText');
+            
+            if (isOnline) {
+                indicator.className = 'status-indicator status-online';
+                statusText.textContent = '已连接';
+            } else {
+                indicator.className = 'status-indicator status-offline';
+                statusText.textContent = '已断开';
+            }
+        }
+        
+        async function loadInitialData() {
+            try {
+                const response = await fetch('/api/deribit/analysis-data');
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateDashboard(data.data);
+                }
+            } catch (error) {
+                console.error('加载数据失败:', error);
+            }
+        }
+        
+        function updateDashboard(data) {
+            // 更新统计数据
+            document.getElementById('totalTrades').textContent = data.total_trades?.toLocaleString() || '0';
+            document.getElementById('totalVolume').textContent = data.total_volume?.toLocaleString() || '0';
+            document.getElementById('avgPrice').textContent = data.avg_price ? `$${data.avg_price.toLocaleString()}` : '$0';
+            document.getElementById('lastUpdate').textContent = data.last_update || '从未';
+            document.getElementById('dbRecords').textContent = data.db_records?.toLocaleString() || '0';
+            
+            // 更新图表
+            if (data.price_ranges) {
+                updatePriceRangeChart(data.price_ranges);
+                updatePriceRangeDetails(data.price_ranges);
+            }
+            
+            if (data.direction_stats) {
+                updateDirectionChart(data.direction_stats);
+            }
+            
+            // 隐藏加载指示器
+            document.getElementById('loadingIndicator').style.display = 'none';
+            document.getElementById('priceRangeDetails').style.display = 'block';
+        }
+        
+        function updatePriceRangeChart(priceRanges) {
+            const labels = priceRanges.map(range => range.price_range);
+            const volumes = priceRanges.map(range => range.total_volume);
+            
+            priceRangeChart.data.labels = labels;
+            priceRangeChart.data.datasets[0].data = volumes;
+            priceRangeChart.update();
+        }
+        
+        function updateDirectionChart(directionStats) {
+            // 确保数据存在且为数字
+            const buyVolume = directionStats && directionStats.buy ? directionStats.buy : 0;
+            const sellVolume = directionStats && directionStats.sell ? directionStats.sell : 0;
+            
+            directionChart.data.datasets[0].data = [buyVolume, sellVolume];
+            directionChart.update();
+            
+            // 如果数据为空，显示提示
+            if (buyVolume === 0 && sellVolume === 0) {
+                console.log('方向统计数据为空，可能需要先收集交易数据');
+            }
+        }
+        
+        function updatePriceRangeDetails(priceRanges) {
+            const container = document.getElementById('priceRangeDetails');
+            container.innerHTML = '';
+            
+            priceRanges.forEach((range, index) => {
+                const item = document.createElement('div');
+                item.className = 'price-range-item';
+                item.innerHTML = `
+                    <div class="row align-items-center">
+                        <div class="col-md-3">
+                            <strong>${range.price_range}</strong>
+                        </div>
+                        <div class="col-md-2">
+                            <span class="badge bg-primary">${range.trade_count} 笔</span>
+                        </div>
+                        <div class="col-md-3">
+                            <span>${range.total_volume.toLocaleString()}</span>
+                        </div>
+                        <div class="col-md-2">
+                            <span class="text-warning">${range.percentage.toFixed(2)}%</span>
+                        </div>
+                        <div class="col-md-2">
+                            <span>$${range.avg_price.toLocaleString()}</span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+        
+        async function startDataCollection() {
+            const instrument = document.getElementById('instrumentSelect').value;
+            const interval = document.getElementById('intervalSelect').value;
+            
+            try {
+                const response = await fetch('/api/deribit/start-collection', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ instrument, interval })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('startCollection').disabled = true;
+                    document.getElementById('stopCollection').disabled = false;
+                    
+                    // 定期刷新数据
+                    collectionInterval = setInterval(loadInitialData, 30000); // 每30秒刷新
+                    
+                    alert('数据采集已启动！');
+                } else {
+                    alert('启动失败: ' + data.message);
+                }
+            } catch (error) {
+                alert('启动失败: ' + error.message);
+            }
+        }
+        
+        async function stopDataCollection() {
+            try {
+                const response = await fetch('/api/deribit/stop-collection', {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('startCollection').disabled = false;
+                    document.getElementById('stopCollection').disabled = true;
+                    
+                    if (collectionInterval) {
+                        clearInterval(collectionInterval);
+                        collectionInterval = null;
+                    }
+                    
+                    alert('数据采集已停止！');
+                }
+            } catch (error) {
+                alert('停止失败: ' + error.message);
+            }
+        }
+        
+        async function performManualAnalysis() {
+            const instrument = document.getElementById('instrumentSelect').value;
+            
+            try {
+                document.getElementById('manualAnalysis').disabled = true;
+                document.getElementById('manualAnalysis').innerHTML = '<i class="bi bi-arrow-clockwise"></i> 分析中...';
+                
+                const response = await fetch('/api/deribit/manual-analysis', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ instrument })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    await loadInitialData(); // 重新加载数据
+                    alert('分析完成！');
+                } else {
+                    alert('分析失败: ' + data.message);
+                }
+            } catch (error) {
+                alert('分析失败: ' + error.message);
+            } finally {
+                document.getElementById('manualAnalysis').disabled = false;
+                document.getElementById('manualAnalysis').innerHTML = '<i class="bi bi-arrow-clockwise"></i> 手动分析';
+            }
+        }
+
+        // 多交易所数据收集功能
+        async function collectMultiExchangeData() {
+            const statusDiv = document.getElementById('multiExchangeStatus');
+            const resultsDiv = document.getElementById('multiExchangeResults');
+            const button = document.getElementById('multiExchangeBtn');
+            
+            // 获取配置参数
+            const config = {
+                minutes: parseInt(document.getElementById('timeWindowSelect').value),
+                bucket_width: parseFloat(document.getElementById('bucketWidthInput').value),
+                bucket_by: document.getElementById('bucketTypeSelect').value,
+                max_okx: parseInt(document.getElementById('maxOkxInput').value),
+                max_binance: parseInt(document.getElementById('maxBinanceInput').value),
+                by_type: document.getElementById('callPutSeparate').checked
+            };
+            
+            // 显示加载状态
+            statusDiv.style.display = 'block';
+            resultsDiv.style.display = 'none';
+            button.disabled = true;
+            
+            try {
+                const response = await fetch('/api/deribit/multi-exchange-collect', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(config)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayMultiExchangeResults(result.data);
+                    statusDiv.style.display = 'none';
+                    resultsDiv.style.display = 'block';
+                    
+                    // 如果有警告信息，显示但不阻止结果显示
+                    if (result.warning) {
+                        const warningDiv = document.createElement('div');
+                        warningDiv.className = 'alert alert-warning mt-2';
+                        warningDiv.innerHTML = `<i class="bi bi-exclamation-triangle"></i> ${result.warning}`;
+                        resultsDiv.insertBefore(warningDiv, resultsDiv.firstChild);
+                    }
+                } else {
+                    statusDiv.innerHTML = `<div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle"></i> 收集失败: ${result.error || result.message}
+                    </div>`;
+                }
+            } catch (error) {
+                console.error('Multi-exchange collection error:', error);
+                statusDiv.innerHTML = `<div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i> 网络错误: ${error.message}
+                </div>`;
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        function displayMultiExchangeResults(data) {
+            const resultsDiv = document.getElementById('multiExchangeResults');
+            
+            let html = `
+                <div class="card mt-3">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="mb-0"><i class="bi bi-check-circle"></i> 多交易所数据收集完成</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 class="text-primary">${data.total_trades}</h4>
+                                    <small class="text-muted">总交易数</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 class="text-info">${data.time_window_minutes}分钟</h4>
+                                    <small class="text-muted">时间窗口</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 class="text-warning">${data.bucket_width}</h4>
+                                    <small class="text-muted">分桶宽度</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 class="text-success">${data.exchanges.length}</h4>
+                                    <small class="text-muted">交易所数量</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h6><i class="bi bi-building"></i> 交易所数据摘要</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>交易所</th>
+                                        <th>交易数</th>
+                                        <th>总金额</th>
+                                        <th>平均价格</th>
+                                        <th>价格区间</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+            
+            data.exchanges.forEach(exchange => {
+                html += `
+                    <tr>
+                        <td><strong>${exchange.exchange}</strong></td>
+                        <td>${exchange.trades_count}</td>
+                        <td>${exchange.total_amount.toFixed(2)}</td>
+                        <td>$${exchange.avg_price.toFixed(2)}</td>
+                        <td>$${exchange.min_price.toFixed(2)} - $${exchange.max_price.toFixed(2)}</td>
+                    </tr>`;
+            });
+            
+            html += `
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <h6 class="mt-3"><i class="bi bi-bar-chart"></i> 分桶分析结果</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>价格区间</th>
+                                        <th>交易数</th>
+                                        <th>交易量</th>
+                                        <th>占比</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+            
+            const totalAmount = data.bucket_analysis.reduce((sum, item) => sum + item.amount, 0);
+            data.bucket_analysis.forEach(bucket => {
+                const percentage = ((bucket.amount / totalAmount) * 100).toFixed(1);
+                html += `
+                    <tr>
+                        <td>${bucket.bucket}</td>
+                        <td>${bucket.trades}</td>
+                        <td>${bucket.amount.toFixed(4)}</td>
+                        <td>${percentage}%</td>
+                    </tr>`;
+            });
+            
+            html += `
+                                </tbody>
+                            </table>
+                        </div>`;
+            
+            // 如果有CALL/PUT分析数据
+            if (data.call_put_analysis && data.call_put_analysis.length > 0) {
+                html += `
+                    <h6 class="mt-3"><i class="bi bi-pie-chart"></i> CALL/PUT 分析</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>价格区间</th>
+                                    <th>CALL交易数</th>
+                                    <th>CALL金额</th>
+                                    <th>PUT交易数</th>
+                                    <th>PUT金额</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                
+                data.call_put_analysis.forEach(item => {
+                    html += `
+                        <tr>
+                            <td>${item.bucket}</td>
+                            <td>${item.call.trades}</td>
+                            <td>${item.call.amount.toFixed(4)}</td>
+                            <td>${item.put.trades}</td>
+                            <td>${item.put.amount.toFixed(4)}</td>
+                        </tr>`;
+                });
+                
+                html += `
+                            </tbody>
+                        </table>
+                    </div>`;
+            }
+            
+            html += `
+                    </div>
+                </div>`;
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        async function viewMultiExchangeAnalysis() {
+            try {
+                const response = await fetch('/api/deribit/multi-exchange-analysis');
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayMultiExchangeResults(result.data);
+                    document.getElementById('multiExchangeResults').style.display = 'block';
+                } else {
+                    alert('获取分析数据失败: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error viewing multi-exchange analysis:', error);
+                alert('网络错误: ' + error.message);
+            }
+        }
+
+        function exportMultiExchangeCsv() {
+            // 创建下载链接
+            const link = document.createElement('a');
+            link.href = '/api/deribit/multi-exchange-csv';
+            link.download = `multi_exchange_trades_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>

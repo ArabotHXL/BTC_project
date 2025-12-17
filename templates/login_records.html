@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if current_lang == 'en' %}Login Records - BTC Mining Calculator{% else %}登录记录 - BTC挖矿计算器{% endif %}</title>
+    <!-- Bootstrap CSS from Replit CDN -->
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Responsive CSS -->
+    <link rel="stylesheet" href="/static/css/responsive.css">
+</head>
+<body>
+    <div class="container-fluid">
+        <header class="py-3 mb-4 border-bottom">
+            <div class="container d-flex align-items-center justify-content-between">
+                <h1 class="fs-4">
+                    {% if current_lang == 'en' %}Login Records Management{% else %}登录记录管理{% endif %}
+                </h1>
+                
+                <div class="d-flex gap-2 gap-md-4 align-items-center flex-wrap">
+                    <!-- 语言切换 / Language Switcher -->
+                    <div class="btn-group btn-group-sm me-2 d-none d-md-flex" role="group">
+                        <button type="button" data-lang-switch="zh" data-lang="zh" class="btn btn-outline-light {{ 'active' if current_lang == 'zh' else '' }} lang-switch-btn">中文</button>
+                        <button type="button" data-lang-switch="en" data-lang="en" class="btn btn-outline-light {{ 'active' if current_lang == 'en' else '' }} lang-switch-btn">English</button>
+                    </div>
+                    
+                    <div class="d-flex flex-wrap gap-1">
+                        <a href="{{ url_for('admin.login_dashboard') }}" class="btn btn-outline-info btn-sm">
+                            <i class="bi bi-graph-up"></i> 
+                            <span class="d-none d-md-inline">{% if current_lang == 'en' %}Login Analytics Dashboard{% else %}登录分析仪表盘{% endif %}</span>
+                            <span class="d-md-none">{% if current_lang == 'en' %}Analytics{% else %}分析{% endif %}</span>
+                        </a>
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-calculator"></i> 
+                            <span class="d-none d-md-inline">{% if current_lang == 'en' %}Back to Calculator{% else %}返回计算器{% endif %}</span>
+                            <span class="d-md-none">{% if current_lang == 'en' %}Home{% else %}首页{% endif %}</span>
+                        </a>
+                        <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-box-arrow-right"></i> 
+                            <span class="d-none d-md-inline">{% if current_lang == 'en' %}Logout{% else %}退出登录{% endif %}</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="container mb-5">
+            <!-- 消息提示条 -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endwith %}
+            
+            <div class="card shadow">
+                <div class="card-header bg-primary bg-opacity-10 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        {% if current_lang == 'en' %}Recent Login Records (Max 100 entries){% else %}最近登录记录 (最多显示100条){% endif %}
+                    </h5>
+                    <span id="current-time" class="text-muted"></span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th class="d-none d-lg-table-cell">ID</th>
+                                    <th>{% if current_lang == 'en' %}User Email{% else %}用户邮箱{% endif %}</th>
+                                    <th class="d-none d-md-table-cell">{% if current_lang == 'en' %}Login Time{% else %}登录时间{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                                    <th class="d-none d-lg-table-cell">{% if current_lang == 'en' %}IP Address{% else %}IP地址{% endif %}</th>
+                                    <th class="d-none d-xl-table-cell">{% if current_lang == 'en' %}Country/Region{% else %}国家/地区{% endif %}</th>
+                                    <th class="d-none d-xl-table-cell">{% if current_lang == 'en' %}Detailed Location{% else %}详细位置{% endif %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if records %}
+                                    {% for record in records %}
+                                        <tr class="{{ 'table-success' if record.successful else 'table-danger' }}">
+                                            <td class="d-none d-lg-table-cell">{{ record.id }}</td>
+                                            <td>{{ record.email }}</td>
+                                            <td class="d-none d-md-table-cell">{{ record.login_time.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                            <td>
+                                                {% if record.successful %}
+                                                    <span class="badge bg-success">{% if current_lang == 'en' %}Success{% else %}成功{% endif %}</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">{% if current_lang == 'en' %}Failed{% else %}失败{% endif %}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="d-none d-lg-table-cell">{{ record.ip_address or 'N/A' }}</td>
+                                            <td class="d-none d-xl-table-cell">
+                                                {% if record.login_location %}
+                                                    {% if ',' in record.login_location %}
+                                                        {{ record.login_location.split(',')[0] }}
+                                                    {% elif '本地' in record.login_location or '内部' in record.login_location %}
+                                                        {{ record.login_location.split(' ')[0] }}
+                                                    {% else %}
+                                                        {{ record.login_location }}
+                                                    {% endif %}
+                                                {% else %}
+                                                    未知国家
+                                                {% endif %}
+                                            </td>
+                                            <td class="d-none d-xl-table-cell">
+                                                {% if record.login_location %}
+                                                    {% if record.login_location|length > 15 %}
+                                                        <!-- 如果位置信息较长，使用弹出框 -->
+                                                        <button type="button" class="btn btn-sm btn-outline-info" 
+                                                                data-bs-toggle="tooltip" data-bs-placement="top" 
+                                                                title="{{ record.login_location }}">
+                                                            查看详情
+                                                        </button>
+                                                    {% else %}
+                                                        <!-- 直接显示位置信息 -->
+                                                        {{ record.login_location }}
+                                                    {% endif %}
+                                                {% else %}
+                                                    未知位置
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="7" class="text-center">暂无登录记录</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="py-3 my-4 border-top">
+            <div class="container text-center">
+                <p class="text-muted">© 2025 BTC Mining Calculator</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // 初始化工具提示
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+            
+            // 显示当前时间
+            function updateCurrentTime() {
+                var now = new Date();
+                var options = { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                };
+                document.getElementById('current-time').textContent = now.toLocaleDateString('zh-CN', options);
+            }
+            
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 1000);
+        });
+    </script>
+</body>
+</html>

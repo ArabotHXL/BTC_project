@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if current_lang == 'zh' %}HashInsight Enterprise - 企业级智能分析平台{% else %}HashInsight Enterprise - Enterprise Intelligence Platform{% endif %}</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #121212 0%, #1e2329 100%);
+            color: #f8f9fa;
+            min-height: 100vh;
+        }
+        
+        .hero-section {
+            background: linear-gradient(135deg, rgba(247, 147, 26, 0.1) 0%, rgba(33, 37, 41, 0.9) 100%);
+            padding: 5rem 0 3rem;
+            text-align: center;
+        }
+        
+        .btc-logo {
+            display: inline-block;
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #f7931a, #ffcc00);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 100px;
+            font-size: 3.5rem;
+            margin-bottom: 2rem;
+            transform: rotate(12deg);
+            color: #212529;
+            box-shadow: 0 10px 30px rgba(247, 147, 26, 0.3);
+        }
+        
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #f7931a, #ffffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.4rem;
+            margin-bottom: 3rem;
+            color: #adb5bd;
+            font-weight: 300;
+        }
+        
+        .features-section {
+            padding: 4rem 0;
+            background-color: rgba(33, 37, 41, 0.5);
+        }
+        
+        .feature-card {
+            background: linear-gradient(135deg, rgba(247, 147, 26, 0.05), rgba(33, 37, 41, 0.8));
+            border: 1px solid rgba(247, 147, 26, 0.2);
+            border-radius: 1rem;
+            padding: 2rem;
+            height: 100%;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 35px rgba(247, 147, 26, 0.3);
+            border-color: rgba(247, 147, 26, 0.5);
+        }
+        
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #f7931a, #ffcc00);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2rem;
+            color: #212529;
+        }
+        
+        .feature-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #f7931a;
+        }
+        
+        .feature-desc {
+            color: #adb5bd;
+            line-height: 1.6;
+        }
+        
+        .cta-section {
+            padding: 4rem 0;
+            text-align: center;
+        }
+        
+        .cta-button {
+            background: linear-gradient(135deg, #f7931a, #ffcc00);
+            border: none;
+            color: #212529;
+            font-size: 1.2rem;
+            font-weight: 600;
+            padding: 1rem 3rem;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin: 0 1rem 1rem;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(247, 147, 26, 0.4);
+            color: #212529;
+            text-decoration: none;
+        }
+        
+        .cta-button-outline {
+            background: transparent;
+            border: 2px solid #f7931a;
+            color: #f7931a;
+        }
+        
+        .cta-button-outline:hover {
+            background: linear-gradient(135deg, #f7931a, #ffcc00);
+            color: #212529;
+        }
+        
+        .stats-section {
+            padding: 3rem 0;
+            background-color: rgba(247, 147, 26, 0.05);
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+        }
+        
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #f7931a;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            font-size: 1.1rem;
+            color: #adb5bd;
+        }
+        
+        .badge-new {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+            vertical-align: middle;
+        }
+        
+        .navbar-brand {
+            letter-spacing: -0.5px;
+        }
+        
+        .navbar-brand:hover {
+            color: #ffcc00 !important;
+            transform: translateY(-1px);
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            color: #f7931a !important;
+        }
+        
+        @media (max-width: 768px) {
+            .navbar-brand {
+                font-size: 1.1rem !important;
+            }
+            .navbar-nav {
+                margin-top: 1rem;
+            }
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            .hero-subtitle {
+                font-size: 1.2rem;
+            }
+            .feature-card {
+                margin-bottom: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg fixed-top" style="background: rgba(33, 37, 41, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(247, 147, 26, 0.2);">
+        <div class="container">
+            <a class="navbar-brand" href="/" style="color: #f7931a; font-weight: bold; font-size: 1.3rem;">
+                <span style="font-size: 1.5rem;">₿</span> <span data-i18n="btc_mining_calculator">HashInsight Enterprise</span>
+            </a>
+            <div class="navbar-nav ms-auto d-flex align-items-center gap-3">
+                <a class="nav-link" href="#features" style="color: #adb5bd; transition: color 0.3s;" data-i18n="landing_features">
+                    {% if current_lang == 'zh' %}功能特性{% else %}Features{% endif %}
+                </a>
+                <div class="d-flex align-items-center gap-1">
+                    <i class="fas fa-globe" style="color: #f7931a;"></i>
+                    <button type="button" data-lang-switch="zh" data-lang="zh" 
+                            class="btn btn-link nav-link {{ 'active' if current_lang == 'zh' else '' }}" 
+                            style="color: #f7931a; padding: 0;">
+                        中文
+                    </button>
+                    <span style="color: #666; margin: 0 0.3rem;">|</span>
+                    <button type="button" data-lang-switch="en" data-lang="en" 
+                            class="btn btn-link nav-link {{ 'active' if current_lang == 'en' else '' }}" 
+                            style="color: #f7931a; padding: 0;">
+                        EN
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero-section">
+        <div class="container">
+            <div class="btc-logo">₿</div>
+            <h1 class="hero-title" data-i18n="btc_mining_calculator">HashInsight Enterprise</h1>
+            <p class="hero-subtitle" data-i18n="landing_hero_subtitle">
+                {% if current_lang == 'zh' %}
+                    企业级比特币挖矿智能分析平台 | 实时数据·精准计算·Web3透明度
+                {% else %}
+                    Enterprise Bitcoin Mining Intelligence Platform | Real-time Data · Precision Computing · Web3 Transparency
+                {% endif %}
+            </p>
+            
+            <div class="mt-4">
+                <a href="{{ url_for('calculator.calculator') }}" class="cta-button">
+                    <i class="fas fa-calculator"></i> 
+                    <span data-i18n="landing_start_calculator">{% if current_lang == 'zh' %}开始计算{% else %}Start Calculator{% endif %}</span>
+                </a>
+                <a href="{{ url_for('auth.login') }}" class="cta-button cta-button-outline">
+                    <i class="fas fa-sign-in-alt"></i> 
+                    <span data-i18n="landing_login_now">{% if current_lang == 'zh' %}立即登录{% else %}Login Now{% endif %}</span>
+                </a>
+                <a href="#features" class="cta-button cta-button-outline">
+                    <i class="fas fa-info-circle"></i> 
+                    <span data-i18n="landing_learn_more">{% if current_lang == 'zh' %}了解更多{% else %}Learn More{% endif %}</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="stats-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-3 col-6">
+                    <div class="stat-item">
+                        <div class="stat-number">{{ miner_count|default(19) }}+</div>
+                        <div class="stat-label" data-i18n="landing_asic_models">
+                            {% if current_lang == 'zh' %}ASIC矿机型号{% else %}ASIC Models{% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-item">
+                        <div class="stat-number">9+</div>
+                        <div class="stat-label" data-i18n="landing_data_sources">
+                            {% if current_lang == 'zh' %}实时数据源{% else %}Data Sources{% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-item">
+                        <div class="stat-number">60+</div>
+                        <div class="stat-label" data-i18n="landing_api_endpoints">
+                            {% if current_lang == 'zh' %}API端点{% else %}API Endpoints{% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-item">
+                        <div class="stat-number">5000+</div>
+                        <div class="stat-label" data-i18n="landing_batch_processing">
+                            {% if current_lang == 'zh' %}批量计算能力{% else %}Batch Processing{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="features-section" id="features">
+        <div class="container">
+            <div class="row text-center mb-5">
+                <div class="col-12">
+                    <h2 class="display-4 mb-3" style="color: #f7931a;" data-i18n="landing_core_features">
+                        {% if current_lang == 'zh' %}核心功能{% else %}Core Features{% endif %}
+                    </h2>
+                    <p class="lead" style="color: #adb5bd;" data-i18n="landing_core_features_desc">
+                        {% if current_lang == 'zh' %}
+                            全栈企业级挖矿管理解决方案
+                        {% else %}
+                            Full-stack Enterprise Mining Management Solution
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            
+            <div class="row justify-content-center">
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <h3 class="feature-title" data-i18n="landing_dual_algorithm">
+                            {% if current_lang == 'zh' %}双算法挖矿计算器{% else %}Dual-Algorithm Mining Calculator{% endif %}
+                        </h3>
+                        <p class="feature-desc" data-i18n="landing_dual_algorithm_desc">
+                            {% if current_lang == 'zh' %}
+                                支持{{ miner_count|default(19) }}+ ASIC矿机型号，双算法交叉验证确保精度，实时BTC价格、难度、算力数据，批量计算支持5000+矿机
+                            {% else %}
+                                Supports {{ miner_count|default(19) }}+ ASIC models with dual-algorithm cross-validation for accuracy. Real-time BTC price, difficulty, hashrate data. Batch processing for 5000+ miners
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h3 class="feature-title">
+                            <span data-i18n="landing_enterprise_crm">{% if current_lang == 'zh' %}企业级CRM系统{% else %}Enterprise CRM System{% endif %}</span>
+                            <span class="badge-new">LIVE</span>
+                        </h3>
+                        <p class="feature-desc" data-i18n="landing_enterprise_crm_desc">
+                            {% if current_lang == 'zh' %}
+                                15个专业页面，60+ API端点，完整客户生命周期管理，销售漏斗跟踪，自动发票生成，佣金追踪
+                            {% else %}
+                                15 professional pages, 60+ API endpoints. Complete customer lifecycle management, sales funnel tracking, automated invoicing, commission tracking
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3 class="feature-title">
+                            <span data-i18n="landing_tech_analysis">{% if current_lang == 'zh' %}专业技术分析{% else %}Professional Technical Analysis{% endif %}</span>
+                            <span class="badge-new">LIVE</span>
+                        </h3>
+                        <p class="feature-desc" data-i18n="landing_tech_analysis_desc">
+                            {% if current_lang == 'zh' %}
+                                RSI、MACD、布林带等10+技术指标，市场情绪分析，恐惧贪婪指数，智能信号聚合系统
+                            {% else %}
+                                10+ technical indicators including RSI, MACD, Bollinger Bands. Market sentiment analysis, Fear & Greed Index, intelligent signal aggregation
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="features-section" style="background-color: rgba(33, 37, 41, 0.7);">
+        <div class="container">
+            <div class="row text-center mb-5">
+                <div class="col-12">
+                    <h2 class="display-4 mb-3" style="color: #f7931a;" data-i18n="landing_advanced_features">
+                        {% if current_lang == 'zh' %}高级功能{% else %}Advanced Features{% endif %}
+                    </h2>
+                </div>
+            </div>
+            
+            <div class="row justify-content-center">
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-cube"></i>
+                        </div>
+                        <h3 class="feature-title">
+                            <span data-i18n="landing_web3_integration">{% if current_lang == 'zh' %}Web3区块链集成{% else %}Web3 Blockchain Integration{% endif %}</span>
+                            <span class="badge-new">LIVE</span>
+                        </h3>
+                        <p class="feature-desc" data-i18n="landing_web3_integration_desc">
+                            {% if current_lang == 'zh' %}
+                                Base L2网络透明度记录，SLA NFT证书铸造，IPFS去中心化存储，MetaMask钱包连接，加密货币支付
+                            {% else %}
+                                Base L2 transparency records, SLA NFT certificate minting, IPFS decentralized storage, MetaMask wallet connection, crypto payments
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <h3 class="feature-title">
+                            <span data-i18n="landing_ai_intelligence">{% if current_lang == 'zh' %}AI智能分析层{% else %}AI Intelligence Layer{% endif %}</span>
+                            <span class="badge-new">LIVE</span>
+                        </h3>
+                        <p class="feature-desc" data-i18n="landing_ai_intelligence_desc">
+                            {% if current_lang == 'zh' %}
+                                ARIMA价格预测，异常检测系统，电力优化策略，ROI智能解释，事件驱动架构
+                            {% else %}
+                                ARIMA price forecasting, anomaly detection system, power optimization strategies, intelligent ROI explanation, event-driven architecture
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-server"></i>
+                        </div>
+                        <h3 class="feature-title">
+                            <span data-i18n="landing_hosting_services">{% if current_lang == 'zh' %}托管服务管理{% else %}Hosting Services Management{% endif %}</span>
+                            <span class="badge-new">LIVE</span>
+                        </h3>
+                        <p class="feature-desc" data-i18n="landing_hosting_services_desc">
+                            {% if current_lang == 'zh' %}
+                                实时矿机监控（算力、温度、功率），单机/批量创建API，遥测数据追踪，运维工单系统
+                            {% else %}
+                                Real-time miner monitoring (hashrate, temperature, power), single/batch creation APIs, telemetry tracking, operations ticketing
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-tachometer-alt"></i>
+                        </div>
+                        <h3 class="feature-title">
+                            <span data-i18n="landing_unified_monitoring">{% if current_lang == 'zh' %}统一系统监控{% else %}Unified System Monitoring{% endif %}</span>
+                            <span class="badge-new">LIVE</span>
+                        </h3>
+                        <p class="feature-desc" data-i18n="landing_unified_monitoring_desc">
+                            {% if current_lang == 'zh' %}
+                                实时健康检查，P95延迟监控，成功率追踪，缓存性能分析，端点级统计数据
+                            {% else %}
+                                Real-time health checks, P95 latency monitoring, success rate tracking, cache performance analysis, endpoint-level statistics
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <h3 class="feature-title">
+                            <span data-i18n="landing_treasury_management">{% if current_lang == 'zh' %}财资管理系统{% else %}Treasury Management{% endif %}</span>
+                            <span class="badge-new">LIVE</span>
+                        </h3>
+                        <p class="feature-desc" data-i18n="landing_treasury_management_desc">
+                            {% if current_lang == 'zh' %}
+                                BTC库存追踪，成本基础分析，预配置卖出策略，策略回测引擎，现金覆盖率监控
+                            {% else %}
+                                BTC inventory tracking, cost basis analysis, pre-configured sell strategies, backtesting engine, cash coverage monitoring
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-file-pdf"></i>
+                        </div>
+                        <h3 class="feature-title">
+                            <span data-i18n="landing_multi_format_reporting">{% if current_lang == 'zh' %}多格式报告系统{% else %}Multi-Format Reporting{% endif %}</span>
+                            <span class="badge-new">LIVE</span>
+                        </h3>
+                        <p class="feature-desc" data-i18n="landing_multi_format_reporting_desc">
+                            {% if current_lang == 'zh' %}
+                                PDF/Excel/PPT多格式导出，角色专用仪表盘（投资者/运营/财务），周报月报自动生成
+                            {% else %}
+                                PDF/Excel/PPT multi-format export, role-specific dashboards (Investor/Operations/Finance), automated weekly/monthly reports
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="features-section" style="background-color: rgba(247, 147, 26, 0.03); border-top: 1px solid rgba(247, 147, 26, 0.1);">
+        <div class="container">
+            <div class="row text-center mb-5">
+                <div class="col-12">
+                    <h2 class="display-4 mb-3" style="color: #f7931a;" data-i18n="landing_security_infrastructure">
+                        {% if current_lang == 'zh' %}安全与基础设施{% else %}Security & Infrastructure{% endif %}
+                    </h2>
+                </div>
+            </div>
+            
+            <div class="row justify-content-center">
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h3 class="feature-title" data-i18n="landing_enterprise_security">
+                            {% if current_lang == 'zh' %}企业级安全{% else %}Enterprise Security{% endif %}
+                        </h3>
+                        <p class="feature-desc" data-i18n="landing_enterprise_security_desc">
+                            {% if current_lang == 'zh' %}
+                                KMS密钥管理，mTLS双向认证，WireGuard VPN，审计日志，SOC 2/GDPR/PCI DSS合规
+                            {% else %}
+                                KMS key management, mTLS mutual auth, WireGuard VPN, audit logging, SOC 2/GDPR/PCI DSS compliance
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-rocket"></i>
+                        </div>
+                        <h3 class="feature-title" data-i18n="landing_performance">
+                            {% if current_lang == 'zh' %}性能优化{% else %}Performance Optimization{% endif %}
+                        </h3>
+                        <p class="feature-desc" data-i18n="landing_performance_desc">
+                            {% if current_lang == 'zh' %}
+                                请求合并（9.8x性能提升），多层缓存架构，连接池优化，流式响应处理
+                            {% else %}
+                                Request coalescing (9.8x improvement), multi-tier caching, connection pooling, streamed response handling
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <h3 class="feature-title" data-i18n="landing_rbac">
+                            {% if current_lang == 'zh' %}RBAC权限系统{% else %}RBAC Permission System{% endif %}
+                        </h3>
+                        <p class="feature-desc" data-i18n="landing_rbac_desc">
+                            {% if current_lang == 'zh' %}
+                                细粒度权限控制，角色继承体系，多租户隔离，API密钥管理
+                            {% else %}
+                                Fine-grained permission control, role inheritance, multi-tenant isolation, API key management
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="features-section" style="background-color: rgba(33, 37, 41, 0.5);">
+        <div class="container">
+            <div class="row text-center mb-4">
+                <div class="col-12">
+                    <h2 class="display-5 mb-3" style="color: #f7931a;" data-i18n="landing_tech_stack">
+                        {% if current_lang == 'zh' %}技术栈{% else %}Technology Stack{% endif %}
+                    </h2>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3 col-6 text-center mb-3">
+                    <div style="color: #adb5bd;">
+                        <i class="fab fa-python fa-3x mb-2" style="color: #f7931a;"></i>
+                        <div>Flask + SQLAlchemy</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 text-center mb-3">
+                    <div style="color: #adb5bd;">
+                        <i class="fas fa-database fa-3x mb-2" style="color: #f7931a;"></i>
+                        <div>PostgreSQL + Redis</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 text-center mb-3">
+                    <div style="color: #adb5bd;">
+                        <i class="fab fa-ethereum fa-3x mb-2" style="color: #f7931a;"></i>
+                        <div>Web3.js + Base L2</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 text-center mb-3">
+                    <div style="color: #adb5bd;">
+                        <i class="fas fa-chart-bar fa-3x mb-2" style="color: #f7931a;"></i>
+                        <div>Chart.js + Bootstrap 5</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta-section">
+        <div class="container">
+            <h2 class="display-5 mb-4" style="color: #f7931a;" data-i18n="landing_cta_title">
+                {% if current_lang == 'zh' %}
+                    开始您的企业级挖矿分析之旅
+                {% else %}
+                    Start Your Enterprise Mining Analysis Journey
+                {% endif %}
+            </h2>
+            <p class="lead mb-4" style="color: #adb5bd;" data-i18n="landing_cta_subtitle">
+                {% if current_lang == 'zh' %}
+                    立即体验全栈企业级比特币挖矿管理平台
+                {% else %}
+                    Experience the full-stack enterprise Bitcoin mining management platform
+                {% endif %}
+            </p>
+            <a href="{{ url_for('auth.login') }}" class="cta-button">
+                <i class="fas fa-rocket"></i> 
+                <span data-i18n="landing_get_started">{% if current_lang == 'zh' %}立即开始{% else %}Get Started{% endif %}</span>
+            </a>
+            <a href="/ppt" class="cta-button cta-button-outline">
+                <i class="fas fa-file-powerpoint"></i> 
+                <span data-i18n="landing_download_ppt">{% if current_lang == 'zh' %}下载演示文稿{% else %}Download PPT{% endif %}</span>
+            </a>
+        </div>
+    </section>
+
+    <footer class="text-center py-4" style="background: rgba(33, 37, 41, 0.8); border-top: 1px solid rgba(247, 147, 26, 0.2);">
+        <div class="container">
+            <p class="mb-0" style="color: #adb5bd;">
+                © 2025 HashInsight Enterprise | 
+                <span data-i18n="landing_footer">{% if current_lang == 'zh' %}企业级比特币挖矿智能分析平台{% else %}Enterprise Bitcoin Mining Intelligence Platform{% endif %}</span>
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/i18n.js"></script>
+</body>
+</html>

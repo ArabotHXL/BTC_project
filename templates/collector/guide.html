@@ -1,0 +1,329 @@
+{% extends "base.html" %}
+{% block title %}
+{% if lang == 'zh' %}Edge Collector 部署指南{% else %}Edge Collector Deployment Guide{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('collector_routes.index') }}" class="text-warning">{% if lang == 'zh' %}采集器监控{% else %}Collector Monitor{% endif %}</a></li>
+                    <li class="breadcrumb-item active text-muted">{% if lang == 'zh' %}部署指南{% else %}Deployment Guide{% endif %}</li>
+                </ol>
+            </nav>
+            <h2 class="text-warning mb-0">
+                <i class="bi bi-book me-2"></i>
+                {% if lang == 'zh' %}Edge Collector 部署指南{% else %}Edge Collector Deployment Guide{% endif %}
+            </h2>
+            <p class="text-muted">
+                {% if lang == 'zh' %}在矿场本地部署采集器，实现实时矿机数据采集{% else %}Deploy collector at mining farm for real-time miner data collection{% endif %}
+            </p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card bg-dark border-secondary mb-4">
+                <div class="card-header bg-warning bg-opacity-10">
+                    <h5 class="mb-0 text-warning">
+                        <i class="bi bi-diagram-3 me-2"></i>
+                        {% if lang == 'zh' %}架构概述{% else %}Architecture Overview{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <pre class="bg-black p-3 rounded text-success small mb-0" style="font-family: monospace;">
+{% if lang == 'zh' %}
+矿场机房                                      云端
+┌─────────────────────┐                    ┌─────────────────┐
+│  矿机群              │                    │  HashInsight    │
+│  192.168.x.x        │                    │  云平台          │
+│  ┌────┐ ┌────┐     │                    │                 │
+│  │矿机│ │矿机│ ... │                    │  ┌───────────┐  │
+│  └──┬─┘ └──┬─┘     │                    │  │ 数据存储   │  │
+│     │      │        │                    │  │ 监控告警   │  │
+│     └──────┴────────┼──┐                 │  │ 分析报表   │  │
+│         CGMiner API │  │                 │  └───────────┘  │
+│         端口 4028   │  │                 │        ▲        │
+│                     │  │   HTTPS加密上传  │        │        │
+│  ┌─────────────────┐│  │ ───────────────►│        │        │
+│  │ Edge Collector  ││  │                 │        │        │
+│  │ (本地采集器)     ││◄─┘                 │                 │
+│  └─────────────────┘│                    └─────────────────┘
+└─────────────────────┘
+{% else %}
+Mining Farm                                   Cloud
+┌─────────────────────┐                    ┌─────────────────┐
+│  Miner Fleet        │                    │  HashInsight    │
+│  192.168.x.x        │                    │  Platform       │
+│  ┌────┐ ┌────┐     │                    │                 │
+│  │ASIC│ │ASIC│ ... │                    │  ┌───────────┐  │
+│  └──┬─┘ └──┬─┘     │                    │  │ Storage   │  │
+│     │      │        │                    │  │ Alerts    │  │
+│     └──────┴────────┼──┐                 │  │ Analytics │  │
+│         CGMiner API │  │                 │  └───────────┘  │
+│         Port 4028   │  │                 │        ▲        │
+│                     │  │   HTTPS Upload   │        │        │
+│  ┌─────────────────┐│  │ ───────────────►│        │        │
+│  │ Edge Collector  ││  │                 │        │        │
+│  │ (Local Agent)   ││◄─┘                 │                 │
+│  └─────────────────┘│                    └─────────────────┘
+└─────────────────────┘
+{% endif %}</pre>
+                </div>
+            </div>
+
+            <div class="card bg-dark border-secondary mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <span class="badge bg-warning text-dark me-2">1</span>
+                        {% if lang == 'zh' %}系统要求{% else %}System Requirements{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="p-3 border border-secondary rounded">
+                                <h6 class="text-info"><i class="bi bi-pc-display me-2"></i>{% if lang == 'zh' %}硬件要求{% else %}Hardware{% endif %}</h6>
+                                <ul class="mb-0 small text-muted">
+                                    <li>{% if lang == 'zh' %}任意 x86/ARM 设备{% else %}Any x86/ARM device{% endif %}</li>
+                                    <li>{% if lang == 'zh' %}内存 512MB+{% else %}RAM 512MB+{% endif %}</li>
+                                    <li>{% if lang == 'zh' %}存储 1GB+{% else %}Storage 1GB+{% endif %}</li>
+                                    <li>{% if lang == 'zh' %}推荐: 树莓派、小型PC{% else %}Recommended: Raspberry Pi, Mini PC{% endif %}</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 border border-secondary rounded">
+                                <h6 class="text-info"><i class="bi bi-hdd-network me-2"></i>{% if lang == 'zh' %}网络要求{% else %}Network{% endif %}</h6>
+                                <ul class="mb-0 small text-muted">
+                                    <li>{% if lang == 'zh' %}与矿机同一局域网{% else %}Same LAN as miners{% endif %}</li>
+                                    <li>{% if lang == 'zh' %}可访问矿机 4028 端口{% else %}Access to miner port 4028{% endif %}</li>
+                                    <li>{% if lang == 'zh' %}有互联网连接(上传数据){% else %}Internet access (for upload){% endif %}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-dark border-secondary mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <span class="badge bg-warning text-dark me-2">2</span>
+                        {% if lang == 'zh' %}安装部署{% else %}Installation{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-info mb-3"><i class="bi bi-terminal me-2"></i>{% if lang == 'zh' %}快速安装{% else %}Quick Install{% endif %}</h6>
+                    <pre class="bg-black p-3 rounded text-success small"><code># {% if lang == 'zh' %}1. 下载采集器脚本{% else %}1. Download collector script{% endif %}
+curl -O https://your-domain/edge_collector/cgminer_collector.py
+
+# {% if lang == 'zh' %}2. 安装依赖{% else %}2. Install dependencies{% endif %}
+pip install requests cryptography
+
+# {% if lang == 'zh' %}3. 创建配置文件{% else %}3. Create config file{% endif %}
+python cgminer_collector.py --init</code></pre>
+                </div>
+            </div>
+
+            <div class="card bg-dark border-secondary mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <span class="badge bg-warning text-dark me-2">3</span>
+                        {% if lang == 'zh' %}配置文件{% else %}Configuration{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-info mb-3"><i class="bi bi-file-code me-2"></i>collector_config.json</h6>
+                    <pre class="bg-black p-3 rounded text-warning small"><code>{
+  "api_url": "https://your-hashinsight-domain.com",
+  "api_key": "{% if lang == 'zh' %}从密钥管理页面获取{% else %}Get from key management page{% endif %}",
+  "site_id": "{% if lang == 'zh' %}您的站点ID{% else %}Your site ID{% endif %}",
+  "collection_interval": 30,
+  "max_workers": 50,
+  
+  "ip_ranges": [
+    {
+      "range": "192.168.1.100-192.168.1.200",
+      "prefix": "S19_",
+      "type": "antminer"
+    },
+    {
+      "range": "192.168.2.100-192.168.2.150",
+      "prefix": "M30_",
+      "type": "whatsminer"
+    }
+  ]
+}</code></pre>
+                    <div class="alert alert-info mt-3 mb-0 small">
+                        <i class="bi bi-info-circle me-2"></i>
+                        {% if lang == 'zh' %}
+                        <strong>IP范围说明:</strong> 采集器会自动扫描指定IP范围内的所有矿机，无需逐个配置。
+                        {% else %}
+                        <strong>IP Range:</strong> Collector will auto-scan all miners in specified IP ranges, no need to configure each miner.
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-dark border-secondary mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <span class="badge bg-warning text-dark me-2">4</span>
+                        {% if lang == 'zh' %}运行采集器{% else %}Run Collector{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <pre class="bg-black p-3 rounded text-success small"><code># {% if lang == 'zh' %}前台运行 (测试){% else %}Foreground (testing){% endif %}
+python cgminer_collector.py -c collector_config.json
+
+# {% if lang == 'zh' %}后台运行 (生产){% else %}Background (production){% endif %}
+nohup python cgminer_collector.py -c collector_config.json &
+
+# {% if lang == 'zh' %}使用 systemd 管理 (推荐){% else %}Using systemd (recommended){% endif %}
+sudo systemctl enable hashinsight-collector
+sudo systemctl start hashinsight-collector</code></pre>
+                </div>
+            </div>
+
+            <div class="card bg-dark border-secondary mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <span class="badge bg-warning text-dark me-2">5</span>
+                        {% if lang == 'zh' %}验证连接{% else %}Verify Connection{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small">
+                        {% if lang == 'zh' %}采集器启动后，您可以在监控页面看到实时数据:{% else %}After starting, you can see real-time data on the monitor page:{% endif %}
+                    </p>
+                    <ul class="text-muted small">
+                        <li>{% if lang == 'zh' %}矿机在线状态{% else %}Miner online status{% endif %}</li>
+                        <li>{% if lang == 'zh' %}实时算力数据{% else %}Real-time hashrate{% endif %}</li>
+                        <li>{% if lang == 'zh' %}温度监控{% else %}Temperature monitoring{% endif %}</li>
+                        <li>{% if lang == 'zh' %}频率/功耗数据{% else %}Frequency/power data{% endif %}</li>
+                    </ul>
+                    <a href="{{ url_for('collector_routes.index') }}" class="btn btn-warning">
+                        <i class="bi bi-speedometer2 me-2"></i>
+                        {% if lang == 'zh' %}查看监控面板{% else %}View Monitor Dashboard{% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card bg-dark border-warning mb-4">
+                <div class="card-header bg-warning bg-opacity-10">
+                    <h5 class="mb-0 text-warning">
+                        <i class="bi bi-lightning-charge me-2"></i>
+                        {% if lang == 'zh' %}快速开始{% else %}Quick Start{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ol class="small text-muted">
+                        <li class="mb-2">{% if lang == 'zh' %}创建站点并获取 API 密钥{% else %}Create site and get API key{% endif %}</li>
+                        <li class="mb-2">{% if lang == 'zh' %}在矿场部署 Edge Collector{% else %}Deploy Edge Collector at farm{% endif %}</li>
+                        <li class="mb-2">{% if lang == 'zh' %}配置 IP 范围{% else %}Configure IP ranges{% endif %}</li>
+                        <li class="mb-2">{% if lang == 'zh' %}启动采集器{% else %}Start collector{% endif %}</li>
+                        <li>{% if lang == 'zh' %}在云端查看实时数据{% else %}View real-time data in cloud{% endif %}</li>
+                    </ol>
+                    <hr class="border-secondary">
+                    <a href="{{ url_for('collector_routes.index') }}" class="btn btn-outline-warning btn-sm w-100">
+                        <i class="bi bi-key me-2"></i>
+                        {% if lang == 'zh' %}管理 API 密钥{% else %}Manage API Keys{% endif %}
+                    </a>
+                </div>
+            </div>
+
+            <div class="card bg-dark border-secondary mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-cpu me-2"></i>
+                        {% if lang == 'zh' %}支持的矿机{% else %}Supported Miners{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="text-info small">Bitmain Antminer</h6>
+                        <span class="badge bg-secondary me-1">S19</span>
+                        <span class="badge bg-secondary me-1">S19 Pro</span>
+                        <span class="badge bg-secondary me-1">S19j Pro</span>
+                        <span class="badge bg-secondary me-1">S19 XP</span>
+                        <span class="badge bg-secondary me-1">S21</span>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="text-info small">MicroBT Whatsminer</h6>
+                        <span class="badge bg-secondary me-1">M30S</span>
+                        <span class="badge bg-secondary me-1">M30S+</span>
+                        <span class="badge bg-secondary me-1">M30S++</span>
+                        <span class="badge bg-secondary me-1">M50</span>
+                        <span class="badge bg-secondary me-1">M60</span>
+                    </div>
+                    <div>
+                        <h6 class="text-info small">Canaan Avalon</h6>
+                        <span class="badge bg-secondary me-1">A1246</span>
+                        <span class="badge bg-secondary me-1">A1266</span>
+                        <span class="badge bg-secondary me-1">A1346</span>
+                        <span class="badge bg-secondary me-1">A1366</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-dark border-secondary mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-shield-check me-2"></i>
+                        {% if lang == 'zh' %}第三方固件{% else %}3rd Party Firmware{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-2">
+                        {% if lang == 'zh' %}支持主流第三方固件:{% else %}Supports major 3rd party firmware:{% endif %}
+                    </p>
+                    <ul class="small text-muted mb-0">
+                        <li>Braiins OS / Braiins OS+</li>
+                        <li>VNish</li>
+                        <li>LuxOS</li>
+                        <li>HiveOS (ASIC)</li>
+                    </ul>
+                    <div class="alert alert-success mt-3 mb-0 small py-2">
+                        <i class="bi bi-check-circle me-1"></i>
+                        {% if lang == 'zh' %}超频矿机数据可正常采集{% else %}Overclocked miner data fully supported{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-dark border-secondary">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lock me-2"></i>
+                        {% if lang == 'zh' %}数据安全{% else %}Data Security{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="small text-muted mb-0">
+                        <li class="mb-2">
+                            <i class="bi bi-check text-success me-1"></i>
+                            {% if lang == 'zh' %}HTTPS 加密传输{% else %}HTTPS encrypted transfer{% endif %}
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check text-success me-1"></i>
+                            {% if lang == 'zh' %}API 密钥认证{% else %}API key authentication{% endif %}
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check text-success me-1"></i>
+                            {% if lang == 'zh' %}E2EE 端到端加密(可选){% else %}E2EE end-to-end encryption (optional){% endif %}
+                        </li>
+                        <li>
+                            <i class="bi bi-check text-success me-1"></i>
+                            {% if lang == 'zh' %}敏感信息本地加密存储{% else %}Sensitive data encrypted locally{% endif %}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

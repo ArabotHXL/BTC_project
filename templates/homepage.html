@@ -1,0 +1,834 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {{ t('homepage_title', lang) }} - BTC Mining Calculator
+{% endblock %}
+
+{% block header_title %}
+    {{ t('homepage_title', lang) }}
+{% endblock %}
+
+{% block extra_css %}
+    
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #f7931e 0%, #ffc107 100%);
+            --secondary-gradient: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            --accent-color: #f7931e;
+            --text-primary: #ffffff;
+            --text-secondary: #adb5bd;
+            --bg-primary: #212529;
+            --bg-secondary: #343a40;
+            --border-color: #495057;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d3748 100%);
+            min-height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        .hero-section {
+            background: linear-gradient(135deg, rgba(247, 147, 30, 0.1) 0%, rgba(0, 0, 0, 0.8) 100%), 
+                        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            padding: 100px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1.5rem;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            height: 100%;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-color);
+            box-shadow: 0 20px 40px rgba(247, 147, 30, 0.1);
+        }
+        
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--primary-gradient);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            margin-bottom: 1.5rem;
+        }
+        
+        .stats-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .stats-card:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: scale(1.02);
+        }
+        
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: block;
+        }
+        
+        .stats-label {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-top: 0.5rem;
+        }
+        
+        .cta-section {
+            background: linear-gradient(135deg, rgba(247, 147, 30, 0.15) 0%, rgba(0, 0, 0, 0.3) 100%);
+            padding: 80px 0;
+            margin: 60px 0;
+            border-radius: 24px;
+            position: relative;
+        }
+        
+        .btn-primary-custom {
+            background: var(--primary-gradient);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(247, 147, 30, 0.3);
+            color: white;
+        }
+        
+        .btn-outline-custom {
+            border: 2px solid var(--accent-color);
+            color: var(--accent-color);
+            padding: 10px 28px;
+            border-radius: 25px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .btn-outline-custom:hover {
+            background: var(--accent-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .navbar-custom {
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .navbar-brand-custom {
+            font-weight: 700;
+            font-size: 1.5rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .language-toggle {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 5px;
+            display: flex;
+            gap: 5px;
+        }
+        
+        .language-btn {
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: 15px;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+        
+        .language-btn.active {
+            background: var(--accent-color);
+            color: white;
+        }
+        
+        .floating-elements {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        
+        .floating-elements::before,
+        .floating-elements::after {
+            content: '';
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(247, 147, 30, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .floating-elements::before {
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+        
+        .floating-elements::after {
+            bottom: 20%;
+            right: 10%;
+            animation-delay: 3s;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+        
+        .market-widget {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .market-data {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .market-price {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #28a745;
+        }
+        
+        .market-change {
+            font-size: 0.9rem;
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+        
+        .market-change.positive {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+        }
+        
+        .market-change.negative {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+        }
+        
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .hero-section {
+                padding: 60px 0;
+            }
+            
+            .stats-number {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-custom fixed-top">
+        <div class="container">
+            <a class="navbar-brand navbar-brand-custom d-flex align-items-center" href="/" style="cursor: pointer;">
+                <i class="bi bi-cpu me-2"></i>
+                <span data-translate="btc_mining_calculator">{{ t('btc_mining_calculator', lang) }}</span>
+            </a>
+            
+            <div class="d-flex align-items-center">
+                <!-- Language Toggle -->
+                <div class="language-toggle me-3">
+                    <button class="language-btn" id="btn-zh" onclick="switchLanguage('zh')">中文</button>
+                    <button class="language-btn" id="btn-en" onclick="switchLanguage('en')">English</button>
+                </div>
+                
+                <!-- Login/Dashboard Button -->
+                {% if user_data %}
+                <div class="dropdown">
+                    <button class="btn btn-outline-custom dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-person-circle"></i>
+                        {{ user_data.email }}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="/calculator">
+                            <i class="bi bi-calculator me-2"></i><span data-translate="mining_calculator">{{ t('mining_calculator', lang) }}</span>
+                        </a></li>
+                        <li><a class="dropdown-item" href="/collector">
+                            <i class="bi bi-broadcast me-2"></i><span data-translate="collector_monitor">{{ t('collector_monitor', lang) if t else ('采集器监控' if lang == 'zh' else 'Collector Monitor') }}</span>
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/logout">
+                            <i class="bi bi-box-arrow-right me-2"></i><span data-translate="logout">{{ t('logout', lang) }}</span>
+                        </a></li>
+                    </ul>
+                </div>
+                {% else %}
+                <a href="/login" class="btn btn-outline-custom">
+                    <i class="bi bi-box-arrow-in-right"></i>
+                    {{ t('login', lang) }}
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="floating-elements"></div>
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <div class="hero-content">
+                        <h1 class="hero-title" data-translate="homepage_title">
+                            {{ t('homepage_title', lang) }}
+                        </h1>
+                        <p class="hero-subtitle" data-translate="homepage_subtitle">
+                            专业的比特币挖矿智能分析平台 | 42+矿机型号·实时数据·批量计算·期权分析·CRM系统
+                        </p>
+                        <div class="d-flex gap-3 flex-wrap">
+                            {% if user_data %}
+                            <a href="/calculator" class="btn-primary-custom">
+                                <i class="bi bi-calculator"></i>
+                                <span data-translate="start_calculating">{{ t('start_calculating', lang) }}</span>
+                            </a>
+                            {% else %}
+                            <a href="/billing/plans#free" class="btn-primary-custom">
+                                <i class="bi bi-calculator"></i>
+                                <span data-translate="start_calculating">{{ t('start_calculating', lang) }}</span>
+                            </a>
+                            {% endif %}
+                            <a href="#features" class="btn-outline-custom">
+                                <i class="bi bi-info-circle"></i>
+                                <span data-translate="learn_more">{{ t('learn_more', lang) }}</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <!-- Real-time Market Widget -->
+                    <div class="market-widget">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0" data-translate="market_data">{{ t('market_data', lang) }}</h5>
+                            <small class="text-muted" data-translate="real_time">{{ t('real_time', lang) }}</small>
+                        </div>
+                        <div class="market-data">
+                            <div>
+                                <div class="market-price" id="btc-price">$--,---</div>
+                                <small class="text-muted">BTC/USD</small>
+                            </div>
+                            <div class="market-change" id="price-change">--.--% (24h)</div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-6">
+                                <small class="text-muted" data-translate="network_hashrate">{{ t('network_hashrate', lang) }}</small>
+                                <div class="fw-bold" id="network-hashrate">--- EH/s</div>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted" data-translate="fear_greed_index">{{ t('fear_greed_index', lang) }}</small>
+                                <div class="fw-bold" id="fear-greed">--/100</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-3 col-sm-6">
+                    <div class="stats-card">
+                        <span class="stats-number">42+</span>
+                        <div class="stats-label" data-translate="miner_models">{{ t('miner_models', lang) }}</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="stats-card">
+                        <span class="stats-number">99.9%</span>
+                        <div class="stats-label" data-translate="accuracy_rate">{{ t('accuracy_rate', lang) }}</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="stats-card">
+                        <span class="stats-number">24/7</span>
+                        <div class="stats-label" data-translate="real_time_data">{{ t('real_time_data', lang) }}</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="stats-card">
+                        <span class="stats-number">9+</span>
+                        <div class="stats-label" data-translate="data_sources">{{ t('data_sources', lang) }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-5">
+        <div class="container">
+            <div class="row mb-5">
+                <div class="col-12 text-center">
+                    <h2 class="display-5 fw-bold mb-3" data-translate="key_features">{{ t('key_features', lang) }}</h2>
+                    <p class="lead text-muted" data-translate="features_subtitle">{{ t('features_subtitle', lang) }}</p>
+                </div>
+            </div>
+            
+            <div class="row g-4 justify-content-center">
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-calculator"></i>
+                        </div>
+                        <h4 class="mb-3" data-translate="advanced_calculator">{{ t('advanced_calculator', lang) }}</h4>
+                        <p class="text-muted" data-translate="calculator_desc">支持42+种ASIC矿机型号，实时电价、难度和币价数据，精确挖矿收益计算</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-lightning-charge"></i>
+                        </div>
+                        <h4 class="mb-3" data-translate="batch_processing">批量计算处理</h4>
+                        <p class="text-muted" data-translate="batch_desc">多矿机组合批量计算，Excel导出，矿场配置优化方案</p>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </section>
+
+    <!-- Under Development Section -->
+    <section class="py-5" style="background: rgba(255, 255, 255, 0.02);">
+        <div class="container">
+            <div class="row mb-5">
+                <div class="col-12 text-center">
+                    <h2 class="display-5 fw-bold mb-3" data-translate="under_development">Under Development</h2>
+                    <p class="lead text-muted" data-translate="under_development_subtitle">Coming Soon - Advanced Features</p>
+                </div>
+            </div>
+            
+            <div class="row g-4 justify-content-center">
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card" style="opacity: 0.7; border-style: dashed;">
+                        <div class="feature-icon" style="opacity: 0.6;">
+                            <i class="bi bi-graph-up-arrow"></i>
+                        </div>
+                        <h4 class="mb-3" data-translate="analytics_platform">Analytics Platform</h4>
+                        <p class="text-muted" data-translate="analytics_platform_desc">技术指标分析、历史趋势图表、投资风险评估、专业报告生成</p>
+                        <small class="text-warning"><i class="bi bi-tools me-1"></i>In Development</small>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card" style="opacity: 0.7; border-style: dashed;">
+                        <div class="feature-icon" style="opacity: 0.6;">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <h4 class="mb-3" data-translate="crm_system">CRM</h4>
+                        <p class="text-muted" data-translate="crm_desc">完整的客户关系管理系统，线索跟进、交易管理、佣金计算</p>
+                        <small class="text-warning"><i class="bi bi-tools me-1"></i>In Development</small>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card" style="opacity: 0.7; border-style: dashed;">
+                        <div class="feature-icon" style="opacity: 0.6;">
+                            <i class="bi bi-lightning"></i>
+                        </div>
+                        <h4 class="mb-3" data-translate="power_management">Power Management</h4>
+                        <p class="text-muted" data-translate="power_management_desc">智能限电管理、负载优化、电网监控、节能策略</p>
+                        <small class="text-warning"><i class="bi bi-tools me-1"></i>In Development</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <h2 class="display-5 fw-bold mb-4" data-translate="ready_to_start">{{ t('ready_to_start', lang) }}</h2>
+                    <p class="lead mb-4" data-translate="cta_subtitle">{{ t('cta_subtitle', lang) }}</p>
+                    <div class="d-flex gap-3 justify-content-center flex-wrap">
+                        {% if user_data %}
+                        <a href="/dashboard" class="btn-primary-custom">
+                            <i class="bi bi-calculator"></i>
+                            <span data-translate="start_calculating">{{ t('start_calculating', lang) }}</span>
+                        </a>
+                        {% else %}
+                        <a href="/billing/plans#free" class="btn-primary-custom">
+                            <i class="bi bi-rocket-takeoff"></i>
+                            <span data-translate="start_free_trial">{{ t('start_free_trial', lang) }}</span>
+                        </a>
+                        {% endif %}
+                        <!-- Pricing button hidden -->
+                        <a href="#features" class="btn-outline-custom">
+                            <i class="bi bi-info-circle"></i>
+                            <span data-translate="learn_more">{{ t('learn_more', lang) }}</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-5 border-top border-secondary">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-6">
+                    <h5 class="navbar-brand-custom mb-3">
+                        <i class="bi bi-cpu me-2"></i>
+                        BTC {{ t('mining_calculator', lang) }}
+                    </h5>
+                    <p class="text-muted mb-3" data-translate="footer_description">{{ t('footer_description', lang) }}</p>
+                </div>
+                <div class="col-lg-6">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="mb-3" data-translate="quick_links">{{ t('quick_links', lang) }}</h6>
+                            <ul class="list-unstyled">
+                                <li><a href="/calculator" class="text-muted text-decoration-none" data-translate="mining_calculator">{{ t('mining_calculator', lang) }}</a></li>
+                                <li><a href="/analytics" class="text-muted text-decoration-none" data-translate="analytics">{{ t('analytics', lang) }}</a></li>
+                                <!-- Pricing link hidden -->
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="mb-3" data-translate="support">{{ t('support', lang) }}</h6>
+                            <ul class="list-unstyled">
+                                <li><a href="/help" class="text-muted text-decoration-none" data-translate="help_center">{{ t('help_center', lang) }}</a></li>
+                                <li><a href="/contact" class="text-muted text-decoration-none" data-translate="contact_us">{{ t('contact_us', lang) }}</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-4 border-secondary">
+            <div class="text-center text-muted">
+                <p>&copy; 2025 <span data-translate="btc_mining_calculator">{{ t('btc_mining_calculator', lang) }}</span>. <span data-translate="all_rights_reserved">{{ t('all_rights_reserved', lang) }}</span></p>
+            </div>
+        </div>
+    </footer>
+{% endblock %}
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Language management
+        let currentLanguage = 'zh';
+        
+        // Translation data
+        const translations = {
+            zh: {
+                homepage_title: 'Bitcoin挖矿智能分析平台',
+                homepage_subtitle: '专业的比特币挖矿收益计算与投资分析工具，支持实时数据、多算法验证、智能报告生成',
+                start_calculating: '开始计算',
+                learn_more: '了解更多',
+                market_data: '市场数据',
+                real_time: '实时更新',
+                network_hashrate: '网络算力',
+                fear_greed_index: '恐惧贪婪指数',
+                miner_models: '矿机型号',
+                accuracy_rate: '准确率',
+                real_time_data: '实时数据',
+                enterprise_grade: '企业级',
+                key_features: '核心功能',
+                features_subtitle: '为挖矿投资者提供全方位的专业工具',
+                advanced_calculator: '高级计算引擎',
+                calculator_desc: '支持10+主流矿机型号，双算法验证，精确计算收益',
+                real_time_analytics: '实时数据分析',
+                analytics_desc: '24/7实时获取BTC价格、网络难度、算力等关键指标',
+                crm_system: 'CRM客户管理',
+                crm_desc: '完整的客户生命周期管理，支持销售跟踪和佣金计算',
+                enterprise_security: '企业级安全',
+                security_desc: '多重身份验证，角色权限管理，数据加密保护',
+                multilingual_support: '多语言支持',
+                multilingual_desc: '完整的中英文界面，满足国际化需求',
+                subscription_plans: '订阅计划',
+                subscription_desc: '灵活的付费计划，Stripe安全支付，功能分级管理',
+                ready_to_start: '准备开始挖矿分析？',
+                cta_subtitle: '立即体验专业的比特币挖矿收益计算工具',
+                start_free_trial: '免费试用',
+                view_pricing: '查看定价',
+                mining_calculator: '挖矿计算器',
+                footer_description: '专业的比特币挖矿分析平台，为矿工和投资者提供准确的收益计算和投资建议。',
+                quick_links: '快速链接',
+                analytics: '数据分析',
+                pricing: '定价方案',
+                support: '支持',
+                help_center: '帮助中心',
+                contact_us: '联系我们',
+                all_rights_reserved: '版权所有',
+                login: '登录',
+                btc_mining_calculator: 'BTC挖矿计算器',
+                logout: '退出登录'
+            },
+            en: {
+                homepage_title: 'Bitcoin Mining Intelligence Platform',
+                homepage_subtitle: 'Professional Bitcoin mining profitability calculator and investment analysis tool with real-time data, multi-algorithm validation, and intelligent reporting',
+                start_calculating: 'Start Calculating',
+                learn_more: 'Learn More',
+                market_data: 'Market Data',
+                real_time: 'Real-time',
+                network_hashrate: 'Network Hashrate',
+                fear_greed_index: 'Fear & Greed Index',
+                miner_models: 'Miner Models',
+                accuracy_rate: 'Accuracy Rate',
+                real_time_data: 'Real-time Data',
+                enterprise_grade: 'Enterprise Grade',
+                key_features: 'Key Features',
+                features_subtitle: 'Comprehensive professional tools for mining investors',
+                advanced_calculator: 'Advanced Calculator',
+                calculator_desc: 'Supports 10+ mainstream miner models with dual-algorithm validation for precise profitability calculation',
+                real_time_analytics: 'Real-time Analytics',
+                analytics_desc: '24/7 real-time BTC price, network difficulty, hashrate and other key metrics',
+                crm_system: 'CRM Management',
+                crm_desc: 'Complete customer lifecycle management with sales tracking and commission calculation',
+                enterprise_security: 'Enterprise Security',
+                security_desc: 'Multi-factor authentication, role-based access control, encrypted data protection',
+                multilingual_support: 'Multilingual Support',
+                multilingual_desc: 'Complete Chinese and English interface for international requirements',
+                subscription_plans: 'Subscription Plans',
+                subscription_desc: 'Flexible hosting plans with transparent usage tracking and tiered feature management',
+                ready_to_start: 'Ready to Start Mining Analysis?',
+                cta_subtitle: 'Experience professional Bitcoin mining profitability calculation tools now',
+                start_free_trial: 'Start Free Trial',
+                view_pricing: 'View Pricing',
+                mining_calculator: 'Mining Calculator',
+                footer_description: 'Professional Bitcoin mining analysis platform providing accurate profitability calculations and investment advice for miners and investors.',
+                quick_links: 'Quick Links',
+                analytics: 'Analytics',
+                pricing: 'Pricing',
+                support: 'Support',
+                help_center: 'Help Center',
+                contact_us: 'Contact Us',
+                all_rights_reserved: 'All Rights Reserved',
+                login: 'Login',
+                btc_mining_calculator: 'BTC Mining Calculator',
+                logout: 'Logout'
+            }
+        };
+        
+        function switchLanguage(lang) {
+            currentLanguage = lang;
+            
+            // Update active button
+            document.getElementById('btn-zh').classList.toggle('active', lang === 'zh');
+            document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+            
+            // Update all translatable elements
+            document.querySelectorAll('[data-translate]').forEach(element => {
+                const key = element.getAttribute('data-translate');
+                if (translations[lang] && translations[lang][key]) {
+                    element.textContent = translations[lang][key];
+                }
+            });
+            
+            // Update document language
+            document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+            
+            // Save preference
+            localStorage.setItem('preferred-language', lang);
+        }
+        
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        // Load real-time market data
+        async function loadMarketData() {
+            try {
+                const response = await fetch('/api/analytics/data');
+                const data = await response.json();
+                
+                if (data.success && data.data) {
+                    const marketData = data.data;
+                    
+                    // Update BTC price
+                    if (marketData.btc_price) {
+                        document.getElementById('btc-price').textContent = 
+                            `$${marketData.btc_price.toLocaleString()}`;
+                    }
+                    
+                    // Update price change
+                    if (marketData.price_change_24h !== undefined) {
+                        const changeElement = document.getElementById('price-change');
+                        const change = marketData.price_change_24h;
+                        changeElement.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)}% (24h)`;
+                        changeElement.className = `market-change ${change >= 0 ? 'positive' : 'negative'}`;
+                    }
+                    
+                    // Update network hashrate
+                    if (marketData.network_hashrate) {
+                        document.getElementById('network-hashrate').textContent = 
+                            `${marketData.network_hashrate.toFixed(1)} EH/s`;
+                    }
+                    
+                    // Update fear & greed index
+                    if (marketData.fear_greed_index) {
+                        document.getElementById('fear-greed').textContent = 
+                            `${marketData.fear_greed_index}/100`;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load market data:', error);
+            }
+        }
+        
+        // Fix button click events - 更强制的导航方式
+        function ensureButtonsWork() {
+            // Remove any existing event listeners and force direct navigation
+            document.querySelectorAll('a[href="/login"], a[href="/dashboard"], a[href="/billing/plans"], a[href="/billing/plans#free"]').forEach(button => {
+                // Ensure clickable
+                button.style.pointerEvents = 'auto';
+                button.style.cursor = 'pointer';
+                button.style.zIndex = '999';
+                
+                // Clear any existing event listeners
+                button.onclick = null;
+                
+                // Add strong click handler
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    
+                    console.log('Forcing navigation to:', this.href);
+                    
+                    // Use multiple methods to ensure navigation
+                    const targetUrl = this.getAttribute('href');
+                    
+                    // Method 1: Direct location change
+                    setTimeout(() => {
+                        window.location.href = targetUrl;
+                    }, 100);
+                    
+                    // Method 2: Backup with window.open in same tab
+                    setTimeout(() => {
+                        if (window.location.href.indexOf(targetUrl) === -1) {
+                            window.open(targetUrl, '_self');
+                        }
+                    }, 500);
+                    
+                    return false;
+                }, true); // Use capture phase
+                
+                // Also handle mouse events
+                button.addEventListener('mousedown', function(e) {
+                    console.log('Mouse down on:', this.href);
+                });
+            });
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load saved language preference
+            const savedLang = localStorage.getItem('preferred-language') || 'zh';
+            switchLanguage(savedLang);
+            
+            // Load market data
+            loadMarketData();
+            
+            // Refresh market data every 30 seconds
+            setInterval(loadMarketData, 30000);
+            
+            // Ensure buttons work
+            ensureButtonsWork();
+            
+            // Smooth scrolling for anchor links (but not /login or /dashboard)
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

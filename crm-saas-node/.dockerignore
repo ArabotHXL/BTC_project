@@ -1,0 +1,65 @@
+# Dependencies (会在Docker中npm install)
+**/node_modules
+**/.pnp
+.pnp.js
+
+# Testing
+**/coverage
+**/.nyc_output
+**/test
+**/__tests__
+
+# Production build output (会在Docker中构建)
+**/dist
+**/build
+**/.next
+
+# Environment files (通过docker-compose传递)
+.env
+.env.local
+.env.*.local
+**/.env
+**/.env.local
+
+# IDE and Editor
+.vscode
+.idea
+*.swp
+*.swo
+*~
+*.sublime-*
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation (README需要，其他排除)
+*.md
+!README.md
+
+# Temporary files
+*.tmp
+*.temp
+.cache
+
+# 重要：不要排除这些构建必需的文件/目录
+# tsconfig.json       ← 不要排除（TypeScript配置）
+# backend/            ← 不要排除（源代码）
+# frontend/           ← 不要排除（源代码）
+# docs/               ← 不要排除（API文档）
+# prisma/             ← 不要排除（数据库schema）
+# package.json        ← 不要排除（依赖定义）
+# package-lock.json   ← 不要排除（锁定版本）

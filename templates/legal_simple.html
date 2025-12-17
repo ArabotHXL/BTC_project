@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>法律条款 Legal Terms - Bitcoin Mining Calculator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: #121212;
+            color: #e9ecef;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
+        }
+        
+        .main-container {
+            background: #1e1e1e;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            margin: 2rem 0;
+            overflow: hidden;
+        }
+        
+        .legal-header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .legal-content {
+            padding: 2rem;
+            line-height: 1.7;
+        }
+        
+        .section-title {
+            color: #007bff;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 2rem 0 1rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid rgba(0, 123, 255, 0.3);
+        }
+        
+        .warning-box {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1));
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .legal-list {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .legal-list li {
+            background: rgba(255, 255, 255, 0.05);
+            margin: 0.8rem 0;
+            padding: 1rem 1.2rem;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .legal-list li strong {
+            color: #17a2b8;
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+        
+        .api-list {
+            background: rgba(0, 123, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        
+        .api-item {
+            display: flex;
+            align-items: center;
+            margin: 0.8rem 0;
+            padding: 0.8rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+        
+        .api-item a {
+            color: #17a2b8;
+            text-decoration: none;
+        }
+        
+        .back-button {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 25px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            margin: 2rem 0 1rem 0;
+        }
+        
+        .nav-tabs .nav-link {
+            background: transparent;
+            border: none;
+            color: #adb5bd;
+            padding: 1rem 2rem;
+            font-weight: 600;
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: #fff;
+            background: rgba(45, 67, 86, 0.3);
+            border-bottom: 3px solid #007bff;
+        }
+        
+        .language-tabs {
+            background: #1a1a1a;
+            padding: 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .footer-note {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1.5rem;
+            margin-top: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            color: #adb5bd;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-calculator me-2"></i>
+                Bitcoin Mining Calculator
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">
+                    <i class="bi bi-house me-1"></i>
+                    <span data-i18n="nav.home">{{ '首页' if current_lang == 'zh' else 'Home' }}</span>
+                </a>
+                <div class="nav-item dropdown ms-2">
+                    <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-globe2"></i> {{ 'EN' if current_lang == 'en' else '中文' }}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><button class="dropdown-item" type="button" data-lang-switch="zh">中文</button></li>
+                        <li><button class="dropdown-item" type="button" data-lang-switch="en">English</button></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="main-container">
+            <!-- Header -->
+            <div class="legal-header">
+                <h1>
+                    <i class="bi bi-shield-check me-3"></i>
+                    法律条款 Legal Terms
+                </h1>
+                <p>法律合规文档 Legal Compliance Documentation</p>
+            </div>
+
+            <!-- Language Tabs -->
+            <div class="language-tabs">
+                <ul class="nav nav-tabs justify-content-center" id="languageTabs">
+                    <li class="nav-item">
+                        <button class="nav-link active" id="chinese-tab" data-bs-toggle="tab" data-bs-target="#chinese-content" type="button">
+                            <i class="bi bi-translate me-2"></i>中文版本
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="english-tab" data-bs-toggle="tab" data-bs-target="#english-content" type="button">
+                            <i class="bi bi-globe me-2"></i>English Version
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="tab-content legal-content">
+                <!-- Chinese Content -->
+                <div class="tab-pane fade show active" id="chinese-content">
+                    <div class="section-title">
+                        <i class="bi bi-file-text"></i>
+                        一、使用条款
+                    </div>
+
+                    <ul class="legal-list">
+                        <li>
+                            <strong>非投资建议</strong>
+                            本应用仅用于信息参考和教育目的，不构成任何形式的财务、投资或法律建议。
+                        </li>
+                        <li>
+                            <strong>数据准确性</strong>
+                            我们努力保持信息的准确与更新，但不对数据的完整性和准确性作出保证。
+                        </li>
+                        <li>
+                            <strong>第三方数据源</strong>
+                            本应用集成了如 CoinGecko、Blockchain.info、CoinWarz 等外部数据源。使用者需遵守各API提供方的服务协议。
+                        </li>
+                        <li>
+                            <strong>免责声明</strong>
+                            您使用本应用所造成的任何损失（包括但不限于投资损失），我们概不负责。
+                        </li>
+                        <li>
+                            <strong>使用范围限制</strong>
+                            本应用仅供个人或内部分析使用，未经许可禁止任何形式的商业再分发或销售。
+                        </li>
+                    </ul>
+
+                    <div class="warning-box">
+                        <div style="color: #ffc107; font-weight: 700; font-size: 1.2rem; margin-bottom: 0.5rem;">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            客户使用免责声明
+                        </div>
+                        <p>本平台所提供之所有挖矿回报、收益预测、ROI 计算结果，仅供参考。受比特币价格波动、网络难度、电力成本、设备损耗等因素影响，实际结果可能与计算模型存在显著差异。使用本平台即表示您理解并同意：本系统不对任何财务决策或投资结果承担任何责任，一切风险由使用者自行承担。</p>
+                    </div>
+
+                    <div class="section-title">
+                        <i class="bi bi-graph-down"></i>
+                        二、收益免责声明
+                    </div>
+
+                    <p>所有回报率计算、收益模拟和挖矿预测均基于公开数据与标准模型，不构成任何形式的收益保证。</p>
+                    
+                    <div class="warning-box">
+                        <div style="color: #ffc107; font-weight: 700; font-size: 1.2rem; margin-bottom: 0.5rem;">
+                            <i class="bi bi-info-circle me-2"></i>
+                            风险提示
+                        </div>
+                        <p>真实收益会受到BTC价格波动、网络难度、电价、停机、设备老化等多种因素影响。</p>
+                    </div>
+
+                    <div class="section-title">
+                        <i class="bi bi-cloud-arrow-down"></i>
+                        三、数据使用说明
+                    </div>
+
+                    <p>本应用依赖以下外部数据源：</p>
+
+                    <div class="api-list">
+                        <div class="api-item">
+                            <i class="bi bi-link-45deg me-3" style="color: #007bff;"></i>
+                            <div>
+                                <strong>CoinGecko API</strong><br>
+                                <a href="https://www.coingecko.com/en/api" target="_blank">https://www.coingecko.com/en/api</a>
+                            </div>
+                        </div>
+                        <div class="api-item">
+                            <i class="bi bi-link-45deg me-3" style="color: #007bff;"></i>
+                            <div>
+                                <strong>Blockchain.info</strong><br>
+                                <a href="https://blockchain.info/api" target="_blank">https://blockchain.info/api</a>
+                            </div>
+                        </div>
+                        <div class="api-item">
+                            <i class="bi bi-link-45deg me-3" style="color: #007bff;"></i>
+                            <div>
+                                <strong>CoinWarz Mining API</strong><br>
+                                <a href="https://www.coinwarz.com" target="_blank">https://www.coinwarz.com</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p>如需商业部署或二次开发许可，请联系我们获取授权。</p>
+                </div>
+
+                <!-- English Content -->
+                <div class="tab-pane fade" id="english-content">
+                    <div class="section-title">
+                        <i class="bi bi-file-text"></i>
+                        1. Terms of Use
+                    </div>
+
+                    <ul class="legal-list">
+                        <li>
+                            <strong>No Investment Advice</strong>
+                            This App is for informational and educational purposes only. It does not constitute financial, investment, or legal advice.
+                        </li>
+                        <li>
+                            <strong>Data Accuracy</strong>
+                            While we strive to keep information accurate and up-to-date, we do not guarantee the reliability or completeness of any data presented.
+                        </li>
+                        <li>
+                            <strong>Third-party APIs</strong>
+                            The App uses data from external sources including but not limited to CoinGecko, Blockchain.info, and CoinWarz. Users must comply with the respective API Terms of Service.
+                        </li>
+                        <li>
+                            <strong>No Liability</strong>
+                            We are not liable for any loss or damage resulting from your use of this App, including but not limited to investment losses.
+                        </li>
+                        <li>
+                            <strong>Usage Limitation</strong>
+                            The App is intended for personal and internal business analysis. Any commercial redistribution or resale is prohibited without explicit permission.
+                        </li>
+                    </ul>
+
+                    <div class="warning-box">
+                        <div style="color: #ffc107; font-weight: 700; font-size: 1.2rem; margin-bottom: 0.5rem;">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Client Reference Disclaimer
+                        </div>
+                        <p>All mining return forecasts, profitability estimates, and ROI calculations provided by this platform are for reference only. Actual results may differ significantly due to factors such as BTC price volatility, network difficulty, electricity rates, equipment degradation, and downtime. By using this platform, you acknowledge and agree that the system assumes no responsibility for any financial decisions or outcomes. All risks are solely borne by the user.</p>
+                    </div>
+
+                    <div class="section-title">
+                        <i class="bi bi-graph-down"></i>
+                        2. Earnings Disclaimer
+                    </div>
+
+                    <p>All ROI calculations, profitability simulations, and mining forecasts provided by this App are based on public data and standard formulas. They do not represent guaranteed returns.</p>
+                    
+                    <div class="warning-box">
+                        <div style="color: #ffc107; font-weight: 700; font-size: 1.2rem; margin-bottom: 0.5rem;">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Risk Warning
+                        </div>
+                        <p>Actual mining returns vary depending on BTC price volatility, network difficulty, electricity rates, downtime, and hardware wear.</p>
+                    </div>
+
+                    <div class="section-title">
+                        <i class="bi bi-cloud-arrow-down"></i>
+                        3. Data Usage Notice
+                    </div>
+
+                    <p>This App relies on the following external APIs:</p>
+
+                    <div class="api-list">
+                        <div class="api-item">
+                            <i class="bi bi-link-45deg me-3" style="color: #007bff;"></i>
+                            <div>
+                                <strong>CoinGecko API</strong><br>
+                                <a href="https://www.coingecko.com/en/api" target="_blank">https://www.coingecko.com/en/api</a>
+                            </div>
+                        </div>
+                        <div class="api-item">
+                            <i class="bi bi-link-45deg me-3" style="color: #007bff;"></i>
+                            <div>
+                                <strong>Blockchain.info</strong><br>
+                                <a href="https://blockchain.info/api" target="_blank">https://blockchain.info/api</a>
+                            </div>
+                        </div>
+                        <div class="api-item">
+                            <i class="bi bi-link-45deg me-3" style="color: #007bff;"></i>
+                            <div>
+                                <strong>CoinWarz Mining API</strong><br>
+                                <a href="https://www.coinwarz.com" target="_blank">https://www.coinwarz.com</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p>Users are expected to adhere to their respective rate limits and commercial terms. For any redistribution or commercial use of API data, you must acquire proper licensing from the data provider.</p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="footer-note">
+                <p>
+                    <i class="bi bi-shield-check me-2"></i>
+                    最后更新 Last Updated: 2025-07-04
+                </p>
+                <a href="/" class="back-button">
+                    <i class="bi bi-arrow-left me-2"></i>
+                    返回计算器 Back to Calculator
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/i18n.js"></script>
+    <script>
+        // Auto-switch language based on browser language
+        document.addEventListener('DOMContentLoaded', function() {
+            const browserLang = navigator.language || navigator.userLanguage;
+            if (browserLang.startsWith('en') && !browserLang.startsWith('zh')) {
+                const englishTab = document.getElementById('english-tab');
+                if (englishTab) {
+                    englishTab.click();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

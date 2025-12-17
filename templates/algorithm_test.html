@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>算法差异测试工具 - BTC挖矿计算器</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+                    <div class="container">
+                        <a class="navbar-brand" href="/">
+                            <i class="bi bi-currency-bitcoin"></i> BTC挖矿计算器
+                        </a>
+                        <a href="/" class="btn btn-outline-light btn-sm">返回主页</a>
+                    </div>
+                </nav>
+            </div>
+        </div>
+
+        <div class="container mt-4">
+            <div class="row">
+                <div class="col-12">
+                    <h2><i class="bi bi-gear"></i> 算法差异测试工具</h2>
+                    <p class="text-muted">实时测试两种挖矿算法在不同网络条件下的表现差异</p>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <!-- 左侧：测试控制面板 -->
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="bi bi-sliders"></i> 测试参数</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="testForm">
+                                <div class="mb-3">
+                                    <label class="form-label">网络算力偏差 (%)</label>
+                                    <input type="range" class="form-range" id="hashrateOffset" 
+                                           min="-70" max="100" value="0" step="5">
+                                    <div class="d-flex justify-content-between small text-muted">
+                                        <span>-70%</span>
+                                        <span id="offsetValue">0%</span>
+                                        <span>+100%</span>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">当前设置</label>
+                                    <div class="form-text" id="currentSetting">基准算力: 905 EH/s</div>
+                                </div>
+
+                                <button type="button" class="btn btn-primary w-100" onclick="runTest()">
+                                    <i class="bi bi-play-fill"></i> 运行测试
+                                </button>
+
+                                <button type="button" class="btn btn-secondary w-100 mt-2" onclick="runPresetTests()">
+                                    <i class="bi bi-list-check"></i> 运行预设场景
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- 预设测试场景 -->
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h6><i class="bi bi-bookmark"></i> 快速场景</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-outline-success btn-sm" onclick="setOffset(0)">完全一致 (0%)</button>
+                                <button class="btn btn-outline-warning btn-sm" onclick="setOffset(-20)">轻微偏低 (-20%)</button>
+                                <button class="btn btn-outline-danger btn-sm" onclick="setOffset(-50)">严重偏低 (-50%)</button>
+                                <button class="btn btn-outline-info btn-sm" onclick="setOffset(30)">轻微偏高 (+30%)</button>
+                                <button class="btn btn-outline-dark btn-sm" onclick="setOffset(100)">严重偏高 (+100%)</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右侧：测试结果 -->
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="bi bi-graph-up"></i> 测试结果</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="testResults">
+                                <div class="text-center text-muted">
+                                    <i class="bi bi-play-circle display-4"></i>
+                                    <p>点击"运行测试"开始</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 历史测试记录 -->
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h6><i class="bi bi-clock-history"></i> 测试历史</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="testHistory" style="max-height: 300px; overflow-y: auto;">
+                                <p class="text-muted">暂无测试记录</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const baseHashrate = 905; // 基准网络算力 EH/s
+        let testHistory = [];
+
+        // 更新偏差显示
+        document.getElementById('hashrateOffset').addEventListener('input', function() {
+            const offset = this.value;
+            document.getElementById('offsetValue').textContent = offset + '%';
+            
+            const newHashrate = baseHashrate * (1 + offset / 100);
+            document.getElementById('currentSetting').textContent = 
+                `测试算力: ${newHashrate.toFixed(1)} EH/s (${offset > 0 ? '+' : ''}${offset}%)`;
+        });
+
+        function setOffset(value) {
+            document.getElementById('hashrateOffset').value = value;
+            document.getElementById('hashrateOffset').dispatchEvent(new Event('input'));
+        }
+
+        async function runTest() {
+            const offset = parseInt(document.getElementById('hashrateOffset').value);
+            const testHashrate = baseHashrate * (1 + offset / 100);
+            
+            document.getElementById('testResults').innerHTML = `
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">计算中...</span>
+                    </div>
+                    <p class="mt-2">正在计算算力 ${testHashrate.toFixed(1)} EH/s 的结果...</p>
+                </div>
+            `;
+
+            try {
+                // 调用计算API
+                const formData = new FormData();
+                formData.append('miner_model', 'Antminer S21 XP');
+                formData.append('miner_count', '100');
+                formData.append('electricity_cost', '0.05');
+                formData.append('use_real_time', 'on');
+                formData.append('hashrate_source', 'manual');
+                formData.append('manual_hashrate', testHashrate.toString());
+
+                const response = await fetch('/calculate', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    displayTestResult(offset, testHashrate, result);
+                    addToHistory(offset, testHashrate, result);
+                } else {
+                    throw new Error('计算失败');
+                }
+
+            } catch (error) {
+                document.getElementById('testResults').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle"></i> 测试失败: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function displayTestResult(offset, testHashrate, result) {
+            const method1 = result.btc_mined.method1.daily;
+            const method2 = result.btc_mined.method2.daily;
+            const final = result.btc_mined.daily;
+            
+            const difference = Math.abs(method1 - method2);
+            const percentageDiff = method2 > 0 ? (difference / method2 * 100) : 0;
+            
+            let usedAlgorithm = "未知";
+            if (Math.abs(final - method1) < 1e-10) {
+                usedAlgorithm = "算法1";
+            } else if (Math.abs(final - method2) < 1e-10) {
+                usedAlgorithm = "算法2";
+            } else {
+                usedAlgorithm = "平均值";
+            }
+
+            let statusClass = "success";
+            let statusText = "一致";
+            if (percentageDiff >= 0.01) {
+                statusClass = percentageDiff < 5 ? "warning" : "danger";
+                statusText = percentageDiff < 5 ? "小差异" : "大差异";
+            }
+
+            const html = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>测试条件</h6>
+                        <table class="table table-sm">
+                            <tr><td>算力偏差</td><td>${offset > 0 ? '+' : ''}${offset}%</td></tr>
+                            <tr><td>测试算力</td><td>${testHashrate.toFixed(1)} EH/s</td></tr>
+                            <tr><td>基准算力</td><td>${baseHashrate} EH/s</td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>算法结果</h6>
+                        <table class="table table-sm">
+                            <tr><td>算法1 (API)</td><td>${method1.toFixed(8)} BTC</td></tr>
+                            <tr><td>算法2 (难度)</td><td>${method2.toFixed(8)} BTC</td></tr>
+                            <tr class="fw-bold"><td>最终采用</td><td>${final.toFixed(8)} BTC</td></tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="alert alert-${statusClass}">
+                            <h6><i class="bi bi-info-circle"></i> 分析结果</h6>
+                            <p class="mb-1">差异程度: <strong>${percentageDiff.toFixed(3)}%</strong> (${statusText})</p>
+                            <p class="mb-1">采用算法: <strong>${usedAlgorithm}</strong></p>
+                            <p class="mb-0">
+                                ${percentageDiff < 0.01 ? '两算法结果一致，说明API数据质量良好' :
+                                  percentageDiff < 5 ? '算法存在小幅差异，系统使用平均值保证稳定性' :
+                                  '算法差异较大，系统启用智能保护机制'}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('testResults').innerHTML = html;
+        }
+
+        function addToHistory(offset, testHashrate, result) {
+            const method1 = result.btc_mined.method1.daily;
+            const method2 = result.btc_mined.method2.daily;
+            const difference = Math.abs(method1 - method2);
+            const percentageDiff = method2 > 0 ? (difference / method2 * 100) : 0;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            
+            testHistory.unshift({
+                timestamp,
+                offset,
+                testHashrate,
+                percentageDiff
+            });
+
+            // 保留最近20条记录
+            if (testHistory.length > 20) {
+                testHistory = testHistory.slice(0, 20);
+            }
+
+            updateHistoryDisplay();
+        }
+
+        function updateHistoryDisplay() {
+            const historyDiv = document.getElementById('testHistory');
+            
+            if (testHistory.length === 0) {
+                historyDiv.innerHTML = '<p class="text-muted">暂无测试记录</p>';
+                return;
+            }
+
+            let html = '<div class="row"><div class="col-3"><strong>时间</strong></div><div class="col-3"><strong>偏差</strong></div><div class="col-3"><strong>算力</strong></div><div class="col-3"><strong>差异</strong></div></div>';
+            
+            testHistory.forEach(record => {
+                const statusClass = record.percentageDiff < 0.01 ? 'success' : 
+                                   record.percentageDiff < 5 ? 'warning' : 'danger';
+                
+                html += `
+                    <div class="row border-bottom py-1 small">
+                        <div class="col-3">${record.timestamp}</div>
+                        <div class="col-3">${record.offset > 0 ? '+' : ''}${record.offset}%</div>
+                        <div class="col-3">${record.testHashrate.toFixed(1)} EH/s</div>
+                        <div class="col-3"><span class="badge bg-${statusClass}">${record.percentageDiff.toFixed(2)}%</span></div>
+                    </div>
+                `;
+            });
+
+            historyDiv.innerHTML = html;
+        }
+
+        async function runPresetTests() {
+            const presets = [0, -20, -50, 30, 100];
+            
+            for (let i = 0; i < presets.length; i++) {
+                setOffset(presets[i]);
+                await runTest();
+                await new Promise(resolve => setTimeout(resolve, 1000)); // 1秒延迟
+            }
+        }
+    </script>
+</body>
+</html>

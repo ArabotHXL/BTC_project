@@ -1,0 +1,60 @@
+
+Adapters:
+- modules/miner_adapters/antminer.ts 
+  - Implement HTTP/JSON-RPC compatible with BMminer/CGMiner API via TCP proxy or lightweight lib; if direct TCP not available in this environment, add a small adapter client using node-net. Provide timeout + auth support.
+- modules/miner_adapters/whatsminer.sim.ts 
+  - Simulator producing realistic states + responding to control actions.
+- modules/miner_adapters/registry.ts 
+  - Resolve adapter by miner model and config (config/miners.json).
+
+Security/Controls:
+- All control operations require a second confirmation flag & are audited (event type=monitor.command with actor).
+- In DEMO_MODE, control ops are no-ops but fully logged.
+
+Acceptance:
+- Monitoring page can read a mix of 5 miners (real/simulated).
+- All control ops require double confirmation; audit to events/ with actor.
+
+## UI STRAPS / 前端落点
+- Add a top banner component dashboard/components/RealtimeStrip.tsx
+- Add monitoring page with table + 15-min sparkline (SVG based).
+- Add alert badges and a filter for "alerting" miners.
+- Add an Export CSV button that hits api/events/export.
+
+## TESTS / 单测
+- Use jest + ts-jest.
+- Three DataHub tests (timeout/fallback/exception) MUST pass.
+- Monitoring rules unit tests: fabricate states to trigger each rule; assert event write.
+- Curtailment planner test: input sample miners + price -> expected plan length and monotonic savings.
+- ETL smoke test: DEMO fixtures -> SQLite populated -> 1-day recon writes CSV.
+
+Add scripts in package.json:
+{
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "jest --runInBand",
+    "report:daily": "ts-node reports/generateDailyReport.ts",
+    "web3:etl": "ts-node batch/web3/etl.ts",
+    "web3:recon": "ts-node batch/web3/reconcileDaily.ts"
+  }
+}
+
+## CI
+.github/workflows/ci.yml runs install + test on push/PR.
+
+## ACCEPTANCE CHECKLIST / 验收清单
+- DataHub: UI shows source + refreshed time; manual price/reward inputs removed and replaced with read-only values; timeout/fallback/exception tests passing.
+- Monitoring: table + 15-min micro-sparkline; rules trigger events; daily monitoring report generated into reports/.
+- Events: all fetch/rule/command/email write into events/; 24h replay possible; CSV export endpoint works; each alert traceable to trigger params and ack actor.
+- Web3 Recon: ETL populates database/; daily wallet settlement CSV/PDF exported; <1% rounding marked as accepted.
+- Curtailment: plan/execute/rollback flow with before/after overlay; events & daily report record actions.
+- Miner adapters: Antminer basic state fetch + no-op controls in DEMO; WhatsMiner simulator; mix of 5 miners visible; all control ops double-confirm + audited.
+
+## DELIVERABLES / 交付
+- 6 PRs (one per feature branch) with screenshots/gifs in PR description
+- Updated README with:
+  - Setup, env vars, DEMO mode
+  - How to run tests, generate reports, export events
+  - Security notes for control operations

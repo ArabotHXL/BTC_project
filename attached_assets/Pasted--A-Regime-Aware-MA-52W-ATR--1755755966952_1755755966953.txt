@@ -1,0 +1,181 @@
+高级算法清单（可叠加）
+A. Regime-Aware 自适应（趋势×波动状态）
+
+逻辑：用 MA 斜率 & 52W 百分位判“趋势”，用 ATR/价的分位数判“波动”。
+触发：仅做自适应，不直接卖：在 “趋势上行/低波动” → 提高分层门槛；“震荡/高波动” → 降低门槛、加严追踪止损。
+参数：MA50/200 斜率阈值 0、ATRpct 80%分位、52W 百分位 0.5。
+
+B. Breakout → Exhaustion 分段交易
+
+逻辑：Donchian/布林上轨突破 + 量能确认进入；卖点在“动能衰竭”。
+卖出触发：
+
+价格突破 20D 高点且量能>20D均量×1.3 → 不卖（只是进入观察）。
+
+Exhaustion：RSI 高位下拐（t 与 t-1 下降且 >65）或价格/RSI 背离 + 收盘跌回上轨内 → Partial Sell 10–20%。
+参数：通道=20，量能阈值=1.3×，RSI髙位=65–70。
+
+C. 支撑/阻力共振评分（Confluence Score）
+
+逻辑：综合摆动高低点、Pivot、价格直方图（近250日分桶）得到水平位；若多条水平在±x%内 → 共振区。
+卖出触发：现价进入共振区上沿±0.3%并出现拒绝形态（上影阴线/吞没/收盘低于区间中点） → Partial Sell 10–25%。
+参数：桶宽 0.5–1.0%，共振数≥3，拒绝蜡烛定义可选“BE/吞没”。
+
+D. Adaptive-ATR 分层（动态倍数）
+
+逻辑：分层倍数随波动调整：
+effectiveMultiple = baseMultiple × (1 + k × (ATR/Price − ATRₘₑd))
+作用：波动大时拉远层距，避免被噪声反复触发。
+触发：到达动态层价 + 动能过滤（RSI≥阈值或 20D 新高） → Partial Sell（配额来自你的 Ladder）。
+参数：k=3–5，ATR中位用近365日。
+
+E. 形态目标引擎（Triangle/Rectangle/Channel）
+
+逻辑：识别收敛三角/矩形/通道；突破后以“形态高度”测算目标。
+卖出触发：
+
+到达 0.618× 目标 → 卖 10–15%
+
+到达 1.0× 目标 或出现背离/放量长上影 → 再卖 10–20%
+过滤：突破日量能>1.5×20日均量。
+
+F. Miner-Cycle / Hashprice 过热
+
+逻辑：Score = 0.5·Hashprice分位 + 0.3·Puell + 0.2·HashRibbons状态
+卖出触发：Score≥0.7 且价格处于 52W≥0.75，优先在分层附近增配卖出（层配额+5–10pp）。
+参数：Puell>1.8 计强，Ribbons Recovery/Capitulation 计±0.1。
+
+G. 衍生品压力与对冲选择
+
+逻辑：监控资金费/基差/未平仓量突变。
+卖出/对冲：
+
+年化基差>8–12% & 资金费持续为正 & OI↑ → 优先建议对冲（做空同等名义，教育卡片），否则 Partial Sell。
+
+资金费快速翻负 & OI↓（风险偏好保守）→ 防守性 Protective Sell 10–15%。
+
+H. 微观结构执行器（Liquidity-Aware）
+
+逻辑：用“订单规模/近24h成交额”的比率估算滑点曲线，超过目标滑点就用 TWAP。
+输出：windowMinutes = a × (orderUSD / dailyTurnoverUSD)^b，推荐 TWAP 切片与最差成交价（WCL）。
+参数：目标滑点 0.1–0.3%，a,b 经验拟合或静态值（如 a=60,b=0.6）。
+
+I. Bandit-Sizing（分层配额自学习）
+
+逻辑：把“每层卖几成”当作多臂老虎机臂；回报=卖出后 X 小时的相对收益（与事后价格对比）。
+动作：Thompson Sampling 更新各层配额（在合规边界内），逐步提高长期期望。
+边界：每层配额 5–25%，日卖上限约束。
+
+J. Ensemble 聚合评分 → 单一“Sell Window”
+
+逻辑：各模块输出 score∈[−1,1] 与置信度；加权求和得到 SellScore∈[0,100]。
+阈值：≥70 → Sell / Partial Sell；50–70 → Watch；<50 → Hold。
+优先级：OPEX>风控（追踪/回撤）> 分层/形态 > 派生信号（矿工/衍生品）。
+
+与你现有引擎的对接
+
+继续用你已有的 generateDailySellPlan() 作为核心执行计划；把上面各模块的 score/flag 作为加权或加/减配。
+
+例如：Regime 调整 Ladder 的倍数；Confluence 在区间上沿触发时对当前层加5–10pp；G 模块改成“对冲替代卖出”的建议卡片。
+
+TypeScript 骨架（可直接放进项目）
+// ===== Features & Scores =====
+export type FeaturePack = {
+  // prices
+  close: number, high: number, low: number,
+  ma50: number, ma200: number,
+  atrPct: number, pct52w: number, rsi14: number,
+  vol20: number, volToday: number,
+
+  // mining/on-chain/derivs (可为 null)
+  hashpricePctile?: number, puell?: number,
+  hashRibbons?: 'bear'|'recover'|'bull'|null,
+  funding?: number, basisAnn?: number, oiChange?: number,
+
+  // structure
+  donchian20High: number, bbUpper: number,
+  highestClose60: number,
+  // confluence
+  srBands: Array<{price:number, strength:number}> // 聚类好的水平位
+};
+
+export type ModuleScore = { name: string; score: number; conf: number; notes?: string[] };
+
+export function regimeModule(f: FeaturePack): ModuleScore {
+  const trendUp = (f.ma50 - f.ma200) / Math.max(f.ma200,1e-9) > 0;
+  const lowVol = f.atrPct < 0.8 * rollingMedianATRPct; // 预先计算
+  let score = 0;
+  if (!trendUp && !lowVol) score -= 0.2;
+  if (trendUp && lowVol)  score += 0.2;
+  return { name:'regime', score, conf:0.6 };
+}
+
+export function breakoutExhaustionModule(f: FeaturePack, prevRSI: number): ModuleScore {
+  let s = 0, notes:string[]=[];
+  const breakout = f.close >= f.donchian20High && f.volToday > 1.3*f.vol20;
+  const rsiRoll = f.rsi14 < prevRSI && f.rsi14 >= 65;
+  const reenter = f.close < f.bbUpper; // 跌回上轨内
+  if (breakout) { notes.push('breakout watch'); }
+  if (rsiRoll && reenter) { s += 0.35; notes.push('exhaustion'); }
+  return { name:'breakout_exhaustion', score:s, conf:0.7, notes };
+}
+
+export function confluenceModule(f: FeaturePack): ModuleScore {
+  const band = 0.003 * f.close; // ±0.3%
+  const hits = f.srBands.filter(b=> Math.abs(b.price - f.close) <= band)
+                        .reduce((a,b)=> a + b.strength, 0);
+  let s = 0;
+  if (hits >= 3 && closeRejected(f)) s += 0.3; // 你已有拒绝形态判定
+  return { name:'confluence', score:s, conf:0.6 };
+}
+
+export function adaptiveLadderMultiple(baseMultiple: number, atrPct: number, atrMed: number, k=4){
+  return baseMultiple * (1 + k * Math.max(0, atrPct - atrMed));
+}
+
+export function minerCycleModule(f: FeaturePack): ModuleScore {
+  const hp = f.hashpricePctile ?? 0, puell = f.puell ?? 1, ribbons = f.hashRibbons ?? null;
+  let s = 0; if (hp>=0.7) s += 0.15; if (puell>1.8) s += 0.1; if (ribbons==='recover') s += 0.05;
+  return { name:'miner_cycle', score:s, conf:0.5 };
+}
+
+export function derivsStressModule(f: FeaturePack): ModuleScore {
+  let s = 0, notes:string[]=[];
+  if ((f.basisAnn??0) > 0.08 && (f.funding??0) > 0 && (f.oiChange??0) > 0) { s += 0.25; notes.push('hedge preferred'); }
+  if ((f.funding??0) < -0.02 && (f.oiChange??0) < 0) { s += 0.15; notes.push('defensive sell'); }
+  return { name:'derivs', score:s, conf:0.5, notes };
+}
+
+// ===== Aggregator =====
+export function aggregateScores(mods: ModuleScore[]): {sellScore:number, explain:string[]} {
+  // 归一后加权（可放在 Settings）
+  const weights: Record<string,number> = {
+    regime:0.8, breakout_exhaustion:1.2, confluence:1.0, miner_cycle:0.8, derivs:1.0
+  };
+  let raw = 0, wsum = 0, notes:string[]=[];
+  for (const m of mods){
+    const w = weights[m.name] ?? 1;
+    raw += w * m.score * m.conf;
+    wsum += w;
+    if (m.notes?.length) notes.push(...m.notes);
+  }
+  const sellScore = Math.max(0, Math.min(100, 50 + 50 * raw/wsum)); // 映射到0..100
+  return { sellScore, explain: notes };
+}
+
+
+产出给你的执行引擎两件事：
+
+sellScore → 决定是否把“分层配额/追踪止损”加/减配；
+
+explain[] → 落到“Aggregated Signal & Recommendation”的人话解释里。
+
+如何落地（建议顺序）
+
+先加 A+D+C（自适应 + 动态分层 + 共振区）→ 立即提升“卖点质量”。
+
+再加 B（突破→衰竭）和 F（矿工周期加成）。
+
+最后接 G/H/I（衍生品/执行/自学习）作为增强模块。
+
+用 J 聚合出 0–100 的“Sell Window 分数”，只在≥70时推送，保持克制。

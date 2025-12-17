@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="user-role" content="{{ session.role }}">
+    <meta name="language" content="{{ current_lang }}">
+    <title>{% block title %}{% if current_lang == 'en' %}Hosting Management{% else %}托管管理{% endif %} - BTC Mining Calculator{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <!-- Bootstrap Icons - Primary CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" id="bi-icons-primary">
+    <!-- Bootstrap Icons Fallback Script -->
+    <script>
+    (function() {
+        setTimeout(function() {
+            var testEl = document.createElement('i');
+            testEl.className = 'bi bi-check';
+            testEl.style.position = 'absolute';
+            testEl.style.left = '-9999px';
+            document.body.appendChild(testEl);
+            var computed = window.getComputedStyle(testEl, ':before').content;
+            document.body.removeChild(testEl);
+            if (!computed || computed === 'none' || computed === '""') {
+                var fallback = document.createElement('link');
+                fallback.rel = 'stylesheet';
+                fallback.href = 'https://cdn.bootcdn.net/ajax/libs/bootstrap-icons/1.11.1/font/bootstrap-icons.min.css';
+                document.head.appendChild(fallback);
+                console.log('[Icons] Fallback CDN loaded');
+            }
+        }, 1500);
+    })();
+    </script>
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- E2EE Crypto Module -->
+    <script src="/static/js/crypto_miner_e2ee.js"></script>
+    <!-- i18n 无刷新语言切换 -->
+    <script src="/static/js/i18n.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+    
+    <!-- Hosting Unified Styles -->
+    <style>
+    /* Hosting Management Unified Design System */
+    :root {
+        --hosting-primary: #f7931e;
+        --hosting-secondary: #ffc107;
+        --hosting-gradient: linear-gradient(135deg, #f7931e 0%, #ffc107 100%);
+        --hosting-bg-primary: #1a1a1a;
+        --hosting-bg-secondary: #2d3748;
+        --hosting-bg-gradient: linear-gradient(135deg, #1a1a1a 0%, #2d3748 100%);
+        --hosting-card-bg: rgba(255, 255, 255, 0.05);
+        --hosting-card-border: #333;
+        --hosting-card-border-hover: #ffc107;
+        --hosting-text-primary: #ffffff;
+        --hosting-text-secondary: #adb5bd;
+        --hosting-text-muted: #6c757d;
+        --hosting-shadow-default: 0 4px 6px rgba(0, 0, 0, 0.1);
+        --hosting-shadow-glow: 0 10px 25px rgba(255, 193, 7, 0.2);
+        --hosting-border-radius: 15px;
+        --hosting-border-radius-sm: 8px;
+        --hosting-transition: all 0.3s ease;
+    }
+
+    /* Global Body Styling */
+    body.hosting-body {
+        background: var(--hosting-bg-gradient);
+        min-height: 100vh;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        color: var(--hosting-text-primary);
+        margin: 0;
+        padding: 0;
+    }
+
+    /* Hosting Layout Container */
+    .hosting-layout {
+        display: flex;
+        min-height: 100vh;
+    }
+
+    /* Sidebar Styling */
+    .hosting-sidebar {
+        width: 280px;
+        background: rgba(26, 26, 26, 0.95);
+        backdrop-filter: blur(20px);
+        border-right: 2px solid var(--hosting-card-border);
+        padding: 2rem 0;
+        position: fixed;
+        height: 100vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        z-index: 1000;
+        transition: width 0.3s ease, padding 0.3s ease;
+    }
+    
+    /* Collapsed Sidebar */
+    .hosting-sidebar.collapsed {
+        width: 80px;
+        padding: 2rem 0.5rem;
+    }
+    
+    /* Sidebar Toggle Button */
+    .sidebar-toggle-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: rgba(255, 193, 7, 0.1);
+        border: 1px solid var(--hosting-secondary);
+        color: var(--hosting-secondary);
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: var(--hosting-transition);
+        z-index: 10;
+    }
+    
+    .sidebar-toggle-btn:hover {
+        background: var(--hosting-secondary);
+        color: #000;
+        transform: scale(1.1);
+    }
+    
+    .hosting-sidebar.collapsed .sidebar-toggle-btn {
+        right: 50%;
+        transform: translateX(50%);
+    }
+    
+    .hosting-sidebar.collapsed .sidebar-toggle-btn:hover {
+        transform: translateX(50%) scale(1.1);
+    }
+
+    .hosting-sidebar-brand {
+        text-align: center;
+        padding: 0 2rem 2rem;
+        border-bottom: 1px solid var(--hosting-card-border);
+        margin-bottom: 2rem;
+        transition: padding 0.3s ease;
+    }
+    
+    .hosting-sidebar.collapsed .hosting-sidebar-brand {
+        padding: 1.5rem 0.5rem 2rem;
+    }
+
+    .hosting-brand-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        background: var(--hosting-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+        white-space: nowrap;
+        overflow: hidden;
+        transition: font-size 0.3s ease;
+    }
+    
+    .hosting-sidebar.collapsed .hosting-brand-title {
+        font-size: 0.9rem;
+    }
+    
+    .hosting-brand-icon {
+        display: inline-block;
+        background: var(--hosting-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        transition: all 0.3s ease;
+    }
+    
+    .hosting-sidebar.collapsed .hosting-brand-icon {
+        display: none;
+    }
+
+    .hosting-brand-subtitle {
+        display: block;
+        font-size: 0.85rem;
+        color: var(--hosting-text-secondary);
+        transition: opacity 0.2s ease;
+    }
+    
+    .hosting-sidebar.collapsed .hosting-brand-subtitle {
+        display: none;
+    }
+
+    /* Navigation Menu */
+    .hosting-nav {
+        padding: 0 1rem;
+        transition: padding 0.3s ease;
+    }
+    
+    .hosting-sidebar.collapsed .hosting-nav {
+        padding: 0 0.5rem;
+    }
+
+    .hosting-nav-section {
+        margin-bottom: 2rem;
+    }
+
+    .hosting-nav-title {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--hosting-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 0 1rem 0.5rem;
+        margin-bottom: 0.5rem;
+        white-space: nowrap;
+        overflow: hidden;
+        transition: opacity 0.2s ease;
+    }
+    
+    .hosting-sidebar.collapsed .hosting-nav-title {
+        opacity: 0;
+        height: 0;
+        padding: 0;
+        margin: 0;
+    }
+
+    .hosting-nav-item {
+        margin-bottom: 0.25rem;
+    }
+
+    .hosting-nav-link {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        color: var(--hosting-text-secondary);
+        text-decoration: none;
+        border-radius: var(--hosting-border-radius-sm);
+        transition: var(--hosting-transition);
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+    
+    .hosting-sidebar.collapsed .hosting-nav-link {
+        justify-content: center;
+        padding: 0.75rem 0.5rem;
+    }
+
+    .hosting-nav-link:hover {
+        background: rgba(255, 193, 7, 0.1);
+        color: var(--hosting-secondary);
+        transform: translateX(5px);
+    }
+    
+    .hosting-sidebar.collapsed .hosting-nav-link:hover {
+        transform: none;
+    }
+
+    .hosting-nav-link.active {
+        background: var(--hosting-gradient);
+        color: #000;
+        font-weight: 600;
+    }
+
+    .hosting-nav-icon {
+        margin-right: 0.75rem;
+        font-size: 1.1rem;
+        width: 20px;
+        text-align: center;
+        flex-shrink: 0;
+        transition: margin 0.3s ease;
+    }
+    
+    .hosting-sidebar.collapsed .hosting-nav-icon {
+        margin-right: 0;
+    }
+    
+    .hosting-nav-text {
+        transition: opacity 0.2s ease;
+    }
+    
+    .hosting-sidebar.collapsed .hosting-nav-text {
+        opacity: 0;
+        width: 0;
+    }
+    
+    /* Collapsible Submenu Styles */
+    .hosting-nav-parent {
+        position: relative;
+    }
+    
+    .hosting-nav-toggle {
+        cursor: pointer;
+        justify-content: flex-start;
+    }
+    
+    .hosting-nav-arrow {
+        margin-left: auto;
+        font-size: 0.75rem;
+        transition: transform 0.3s ease;
+    }
+    
+    .hosting-nav-toggle[aria-expanded="true"] .hosting-nav-arrow {
+        transform: rotate(180deg);
+    }
+    
+    .hosting-sidebar.collapsed .hosting-nav-arrow {
+        display: none;
+    }
+    
+    .hosting-submenu {
+        padding-left: 0.5rem;
+        margin-top: 0.25rem;
+        border-left: 2px solid rgba(247, 147, 26, 0.3);
+        margin-left: 1.5rem;
+    }
+    
+    .hosting-nav-child {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+        color: var(--hosting-text-muted);
+    }
+    
+    .hosting-nav-child:hover {
+        color: var(--hosting-secondary);
+        background: rgba(255, 193, 7, 0.05);
+    }
+    
+    .hosting-nav-child.active {
+        color: var(--hosting-secondary);
+        background: rgba(247, 147, 26, 0.15);
+        font-weight: 600;
+    }
+    
+    .hosting-sidebar.collapsed .hosting-submenu {
+        display: none !important;
+    }
+    
+    .hosting-sidebar.collapsed .hosting-nav-parent .hosting-nav-toggle:hover + .hosting-submenu {
+        display: block !important;
+        position: absolute;
+        left: 100%;
+        top: 0;
+        background: var(--hosting-card-bg);
+        border: 1px solid var(--hosting-card-border);
+        border-radius: var(--hosting-border-radius-sm);
+        padding: 0.5rem;
+        margin-left: 0;
+        border-left: none;
+        min-width: 180px;
+        z-index: 1000;
+    }
+
+    /* Main Content Area */
+    .hosting-main {
+        flex: 1;
+        margin-left: 280px;
+        padding: 2rem;
+        min-height: 100vh;
+        transition: margin-left 0.3s ease;
+    }
+    
+    .hosting-main.sidebar-collapsed {
+        margin-left: 80px;
+    }
+
+    /* Top Header */
+    .hosting-header {
+        background: var(--hosting-card-bg);
+        backdrop-filter: blur(10px);
+        border: 2px solid var(--hosting-card-border);
+        border-radius: var(--hosting-border-radius);
+        padding: 1.5rem 2rem;
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .hosting-header-title {
+        font-size: 2rem;
+        font-weight: 700;
+        background: var(--hosting-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin: 0;
+    }
+
+    .hosting-header-subtitle {
+        color: var(--hosting-text-secondary);
+        margin: 0.5rem 0 0;
+        font-size: 1rem;
+    }
+
+    .hosting-header-actions {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    /* Unified Cards */
+    .hosting-card {
+        background: var(--hosting-card-bg);
+        backdrop-filter: blur(10px);
+        border: 2px solid var(--hosting-card-border);
+        border-radius: var(--hosting-border-radius);
+        transition: var(--hosting-transition);
+        margin-bottom: 2rem;
+    }
+
+    .hosting-card:hover {
+        border-color: var(--hosting-card-border-hover);
+        box-shadow: var(--hosting-shadow-glow);
+        transform: translateY(-2px);
+    }
+
+    .hosting-card-header {
+        background: var(--hosting-gradient);
+        color: #000;
+        font-weight: 600;
+        padding: 1.5rem 2rem;
+        border-radius: calc(var(--hosting-border-radius) - 2px) calc(var(--hosting-border-radius) - 2px) 0 0;
+        margin: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .hosting-card-body {
+        padding: 2rem;
+    }
+
+    .hosting-card-title {
+        margin: 0;
+        font-size: 1.25rem;
+        display: flex;
+        align-items: center;
+    }
+
+    /* Unified Buttons */
+    .btn-hosting-primary {
+        background: var(--hosting-gradient);
+        border: none;
+        color: #000;
+        font-weight: 600;
+        border-radius: var(--hosting-border-radius-sm);
+        padding: 0.75rem 1.5rem;
+        transition: var(--hosting-transition);
+    }
+
+    .btn-hosting-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(255, 193, 7, 0.3);
+        color: #000;
+    }
+
+    .btn-hosting-secondary {
+        background: transparent;
+        border: 2px solid var(--hosting-secondary);
+        color: var(--hosting-secondary);
+        font-weight: 600;
+        border-radius: var(--hosting-border-radius-sm);
+        padding: 0.75rem 1.5rem;
+        transition: var(--hosting-transition);
+    }
+
+    .btn-hosting-secondary:hover {
+        background: var(--hosting-secondary);
+        color: #000;
+        transform: translateY(-2px);
+    }
+
+    .btn-hosting-outline {
+        background: transparent;
+        border: 1px solid var(--hosting-text-secondary);
+        color: var(--hosting-text-secondary);
+        border-radius: var(--hosting-border-radius-sm);
+        padding: 0.5rem 1rem;
+        transition: var(--hosting-transition);
+    }
+
+    .btn-hosting-outline:hover {
+        background: var(--hosting-text-secondary);
+        color: var(--hosting-bg-primary);
+    }
+
+    /* Stats Cards */
+    .hosting-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    @media (max-width: 1200px) {
+        .hosting-stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .hosting-stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .hosting-stat-card {
+        background: var(--hosting-card-bg);
+        backdrop-filter: blur(10px);
+        border: 2px solid var(--hosting-card-border);
+        border-radius: var(--hosting-border-radius);
+        padding: 1rem 1.25rem;
+        text-align: center;
+        transition: var(--hosting-transition);
+        position: relative;
+        overflow: hidden;
+        min-height: 80px;
+    }
+
+    .hosting-stat-card:hover {
+        border-color: var(--hosting-card-border-hover);
+        box-shadow: var(--hosting-shadow-glow);
+        transform: translateY(-3px);
+    }
+
+    .hosting-stat-value {
+        font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+        font-weight: 700;
+        color: var(--hosting-secondary);
+        margin-bottom: 0.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .hosting-stat-label {
+        color: var(--hosting-text-secondary);
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    .hosting-stat-icon {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 2rem;
+        opacity: 0.25;
+        color: var(--hosting-secondary);
+    }
+
+    /* Tables */
+    .hosting-table {
+        background: var(--hosting-card-bg);
+        border-radius: var(--hosting-border-radius);
+        overflow: hidden;
+    }
+
+    .hosting-table .table {
+        margin: 0;
+        color: var(--hosting-text-primary);
+    }
+
+    .hosting-table .table thead th {
+        background: rgba(255, 193, 7, 0.1);
+        border-color: var(--hosting-card-border);
+        color: var(--hosting-secondary);
+        font-weight: 600;
+    }
+
+    .hosting-table .table tbody tr:hover {
+        background: rgba(255, 193, 7, 0.05);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 992px) {
+        .hosting-sidebar {
+            transform: translateX(-100%);
+        }
+        
+        .hosting-sidebar.show {
+            transform: translateX(0);
+        }
+        
+        .hosting-main {
+            margin-left: 0;
+        }
+        
+        .hosting-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .hosting-stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Utilities */
+    .hosting-text-gradient {
+        background: var(--hosting-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .hosting-border-glow {
+        border-color: var(--hosting-card-border-hover) !important;
+        box-shadow: var(--hosting-shadow-glow);
+    }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="hosting-body">
+    <div class="hosting-layout">
+        <!-- Sidebar Navigation -->
+        <nav class="hosting-sidebar" id="hostingSidebar">
+            <!-- Sidebar Toggle Button -->
+            <button class="sidebar-toggle-btn" id="sidebarCollapseBtn" 
+                    title="{% if current_lang == 'en' %}Toggle Sidebar{% else %}折叠侧边栏{% endif %}"
+                    data-i18n-title="toggle_sidebar">
+                <i class="bi bi-chevron-left" id="sidebarToggleIcon"></i>
+            </button>
+            
+            <div class="hosting-sidebar-brand">
+                <h1 class="hosting-brand-title">
+                    <i class="bi bi-building me-2 hosting-brand-icon"></i><span data-i18n="hosting">{% if current_lang == 'en' %}Hosting{% else %}托管管理{% endif %}</span>
+                </h1>
+                <p class="hosting-brand-subtitle" data-i18n="professional_mining_management">
+                    {% if current_lang == 'en' %}Professional Mining Management{% else %}专业矿机托管平台{% endif %}
+                </p>
+            </div>
+            
+            <div class="hosting-nav">
+                {% if session.role in ['owner', 'admin', 'mining_site'] %}
+                <!-- 托管商菜单 -->
+                <div class="hosting-nav-section">
+                    <div class="hosting-nav-title" data-i18n="host_management">
+                        {% if current_lang == 'en' %}Host Management{% else %}托管商管理{% endif %}
+                    </div>
+                    <!-- 仪表盘 (独立项) -->
+                    <div class="hosting-nav-item">
+                        <a href="/hosting/host" class="hosting-nav-link {{ 'active' if request.path == '/hosting/host' or request.path == '/hosting/host/' }}" data-nav="dashboard">
+                            <i class="bi bi-speedometer2 hosting-nav-icon"></i>
+                            <span class="hosting-nav-text" data-i18n="dashboard">{% if current_lang == 'en' %}Dashboard{% else %}仪表盘{% endif %}</span>
+                        </a>
+                    </div>
+                    
+                    <!-- 设备与监控 (可折叠) -->
+                    <div class="hosting-nav-item hosting-nav-parent">
+                        <a href="javascript:void(0)" class="hosting-nav-link hosting-nav-toggle" data-bs-toggle="collapse" data-bs-target="#submenu-devices" aria-expanded="{{ 'true' if request.path.startswith('/hosting/host/devices') or request.path.startswith('/hosting/host/monitoring') else 'false' }}" aria-controls="submenu-devices">
+                            <i class="bi bi-cpu hosting-nav-icon"></i>
+                            <span class="hosting-nav-text" data-i18n="devices_monitoring">{% if current_lang == 'en' %}Devices & Monitoring{% else %}设备与监控{% endif %}</span>
+                            <i class="bi bi-chevron-down hosting-nav-arrow"></i>
+                        </a>
+                        <div class="collapse hosting-submenu {{ 'show' if request.path.startswith('/hosting/host/devices') or request.path.startswith('/hosting/host/monitoring') }}" id="submenu-devices">
+                            <a href="/hosting/host/devices" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path.startswith('/hosting/host/devices') }}">
+                                <span class="hosting-nav-text" data-i18n="device_management">{% if current_lang == 'en' %}Device Management{% else %}设备管理{% endif %}</span>
+                            </a>
+                            <a href="/hosting/host/monitoring" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path.startswith('/hosting/host/monitoring') }}">
+                                <span class="hosting-nav-text" data-i18n="monitoring">{% if current_lang == 'en' %}Monitoring{% else %}监控管理{% endif %}</span>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- 站点运营 (可折叠) -->
+                    <div class="hosting-nav-item hosting-nav-parent">
+                        <a href="javascript:void(0)" class="hosting-nav-link hosting-nav-toggle" data-bs-toggle="collapse" data-bs-target="#submenu-operations" aria-expanded="{{ 'true' if request.path.startswith('/hosting/host/sites') or request.path.startswith('/hosting/host/curtailment') or request.path.startswith('/hosting/host/collectors') else 'false' }}" aria-controls="submenu-operations">
+                            <i class="bi bi-gear hosting-nav-icon"></i>
+                            <span class="hosting-nav-text" data-i18n="site_operations">{% if current_lang == 'en' %}Site Operations{% else %}站点运营{% endif %}</span>
+                            <i class="bi bi-chevron-down hosting-nav-arrow"></i>
+                        </a>
+                        <div class="collapse hosting-submenu {{ 'show' if request.path.startswith('/hosting/host/sites') or request.path.startswith('/hosting/host/curtailment') or request.path.startswith('/hosting/host/collectors') }}" id="submenu-operations">
+                            <a href="/hosting/host/sites" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path.startswith('/hosting/host/sites') }}">
+                                <span class="hosting-nav-text" data-i18n="site_management">{% if current_lang == 'en' %}Site Management{% else %}站点管理{% endif %}</span>
+                            </a>
+                            <a href="/hosting/host/curtailment" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path.startswith('/hosting/host/curtailment') }}">
+                                <span class="hosting-nav-text" data-i18n="smart_curtailment">{% if current_lang == 'en' %}Smart Curtailment{% else %}智能限电{% endif %}</span>
+                            </a>
+                            <a href="/hosting/host/collectors" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path.startswith('/hosting/host/collectors') }}">
+                                <span class="hosting-nav-text" data-i18n="edge_collectors">{% if current_lang == 'en' %}Edge Collectors{% else %}边缘采集器{% endif %}</span>
+                            </a>
+                            <a href="javascript:void(0)" class="hosting-nav-link hosting-nav-child {{ 'active' if '/settings' in request.path }}" onclick="showSiteSettingsSelector()">
+                                <span class="hosting-nav-text" data-i18n="site_settings">{% if current_lang == 'en' %}Site Settings{% else %}站点设置{% endif %}</span>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- 我的资产 (可折叠) -->
+                    <div class="hosting-nav-item hosting-nav-parent">
+                        <a href="javascript:void(0)" class="hosting-nav-link hosting-nav-toggle" data-bs-toggle="collapse" data-bs-target="#submenu-assets" aria-expanded="{{ 'true' if request.path.startswith('/hosting/client') or request.path == '/hosting/' else 'false' }}" aria-controls="submenu-assets">
+                            <i class="bi bi-wallet2 hosting-nav-icon"></i>
+                            <span class="hosting-nav-text" data-i18n="my_assets">{% if current_lang == 'en' %}My Assets{% else %}我的资产{% endif %}</span>
+                            <i class="bi bi-chevron-down hosting-nav-arrow"></i>
+                        </a>
+                        <div class="collapse hosting-submenu {{ 'show' if request.path.startswith('/hosting/client') or request.path == '/hosting/' }}" id="submenu-assets">
+                            <a href="/hosting/" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path == '/hosting/' }}">
+                                <span class="hosting-nav-text" data-i18n="asset_overview">{% if current_lang == 'en' %}Overview{% else %}资产概览{% endif %}</span>
+                            </a>
+                            <a href="/hosting/client/assets" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path.startswith('/hosting/client/assets') }}">
+                                <span class="hosting-nav-text" data-i18n="my_devices">{% if current_lang == 'en' %}My Devices{% else %}我的设备{% endif %}</span>
+                            </a>
+                            <a href="/hosting/client/usage" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path.startswith('/hosting/client/usage') }}">
+                                <span class="hosting-nav-text" data-i18n="usage_tracking">{% if current_lang == 'en' %}Usage Tracking{% else %}使用记录{% endif %}</span>
+                            </a>
+                            <a href="/hosting/client/reports" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path.startswith('/hosting/client/reports') }}">
+                                <span class="hosting-nav-text" data-i18n="revenue_reports">{% if current_lang == 'en' %}Revenue Reports{% else %}收益报告{% endif %}</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <!-- 客户菜单 (非管理员角色) -->
+                <div class="hosting-nav-section">
+                    <div class="hosting-nav-title" data-i18n="my_assets">
+                        {% if current_lang == 'en' %}My Assets{% else %}我的资产{% endif %}
+                    </div>
+                    <div class="hosting-nav-item">
+                        <a href="/hosting/client" class="hosting-nav-link {{ 'active' if request.path == '/hosting/client' or request.path == '/hosting/client/' }}">
+                            <i class="bi bi-person-circle hosting-nav-icon"></i>
+                            <span class="hosting-nav-text" data-i18n="asset_overview">{% if current_lang == 'en' %}Overview{% else %}资产概览{% endif %}</span>
+                        </a>
+                    </div>
+                    <div class="hosting-nav-item">
+                        <a href="/hosting/client/assets" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/client/assets') }}">
+                            <i class="bi bi-cpu hosting-nav-icon"></i>
+                            <span class="hosting-nav-text" data-i18n="my_devices">{% if current_lang == 'en' %}My Devices{% else %}我的设备{% endif %}</span>
+                        </a>
+                    </div>
+                    <div class="hosting-nav-item">
+                        <a href="/hosting/client/usage" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/client/usage') }}">
+                            <i class="bi bi-activity hosting-nav-icon"></i>
+                            <span class="hosting-nav-text" data-i18n="usage_tracking">{% if current_lang == 'en' %}Usage Tracking{% else %}使用记录{% endif %}</span>
+                        </a>
+                    </div>
+                    <div class="hosting-nav-item">
+                        <a href="/hosting/client/reports" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/client/reports') }}">
+                            <i class="bi bi-graph-up hosting-nav-icon"></i>
+                            <span class="hosting-nav-text" data-i18n="revenue_reports">{% if current_lang == 'en' %}Revenue Reports{% else %}收益报告{% endif %}</span>
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- 公共菜单 -->
+                <div class="hosting-nav-section">
+                    <div class="hosting-nav-title" data-i18n="support">
+                        {% if current_lang == 'en' %}Support{% else %}支持服务{% endif %}
+                    </div>
+                    <div class="hosting-nav-item">
+                        <a href="/hosting/client/tickets" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/client/tickets') }}">
+                            <i class="bi bi-headset hosting-nav-icon"></i>
+                            <span class="hosting-nav-text" data-i18n="support_tickets">{% if current_lang == 'en' %}Support Tickets{% else %}技术支持{% endif %}</span>
+                        </a>
+                    </div>
+                    <div class="hosting-nav-item">
+                        <a href="/hosting/status" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/status') }}">
+                            <i class="bi bi-globe hosting-nav-icon"></i>
+                            <span class="hosting-nav-text" data-i18n="system_status">{% if current_lang == 'en' %}System Status{% else %}系统状态{% endif %}</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- 返回主系统 -->
+                <div class="hosting-nav-section">
+                    <div class="hosting-nav-title" data-i18n="navigation">
+                        {% if current_lang == 'en' %}Navigation{% else %}导航{% endif %}
+                    </div>
+                    <div class="hosting-nav-item">
+                        <a href="/main" class="hosting-nav-link">
+                            <i class="bi bi-arrow-left hosting-nav-icon"></i>
+                            <span class="hosting-nav-text" data-i18n="back_to_main">{% if current_lang == 'en' %}Back to Main{% else %}返回主页{% endif %}</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Main Content -->
+        <main class="hosting-main">
+            <!-- Top Header -->
+            <header class="hosting-header">
+                <div>
+                    <h1 class="hosting-header-title">{% block page_title %}{% if current_lang == 'en' %}Hosting Management{% else %}托管管理{% endif %}{% endblock %}</h1>
+                    <p class="hosting-header-subtitle">{% block page_subtitle %}{% if current_lang == 'en' %}Professional mining device hosting platform{% else %}专业矿机设备托管平台{% endif %}{% endblock %}</p>
+                </div>
+                <div class="hosting-header-actions">
+                    {% block header_actions %}
+                    <!-- Language Switcher (无刷新切换) -->
+                    <div class="lang-switcher me-2" style="display: inline-flex; gap: 4px;">
+                        <button type="button" 
+                           data-lang-switch="zh" data-lang="zh"
+                           class="btn btn-sm lang-switch-btn {{ 'btn-warning' if current_lang == 'zh' else 'btn-outline-secondary' }}" 
+                           style="padding: 4px 10px; font-size: 0.8rem;">中文</button>
+                        <button type="button"
+                           data-lang-switch="en" data-lang="en"
+                           class="btn btn-sm lang-switch-btn {{ 'btn-warning' if current_lang == 'en' else 'btn-outline-secondary' }}" 
+                           style="padding: 4px 10px; font-size: 0.8rem;">EN</button>
+                    </div>
+                    <span class="badge bg-success">
+                        <i class="bi bi-person-check me-1"></i>{{ session.username or session.email }}
+                    </span>
+                    <span class="badge bg-warning text-dark">
+                        {% if session.role == 'owner' %}<span data-i18n="owner">{% if current_lang == 'en' %}Owner{% else %}业主{% endif %}</span>
+                        {% elif session.role == 'admin' %}<span data-i18n="admin">{% if current_lang == 'en' %}Admin{% else %}管理员{% endif %}</span>
+                        {% elif session.role == 'mining_site' %}<span data-i18n="site_manager">{% if current_lang == 'en' %}Site Manager{% else %}站点管理员{% endif %}</span>
+                        {% else %}<span data-i18n="client">{% if current_lang == 'en' %}Client{% else %}客户{% endif %}</span>{% endif %}
+                    </span>
+                    {% endblock %}
+                </div>
+            </header>
+            
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endwith %}
+            
+            <!-- Page Content -->
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    
+    <!-- Mobile Sidebar Toggle -->
+    <button class="btn btn-hosting-primary position-fixed" 
+            style="top: 20px; left: 20px; z-index: 1001; display: none;" 
+            id="sidebarToggle">
+        <i class="bi bi-list"></i>
+    </button>
+    
+    <!-- Scripts -->
+    {% block scripts %}{% endblock %}
+    
+    <script>
+    // Sidebar Collapse and Mobile Toggle
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('hostingSidebar');
+        const sidebarCollapseBtn = document.getElementById('sidebarCollapseBtn');
+        const sidebarToggleIcon = document.getElementById('sidebarToggleIcon');
+        const mainContent = document.querySelector('.hosting-main');
+        
+        // Restore sidebar state from localStorage
+        const savedState = localStorage.getItem('hostingSidebarCollapsed');
+        if (savedState === 'true') {
+            sidebar.classList.add('collapsed');
+            mainContent.classList.add('sidebar-collapsed');
+            sidebarToggleIcon.classList.remove('bi-chevron-left');
+            sidebarToggleIcon.classList.add('bi-chevron-right');
+        }
+        
+        // Sidebar Collapse Toggle (Desktop)
+        sidebarCollapseBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const isCollapsed = sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('sidebar-collapsed');
+            
+            // Toggle icon
+            if (isCollapsed) {
+                sidebarToggleIcon.classList.remove('bi-chevron-left');
+                sidebarToggleIcon.classList.add('bi-chevron-right');
+            } else {
+                sidebarToggleIcon.classList.remove('bi-chevron-right');
+                sidebarToggleIcon.classList.add('bi-chevron-left');
+            }
+            
+            // Save state to localStorage
+            localStorage.setItem('hostingSidebarCollapsed', isCollapsed);
+        });
+        
+        // Show toggle button on mobile
+        function checkScreenSize() {
+            if (window.innerWidth <= 992) {
+                if (sidebarToggle) sidebarToggle.style.display = 'block';
+                // On mobile, remove collapsed state to ensure full sidebar when shown
+                sidebar.classList.remove('collapsed');
+                mainContent.classList.remove('sidebar-collapsed');
+            } else {
+                if (sidebarToggle) sidebarToggle.style.display = 'none';
+                sidebar.classList.remove('show');
+                // Restore collapsed state on desktop
+                if (savedState === 'true') {
+                    sidebar.classList.add('collapsed');
+                    mainContent.classList.add('sidebar-collapsed');
+                }
+            }
+        }
+        
+        checkScreenSize();
+        window.addEventListener('resize', checkScreenSize);
+        
+        // Mobile Toggle sidebar
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('show');
+            });
+        }
+        
+        // Close sidebar when clicking outside (mobile)
+        document.addEventListener('click', function(e) {
+            if (window.innerWidth <= 992 && 
+                !sidebar.contains(e.target) && 
+                sidebarToggle && !sidebarToggle.contains(e.target)) {
+                sidebar.classList.remove('show');
+            }
+        });
+        
+        // Set active navigation item - 只为没有服务端active类的链接设置
+        const currentPath = window.location.pathname;
+        const navLinks = document.querySelectorAll('.hosting-nav-link[data-nav]');
+        
+        // 只清除带有data-nav的链接（托管商菜单），保留服务端渲染的active类（客户菜单）
+        navLinks.forEach(link => link.classList.remove('active'));
+        
+        // 精确匹配路径并设置高亮（仅托管商菜单）
+        if (currentPath === '/hosting/host' || currentPath === '/hosting/host/') {
+            document.querySelector('[data-nav="dashboard"]')?.classList.add('active');
+        } else if (currentPath === '/hosting/host/devices' || currentPath.startsWith('/hosting/host/devices/')) {
+            document.querySelector('[data-nav="devices"]')?.classList.add('active');
+        } else if (currentPath === '/hosting/host/sites' || currentPath.startsWith('/hosting/host/sites/')) {
+            document.querySelector('[data-nav="sites"]')?.classList.add('active');
+        } else if (currentPath === '/hosting/host/monitoring' || currentPath.startsWith('/hosting/host/monitoring/')) {
+            document.querySelector('[data-nav="monitoring"]')?.classList.add('active');
+        } else if (currentPath === '/hosting/host/curtailment' || currentPath.startsWith('/hosting/host/curtailment/')) {
+            document.querySelector('[data-nav="curtailment"]')?.classList.add('active');
+        }
+        
+        // 无刷新语言切换 - 更新按钮样式
+        if (window.I18n) {
+            I18n.onLangChange(function(newLang, oldLang) {
+                // 更新语言切换按钮样式
+                document.querySelectorAll('.lang-switch-btn').forEach(btn => {
+                    if (btn.dataset.lang === newLang) {
+                        btn.classList.remove('btn-outline-secondary');
+                        btn.classList.add('btn-warning');
+                    } else {
+                        btn.classList.remove('btn-warning');
+                        btn.classList.add('btn-outline-secondary');
+                    }
+                });
+                
+                // 更新需要翻译的动态元素
+                updateDynamicTranslations(newLang);
+            });
+        }
+        
+        // 更新动态翻译文本
+        function updateDynamicTranslations(lang) {
+            const translations = {
+                // 品牌标题
+                'hosting': { zh: '托管管理', en: 'Hosting' },
+                'professional_mining_management': { zh: '专业矿机托管平台', en: 'Professional Mining Management' },
+                // 托管商菜单
+                'host_management': { zh: '托管商管理', en: 'Host Management' },
+                'dashboard': { zh: '仪表盘', en: 'Dashboard' },
+                'devices_monitoring': { zh: '设备与监控', en: 'Devices & Monitoring' },
+                'device_management': { zh: '设备管理', en: 'Device Management' },
+                'monitoring': { zh: '监控管理', en: 'Monitoring' },
+                'site_operations': { zh: '站点运营', en: 'Site Operations' },
+                'site_management': { zh: '站点管理', en: 'Site Management' },
+                'smart_curtailment': { zh: '智能限电', en: 'Smart Curtailment' },
+                'edge_collectors': { zh: '边缘采集器', en: 'Edge Collectors' },
+                // 客户菜单
+                'my_assets': { zh: '我的资产', en: 'My Assets' },
+                'asset_overview': { zh: '资产概览', en: 'Overview' },
+                'my_devices': { zh: '我的设备', en: 'My Devices' },
+                'usage_tracking': { zh: '使用记录', en: 'Usage Tracking' },
+                'revenue_reports': { zh: '收益报告', en: 'Revenue Reports' },
+                // 公共菜单
+                'support': { zh: '支持服务', en: 'Support' },
+                'support_tickets': { zh: '技术支持', en: 'Support Tickets' },
+                'system_status': { zh: '系统状态', en: 'System Status' },
+                'navigation': { zh: '导航', en: 'Navigation' },
+                'back_to_main': { zh: '返回主页', en: 'Back to Main' },
+                'toggle_sidebar': { zh: '折叠侧边栏', en: 'Toggle Sidebar' },
+                // 角色
+                'owner': { zh: '业主', en: 'Owner' },
+                'admin': { zh: '管理员', en: 'Admin' },
+                'site_manager': { zh: '站点管理员', en: 'Site Manager' },
+                'client': { zh: '客户', en: 'Client' },
+                // 通用词汇
+                'status': { zh: '状态', en: 'Status' },
+                'actions': { zh: '操作', en: 'Actions' },
+                // 矿机管理相关
+                'miner_management': { zh: '矿机管理', en: 'Miner Management' },
+                'add_miner': { zh: '添加矿机', en: 'Add Miner' },
+                'refresh': { zh: '刷新', en: 'Refresh' },
+                'help_guide': { zh: '帮助文档', en: 'Help Guide' },
+                'total_miners': { zh: '总矿机数', en: 'Total Miners' },
+                'total_hashrate': { zh: '总算力', en: 'Total Hashrate' },
+                'power_efficiency': { zh: '功耗+能效', en: 'Power & Efficiency' },
+                'device_health': { zh: '设备健康度', en: 'Device Health' },
+                'online_rate': { zh: '在线率', en: 'Online Rate' },
+                'online': { zh: '在线', en: 'Online' },
+                'offline': { zh: '离线', en: 'Offline' },
+                'hashrate': { zh: '算力', en: 'Hashrate' },
+                'temperature': { zh: '温度', en: 'Temperature' },
+                'power': { zh: '功耗', en: 'Power' },
+                'curtailment': { zh: '限电', en: 'Curtailment' },
+                'sites': { zh: '站点', en: 'Sites' },
+                'miners': { zh: '矿机', en: 'Miners' },
+                // 批量操作
+                'batch_import': { zh: '批量导入', en: 'Batch Import' },
+                'pending_review': { zh: '待审核', en: 'Pending Review' },
+                'batch_operations': { zh: '批量操作', en: 'Batch Operations' },
+                'approve': { zh: '批量审核通过', en: 'Approve' },
+                'start': { zh: '批量启动', en: 'Start' },
+                'shutdown': { zh: '批量关闭', en: 'Shutdown' },
+                'change_status': { zh: '批量修改状态', en: 'Change Status' },
+                'delete': { zh: '批量删除', en: 'Delete' },
+                'export_csv': { zh: '导出CSV', en: 'Export CSV' },
+                // 筛选器
+                'filter_options': { zh: '筛选选项', en: 'Filter Options' },
+                'all_status': { zh: '全部状态', en: 'All Status' },
+                'running': { zh: '运行中', en: 'Running' },
+                'maintenance': { zh: '维护中', en: 'Maintenance' },
+                'error': { zh: '故障', en: 'Error' },
+                'approval_status': { zh: '审核状态', en: 'Approval Status' },
+                'draft': { zh: '草稿', en: 'Draft' },
+                'approved': { zh: '已通过', en: 'Approved' },
+                'rejected': { zh: '已拒绝', en: 'Rejected' },
+                'all_sites': { zh: '全部站点', en: 'All Sites' },
+                'all_customers': { zh: '全部客户', en: 'All Customers' },
+                'customer': { zh: '客户', en: 'Customer' },
+                'site': { zh: '站点', en: 'Site' },
+                // 列表
+                'miner_list': { zh: '矿机列表', en: 'Miner List' },
+                'serial_number': { zh: '序列号', en: 'Serial Number' },
+                'grade': { zh: '评级', en: 'Grade' },
+                'daily_profit': { zh: '日收益', en: 'Daily Profit' },
+                'fan': { zh: '风扇', en: 'Fan' },
+                'site_settings': { zh: '站点设置', en: 'Site Settings' }
+            };
+            
+            // 更新带有 data-i18n 属性的元素
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.dataset.i18n;
+                if (translations[key] && translations[key][lang]) {
+                    el.textContent = translations[key][lang];
+                }
+            });
+        }
+    });
+    
+    function showSiteSettingsSelector() {
+        const lang = document.documentElement.lang || 'zh';
+        fetch('/hosting/api/sites')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.sites || data.sites.length === 0) {
+                    alert(lang === 'en' ? 'No sites available' : '没有可用的站点');
+                    return;
+                }
+                if (data.sites.length === 1) {
+                    window.location.href = `/hosting/site/${data.sites[0].id}/settings`;
+                    return;
+                }
+                let options = data.sites.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+                let modalHtml = `
+                    <div class="modal fade" id="siteSettingsModal" tabindex="-1">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content" style="background: #1a1d2e; border: 1px solid #f7931a;">
+                                <div class="modal-header border-bottom border-secondary">
+                                    <h5 class="modal-title text-warning">${lang === 'en' ? 'Select Site' : '选择站点'}</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <select class="form-select" id="site-settings-select">${options}</select>
+                                </div>
+                                <div class="modal-footer border-top border-secondary">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${lang === 'en' ? 'Cancel' : '取消'}</button>
+                                    <button type="button" class="btn btn-warning" onclick="goToSiteSettings()">${lang === 'en' ? 'Go to Settings' : '进入设置'}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                document.getElementById('siteSettingsModal')?.remove();
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+                new bootstrap.Modal(document.getElementById('siteSettingsModal')).show();
+            })
+            .catch(err => {
+                console.error('Failed to load sites:', err);
+                alert(lang === 'en' ? 'Failed to load sites' : '加载站点失败');
+            });
+    }
+    
+    function goToSiteSettings() {
+        const siteId = document.getElementById('site-settings-select').value;
+        if (siteId) {
+            window.location.href = `/hosting/site/${siteId}/settings`;
+        }
+    }
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

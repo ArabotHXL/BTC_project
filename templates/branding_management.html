@@ -1,0 +1,927 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if current_lang == 'en' %}White Label Branding{% else %}白标品牌配置{% endif %} - HashInsight
+{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --primary-gold: #f7931a;
+    --bg-gradient: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+    --card-bg: rgba(255, 255, 255, 0.05);
+    --card-border: rgba(255, 255, 255, 0.1);
+    --text-primary: #ffffff;
+    --text-secondary: #b8b8b8;
+}
+
+body {
+    background: var(--bg-gradient);
+    min-height: 100vh;
+}
+
+.branding-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.branding-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.branding-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #9b59b6, #8e44ad, #f7931a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+}
+
+.branding-subtitle {
+    font-size: 1rem;
+    color: var(--text-secondary);
+}
+
+.back-btn {
+    position: absolute;
+    left: 2rem;
+    top: 2rem;
+}
+
+.branding-layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 2rem;
+    min-height: calc(100vh - 200px);
+}
+
+@media (max-width: 992px) {
+    .branding-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.site-list-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+    height: fit-content;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+}
+
+.site-list-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--primary-gold);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.site-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 0.5rem;
+    border: 1px solid transparent;
+}
+
+.site-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.site-item.active {
+    background: rgba(247, 147, 26, 0.15);
+    border-color: var(--primary-gold);
+}
+
+.site-logo-thumb {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.site-logo-thumb img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.site-info h6 {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+.site-info small {
+    color: var(--text-secondary);
+}
+
+.config-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 2rem;
+    backdrop-filter: blur(10px);
+}
+
+.config-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    color: var(--text-secondary);
+}
+
+.config-empty i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.config-content {
+    display: none;
+}
+
+.config-content.active {
+    display: block;
+}
+
+.config-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.config-header h4 {
+    margin: 0;
+    color: var(--primary-gold);
+}
+
+.config-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+@media (max-width: 1200px) {
+    .config-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.config-section {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.config-section-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--primary-gold);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.form-control {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    padding: 0.75rem 1rem;
+}
+
+.form-control:focus {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--primary-gold);
+    box-shadow: 0 0 0 2px rgba(247, 147, 26, 0.2);
+    color: var(--text-primary);
+}
+
+.logo-upload-area {
+    border: 2px dashed var(--card-border);
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.logo-upload-area:hover {
+    border-color: var(--primary-gold);
+    background: rgba(247, 147, 26, 0.05);
+}
+
+.logo-upload-area input[type="file"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.logo-preview {
+    max-width: 200px;
+    max-height: 100px;
+    margin: 0 auto;
+}
+
+.color-picker-group {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.color-picker-item {
+    flex: 1;
+    min-width: 100px;
+}
+
+.color-picker-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 0.5rem;
+}
+
+.color-picker-wrapper input[type="color"] {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    padding: 0;
+}
+
+.color-picker-wrapper input[type="text"] {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+.color-picker-wrapper input[type="text"]:focus {
+    outline: none;
+}
+
+.preview-card {
+    background: linear-gradient(135deg, var(--preview-primary, #f7931a) 0%, var(--preview-secondary, #1a1d2e) 100%);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.preview-logo {
+    max-width: 150px;
+    max-height: 80px;
+    margin-bottom: 1rem;
+}
+
+.preview-company {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.preview-slogan {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-top: 0.5rem;
+}
+
+.social-links-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.social-input-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.social-input-group i {
+    width: 30px;
+    text-align: center;
+    font-size: 1.2rem;
+}
+
+.social-input-group .form-control {
+    flex: 1;
+}
+
+.btn-save {
+    background: linear-gradient(135deg, #f7931a 0%, #ffc107 100%);
+    border: none;
+    color: #000;
+    font-weight: 600;
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-save:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(247, 147, 26, 0.4);
+    color: #000;
+}
+
+.btn-save:disabled {
+    opacity: 0.6;
+    transform: none;
+}
+
+.status-badge {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 20px;
+}
+
+.status-configured {
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+}
+
+.status-pending {
+    background: rgba(108, 117, 125, 0.2);
+    color: #6c757d;
+}
+
+.toast-container {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 9999;
+}
+
+.loading-spinner {
+    display: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="branding-container">
+    <a href="/main" class="btn btn-outline-warning back-btn">
+        <i class="bi bi-arrow-left me-2"></i>
+        <span data-i18n="back_to_dashboard">{% if current_lang == 'en' %}Back{% else %}返回{% endif %}</span>
+    </a>
+    
+    <div class="branding-header">
+        <h1 class="branding-title">
+            <i class="bi bi-brush me-2"></i>
+            <span data-i18n="white_label_branding">{% if current_lang == 'en' %}White Label Branding{% else %}白标品牌配置{% endif %}</span>
+        </h1>
+        <p class="branding-subtitle" data-i18n="branding_page_subtitle">
+            {% if current_lang == 'en' %}Customize your platform branding for each mining site{% else %}为每个矿场站点自定义平台品牌{% endif %}
+        </p>
+    </div>
+
+    <div class="branding-layout">
+        <div class="site-list-panel">
+            <div class="site-list-title">
+                <i class="bi bi-building me-2"></i>
+                <span data-i18n="select_site">{% if current_lang == 'en' %}Select Site{% else %}选择站点{% endif %}</span>
+            </div>
+            
+            {% for item in sites_with_branding %}
+            <div class="site-item" data-site-id="{{ item.site.id }}" onclick="selectSite({{ item.site.id }})">
+                <div class="site-logo-thumb">
+                    {% if item.branding and item.branding.logo_url %}
+                    <img src="{{ item.branding.logo_url }}" alt="Logo">
+                    {% else %}
+                    <i class="bi bi-building text-muted"></i>
+                    {% endif %}
+                </div>
+                <div class="site-info">
+                    <h6>{{ item.site.name }}</h6>
+                    <small>{{ item.site.operator_name or item.site.location or '-' }}</small>
+                </div>
+                {% if item.branding and item.branding.company_name %}
+                <span class="status-badge status-configured ms-auto">
+                    <i class="bi bi-check-circle"></i>
+                </span>
+                {% else %}
+                <span class="status-badge status-pending ms-auto">
+                    <i class="bi bi-circle"></i>
+                </span>
+                {% endif %}
+            </div>
+            {% endfor %}
+            
+            {% if not sites_with_branding %}
+            <div class="text-center text-muted py-4">
+                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                <p class="mt-2 mb-0" data-i18n="no_sites_available">
+                    {% if current_lang == 'en' %}No sites available{% else %}暂无站点{% endif %}
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="config-panel">
+            <div class="config-empty" id="configEmpty">
+                <i class="bi bi-hand-index"></i>
+                <h5 data-i18n="select_site_to_configure">
+                    {% if current_lang == 'en' %}Select a site to configure branding{% else %}选择站点进行品牌配置{% endif %}
+                </h5>
+                <p class="text-muted" data-i18n="click_site_hint">
+                    {% if current_lang == 'en' %}Click on a site from the list to start{% else %}点击左侧列表中的站点开始配置{% endif %}
+                </p>
+            </div>
+
+            <div class="config-content" id="configContent">
+                <div class="config-header">
+                    <h4>
+                        <i class="bi bi-gear me-2"></i>
+                        <span id="configSiteName"></span>
+                    </h4>
+                    <button type="button" class="btn btn-save" onclick="saveBranding()" id="saveBtn">
+                        <span class="loading-spinner me-2" id="saveSpinner"></span>
+                        <i class="bi bi-check-lg me-1" id="saveIcon"></i>
+                        <span data-i18n="save_changes">{% if current_lang == 'en' %}Save Changes{% else %}保存更改{% endif %}</span>
+                    </button>
+                </div>
+
+                <div class="config-grid">
+                    <div>
+                        <div class="config-section mb-3">
+                            <div class="config-section-title">
+                                <i class="bi bi-image"></i>
+                                <span data-i18n="logo_upload">{% if current_lang == 'en' %}Logo{% else %}Logo上传{% endif %}</span>
+                            </div>
+                            <div class="logo-upload-area" id="logoUploadArea">
+                                <input type="file" accept="image/*" id="logoInput" onchange="handleLogoUpload(event)">
+                                <div id="logoPlaceholder">
+                                    <i class="bi bi-cloud-arrow-up" style="font-size: 2rem; color: var(--text-secondary);"></i>
+                                    <p class="text-muted mt-2 mb-0" data-i18n="drag_or_click">
+                                        {% if current_lang == 'en' %}Drag & drop or click to upload{% else %}拖拽或点击上传{% endif %}
+                                    </p>
+                                    <small class="text-muted">PNG, JPG, SVG, WebP</small>
+                                </div>
+                                <img id="logoPreviewImg" class="logo-preview" style="display: none;">
+                            </div>
+                        </div>
+
+                        <div class="config-section mb-3">
+                            <div class="config-section-title">
+                                <i class="bi bi-building"></i>
+                                <span data-i18n="company_info">{% if current_lang == 'en' %}Company Info{% else %}公司信息{% endif %}</span>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" data-i18n="company_name">
+                                    {% if current_lang == 'en' %}Company Name{% else %}公司名称{% endif %}
+                                </label>
+                                <input type="text" class="form-control" id="companyName" 
+                                       placeholder="{% if current_lang == 'en' %}Enter company name{% else %}输入公司名称{% endif %}"
+                                       oninput="updatePreview()">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" data-i18n="company_slogan">
+                                    {% if current_lang == 'en' %}Slogan{% else %}口号/标语{% endif %}
+                                </label>
+                                <input type="text" class="form-control" id="companySlogan" 
+                                       placeholder="{% if current_lang == 'en' %}Optional tagline{% else %}可选的企业标语{% endif %}"
+                                       oninput="updatePreview()">
+                            </div>
+                        </div>
+
+                        <div class="config-section">
+                            <div class="config-section-title">
+                                <i class="bi bi-palette"></i>
+                                <span data-i18n="brand_colors">{% if current_lang == 'en' %}Brand Colors{% else %}品牌颜色{% endif %}</span>
+                            </div>
+                            <div class="color-picker-group">
+                                <div class="color-picker-item">
+                                    <label class="form-label" data-i18n="primary_color">
+                                        {% if current_lang == 'en' %}Primary{% else %}主色{% endif %}
+                                    </label>
+                                    <div class="color-picker-wrapper">
+                                        <input type="color" id="primaryColor" value="#f7931a" onchange="syncColorInput('primary')">
+                                        <input type="text" id="primaryColorText" value="#f7931a" onchange="syncColorPicker('primary')">
+                                    </div>
+                                </div>
+                                <div class="color-picker-item">
+                                    <label class="form-label" data-i18n="secondary_color">
+                                        {% if current_lang == 'en' %}Secondary{% else %}副色{% endif %}
+                                    </label>
+                                    <div class="color-picker-wrapper">
+                                        <input type="color" id="secondaryColor" value="#1a1d2e" onchange="syncColorInput('secondary')">
+                                        <input type="text" id="secondaryColorText" value="#1a1d2e" onchange="syncColorPicker('secondary')">
+                                    </div>
+                                </div>
+                                <div class="color-picker-item">
+                                    <label class="form-label" data-i18n="accent_color">
+                                        {% if current_lang == 'en' %}Accent{% else %}强调色{% endif %}
+                                    </label>
+                                    <div class="color-picker-wrapper">
+                                        <input type="color" id="accentColor" value="#ffc107" onchange="syncColorInput('accent')">
+                                        <input type="text" id="accentColorText" value="#ffc107" onchange="syncColorPicker('accent')">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="config-section mb-3">
+                            <div class="config-section-title">
+                                <i class="bi bi-eye"></i>
+                                <span data-i18n="live_preview">{% if current_lang == 'en' %}Live Preview{% else %}实时预览{% endif %}</span>
+                            </div>
+                            <div class="preview-card" id="previewCard">
+                                <img id="previewLogo" class="preview-logo" style="display: none;">
+                                <i id="previewLogoPlaceholder" class="bi bi-building" style="font-size: 3rem; color: rgba(255,255,255,0.5);"></i>
+                                <div class="preview-company" id="previewCompany">Company Name</div>
+                                <div class="preview-slogan" id="previewSlogan"></div>
+                            </div>
+                        </div>
+
+                        <div class="config-section mb-3">
+                            <div class="config-section-title">
+                                <i class="bi bi-envelope"></i>
+                                <span data-i18n="contact_info">{% if current_lang == 'en' %}Contact Info{% else %}联系方式{% endif %}</span>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" data-i18n="support_email">
+                                    {% if current_lang == 'en' %}Support Email{% else %}客服邮箱{% endif %}
+                                </label>
+                                <input type="email" class="form-control" id="supportEmail" 
+                                       placeholder="support@company.com">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" data-i18n="support_phone">
+                                    {% if current_lang == 'en' %}Support Phone{% else %}客服电话{% endif %}
+                                </label>
+                                <input type="text" class="form-control" id="supportPhone" 
+                                       placeholder="+1 234 567 8900">
+                            </div>
+                            <div>
+                                <label class="form-label" data-i18n="website_url">
+                                    {% if current_lang == 'en' %}Website{% else %}官网{% endif %}
+                                </label>
+                                <input type="url" class="form-control" id="websiteUrl" 
+                                       placeholder="https://www.company.com">
+                            </div>
+                        </div>
+
+                        <div class="config-section">
+                            <div class="config-section-title">
+                                <i class="bi bi-share"></i>
+                                <span data-i18n="social_links">{% if current_lang == 'en' %}Social Links{% else %}社交链接{% endif %}</span>
+                            </div>
+                            <div class="social-links-grid">
+                                <div class="social-input-group">
+                                    <i class="bi bi-twitter-x"></i>
+                                    <input type="url" class="form-control" id="twitterUrl" placeholder="Twitter/X URL">
+                                </div>
+                                <div class="social-input-group">
+                                    <i class="bi bi-telegram"></i>
+                                    <input type="url" class="form-control" id="telegramUrl" placeholder="Telegram URL">
+                                </div>
+                                <div class="social-input-group">
+                                    <i class="bi bi-discord"></i>
+                                    <input type="url" class="form-control" id="discordUrl" placeholder="Discord URL">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+let currentSiteId = null;
+let currentBranding = null;
+
+const sitesData = {
+    {% for item in sites_with_branding %}
+    {{ item.site.id }}: {
+        name: "{{ item.site.name }}",
+        operator: "{{ item.site.operator_name or '' }}",
+        branding: {% if item.branding %}{{ item.branding.to_dict() | tojson | safe }}{% else %}null{% endif %}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+};
+
+function selectSite(siteId) {
+    currentSiteId = siteId;
+    const siteData = sitesData[siteId];
+    
+    document.querySelectorAll('.site-item').forEach(el => el.classList.remove('active'));
+    document.querySelector(`.site-item[data-site-id="${siteId}"]`).classList.add('active');
+    
+    document.getElementById('configEmpty').style.display = 'none';
+    document.getElementById('configContent').classList.add('active');
+    document.getElementById('configSiteName').textContent = siteData.name;
+    
+    loadBrandingData(siteId);
+}
+
+function loadBrandingData(siteId) {
+    fetch(`/hosting/api/branding/${siteId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.branding) {
+                currentBranding = data.branding;
+                populateForm(data.branding);
+            } else {
+                resetForm();
+                const siteData = sitesData[siteId];
+                document.getElementById('companyName').value = siteData.operator || siteData.name;
+                updatePreview();
+            }
+        })
+        .catch(err => {
+            console.error('Failed to load branding:', err);
+            resetForm();
+        });
+}
+
+function populateForm(branding) {
+    document.getElementById('companyName').value = branding.company_name || '';
+    document.getElementById('companySlogan').value = branding.company_slogan || '';
+    
+    const primaryColor = branding.primary_color || '#f7931a';
+    const secondaryColor = branding.secondary_color || '#1a1d2e';
+    const accentColor = branding.accent_color || '#ffc107';
+    
+    document.getElementById('primaryColor').value = primaryColor;
+    document.getElementById('primaryColorText').value = primaryColor;
+    document.getElementById('secondaryColor').value = secondaryColor;
+    document.getElementById('secondaryColorText').value = secondaryColor;
+    document.getElementById('accentColor').value = accentColor;
+    document.getElementById('accentColorText').value = accentColor;
+    
+    document.getElementById('supportEmail').value = branding.support_email || '';
+    document.getElementById('supportPhone').value = branding.support_phone || '';
+    document.getElementById('websiteUrl').value = branding.website_url || '';
+    document.getElementById('twitterUrl').value = branding.twitter_url || '';
+    document.getElementById('telegramUrl').value = branding.telegram_url || '';
+    document.getElementById('discordUrl').value = branding.discord_url || '';
+    
+    if (branding.logo_url) {
+        document.getElementById('logoPreviewImg').src = branding.logo_url;
+        document.getElementById('logoPreviewImg').style.display = 'block';
+        document.getElementById('logoPlaceholder').style.display = 'none';
+    } else {
+        document.getElementById('logoPreviewImg').style.display = 'none';
+        document.getElementById('logoPlaceholder').style.display = 'block';
+    }
+    
+    updatePreview();
+}
+
+function resetForm() {
+    document.getElementById('companyName').value = '';
+    document.getElementById('companySlogan').value = '';
+    document.getElementById('primaryColor').value = '#f7931a';
+    document.getElementById('primaryColorText').value = '#f7931a';
+    document.getElementById('secondaryColor').value = '#1a1d2e';
+    document.getElementById('secondaryColorText').value = '#1a1d2e';
+    document.getElementById('accentColor').value = '#ffc107';
+    document.getElementById('accentColorText').value = '#ffc107';
+    document.getElementById('supportEmail').value = '';
+    document.getElementById('supportPhone').value = '';
+    document.getElementById('websiteUrl').value = '';
+    document.getElementById('twitterUrl').value = '';
+    document.getElementById('telegramUrl').value = '';
+    document.getElementById('discordUrl').value = '';
+    document.getElementById('logoPreviewImg').style.display = 'none';
+    document.getElementById('logoPlaceholder').style.display = 'block';
+    currentBranding = null;
+    updatePreview();
+}
+
+function syncColorInput(type) {
+    const colorPicker = document.getElementById(`${type}Color`);
+    const textInput = document.getElementById(`${type}ColorText`);
+    textInput.value = colorPicker.value;
+    updatePreview();
+}
+
+function syncColorPicker(type) {
+    const colorPicker = document.getElementById(`${type}Color`);
+    const textInput = document.getElementById(`${type}ColorText`);
+    if (/^#[0-9A-Fa-f]{6}$/.test(textInput.value)) {
+        colorPicker.value = textInput.value;
+    }
+    updatePreview();
+}
+
+function updatePreview() {
+    const primaryColor = document.getElementById('primaryColor').value;
+    const secondaryColor = document.getElementById('secondaryColor').value;
+    const companyName = document.getElementById('companyName').value || 'Company Name';
+    const slogan = document.getElementById('companySlogan').value;
+    
+    const previewCard = document.getElementById('previewCard');
+    previewCard.style.background = `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`;
+    
+    document.getElementById('previewCompany').textContent = companyName;
+    document.getElementById('previewSlogan').textContent = slogan;
+    
+    const logoImg = document.getElementById('logoPreviewImg');
+    const previewLogo = document.getElementById('previewLogo');
+    const previewPlaceholder = document.getElementById('previewLogoPlaceholder');
+    
+    if (logoImg.style.display !== 'none' && logoImg.src) {
+        previewLogo.src = logoImg.src;
+        previewLogo.style.display = 'block';
+        previewPlaceholder.style.display = 'none';
+    } else {
+        previewLogo.style.display = 'none';
+        previewPlaceholder.style.display = 'block';
+    }
+}
+
+function handleLogoUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const validTypes = ['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+        showToast('Invalid file type', 'error');
+        return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) {
+        showToast('File too large (max 5MB)', 'error');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('logoPreviewImg').src = e.target.result;
+        document.getElementById('logoPreviewImg').style.display = 'block';
+        document.getElementById('logoPlaceholder').style.display = 'none';
+        updatePreview();
+    };
+    reader.readAsDataURL(file);
+    
+    if (currentSiteId) {
+        const formData = new FormData();
+        formData.append('logo', file);
+        formData.append('logo_type', 'main');
+        
+        fetch(`/hosting/api/branding/${currentSiteId}/logo`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message_zh || 'Logo uploaded', 'success');
+                document.getElementById('logoPreviewImg').src = data.logo_url;
+            } else {
+                showToast(data.message_zh || 'Upload failed', 'error');
+            }
+        })
+        .catch(err => {
+            console.error('Logo upload failed:', err);
+            showToast('Upload failed', 'error');
+        });
+    }
+}
+
+function saveBranding() {
+    if (!currentSiteId) return;
+    
+    const saveBtn = document.getElementById('saveBtn');
+    const spinner = document.getElementById('saveSpinner');
+    const icon = document.getElementById('saveIcon');
+    
+    saveBtn.disabled = true;
+    spinner.style.display = 'inline-block';
+    icon.style.display = 'none';
+    
+    const data = {
+        company_name: document.getElementById('companyName').value,
+        company_slogan: document.getElementById('companySlogan').value,
+        primary_color: document.getElementById('primaryColor').value,
+        secondary_color: document.getElementById('secondaryColor').value,
+        accent_color: document.getElementById('accentColor').value,
+        support_email: document.getElementById('supportEmail').value,
+        support_phone: document.getElementById('supportPhone').value,
+        website_url: document.getElementById('websiteUrl').value,
+        twitter_url: document.getElementById('twitterUrl').value,
+        telegram_url: document.getElementById('telegramUrl').value,
+        discord_url: document.getElementById('discordUrl').value
+    };
+    
+    fetch(`/hosting/api/branding/${currentSiteId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        saveBtn.disabled = false;
+        spinner.style.display = 'none';
+        icon.style.display = 'inline-block';
+        
+        if (result.success) {
+            showToast(result.message_zh || 'Saved successfully', 'success');
+            
+            const siteItem = document.querySelector(`.site-item[data-site-id="${currentSiteId}"]`);
+            const badge = siteItem.querySelector('.status-badge');
+            badge.className = 'status-badge status-configured ms-auto';
+            badge.innerHTML = '<i class="bi bi-check-circle"></i>';
+        } else {
+            showToast(result.message_zh || 'Save failed', 'error');
+        }
+    })
+    .catch(err => {
+        saveBtn.disabled = false;
+        spinner.style.display = 'none';
+        icon.style.display = 'inline-block';
+        console.error('Save failed:', err);
+        showToast('Save failed', 'error');
+    });
+}
+
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'error' ? 'danger' : 'success'} alert-dismissible fade show`;
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 150);
+    }, 3000);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const firstSite = document.querySelector('.site-item');
+    if (firstSite) {
+        const siteId = firstSite.getAttribute('data-site-id');
+        selectSite(parseInt(siteId));
+    }
+});
+</script>
+{% endblock %}

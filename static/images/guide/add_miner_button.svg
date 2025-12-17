@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 150" style="background:#1a1d2e;">
+  <defs>
+    <style>
+      .header-bar { fill: #2d3748; }
+      .btn-primary { fill: #f7931a; stroke: #f7931a; stroke-width: 1; }
+      .btn-secondary { fill: #6c757d; stroke: #6c757d; stroke-width: 1; }
+      .btn-text { fill: #ffffff; font-family: Arial, sans-serif; font-size: 12px; font-weight: bold; }
+      .title { fill: #ffffff; font-family: Arial, sans-serif; font-size: 18px; font-weight: bold; }
+      .subtitle { fill: #adb5bd; font-family: Arial, sans-serif; font-size: 14px; }
+      .arrow { fill: #ff6b6b; }
+      .arrow-text { fill: #ff6b6b; font-family: Arial, sans-serif; font-size: 14px; font-weight: bold; }
+    </style>
+  </defs>
+  
+  <!-- Header Bar -->
+  <rect x="0" y="0" width="800" height="80" class="header-bar"/>
+  
+  <!-- Title Area -->
+  <text x="20" y="30" class="title">Miner Management / 矿机管理</text>
+  <text x="20" y="55" class="subtitle">Professional mining device management</text>
+  
+  <!-- Buttons on the right -->
+  <g transform="translate(550, 20)">
+    <!-- Add Miner Button -->
+    <rect x="0" y="0" width="110" height="35" class="btn-primary" rx="5"/>
+    <text x="55" y="22" text-anchor="middle" class="btn-text">➕ Add Miner</text>
+    
+    <!-- Refresh Button -->
+    <rect x="120" y="0" width="90" height="35" class="btn-secondary" rx="5"/>
+    <text x="165" y="22" text-anchor="middle" class="btn-text">🔄 Refresh</text>
+  </g>
+  
+  <!-- Arrow pointing to Add Miner button -->
+  <path d="M 605 100 L 605 60" class="arrow" stroke="#ff6b6b" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
+  <polygon points="605,60 600,70 610,70" class="arrow"/>
+  <text x="605" y="125" text-anchor="middle" class="arrow-text">Click here / 点击这里</text>
+  
+</svg>

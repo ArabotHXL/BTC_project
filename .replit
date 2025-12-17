@@ -1,0 +1,7 @@
+modules = ["python-3.11"]
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[nix]
+packages = ["cairo", "cargo", "ffmpeg-full", "fontconfig", "freetype", "ghostscript", "glib", "glibcLocales", "gobject-introspection", "gtk3", "harfbuzz", "lcms2", "libiconv", "libimagequant", "libjpeg", "libsodium", "libtiff", "libwebp", "libxcrypt", "openjpeg", "openssl", "pango", "pkg-config", "qhull", "rustc", "tcl", "tk", "zlib"]

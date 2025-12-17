@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电力管理系统 API 测试工具</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <style>
+        .api-card {
+            margin-bottom: 20px;
+        }
+        .response-container {
+            max-height: 300px;
+            overflow-y: auto;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 4px;
+            padding: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1 class="mb-4">电力管理系统 API 测试工具</h1>
+        
+        <ul class="nav nav-tabs" id="apiTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="system-tab" data-bs-toggle="tab" data-bs-target="#system" type="button" role="tab">系统状态</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="miners-tab" data-bs-toggle="tab" data-bs-target="#miners" type="button" role="tab">矿机管理</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="reduction-tab" data-bs-toggle="tab" data-bs-target="#reduction" type="button" role="tab">电力削减</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="rotation-tab" data-bs-toggle="tab" data-bs-target="#rotation" type="button" role="tab">轮换计划</button>
+            </li>
+        </ul>
+        
+        <div class="tab-content mt-3" id="apiTabContent">
+            <!-- 系统状态 API -->
+            <div class="tab-pane fade show active" id="system" role="tabpanel">
+                <div class="card api-card">
+                    <div class="card-header">
+                        <h5>系统状态 API</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <button class="btn btn-primary" id="getSystemStatus">获取系统状态</button>
+                        </div>
+                        <div id="systemStatusResponse" class="response-container d-none">
+                            <pre></pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card api-card">
+                    <div class="card-header">
+                        <h5>矿机健康状况 API</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <button class="btn btn-primary" id="getMinersHealth">获取矿机健康状况</button>
+                        </div>
+                        <div id="minersHealthResponse" class="response-container d-none">
+                            <pre></pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card api-card">
+                    <div class="card-header">
+                        <h5>初始化测试数据 API</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="minerCount" class="form-label">矿机数量</label>
+                            <input type="number" class="form-control" id="minerCount" value="100">
+                        </div>
+                        <button class="btn btn-warning" id="initializeMiners">初始化矿机数据</button>
+                        <div id="initializeResponse" class="response-container d-none mt-3">
+                            <pre></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 矿机管理 API -->
+            <div class="tab-pane fade" id="miners" role="tabpanel">
+                <div class="card api-card">
+                    <div class="card-header">
+                        <h5>矿机列表 API</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <button class="btn btn-primary" id="getMinersList">获取矿机列表</button>
+                        </div>
+                        <div id="minersListResponse" class="response-container d-none">
+                            <pre></pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card api-card">
+                    <div class="card-header">
+                        <h5>更改矿机状态 API</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="minerId">矿机ID</label>
+                            <input type="text" class="form-control" id="minerId" placeholder="如: miner_001">
+                        </div>
+                        <div class="form-group">
+                            <label for="minerStatus">状态</label>
+                            <select class="form-control" id="minerStatus">
+                                <option value="running">开机</option>
+                                <option value="shutdown">关机</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="statusReason">原因</label>
+                            <input type="text" class="form-control" id="statusReason" placeholder="如: 维护">
+                        </div>
+                        <button class="btn btn-warning" id="changeMinerStatus">更改状态</button>
+                        <div id="changeMinerResponse" class="response-container d-none mt-3">
+                            <pre></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 电力削减 API -->
+            <div class="tab-pane fade" id="reduction" role="tabpanel">
+                <div class="card api-card">
+                    <div class="card-header">
+                        <h5>应用电力削减 API</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="reductionPercentage">削减百分比 (%)</label>
+                            <input type="number" class="form-control" id="reductionPercentage" value="10" min="1" max="100">
+                        </div>
+                        <button class="btn btn-danger" id="applyReduction">应用削减</button>
+                        <div id="reductionResponse" class="response-container d-none mt-3">
+                            <pre></pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card api-card">
+                    <div class="card-header">
+                        <h5>削减计划 API</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <button class="btn btn-primary" id="getReductionPlans">获取所有削减计划</button>
+                        </div>
+                        <div id="plansResponse" class="response-container d-none">
+                            <pre></pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card api-card">
+                    <div class="card-header">
+                        <h5>创建削减计划 API</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="planName">计划名称</label>
+                            <input type="text" class="form-control" id="planName" placeholder="如: 轻度削减计划">
+                        </div>
+                        <div class="form-group">
+                            <label for="planDescription">计划描述</label>
+                            <input type="text" class="form-control" id="planDescription" placeholder="如: 削减10%电力">
+                        </div>
+                        <div class="form-group">
+                            <label for="planPercentage">削减百分比 (%)</label>
+                            <input type="number" class="form-control" id="planPercentage" value="10" min="1" max="100">
+                        </div>
+                        <div class="form-group">
+                            <label>目标类别</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="categoryA" value="A">
+                                <label class="form-check-label" for="categoryA">A类 (最健康)</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="categoryB" value="B">
+                                <label class="form-check-label" for="categoryB">B类</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="categoryC" value="C" checked>
+                                <label class="form-check-label" for="categoryC">C类</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="categoryD" value="D" checked>
+                                <label class="form-check-label" for="categoryD">D类 (最不健康)</label>
+                            </div>
+                        </div>
+                        <button class="btn btn-success" id="createPlan">创建计划</button>
+                        <div id="createPlanResponse" class="response-container d-none mt-3">
+                            <pre></pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card api-card">
+                    <div class="card-header">
+                        <h5>激活削减计划 API</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="activatePlanId">计划ID</label>
+                            <input type="number" class="form-control" id="activatePlanId" placeholder="如: 1">
+                        </div>
+                        <button class="btn btn-warning" id="activatePlan">激活计划</button>
+                        <div id="activatePlanResponse" class="response-container d-none mt-3">
+                            <pre></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 轮换计划 API -->
+            <div class="tab-pane fade" id="rotation" role="tabpanel">
+                <div class="card api-card">
+                    <div class="card-header">
+                        <h5>生成轮换计划 API</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-primary" id="generateRotation">生成轮换计划</button>
+                        <div id="generateRotationResponse" class="response-container d-none mt-3">
+                            <pre></pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card api-card">
+                    <div class="card-header">
+                        <h5>执行轮换计划 API</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="rotationPlanId">轮换计划ID</label>
+                            <input type="number" class="form-control" id="rotationPlanId" placeholder="如: 1">
+                        </div>
+                        <button class="btn btn-warning" id="executeRotation">执行轮换</button>
+                        <div id="executeRotationResponse" class="response-container d-none mt-3">
+                            <pre></pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card api-card">
+                    <div class="card-header">
+                        <h5>获取轮换计划列表 API</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-primary" id="getRotationSchedules">获取轮换计划</button>
+                        <div id="rotationSchedulesResponse" class="response-container d-none mt-3">
+                            <pre></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 通用的API调用函数
+            async function callApi(url, method = 'GET', data = null) {
+                try {
+                    const options = {
+                        method: method,
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    };
+                    
+                    if (data && (method === 'POST' || method === 'PUT')) {
+                        options.body = JSON.stringify(data);
+                    }
+                    
+                    const response = await fetch(url, options);
+                    const result = await response.json();
+                    return {
+                        success: response.ok,
+                        status: response.status,
+                        data: result
+                    };
+                } catch (error) {
+                    return {
+                        success: false,
+                        status: 500,
+                        data: { error: error.message }
+                    };
+                }
+            }
+            
+            // 格式化JSON显示
+            function formatJson(json) {
+                return JSON.stringify(json, null, 2);
+            }
+            
+            // 显示响应结果
+            function showResponse(elementId, response) {
+                const container = document.getElementById(elementId);
+                container.classList.remove('d-none');
+                const pre = container.querySelector('pre');
+                pre.textContent = formatJson(response);
+            }
+            
+            // 系统状态API
+            document.getElementById('getSystemStatus').addEventListener('click', async function() {
+                const response = await callApi('/api/system-status');
+                showResponse('systemStatusResponse', response.data);
+            });
+            
+            // 矿机健康状况API
+            document.getElementById('getMinersHealth').addEventListener('click', async function() {
+                const response = await callApi('/api/miners-health');
+                showResponse('minersHealthResponse', response.data);
+            });
+            
+            // 初始化矿机数据API
+            document.getElementById('initializeMiners').addEventListener('click', async function() {
+                const count = document.getElementById('minerCount').value;
+                const response = await callApi('/api/initialize-miners', 'POST', { count: parseInt(count) });
+                showResponse('initializeResponse', response.data);
+            });
+            
+            // 矿机列表API
+            document.getElementById('getMinersList').addEventListener('click', async function() {
+                const response = await callApi('/api/miners-list');
+                showResponse('minersListResponse', response.data);
+            });
+            
+            // 更改矿机状态API
+            document.getElementById('changeMinerStatus').addEventListener('click', async function() {
+                const minerId = document.getElementById('minerId').value;
+                const status = document.getElementById('minerStatus').value;
+                const reason = document.getElementById('statusReason').value;
+                
+                if (!minerId) {
+                    showResponse('changeMinerResponse', { error: '请输入矿机ID' });
+                    return;
+                }
+                
+                const response = await callApi('/api/change-miner-status', 'POST', {
+                    miner_id: minerId,
+                    status: status,
+                    reason: reason
+                });
+                showResponse('changeMinerResponse', response.data);
+            });
+            
+            // 应用电力削减API
+            document.getElementById('applyReduction').addEventListener('click', async function() {
+                const percentage = document.getElementById('reductionPercentage').value;
+                const response = await callApi('/api/apply-reduction', 'POST', {
+                    percentage: parseFloat(percentage)
+                });
+                showResponse('reductionResponse', response.data);
+            });
+            
+            // 获取削减计划API
+            document.getElementById('getReductionPlans').addEventListener('click', async function() {
+                const response = await callApi('/api/reduction-plans');
+                showResponse('plansResponse', response.data);
+            });
+            
+            // 创建削减计划API
+            document.getElementById('createPlan').addEventListener('click', async function() {
+                const name = document.getElementById('planName').value;
+                const description = document.getElementById('planDescription').value;
+                const percentage = document.getElementById('planPercentage').value;
+                
+                // 获取选中的类别
+                const categories = [];
+                if (document.getElementById('categoryA').checked) categories.push('A');
+                if (document.getElementById('categoryB').checked) categories.push('B');
+                if (document.getElementById('categoryC').checked) categories.push('C');
+                if (document.getElementById('categoryD').checked) categories.push('D');
+                
+                if (!name || !description || categories.length === 0) {
+                    showResponse('createPlanResponse', { error: '请填写所有必填字段' });
+                    return;
+                }
+                
+                const response = await callApi('/api/create-reduction-plan', 'POST', {
+                    name: name,
+                    description: description,
+                    reduction_percentage: parseFloat(percentage),
+                    target_categories: categories,
+                    active: false
+                });
+                showResponse('createPlanResponse', response.data);
+            });
+            
+            // 激活削减计划API
+            document.getElementById('activatePlan').addEventListener('click', async function() {
+                const planId = document.getElementById('activatePlanId').value;
+                
+                if (!planId) {
+                    showResponse('activatePlanResponse', { error: '请输入计划ID' });
+                    return;
+                }
+                
+                const response = await callApi('/api/activate-reduction-plan', 'POST', {
+                    plan_id: parseInt(planId)
+                });
+                showResponse('activatePlanResponse', response.data);
+            });
+            
+            // 生成轮换计划API
+            document.getElementById('generateRotation').addEventListener('click', async function() {
+                const response = await callApi('/api/generate-rotation', 'POST');
+                showResponse('generateRotationResponse', response.data);
+            });
+            
+            // 执行轮换计划API
+            document.getElementById('executeRotation').addEventListener('click', async function() {
+                const planId = document.getElementById('rotationPlanId').value;
+                
+                if (!planId) {
+                    showResponse('executeRotationResponse', { error: '请输入轮换计划ID' });
+                    return;
+                }
+                
+                const response = await callApi('/api/execute-rotation', 'POST', {
+                    plan_id: parseInt(planId)
+                });
+                showResponse('executeRotationResponse', response.data);
+            });
+            
+            // 获取轮换计划列表API
+            document.getElementById('getRotationSchedules').addEventListener('click', async function() {
+                const response = await callApi('/api/rotation-schedules');
+                showResponse('rotationSchedulesResponse', response.data);
+            });
+        });
+    </script>
+</body>
+</html>

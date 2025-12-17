@@ -1,0 +1,56 @@
+{
+  "name": "hashinsight-outbox-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "tasks.max": "1",
+    
+    "database.hostname": "postgres",
+    "database.port": "5432",
+    "database.user": "hashinsight",
+    "database.password": "hashinsight_secret_2024",
+    "database.dbname": "hashinsight",
+    "database.server.name": "hashinsight",
+    
+    "table.include.list": "public.event_outbox",
+    "plugin.name": "pgoutput",
+    "publication.autocreate.mode": "filtered",
+    
+    "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "key.converter.schemas.enable": "false",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "false",
+    
+    "transforms": "unwrap,route,addFields",
+    
+    "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+    "transforms.unwrap.drop.tombstones": "true",
+    "transforms.unwrap.delete.handling.mode": "none",
+    
+    "transforms.route.type": "org.apache.kafka.connect.transforms.RegexRouter",
+    "transforms.route.regex": "([^.]+)\\.([^.]+)\\.([^.]+)",
+    "transforms.route.replacement": "events.$3",
+    
+    "transforms.addFields.type": "org.apache.kafka.connect.transforms.ValueToKey",
+    "transforms.addFields.fields": "user_id",
+    
+    "message.key.columns": "public.event_outbox:user_id",
+    
+    "topic.creation.default.replication.factor": 1,
+    "topic.creation.default.partitions": 3,
+    "topic.creation.default.retention.ms": 604800000,
+    
+    "snapshot.mode": "never",
+    "slot.name": "hashinsight_outbox_slot",
+    "publication.name": "hashinsight_outbox_publication",
+    
+    "tombstones.on.delete": "false",
+    "skipped.operations": "d",
+    
+    "poll.interval.ms": 100,
+    "max.batch.size": 2048,
+    "max.queue.size": 8192,
+    
+    "heartbeat.interval.ms": 10000,
+    "heartbeat.action.query": "UPDATE event_outbox SET processed = true WHERE id IN (SELECT id FROM event_outbox WHERE processed = false ORDER BY created_at LIMIT 100)"
+  }
+}

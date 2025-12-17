@@ -1,0 +1,184 @@
+10The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.Understand this error
+10The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?Understand this error
+10The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.Understand this error
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.Understand this error
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?Understand this error
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.Understand this error
+BitcoinMiningCalculator:1 The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.Understand this error
+BitcoinMiningCalculator:1 The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?Understand this error
+BitcoinMiningCalculator:1 The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.Understand this error
+_app-d237ff26cc8fc2c8.js:13 
+      /////////////////////
+   ///////////////////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////        Curious and driven?
+  ///////////////@@@@@@@///////        Work with us!
+  ///////////////@@@@@@@///////
+  ///////////////@@@@@@@///////        https://join.replit.com/hack.with.us
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@#//////////////
+   ///////////////////////////
+      /////////////////////
+      
+_app-d237ff26cc8fc2c8.js:13 [LaunchDarkly] LaunchDarkly client initialized
+framework-bc0e5d42934fbbd8.js:1 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+_ @ framework-bc0e5d42934fbbd8.js:1
+(anonymous) @ framework-bc0e5d42934fbbd8.js:1
+uD @ framework-bc0e5d42934fbbd8.js:1
+uI @ framework-bc0e5d42934fbbd8.js:1
+uM @ framework-bc0e5d42934fbbd8.js:1
+uS @ framework-bc0e5d42934fbbd8.js:1
+C @ framework-bc0e5d42934fbbd8.js:1
+z @ framework-bc0e5d42934fbbd8.js:1Understand this error
+framework-bc0e5d42934fbbd8.js:1 Unrecognized feature: 'ambient-light-sensor'.
+_ @ framework-bc0e5d42934fbbd8.js:1
+(anonymous) @ framework-bc0e5d42934fbbd8.js:1
+uD @ framework-bc0e5d42934fbbd8.js:1
+uI @ framework-bc0e5d42934fbbd8.js:1
+uM @ framework-bc0e5d42934fbbd8.js:1
+uS @ framework-bc0e5d42934fbbd8.js:1
+C @ framework-bc0e5d42934fbbd8.js:1
+z @ framework-bc0e5d42934fbbd8.js:1Understand this warning
+framework-bc0e5d42934fbbd8.js:1 Unrecognized feature: 'battery'.
+_ @ framework-bc0e5d42934fbbd8.js:1
+(anonymous) @ framework-bc0e5d42934fbbd8.js:1
+uD @ framework-bc0e5d42934fbbd8.js:1
+uI @ framework-bc0e5d42934fbbd8.js:1
+uM @ framework-bc0e5d42934fbbd8.js:1
+uS @ framework-bc0e5d42934fbbd8.js:1
+C @ framework-bc0e5d42934fbbd8.js:1
+z @ framework-bc0e5d42934fbbd8.js:1Understand this warning
+framework-bc0e5d42934fbbd8.js:1 Unrecognized feature: 'execution-while-not-rendered'.
+_ @ framework-bc0e5d42934fbbd8.js:1
+(anonymous) @ framework-bc0e5d42934fbbd8.js:1
+uD @ framework-bc0e5d42934fbbd8.js:1
+uI @ framework-bc0e5d42934fbbd8.js:1
+uM @ framework-bc0e5d42934fbbd8.js:1
+uS @ framework-bc0e5d42934fbbd8.js:1
+C @ framework-bc0e5d42934fbbd8.js:1
+z @ framework-bc0e5d42934fbbd8.js:1Understand this warning
+framework-bc0e5d42934fbbd8.js:1 Unrecognized feature: 'execution-while-out-of-viewport'.
+_ @ framework-bc0e5d42934fbbd8.js:1
+(anonymous) @ framework-bc0e5d42934fbbd8.js:1
+uD @ framework-bc0e5d42934fbbd8.js:1
+uI @ framework-bc0e5d42934fbbd8.js:1
+uM @ framework-bc0e5d42934fbbd8.js:1
+uS @ framework-bc0e5d42934fbbd8.js:1
+C @ framework-bc0e5d42934fbbd8.js:1
+z @ framework-bc0e5d42934fbbd8.js:1Understand this warning
+framework-bc0e5d42934fbbd8.js:1 Unrecognized feature: 'layout-animations'.
+_ @ framework-bc0e5d42934fbbd8.js:1
+(anonymous) @ framework-bc0e5d42934fbbd8.js:1
+uD @ framework-bc0e5d42934fbbd8.js:1
+uI @ framework-bc0e5d42934fbbd8.js:1
+uM @ framework-bc0e5d42934fbbd8.js:1
+uS @ framework-bc0e5d42934fbbd8.js:1
+C @ framework-bc0e5d42934fbbd8.js:1
+z @ framework-bc0e5d42934fbbd8.js:1Understand this warning
+framework-bc0e5d42934fbbd8.js:1 Unrecognized feature: 'legacy-image-formats'.
+_ @ framework-bc0e5d42934fbbd8.js:1
+(anonymous) @ framework-bc0e5d42934fbbd8.js:1
+uD @ framework-bc0e5d42934fbbd8.js:1
+uI @ framework-bc0e5d42934fbbd8.js:1
+uM @ framework-bc0e5d42934fbbd8.js:1
+uS @ framework-bc0e5d42934fbbd8.js:1
+C @ framework-bc0e5d42934fbbd8.js:1
+z @ framework-bc0e5d42934fbbd8.js:1Understand this warning
+framework-bc0e5d42934fbbd8.js:1 Unrecognized feature: 'navigation-override'.
+_ @ framework-bc0e5d42934fbbd8.js:1
+(anonymous) @ framework-bc0e5d42934fbbd8.js:1
+uD @ framework-bc0e5d42934fbbd8.js:1
+uI @ framework-bc0e5d42934fbbd8.js:1
+uM @ framework-bc0e5d42934fbbd8.js:1
+uS @ framework-bc0e5d42934fbbd8.js:1
+C @ framework-bc0e5d42934fbbd8.js:1
+z @ framework-bc0e5d42934fbbd8.js:1Understand this warning
+framework-bc0e5d42934fbbd8.js:1 Unrecognized feature: 'oversized-images'.
+_ @ framework-bc0e5d42934fbbd8.js:1
+(anonymous) @ framework-bc0e5d42934fbbd8.js:1
+uD @ framework-bc0e5d42934fbbd8.js:1
+uI @ framework-bc0e5d42934fbbd8.js:1
+uM @ framework-bc0e5d42934fbbd8.js:1
+uS @ framework-bc0e5d42934fbbd8.js:1
+C @ framework-bc0e5d42934fbbd8.js:1
+z @ framework-bc0e5d42934fbbd8.js:1Understand this warning
+framework-bc0e5d42934fbbd8.js:1 Unrecognized feature: 'publickey-credentials'.
+_ @ framework-bc0e5d42934fbbd8.js:1
+(anonymous) @ framework-bc0e5d42934fbbd8.js:1
+uD @ framework-bc0e5d42934fbbd8.js:1
+uI @ framework-bc0e5d42934fbbd8.js:1
+uM @ framework-bc0e5d42934fbbd8.js:1
+uS @ framework-bc0e5d42934fbbd8.js:1
+C @ framework-bc0e5d42934fbbd8.js:1
+z @ framework-bc0e5d42934fbbd8.js:1Understand this warning
+framework-bc0e5d42934fbbd8.js:1 Unrecognized feature: 'speaker-selection'.
+_ @ framework-bc0e5d42934fbbd8.js:1
+(anonymous) @ framework-bc0e5d42934fbbd8.js:1
+uD @ framework-bc0e5d42934fbbd8.js:1
+uI @ framework-bc0e5d42934fbbd8.js:1
+uM @ framework-bc0e5d42934fbbd8.js:1
+uS @ framework-bc0e5d42934fbbd8.js:1
+C @ framework-bc0e5d42934fbbd8.js:1
+z @ framework-bc0e5d42934fbbd8.js:1Understand this warning
+framework-bc0e5d42934fbbd8.js:1 Unrecognized feature: 'unoptimized-images'.
+_ @ framework-bc0e5d42934fbbd8.js:1
+(anonymous) @ framework-bc0e5d42934fbbd8.js:1
+uD @ framework-bc0e5d42934fbbd8.js:1
+uI @ framework-bc0e5d42934fbbd8.js:1
+uM @ framework-bc0e5d42934fbbd8.js:1
+uS @ framework-bc0e5d42934fbbd8.js:1
+C @ framework-bc0e5d42934fbbd8.js:1
+z @ framework-bc0e5d42934fbbd8.js:1Understand this warning
+framework-bc0e5d42934fbbd8.js:1 Unrecognized feature: 'unsized-media'.
+_ @ framework-bc0e5d42934fbbd8.js:1
+(anonymous) @ framework-bc0e5d42934fbbd8.js:1
+uD @ framework-bc0e5d42934fbbd8.js:1
+uI @ framework-bc0e5d42934fbbd8.js:1
+uM @ framework-bc0e5d42934fbbd8.js:1
+uS @ framework-bc0e5d42934fbbd8.js:1
+C @ framework-bc0e5d42934fbbd8.js:1
+z @ framework-bc0e5d42934fbbd8.js:1Understand this warning
+framework-bc0e5d42934fbbd8.js:1 Unrecognized feature: 'pointer-lock'.
+_ @ framework-bc0e5d42934fbbd8.js:1
+(anonymous) @ framework-bc0e5d42934fbbd8.js:1
+uD @ framework-bc0e5d42934fbbd8.js:1
+uI @ framework-bc0e5d42934fbbd8.js:1
+uM @ framework-bc0e5d42934fbbd8.js:1
+uS @ framework-bc0e5d42934fbbd8.js:1
+C @ framework-bc0e5d42934fbbd8.js:1
+z @ framework-bc0e5d42934fbbd8.js:1Understand this warning
+framework-bc0e5d42934fbbd8.js:1 Allow attribute will take precedence over 'allowfullscreen'.
+_ @ framework-bc0e5d42934fbbd8.js:1
+(anonymous) @ framework-bc0e5d42934fbbd8.js:1
+uD @ framework-bc0e5d42934fbbd8.js:1
+uI @ framework-bc0e5d42934fbbd8.js:1
+uM @ framework-bc0e5d42934fbbd8.js:1
+uS @ framework-bc0e5d42934fbbd8.js:1
+C @ framework-bc0e5d42934fbbd8.js:1
+z @ framework-bc0e5d42934fbbd8.js:1Understand this warning
+framework-bc0e5d42934fbbd8.js:1 Allow attribute will take precedence over 'allowpaymentrequest'.
+_ @ framework-bc0e5d42934fbbd8.js:1
+(anonymous) @ framework-bc0e5d42934fbbd8.js:1
+uD @ framework-bc0e5d42934fbbd8.js:1
+uI @ framework-bc0e5d42934fbbd8.js:1
+uM @ framework-bc0e5d42934fbbd8.js:1
+uS @ framework-bc0e5d42934fbbd8.js:1
+C @ framework-bc0e5d42934fbbd8.js:1
+z @ framework-bc0e5d42934fbbd8.js:1Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Ar6l%3A:32 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.Understand this error
+workspace_iframe.html?initialPath=%2F&id=%3Ar6l%3A:32 Unrecognized feature: 'ambient-light-sensor'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Ar6l%3A:32 Unrecognized feature: 'battery'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Ar6l%3A:32 Unrecognized feature: 'execution-while-not-rendered'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Ar6l%3A:32 Unrecognized feature: 'execution-while-out-of-viewport'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Ar6l%3A:32 Unrecognized feature: 'layout-animations'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Ar6l%3A:32 Unrecognized feature: 'legacy-image-formats'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Ar6l%3A:32 Unrecognized feature: 'navigation-override'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Ar6l%3A:32 Unrecognized feature: 'oversized-images'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Ar6l%3A:32 Unrecognized feature: 'publickey-credentials'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Ar6l%3A:32 Unrecognized feature: 'speaker-selection'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Ar6l%3A:32 Unrecognized feature: 'unoptimized-images'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Ar6l%3A:32 Unrecognized feature: 'unsized-media'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Ar6l%3A:32 Allow attribute will take precedence over 'allowfullscreen'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Ar6l%3A:32 Allow attribute will take precedence over 'allowpaymentrequest'.

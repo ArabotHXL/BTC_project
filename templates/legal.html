@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms of Use and Privacy Notice - HashInsight Mining Intelligence</title>
+    <!-- Bootstrap CSS from Replit CDN -->
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <style>
+        :root {
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-secondary: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            --gradient-accent: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);
+        }
+        
+        body {
+            background: #0a0a0a;
+            color: #e9ecef;
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.7;
+        }
+
+        .navbar {
+            background: var(--gradient-primary) !important;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .navbar-brand {
+            color: white !important;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .navbar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-weight: 500;
+        }
+
+        .main-container {
+            background: linear-gradient(145deg, #1a1a1a 0%, #2d2d30 100%);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            margin: 2rem 0;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .legal-header {
+            background: var(--gradient-primary);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .legal-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        }
+
+        .legal-header h1 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .legal-header .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .legal-content {
+            padding: 3rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            color: #4dabf7;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 3rem 0 1.5rem 0;
+            padding-bottom: 0.8rem;
+            border-bottom: 2px solid rgba(77, 171, 247, 0.3);
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title i {
+            margin-right: 0.8rem;
+            color: #ffc107;
+        }
+
+        .subsection {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 1.8rem;
+            margin: 1.5rem 0;
+            border-left: 4px solid #4dabf7;
+        }
+
+        .subsection-title {
+            color: #ffc107;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .subsection-title i {
+            margin-right: 0.5rem;
+        }
+
+        .legal-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .legal-list li {
+            background: rgba(255, 255, 255, 0.05);
+            margin: 1rem 0;
+            padding: 1.2rem;
+            border-radius: 8px;
+            border-left: 4px solid #4dabf7;
+            position: relative;
+        }
+
+        .legal-list li::before {
+            content: '•';
+            color: #ffc107;
+            font-weight: bold;
+            position: absolute;
+            left: -0.5rem;
+            top: 1.2rem;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1));
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+            border-left: 5px solid #ffc107;
+        }
+
+        .warning-box .warning-title {
+            color: #ffc107;
+            font-weight: 700;
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .warning-box .warning-title i {
+            margin-right: 0.8rem;
+        }
+
+        .contact-info {
+            background: linear-gradient(135deg, rgba(77, 171, 247, 0.1), rgba(118, 75, 162, 0.1));
+            border: 1px solid rgba(77, 171, 247, 0.3);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .contact-email {
+            color: #4dabf7;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .contact-email:hover {
+            color: #ffc107;
+            text-decoration: underline;
+        }
+
+        .footer-section {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2rem;
+            text-align: center;
+            color: #adb5bd;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .back-button {
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 25px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .last-updated {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 2rem 0;
+            text-align: center;
+            font-style: italic;
+            color: #adb5bd;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .legal-header {
+                padding: 2rem 1rem;
+            }
+            
+            .legal-header h1 {
+                font-size: 2.2rem;
+            }
+            
+            .legal-content {
+                padding: 2rem 1.5rem;
+            }
+            
+            .section-title {
+                font-size: 1.5rem;
+            }
+            
+            .subsection {
+                padding: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-shield-check me-2"></i>
+                HashInsight Mining Intelligence
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">
+                    <i class="bi bi-house me-1"></i>
+                    <span data-i18n="nav.home">{{ 'Home' if current_lang == 'en' else '首页' }}</span>
+                </a>
+                <div class="nav-item dropdown ms-2">
+                    <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-globe2"></i> {{ 'EN' if current_lang == 'en' else '中文' }}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><button class="dropdown-item" type="button" data-lang-switch="zh">中文</button></li>
+                        <li><button class="dropdown-item" type="button" data-lang-switch="en">English</button></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="main-container">
+            <!-- Header -->
+            <div class="legal-header">
+                <h1>
+                    <i class="bi bi-shield-check me-3"></i>
+                    Terms of Use and Privacy Notice
+                </h1>
+                <div class="subtitle">HashInsight Mining Intelligence Platform</div>
+                <div class="last-updated mt-3">
+                    <i class="bi bi-clock me-2"></i>
+                    Last updated: 22 August 2025
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="legal-content">
+                <!-- Section 1: Acceptance of Terms -->
+                <div class="section-title">
+                    <i class="bi bi-file-check"></i>
+                    1. Acceptance of Terms
+                </div>
+                <div class="subsection">
+                    <p>By accessing or using the HashInsight Mining Intelligence platform ("Service") at calc.hashinsight.net, you agree to be bound by these Terms of Use ("Terms"). If you do not agree to these Terms, do not use the Service. HashInsight reserves the right to update or modify the Terms at any time; your continued use of the Service constitutes acceptance of any revised Terms.</p>
+                </div>
+
+                <!-- Section 2: Service Description -->
+                <div class="section-title">
+                    <i class="bi bi-gear"></i>
+                    2. Service Description
+                </div>
+                <div class="subsection">
+                    <p>HashInsight provides tools for estimating cryptocurrency mining profitability, analysing bulk mining operations, managing mining customers and, for certain tiers, offering market analytics and treasury management features. All information provided is for informational and educational purposes only and does not constitute financial, investment or trading advice. HashInsight does not guarantee the accuracy, completeness or timeliness of any information provided and shall not be liable for any errors or omissions.</p>
+                </div>
+
+                <!-- Section 3: User Accounts -->
+                <div class="section-title">
+                    <i class="bi bi-person-circle"></i>
+                    3. User Accounts
+                </div>
+                <div class="subsection">
+                    <p>You must create an account to access certain features. You agree to provide accurate and complete registration information and to keep it up to date. You are responsible for maintaining the confidentiality of your login credentials and for all activities that occur under your account. HashInsight is not liable for any loss or damage arising from unauthorised use of your account.</p>
+                </div>
+
+                <!-- Section 4: Data Sources and Disclaimer -->
+                <div class="section-title">
+                    <i class="bi bi-database"></i>
+                    4. Data Sources and Disclaimer
+                </div>
+                <div class="subsection">
+                    <p>HashInsight obtains data from third‑party sources (including cryptocurrency exchanges, mining pools and network statistics) which it believes to be reliable. However, network difficulty, block rewards, cryptocurrency prices and electricity costs change rapidly. The Service's calculations are estimates only. You should independently verify all information before making financial decisions. Use of the Service is at your own risk.</p>
+                </div>
+
+                <div class="warning-box">
+                    <div class="warning-title">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        Important Risk Disclaimer
+                    </div>
+                    <p>All mining return forecasts, profitability estimates, and ROI calculations provided by this platform are for reference only. Actual results may differ significantly due to factors such as BTC price volatility, network difficulty, electricity rates, equipment degradation, and downtime. By using this platform, you acknowledge and agree that the system assumes no responsibility for any financial decisions or outcomes. All risks are solely borne by the user.</p>
+                </div>
+
+                <!-- Section 5: User Conduct -->
+                <div class="section-title">
+                    <i class="bi bi-person-check"></i>
+                    5. User Conduct
+                </div>
+                <div class="subsection">
+                    <p>You agree not to:</p>
+                    <ul class="legal-list">
+                        <li>Use the Service in any manner that could disrupt, damage or impair the Service or interfere with any other party's use of the Service;</li>
+                        <li>Upload or transmit any malicious code, viruses or harmful content;</li>
+                        <li>Attempt to gain unauthorised access to other accounts or computer systems;</li>
+                        <li>Use the Service for any unlawful purpose, including but not limited to laundering, fraud or violation of sanctions;</li>
+                        <li>Resell, redistribute or scrape data from the Service without HashInsight's written permission.</li>
+                    </ul>
+                </div>
+
+                <!-- Section 6: Paid Plans and Subscriptions -->
+                <div class="section-title">
+                    <i class="bi bi-credit-card"></i>
+                    6. Paid Plans and Subscriptions
+                </div>
+                <div class="subsection">
+                    <p>Certain features (such as bulk mining analysis or treasury management) may require a paid subscription. Pricing, billing cycles and plan details will be presented at the time of purchase. Fees are non‑refundable except as required by law. HashInsight may change its fees or plans at any time; existing subscribers will be notified in advance.</p>
+                </div>
+
+                <!-- Section 7: Intellectual Property -->
+                <div class="section-title">
+                    <i class="bi bi-copyright"></i>
+                    7. Intellectual Property
+                </div>
+                <div class="subsection">
+                    <p>All content, software and visuals on the Service are owned or licensed by HashInsight and are protected by intellectual property laws. You may use the Service and print or export results for personal or internal business use only. You may not reproduce, distribute, modify or create derivative works without HashInsight's written consent.</p>
+                </div>
+
+                <!-- Section 8: Privacy Notice -->
+                <div class="section-title">
+                    <i class="bi bi-shield-lock"></i>
+                    8. Privacy Notice
+                </div>
+
+                <div class="subsection">
+                    <div class="subsection-title">
+                        <i class="bi bi-collection"></i>
+                        Information collected
+                    </div>
+                    <p>HashInsight collects information you provide during account creation (such as name, email address, company and phone number) and logs relating to your use of the Service (such as IP address, device type and pages visited). This hosting transparency platform does not process payments.</p>
+                </div>
+
+                <div class="subsection">
+                    <div class="subsection-title">
+                        <i class="bi bi-arrow-repeat"></i>
+                        Use of information
+                    </div>
+                    <p>HashInsight uses collected information to provide and improve the Service, communicate with you about your account, analyse usage patterns and comply with legal obligations.</p>
+                </div>
+
+                <div class="subsection">
+                    <div class="subsection-title">
+                        <i class="bi bi-share"></i>
+                        Sharing of information
+                    </div>
+                    <p>HashInsight does not sell your personal data. Information may be shared with service providers who assist in operating the platform (e.g., hosting providers), with your consent, or as required by law.</p>
+                </div>
+
+                <div class="subsection">
+                    <div class="subsection-title">
+                        <i class="bi bi-clock-history"></i>
+                        Data retention
+                    </div>
+                    <p>HashInsight retains personal data for as long as your account is active or as needed to provide the Service. You may request deletion of your account by contacting support; some information may be retained for legal or audit purposes.</p>
+                </div>
+
+                <div class="subsection">
+                    <div class="subsection-title">
+                        <i class="bi bi-shield-check"></i>
+                        Security
+                    </div>
+                    <p>HashInsight implements reasonable technical and organisational measures to protect your data. However, no system can guarantee absolute security.</p>
+                </div>
+
+                <!-- Section 9: Limitation of Liability -->
+                <div class="section-title">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    9. Limitation of Liability
+                </div>
+                <div class="subsection">
+                    <p>To the fullest extent permitted by law, HashInsight and its affiliates shall not be liable for any direct, indirect, incidental, consequential or punitive damages arising from or relating to your use of the Service, even if advised of the possibility of such damages. In no event shall HashInsight's total liability exceed the amount paid by you for the Service in the twelve months preceding the claim.</p>
+                </div>
+
+                <!-- Section 10: Governing Law and Dispute Resolution -->
+                <div class="section-title">
+                    <i class="bi bi-building"></i>
+                    10. Governing Law and Dispute Resolution
+                </div>
+                <div class="subsection">
+                    <p>These Terms are governed by the laws of the jurisdiction where HashInsight operates, without regard to conflict of laws principles. Any disputes arising out of or relating to the Service shall be resolved through binding arbitration in that jurisdiction, except that either party may seek equitable relief in a court of competent jurisdiction.</p>
+                </div>
+
+                <!-- Section 11: Contact Information -->
+                <div class="section-title">
+                    <i class="bi bi-envelope"></i>
+                    11. Contact Information
+                </div>
+                <div class="contact-info">
+                    <p style="margin-bottom: 1rem;">If you have questions about these Terms or the Privacy Notice, please contact HashInsight at:</p>
+                    <a href="mailto:cryptocalculator123@gmail.com" class="contact-email">
+                        <i class="bi bi-envelope-fill me-2"></i>
+                        cryptocalculator123@gmail.com
+                    </a>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="footer-section">
+                <p>
+                    <i class="bi bi-shield-check me-2"></i>
+                    By using HashInsight Mining Intelligence, you acknowledge that you have read, understood, and agree to be bound by these Terms of Use and Privacy Notice.
+                </p>
+                <a href="/" class="back-button">
+                    <i class="bi bi-arrow-left me-2"></i>
+                    Return to HashInsight Platform
+                </a>
+            </div>
+        </div>
+    </div>
+    <script src="/static/js/i18n.js"></script>
+</body>
+</html>

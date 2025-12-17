@@ -1,0 +1,785 @@
+asyncapi: 2.6.0
+info:
+  title: HashInsight CRM Platform Event API
+  version: 1.0.0
+  description: |
+    # HashInsight CRM平台事件API规范 / HashInsight CRM Platform Event API Specification
+    
+    基于Redis Pub/Sub的实时事件流，遵循CloudEvents规范，用于系统间异步通信和事件驱动架构。
+    
+    Real-time event streaming based on Redis Pub/Sub, following CloudEvents specification, used for inter-system asynchronous communication and event-driven architecture.
+    
+    ## 事件分类 / Event Categories
+    - **CRM事件**: 线索、商机、合同、活动相关事件
+    - **CRM Events**: Lead, Deal, Contract, Activity related events
+    
+    - **计费事件**: 发票、付款相关事件
+    - **Billing Events**: Invoice, Payment related events
+    
+    - **资产事件**: 矿机资产、工单相关事件
+    - **Asset Events**: Miner Asset, Ticket related events
+    
+    - **自动化事件**: 自动化规则、Webhook相关事件
+    - **Automation Events**: Automation Rule, Webhook related events
+    
+    ## CloudEvents规范 / CloudEvents Specification
+    所有事件遵循CloudEvents v1.0规范，包含标准字段：
+    - `specversion`: CloudEvents版本
+    - `type`: 事件类型
+    - `source`: 事件源
+    - `id`: 事件唯一标识
+    - `time`: 事件时间
+    - `datacontenttype`: 数据格式
+    - `data`: 事件负载
+    
+  contact:
+    name: HashInsight API Support
+    email: events@hashinsight.net
+  license:
+    name: Proprietary
+
+servers:
+  production:
+    url: redis://redis.hashinsight.net:6379
+    protocol: redis
+    description: Production Redis Server / 生产环境Redis服务器
+  staging:
+    url: redis://redis-staging.hashinsight.net:6379
+    protocol: redis
+    description: Staging Redis Server / 测试环境Redis服务器
+  development:
+    url: redis://localhost:6379
+    protocol: redis
+    description: Development Redis Server / 开发环境Redis服务器
+
+defaultContentType: application/json
+
+channels:
+  # ==================== CRM Events CRM事件 ====================
+  crm/lead/captured:
+    description: |
+      线索捕获事件 - 当新线索被创建或捕获时触发
+      
+      Lead Captured Event - Triggered when a new lead is created or captured
+    subscribe:
+      summary: 订阅线索捕获事件 / Subscribe to lead captured events
+      operationId: onLeadCaptured
+      message:
+        $ref: '#/components/messages/LeadCaptured'
+
+  crm/lead/converted:
+    description: |
+      线索转换事件 - 当线索被转换为商机时触发
+      
+      Lead Converted Event - Triggered when a lead is converted to a deal
+    subscribe:
+      summary: 订阅线索转换事件 / Subscribe to lead converted events
+      operationId: onLeadConverted
+      message:
+        $ref: '#/components/messages/LeadConverted'
+
+  crm/deal/stage_changed:
+    description: |
+      商机阶段变更事件 - 当商机销售阶段发生变化时触发
+      
+      Deal Stage Changed Event - Triggered when a deal's sales stage changes
+    subscribe:
+      summary: 订阅商机阶段变更事件 / Subscribe to deal stage changed events
+      operationId: onDealStageChanged
+      message:
+        $ref: '#/components/messages/DealStageChanged'
+
+  crm/contract/signed:
+    description: |
+      合同签署事件 - 当合同被客户签署时触发
+      
+      Contract Signed Event - Triggered when a contract is signed by customer
+    subscribe:
+      summary: 订阅合同签署事件 / Subscribe to contract signed events
+      operationId: onContractSigned
+      message:
+        $ref: '#/components/messages/ContractSigned'
+
+  crm/activity/created:
+    description: |
+      活动创建事件 - 当新的销售活动被创建时触发
+      
+      Activity Created Event - Triggered when a new sales activity is created
+    subscribe:
+      summary: 订阅活动创建事件 / Subscribe to activity created events
+      operationId: onActivityCreated
+      message:
+        $ref: '#/components/messages/ActivityCreated'
+
+  # ==================== Billing Events 计费事件 ====================
+  billing/invoice/issued:
+    description: |
+      发票开具事件 - 当新发票被开具时触发
+      
+      Invoice Issued Event - Triggered when a new invoice is issued
+    subscribe:
+      summary: 订阅发票开具事件 / Subscribe to invoice issued events
+      operationId: onInvoiceIssued
+      message:
+        $ref: '#/components/messages/InvoiceIssued'
+
+  billing/invoice/overdue:
+    description: |
+      发票逾期事件 - 当发票超过到期日期未付款时触发
+      
+      Invoice Overdue Event - Triggered when an invoice is past due date without payment
+    subscribe:
+      summary: 订阅发票逾期事件 / Subscribe to invoice overdue events
+      operationId: onInvoiceOverdue
+      message:
+        $ref: '#/components/messages/InvoiceOverdue'
+
+  billing/payment/received:
+    description: |
+      收款确认事件 - 当收到客户付款时触发
+      
+      Payment Received Event - Triggered when payment is received from customer
+    subscribe:
+      summary: 订阅收款确认事件 / Subscribe to payment received events
+      operationId: onPaymentReceived
+      message:
+        $ref: '#/components/messages/PaymentReceived'
+
+  # ==================== Asset Events 资产事件 ====================
+  asset/status_changed:
+    description: |
+      资产状态变更事件 - 当矿机资产状态发生变化时触发
+      
+      Asset Status Changed Event - Triggered when miner asset status changes
+    subscribe:
+      summary: 订阅资产状态变更事件 / Subscribe to asset status changed events
+      operationId: onAssetStatusChanged
+      message:
+        $ref: '#/components/messages/AssetStatusChanged'
+
+  ops/ticket/created:
+    description: |
+      工单创建事件 - 当新运维工单被创建时触发
+      
+      Ticket Created Event - Triggered when a new operations ticket is created
+    subscribe:
+      summary: 订阅工单创建事件 / Subscribe to ticket created events
+      operationId: onTicketCreated
+      message:
+        $ref: '#/components/messages/TicketCreated'
+
+  # ==================== Automation Events 自动化事件 ====================
+  automation/rule/triggered:
+    description: |
+      自动化触发事件 - 当自动化规则被触发执行时发送
+      
+      Automation Triggered Event - Triggered when an automation rule is executed
+    subscribe:
+      summary: 订阅自动化触发事件 / Subscribe to automation triggered events
+      operationId: onAutomationTriggered
+      message:
+        $ref: '#/components/messages/AutomationTriggered'
+
+  webhook/received:
+    description: |
+      Webhook接收事件 - 当系统接收到外部Webhook调用时触发
+      
+      Webhook Received Event - Triggered when the system receives an external webhook call
+    subscribe:
+      summary: 订阅Webhook接收事件 / Subscribe to webhook received events
+      operationId: onWebhookReceived
+      message:
+        $ref: '#/components/messages/WebhookReceived'
+
+components:
+  messages:
+    # ==================== CRM Event Messages ====================
+    LeadCaptured:
+      name: LeadCaptured
+      title: 线索捕获事件 / Lead Captured Event
+      summary: 新线索被捕获或创建
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CloudEvent'
+        x-payload-data:
+          type: object
+          properties:
+            leadId:
+              type: string
+              format: uuid
+              description: 线索ID / Lead ID
+              example: 550e8400-e29b-41d4-a716-446655440000
+            source:
+              type: string
+              enum: [WEBSITE, REFERRAL, EMAIL, PHONE, SOCIAL_MEDIA, TRADE_SHOW, PARTNER, OTHER]
+              description: 线索来源 / Lead source
+              example: WEBSITE
+            company:
+              type: string
+              description: 公司名称 / Company name
+              example: Bitcoin Mining Corp
+            contactName:
+              type: string
+              description: 联系人姓名 / Contact name
+              example: John Doe
+            email:
+              type: string
+              format: email
+              example: john@btcmining.com
+            assignedTo:
+              type: string
+              format: uuid
+              description: 分配给用户ID / Assigned to user ID
+            capturedAt:
+              type: string
+              format: date-time
+              description: 捕获时间 / Captured at
+              example: "2025-10-07T10:30:00Z"
+
+    LeadConverted:
+      name: LeadConverted
+      title: 线索转换事件 / Lead Converted Event
+      summary: 线索被转换为商机
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CloudEvent'
+        x-payload-data:
+          type: object
+          properties:
+            leadId:
+              type: string
+              format: uuid
+              description: 线索ID / Lead ID
+            dealId:
+              type: string
+              format: uuid
+              description: 新创建的商机ID / Newly created deal ID
+            accountId:
+              type: string
+              format: uuid
+              description: 客户账户ID / Account ID
+            dealTitle:
+              type: string
+              description: 商机标题 / Deal title
+              example: Q1 2025 Mining Equipment Deal
+            dealValue:
+              type: number
+              format: decimal
+              description: 商机金额 / Deal value
+              example: 500000.00
+            convertedBy:
+              type: string
+              format: uuid
+              description: 转换操作人ID / Converted by user ID
+            convertedAt:
+              type: string
+              format: date-time
+              example: "2025-10-07T11:00:00Z"
+
+    DealStageChanged:
+      name: DealStageChanged
+      title: 商机阶段变更事件 / Deal Stage Changed Event
+      summary: 商机销售阶段发生变化
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CloudEvent'
+        x-payload-data:
+          type: object
+          properties:
+            dealId:
+              type: string
+              format: uuid
+              description: 商机ID / Deal ID
+            accountId:
+              type: string
+              format: uuid
+              description: 客户账户ID / Account ID
+            previousStage:
+              type: string
+              enum: [PROSPECTING, QUALIFICATION, PROPOSAL, NEGOTIATION, CLOSED_WON, CLOSED_LOST]
+              description: 之前阶段 / Previous stage
+              example: QUALIFICATION
+            newStage:
+              type: string
+              enum: [PROSPECTING, QUALIFICATION, PROPOSAL, NEGOTIATION, CLOSED_WON, CLOSED_LOST]
+              description: 新阶段 / New stage
+              example: PROPOSAL
+            probability:
+              type: integer
+              description: 成交概率 / Win probability
+              example: 75
+            changedBy:
+              type: string
+              format: uuid
+              description: 变更操作人ID / Changed by user ID
+            changedAt:
+              type: string
+              format: date-time
+              example: "2025-10-07T14:30:00Z"
+
+    ContractSigned:
+      name: ContractSigned
+      title: 合同签署事件 / Contract Signed Event
+      summary: 合同被客户签署
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CloudEvent'
+        x-payload-data:
+          type: object
+          properties:
+            contractId:
+              type: string
+              format: uuid
+              description: 合同ID / Contract ID
+            contractNumber:
+              type: string
+              description: 合同编号 / Contract number
+              example: CON-2025-001
+            accountId:
+              type: string
+              format: uuid
+              description: 客户账户ID / Account ID
+            dealId:
+              type: string
+              format: uuid
+              description: 关联商机ID / Associated deal ID
+            value:
+              type: number
+              format: decimal
+              description: 合同金额 / Contract value
+              example: 500000.00
+            startDate:
+              type: string
+              format: date
+              description: 开始日期 / Start date
+              example: "2025-11-01"
+            endDate:
+              type: string
+              format: date
+              description: 结束日期 / End date
+              example: "2026-10-31"
+            signedAt:
+              type: string
+              format: date-time
+              description: 签署时间 / Signed at
+              example: "2025-10-07T16:00:00Z"
+
+    ActivityCreated:
+      name: ActivityCreated
+      title: 活动创建事件 / Activity Created Event
+      summary: 新销售活动被创建
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CloudEvent'
+        x-payload-data:
+          type: object
+          properties:
+            activityId:
+              type: string
+              format: uuid
+              description: 活动ID / Activity ID
+            type:
+              type: string
+              enum: [CALL, EMAIL, MEETING, TASK, DEMO, FOLLOW_UP]
+              description: 活动类型 / Activity type
+              example: MEETING
+            entityType:
+              type: string
+              enum: [ACCOUNT, CONTACT, LEAD, DEAL, CONTRACT, TICKET]
+              description: 关联实体类型 / Associated entity type
+              example: DEAL
+            entityId:
+              type: string
+              format: uuid
+              description: 关联实体ID / Associated entity ID
+            subject:
+              type: string
+              description: 活动主题 / Activity subject
+              example: Product Demo Meeting
+            scheduledAt:
+              type: string
+              format: date-time
+              description: 计划时间 / Scheduled at
+              example: "2025-10-10T09:00:00Z"
+            createdBy:
+              type: string
+              format: uuid
+              description: 创建人ID / Created by user ID
+            createdAt:
+              type: string
+              format: date-time
+              example: "2025-10-07T10:00:00Z"
+
+    # ==================== Billing Event Messages ====================
+    InvoiceIssued:
+      name: InvoiceIssued
+      title: 发票开具事件 / Invoice Issued Event
+      summary: 新发票被开具
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CloudEvent'
+        x-payload-data:
+          type: object
+          properties:
+            invoiceId:
+              type: string
+              format: uuid
+              description: 发票ID / Invoice ID
+            invoiceNumber:
+              type: string
+              description: 发票编号 / Invoice number
+              example: INV-2025-10-001
+            accountId:
+              type: string
+              format: uuid
+              description: 客户账户ID / Account ID
+            contractId:
+              type: string
+              format: uuid
+              description: 关联合同ID / Associated contract ID
+            totalAmount:
+              type: number
+              format: decimal
+              description: 发票总金额 / Total amount
+              example: 5000.00
+            issueDate:
+              type: string
+              format: date
+              description: 开票日期 / Issue date
+              example: "2025-10-01"
+            dueDate:
+              type: string
+              format: date
+              description: 到期日期 / Due date
+              example: "2025-10-31"
+            issuedAt:
+              type: string
+              format: date-time
+              example: "2025-10-01T08:00:00Z"
+
+    InvoiceOverdue:
+      name: InvoiceOverdue
+      title: 发票逾期事件 / Invoice Overdue Event
+      summary: 发票超过到期日期未付款
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CloudEvent'
+        x-payload-data:
+          type: object
+          properties:
+            invoiceId:
+              type: string
+              format: uuid
+              description: 发票ID / Invoice ID
+            invoiceNumber:
+              type: string
+              description: 发票编号 / Invoice number
+              example: INV-2025-09-001
+            accountId:
+              type: string
+              format: uuid
+              description: 客户账户ID / Account ID
+            totalAmount:
+              type: number
+              format: decimal
+              description: 发票总金额 / Total amount
+              example: 5000.00
+            dueDate:
+              type: string
+              format: date
+              description: 到期日期 / Due date
+              example: "2025-09-30"
+            overdueDays:
+              type: integer
+              description: 逾期天数 / Overdue days
+              example: 7
+            detectedAt:
+              type: string
+              format: date-time
+              description: 检测时间 / Detected at
+              example: "2025-10-07T00:00:00Z"
+
+    PaymentReceived:
+      name: PaymentReceived
+      title: 收款确认事件 / Payment Received Event
+      summary: 收到客户付款
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CloudEvent'
+        x-payload-data:
+          type: object
+          properties:
+            paymentId:
+              type: string
+              format: uuid
+              description: 付款ID / Payment ID
+            invoiceId:
+              type: string
+              format: uuid
+              description: 发票ID / Invoice ID
+            accountId:
+              type: string
+              format: uuid
+              description: 客户账户ID / Account ID
+            amount:
+              type: number
+              format: decimal
+              description: 付款金额 / Payment amount
+              example: 5000.00
+            method:
+              type: string
+              enum: [BANK_TRANSFER, CREDIT_CARD, CRYPTO, CHECK, OTHER]
+              description: 付款方式 / Payment method
+              example: BANK_TRANSFER
+            reference:
+              type: string
+              description: 交易参考号 / Transaction reference
+              example: TXN-2025-10-07-001
+            receivedAt:
+              type: string
+              format: date-time
+              description: 收款时间 / Received at
+              example: "2025-10-07T15:30:00Z"
+
+    # ==================== Asset Event Messages ====================
+    AssetStatusChanged:
+      name: AssetStatusChanged
+      title: 资产状态变更事件 / Asset Status Changed Event
+      summary: 矿机资产状态发生变化
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CloudEvent'
+        x-payload-data:
+          type: object
+          properties:
+            assetId:
+              type: string
+              format: uuid
+              description: 资产ID / Asset ID
+            serialNumber:
+              type: string
+              description: 序列号 / Serial number
+              example: S19PRO-2025-001234
+            accountId:
+              type: string
+              format: uuid
+              description: 客户账户ID / Account ID
+            model:
+              type: string
+              description: 设备型号 / Device model
+              example: Antminer S19 Pro
+            previousStatus:
+              type: string
+              enum: [OPERATIONAL, MAINTENANCE, OFFLINE, RETIRED]
+              description: 之前状态 / Previous status
+              example: OPERATIONAL
+            newStatus:
+              type: string
+              enum: [OPERATIONAL, MAINTENANCE, OFFLINE, RETIRED]
+              description: 新状态 / New status
+              example: OFFLINE
+            reason:
+              type: string
+              description: 变更原因 / Change reason
+              example: Network connectivity issue
+            changedAt:
+              type: string
+              format: date-time
+              example: "2025-10-07T12:00:00Z"
+
+    TicketCreated:
+      name: TicketCreated
+      title: 工单创建事件 / Ticket Created Event
+      summary: 新运维工单被创建
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CloudEvent'
+        x-payload-data:
+          type: object
+          properties:
+            ticketId:
+              type: string
+              format: uuid
+              description: 工单ID / Ticket ID
+            accountId:
+              type: string
+              format: uuid
+              description: 客户账户ID / Account ID
+            assetId:
+              type: string
+              format: uuid
+              description: 关联资产ID / Associated asset ID
+            type:
+              type: string
+              enum: [HARDWARE_ISSUE, NETWORK_ISSUE, PERFORMANCE, MAINTENANCE, SUPPORT, OTHER]
+              description: 工单类型 / Ticket type
+              example: HARDWARE_ISSUE
+            priority:
+              type: string
+              enum: [LOW, MEDIUM, HIGH, CRITICAL]
+              description: 优先级 / Priority
+              example: HIGH
+            subject:
+              type: string
+              description: 工单主题 / Ticket subject
+              example: Miner hashrate dropped
+            assignedTo:
+              type: string
+              format: uuid
+              description: 分配给技术人员ID / Assigned to technician ID
+            createdAt:
+              type: string
+              format: date-time
+              example: "2025-10-07T13:00:00Z"
+
+    # ==================== Automation Event Messages ====================
+    AutomationTriggered:
+      name: AutomationTriggered
+      title: 自动化触发事件 / Automation Triggered Event
+      summary: 自动化规则被触发执行
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CloudEvent'
+        x-payload-data:
+          type: object
+          properties:
+            ruleId:
+              type: string
+              format: uuid
+              description: 规则ID / Rule ID
+            ruleName:
+              type: string
+              description: 规则名称 / Rule name
+              example: Auto-assign high-priority tickets
+            triggerType:
+              type: string
+              enum: [LEAD_CREATED, DEAL_STAGE_CHANGED, INVOICE_OVERDUE, TICKET_CREATED, ASSET_OFFLINE, SCHEDULED]
+              description: 触发类型 / Trigger type
+              example: TICKET_CREATED
+            entityType:
+              type: string
+              enum: [ACCOUNT, CONTACT, LEAD, DEAL, CONTRACT, TICKET]
+              description: 关联实体类型 / Associated entity type
+              example: TICKET
+            entityId:
+              type: string
+              format: uuid
+              description: 关联实体ID / Associated entity ID
+            actions:
+              type: array
+              description: 执行的动作 / Executed actions
+              items:
+                type: string
+              example: ["assign_to_user", "send_notification", "create_task"]
+            status:
+              type: string
+              enum: [SUCCESS, FAILED, SKIPPED]
+              description: 执行状态 / Execution status
+              example: SUCCESS
+            triggeredAt:
+              type: string
+              format: date-time
+              example: "2025-10-07T13:05:00Z"
+
+    WebhookReceived:
+      name: WebhookReceived
+      title: Webhook接收事件 / Webhook Received Event
+      summary: 系统接收到外部Webhook调用
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CloudEvent'
+        x-payload-data:
+          type: object
+          properties:
+            webhookId:
+              type: string
+              format: uuid
+              description: Webhook配置ID / Webhook configuration ID
+            source:
+              type: string
+              description: Webhook来源 / Webhook source
+              example: stripe
+            eventType:
+              type: string
+              description: 外部事件类型 / External event type
+              example: payment_intent.succeeded
+            payload:
+              type: object
+              description: Webhook负载 / Webhook payload
+              additionalProperties: true
+            signature:
+              type: string
+              description: 签名验证 / Signature verification
+            verified:
+              type: boolean
+              description: 是否验证通过 / Verification status
+              example: true
+            receivedAt:
+              type: string
+              format: date-time
+              example: "2025-10-07T15:45:00Z"
+
+  schemas:
+    CloudEvent:
+      type: object
+      description: CloudEvents v1.0 标准事件格式 / CloudEvents v1.0 standard event format
+      required:
+        - specversion
+        - type
+        - source
+        - id
+        - time
+        - datacontenttype
+        - data
+      properties:
+        specversion:
+          type: string
+          description: CloudEvents规范版本 / CloudEvents spec version
+          example: "1.0"
+          const: "1.0"
+        type:
+          type: string
+          description: 事件类型 / Event type
+          example: com.hashinsight.crm.lead.captured
+        source:
+          type: string
+          description: 事件源 / Event source
+          example: /crm/leads
+        id:
+          type: string
+          format: uuid
+          description: 事件唯一标识 / Event unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        time:
+          type: string
+          format: date-time
+          description: 事件发生时间 / Event occurrence time
+          example: "2025-10-07T10:30:00Z"
+        datacontenttype:
+          type: string
+          description: 数据内容类型 / Data content type
+          example: application/json
+          const: application/json
+        subject:
+          type: string
+          description: 事件主题（可选）/ Event subject (optional)
+          example: lead/550e8400-e29b-41d4-a716-446655440000
+        data:
+          type: object
+          description: 事件数据负载 / Event data payload
+          additionalProperties: true
+
+  securitySchemes:
+    redisAuth:
+      type: userPassword
+      description: Redis认证 / Redis authentication
+
+tags:
+  - name: CRM Events
+    description: CRM业务事件 / CRM business events
+  - name: Billing Events
+    description: 计费相关事件 / Billing related events
+  - name: Asset Events
+    description: 资产运维事件 / Asset operations events
+  - name: Automation Events
+    description: 自动化事件 / Automation events

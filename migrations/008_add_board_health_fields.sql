@@ -1,0 +1,29 @@
+-- Migration: Add board health fields to miner telemetry tables
+-- Date: 2025-12-01
+-- Description: Add new columns for P0 Single Miner Dashboard MVP
+
+-- Add new columns to miner_telemetry_live
+ALTER TABLE miner_telemetry_live 
+ADD COLUMN IF NOT EXISTS hashrate_expected_ghs DOUBLE PRECISION DEFAULT 0,
+ADD COLUMN IF NOT EXISTS boards_data JSONB DEFAULT '[]'::jsonb,
+ADD COLUMN IF NOT EXISTS boards_healthy INTEGER DEFAULT 0,
+ADD COLUMN IF NOT EXISTS boards_total INTEGER DEFAULT 0,
+ADD COLUMN IF NOT EXISTS temperature_min DOUBLE PRECISION DEFAULT 0,
+ADD COLUMN IF NOT EXISTS pool_latency_ms DOUBLE PRECISION DEFAULT 0,
+ADD COLUMN IF NOT EXISTS latency_ms DOUBLE PRECISION DEFAULT 0,
+ADD COLUMN IF NOT EXISTS overall_health VARCHAR(20) DEFAULT 'offline',
+ADD COLUMN IF NOT EXISTS model VARCHAR(100) DEFAULT '';
+
+-- Add new columns to miner_telemetry_history
+ALTER TABLE miner_telemetry_history 
+ADD COLUMN IF NOT EXISTS hashrate_expected_ghs DOUBLE PRECISION DEFAULT 0,
+ADD COLUMN IF NOT EXISTS boards_data JSONB DEFAULT '[]'::jsonb,
+ADD COLUMN IF NOT EXISTS boards_healthy INTEGER DEFAULT 0,
+ADD COLUMN IF NOT EXISTS boards_total INTEGER DEFAULT 0,
+ADD COLUMN IF NOT EXISTS temperature_min DOUBLE PRECISION DEFAULT 0,
+ADD COLUMN IF NOT EXISTS pool_latency_ms DOUBLE PRECISION DEFAULT 0,
+ADD COLUMN IF NOT EXISTS latency_ms DOUBLE PRECISION DEFAULT 0,
+ADD COLUMN IF NOT EXISTS overall_health VARCHAR(20) DEFAULT 'offline',
+ADD COLUMN IF NOT EXISTS model VARCHAR(100) DEFAULT '',
+ADD COLUMN IF NOT EXISTS net_profit_usd DOUBLE PRECISION DEFAULT 0,
+ADD COLUMN IF NOT EXISTS revenue_usd DOUBLE PRECISION DEFAULT 0;

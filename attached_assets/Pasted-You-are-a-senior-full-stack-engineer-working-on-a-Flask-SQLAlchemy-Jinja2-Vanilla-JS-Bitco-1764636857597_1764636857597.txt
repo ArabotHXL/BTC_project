@@ -1,0 +1,592 @@
+You are a senior full-stack engineer working on a **Flask + SQLAlchemy + Jinja2 + Vanilla JS** Bitcoin mining management app (HashInsight-style).
+
+We want to implement **two layers of security**:
+
+- **Plan A – “Credentials E2EE” (ship now):**
+  - Encrypt only sensitive credentials (username/password/pool_password) in the browser.
+  - Store them as ciphertext JSON in the DB.
+  - Keep `ip_address` + `port` in plaintext so the Edge Collector can still connect easily.
+- **Plan B – “Full Connection E2EE” (next-stage upgrade on top of A):**
+  - Add support for fully encrypting the entire connection object (IP/Port + credentials) so the cloud only stores ciphertext.
+  - Edge Collector and farm/site owner’s browser decrypt locally with a shared passphrase/master key.
+  - The backend must **never** be able to decrypt.
+
+Both Plan A and Plan B should be implemented in this repo in a sane, incremental way:
+
+- Plan A must be fully wired and usable in production.
+- Plan B must have:
+  - DB schema support.
+  - API surface.
+  - Frontend encryption/decryption helpers.
+  - Python helper for Edge Collector decryption.
+  - It can be guarded behind a feature flag (config) if appropriate.
+
+---
+
+## 0. Core Security Rules (Do NOT break these)
+
+1. **No server-side decryption.**
+   - The Flask backend must never possess or derive the key used to encrypt miner secrets.
+   - The backend should only store and return ciphertext blocks.
+2. **No key recovery logic.**
+   - If a farm/site owner loses their passphrase/master key, we cannot recover the secrets; they must re-enter and re-encrypt.
+3. **No logging of plaintext credentials.**
+   - Avoid logging secrets in both frontend and backend.
+
+---
+
+## 1. SQLAlchemy Models – Support Plan A + Plan B
+
+Locate the `HostingMiner` model (or equivalent).
+
+### 1.1 Plan A fields (credentials E2EE)
+
+Extend the model to store plaintext IP/Port + encrypted credentials:
+
+```python
+from sqlalchemy import Column, Integer, String, JSON, Boolean  # adjust imports as needed
+
+class HostingMiner(Base):
+    __tablename__ = "hosting_miners"
+
+    id = Column(Integer, primary_key=True)
+    # existing fields...
+
+    # Plan A – plaintext connection endpoints (Edge Collector uses these)
+    ip_address = Column(String, nullable=False)   # e.g. "192.168.1.23"
+    port = Column(Integer, nullable=False)        # e.g. 4028 or SSH/HTTP port
+
+    # Plan A – encrypted credentials (username/password/pool_password)
+    encrypted_credentials = Column(JSON, nullable=True)  # AES-GCM block
+
+    # Plan B – full E2EE connection support (optional)
+    encrypted_connection_full = Column(JSON, nullable=True)
+
+    # simple mode flag to indicate whether this miner uses full E2EE
+    use_full_e2ee = Column(Boolean, nullable=False, default=False)
+encrypted_credentials (Plan A) holds credentials only.
+
+encrypted_connection_full (Plan B) holds the entire connection blob including IP/Port if full E2EE is enabled.
+
+use_full_e2ee = False → Plan A mode (plaintext IP/Port + encrypted_credentials).
+
+use_full_e2ee = True → Plan B mode (IP/Port & credentials come from encrypted_connection_full; Plan A field may be null/ignored).
+
+Create/adjust migrations to add:
+
+encrypted_credentials (JSON / Text)
+
+encrypted_connection_full (JSON / Text)
+
+use_full_e2ee (Boolean)
+
+2. Ciphertext JSON schema
+Use a common structure for both Plan A and Plan B ciphertext blocks:
+
+json
+复制代码
+{
+  "ciphertext": "base64...",
+  "iv": "base64...",
+  "salt": "base64...",
+  "algo": "AES-256-GCM",
+  "version": 1
+}
+ciphertext: base64 of AES-GCM ciphertext.
+
+iv: base64 12-byte IV.
+
+salt: base64 for PBKDF2 salt.
+
+algo: fixed "AES-256-GCM".
+
+version: 1 for now (allow future upgrades).
+
+3. Flask API – Plan A and Plan B endpoints
+3.1 Common rules
+All endpoints must enforce:
+
+Authentication.
+
+Authorization: only the farm/site owner (or authorized user) can access/update miner secrets.
+
+Endpoints must never accept/return plaintext credentials (and for Plan B, not plaintext IP/Port) in these secret-specific routes.
+
+Assume miner IDs are integer.
+
+Plan A endpoints (credentials only)
+GET /api/miners/<int:miner_id>/credentials
+
+POST /api/miners/<int:miner_id>/credentials
+
+Plan B endpoints (full connection E2EE)
+GET /api/miners/<int:miner_id>/connection_full
+
+POST /api/miners/<int:miner_id>/connection_full
+
+Implement all four.
+
+3.2 GET /api/miners/<miner_id>/credentials (Plan A)
+Return current encrypted credentials:
+
+json
+复制代码
+{
+  "miner_id": 123,
+  "encrypted_credentials": {
+    "ciphertext": "base64...",
+    "iv": "base64...",
+    "salt": "base64...",
+    "algo": "AES-256-GCM",
+    "version": 1
+  }
+}
+If encrypted_credentials is None, return encrypted_credentials: null.
+
+3.3 POST /api/miners/<miner_id>/credentials (Plan A)
+Request body:
+
+json
+复制代码
+{
+  "encrypted_credentials": {
+    "ciphertext": "base64...",
+    "iv": "base64...",
+    "salt": "base64...",
+    "algo": "AES-256-GCM",
+    "version": 1
+  }
+}
+Validate ciphertext, iv, salt, algo, version.
+
+Only accept algo == "AES-256-GCM", version == 1.
+
+Save encrypted_credentials as-is to DB.
+
+Do not attempt to decrypt.
+
+Return updated JSON (like GET).
+
+This is Plan A: username/password/pool_password are sent as ciphertext only.
+
+3.4 GET /api/miners/<miner_id>/connection_full (Plan B)
+Return:
+
+json
+复制代码
+{
+  "miner_id": 123,
+  "use_full_e2ee": true,
+  "encrypted_connection_full": {
+    "ciphertext": "base64...",
+    "iv": "base64...",
+    "salt": "base64...",
+    "algo": "AES-256-GCM",
+    "version": 1
+  }
+}
+If encrypted_connection_full is None, return encrypted_connection_full: null and use_full_e2ee: false.
+
+3.5 POST /api/miners/<miner_id>/connection_full (Plan B)
+Request body:
+
+json
+复制代码
+{
+  "use_full_e2ee": true,
+  "encrypted_connection_full": {
+    "ciphertext": "base64...",
+    "iv": "base64...",
+    "salt": "base64...",
+    "algo": "AES-256-GCM",
+    "version": 1
+  }
+}
+Behaviors:
+
+If use_full_e2ee == true:
+
+Save encrypted_connection_full.
+
+Set use_full_e2ee = True.
+
+Optionally set ip_address / port / encrypted_credentials to NULL or mark as legacy in comments (depending on migration strategy).
+
+If use_full_e2ee == false:
+
+This can be used to disable full E2EE and fall back to Plan A mode:
+
+Set use_full_e2ee = False.
+
+Optionally clear encrypted_connection_full.
+
+Do not decrypt anywhere in the backend.
+
+4. Frontend – Web Crypto (Vanilla JS, Jinja2 templates)
+We don’t use React here; create a reusable JS crypto module.
+
+4.1 JS module for encryption (shared Plan A & Plan B)
+Create static/js/crypto_miner_e2ee.js:
+
+js
+复制代码
+// static/js/crypto_miner_e2ee.js
+
+(function () {
+  async function deriveKeyFromPassphrase(passphrase, saltBase64) {
+    const enc = new TextEncoder();
+    const salt = Uint8Array.from(atob(saltBase64), c => c.charCodeAt(0));
+
+    const baseKey = await crypto.subtle.importKey(
+      "raw",
+      enc.encode(passphrase),
+      { name: "PBKDF2" },
+      false,
+      ["deriveKey"]
+    );
+
+    const key = await crypto.subtle.deriveKey(
+      {
+        name: "PBKDF2",
+        salt,
+        iterations: 100000,
+        hash: "SHA-256",
+      },
+      baseKey,
+      { name: "AES-GCM", length: 256 },
+      false,
+      ["encrypt", "decrypt"]
+    );
+
+    return key;
+  }
+
+  function randomBytesBase64(len) {
+    const buf = crypto.getRandomValues(new Uint8Array(len));
+    return btoa(String.fromCharCode(...buf));
+  }
+
+  async function encryptObject(obj, passphrase) {
+    const enc = new TextEncoder();
+    const plainText = JSON.stringify(obj);
+
+    const saltBase64 = randomBytesBase64(16);
+    const ivBytes = crypto.getRandomValues(new Uint8Array(12));
+    const ivBase64 = btoa(String.fromCharCode(...ivBytes));
+
+    const key = await deriveKeyFromPassphrase(passphrase, saltBase64);
+
+    const cipherBuffer = await crypto.subtle.encrypt(
+      { name: "AES-GCM", iv: ivBytes },
+      key,
+      enc.encode(plainText)
+    );
+
+    const cipherArray = new Uint8Array(cipherBuffer);
+    const ciphertextBase64 = btoa(String.fromCharCode(...cipherArray));
+
+    return {
+      ciphertext: ciphertextBase64,
+      iv: ivBase64,
+      salt: saltBase64,
+      algo: "AES-256-GCM",
+      version: 1,
+    };
+  }
+
+  async function decryptObject(block, passphrase) {
+    const { ciphertext, iv, salt, algo } = block;
+    if (algo !== "AES-256-GCM") {
+      throw new Error("Unsupported algo: " + algo);
+    }
+
+    const dec = new TextDecoder();
+
+    const ivBytes = Uint8Array.from(atob(iv), c => c.charCodeAt(0));
+    const saltBase64 = salt;
+    const cipherBytes = Uint8Array.from(atob(ciphertext), c => c.charCodeAt(0));
+
+    const key = await deriveKeyFromPassphrase(passphrase, saltBase64);
+
+    const plainBuffer = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: ivBytes },
+      key,
+      cipherBytes
+    );
+
+    const plainText = dec.decode(plainBuffer);
+    return JSON.parse(plainText);
+  }
+
+  // Expose globally
+  window.MinerE2EE = {
+    encryptObject,
+    decryptObject,
+  };
+})();
+This is the foundational crypto for both Plan A and Plan B.
+
+5. UI Integration – Plan A (credentials only)
+On the miner settings page (Jinja2 template) where username/password/pool_password are edited:
+
+5.1 New fields & UX
+Inputs:
+
+username
+
+password
+
+pool_password
+
+encryption_passphrase (the farm/site owner’s passphrase, never sent to server in plaintext; used only client-side for encryption/decryption).
+
+5.2 Save flow (Plan A)
+Attach a JS handler to submit:
+
+Prevent default form submission.
+
+Build plainCreds = { username, password, pool_password }.
+
+Call MinerE2EE.encryptObject(plainCreds, passphrase).
+
+POST to /api/miners/<id>/credentials with:
+
+json
+复制代码
+{
+  "encrypted_credentials": { ...cipher block... }
+}
+On success:
+
+Show a success message (“Credentials encrypted and saved.”).
+
+Optionally clear plaintext password fields in the DOM.
+
+Plan A does not change how IP/Port are stored – they remain in standard form input → server.
+
+5.3 Load/decrypt flow (Plan A)
+On page load:
+
+Fetch /api/miners/<id>/credentials.
+
+If encrypted_credentials exists:
+
+Prompt for encryption_passphrase (if not already provided).
+
+Call MinerE2EE.decryptObject(encrypted_credentials, passphrase).
+
+Fill username/password/pool_password inputs for editing.
+
+If decryption fails:
+
+Show a clear error:
+
+“Unable to decrypt miner credentials. Please check your passphrase.”
+
+Do not send any passphrase to the server.
+
+6. UI Integration – Plan B (full connection E2EE)
+For the next stage, support a “Full E2EE mode” for miners:
+
+6.1 Frontend model
+Define the full connection object structure in JS (used only on client when Plan B is enabled):
+
+js
+复制代码
+// Example of full connection plain object
+const fullConnection = {
+  ip_address: "192.168.1.23",
+  port: 4028,
+  username: "admin",
+  password: "miner123",
+  pool_url: "stratum+tcp://pool:3333",
+  pool_user: "user.worker",
+  pool_password: "secret",
+  // add anything else relevant
+};
+6.2 Save flow (Plan B)
+Add a toggle in UI: "Enable full end-to-end encryption for this miner" → bound to use_full_e2ee.
+
+When enabled:
+
+Collect all connection fields (ip/port + credentials + pool info) into fullConnection.
+
+Get encryption_passphrase from user.
+
+Call MinerE2EE.encryptObject(fullConnection, passphrase) → encrypted_connection_full.
+
+POST to /api/miners/<id>/connection_full:
+
+json
+复制代码
+{
+  "use_full_e2ee": true,
+  "encrypted_connection_full": { ...cipher block... }
+}
+After saving:
+
+UI should indicate that this miner is now in full E2EE mode.
+
+Optionally hide plaintext IP/Port fields or mark them as “derived from encrypted config”.
+
+If user chooses to disable full E2EE:
+
+POST:
+
+json
+复制代码
+{
+  "use_full_e2ee": false,
+  "encrypted_connection_full": null
+}
+Backend sets use_full_e2ee = False and can fall back to Plan A behavior.
+
+6.3 Load/decrypt flow (Plan B)
+On edit page, if use_full_e2ee is true:
+
+Fetch /api/miners/<id>/connection_full.
+
+Prompt for encryption_passphrase if not provided.
+
+Call MinerE2EE.decryptObject(encrypted_connection_full, passphrase) → fullConnection.
+
+Populate all form fields from fullConnection.
+
+The server never sees the passphrase or decrypted object.
+
+7. Edge Collector – Python helper for Plan B
+Create a small Python module for the Edge Collector to decrypt encrypted_connection_full locally, using the same passphrase-based scheme (farm/site owner inputs passphrase on Edge deployment).
+
+File (example): edge/crypto_e2ee.py
+
+Use cryptography or pycryptodomex for AES-GCM. Example outline:
+
+python
+复制代码
+# edge/crypto_e2ee.py
+
+import base64
+import json
+from typing import Dict
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+
+def derive_key_from_passphrase(passphrase: str, salt_base64: str) -> bytes:
+    salt = base64.b64decode(salt_base64)
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        iterations=100_000,
+    )
+    return kdf.derive(passphrase.encode("utf-8"))
+
+
+def decrypt_connection_full(block: Dict, passphrase: str) -> Dict:
+    """
+    block: {
+      "ciphertext": "...",
+      "iv": "...",
+      "salt": "...",
+      "algo": "AES-256-GCM",
+      "version": 1
+    }
+    Returns a dict like fullConnection (ip, port, username, etc.).
+    """
+    if block.get("algo") != "AES-256-GCM":
+        raise ValueError("Unsupported algo")
+
+    key = derive_key_from_passphrase(passphrase, block["salt"])
+    aesgcm = AESGCM(key)
+
+    iv = base64.b64decode(block["iv"])
+    ciphertext = base64.b64decode(block["ciphertext"])
+
+    plaintext = aesgcm.decrypt(iv, ciphertext, None)
+    return json.loads(plaintext.decode("utf-8"))
+Usage in Edge Collector:
+
+Farm/site owner configures a MASTER_PASSPHRASE or enters it at runtime.
+
+Edge fetches encrypted_connection_full for a given miner from the cloud.
+
+Edge calls decrypt_connection_full(encrypted_block, MASTER_PASSPHRASE) to get:
+
+python
+复制代码
+{
+  "ip_address": "...",
+  "port": 4028,
+  "username": "...",
+  "password": "...",
+  "pool_url": "...",
+  "pool_user": "...",
+  "pool_password": "...",
+  ...
+}
+Edge then uses these to connect to CGMiner locally.
+
+Important: Edge decryption happens on the miner-side network, not on the cloud backend.
+The cloud backend never sees the passphrase or decrypted fullConnection.
+
+8. UX Copy / Warnings (Both Plans)
+In the Jinja2 templates, add clear messaging:
+
+For Plan A (credentials E2EE):
+
+“Your miner login and pool credentials are encrypted in your browser using your passphrase.
+The server only stores ciphertext and cannot see your plaintext password.
+If you lose this passphrase, you will need to re-enter and re-encrypt your credentials.”
+
+For Plan B (full connection E2EE):
+
+“Full end-to-end encryption is enabled for this miner.
+The full connection info (IP/Port and credentials) is stored as ciphertext only.
+Only you and your on-site Edge Collector, with the passphrase, can decrypt it.
+If you lose the passphrase, the connection must be reconfigured.”
+
+9. Tests & Verification
+Backend tests:
+
+GET/POST /api/miners/<id>/credentials:
+
+Only accepts/returns encrypted_credentials, not plaintext.
+
+GET/POST /api/miners/<id>/connection_full:
+
+Only accepts/returns encrypted_connection_full, not plaintext.
+
+JS tests (or manual verification):
+
+Round-trip encryptObject → decryptObject yields original object.
+
+Wrong passphrase → decryption fails.
+
+Edge Python tests:
+
+Round-trip encryptObject in JS → decrypt_connection_full in Python returns the same fullConnection.
+
+Manual E2E:
+
+Configure miner with Plan A only.
+
+Later enable Plan B for that miner.
+
+Confirm DB stores only ciphertext for encrypted parts.
+
+Confirm backend has no code path that decrypts any of these secret blocks.
+
+Implement all of the above, with:
+
+Plan A: fully functional and used by default (credentials E2EE, plaintext IP/Port).
+
+Plan B: fully implemented but gated by use_full_e2ee flag, ready for advanced users and Edge integration.
+
+Remember:
+No server-side decryption, no key recovery.
+All decryption must happen either in the farm/site owner’s browser or on the on-site Edge Collector.
+
+yaml
+复制代码

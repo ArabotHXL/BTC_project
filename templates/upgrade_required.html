@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}需要升级订阅 - Upgrade Required{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card bg-dark border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">
+                        <i class="bi bi-star-fill"></i>
+                        {% if session.language == 'zh' %}
+                        需要升级订阅计划
+                        {% else %}
+                        Upgrade Required
+                        {% endif %}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-lock-fill text-warning" style="font-size: 3rem;"></i>
+                    </div>
+                    
+                    <div class="text-center mb-4">
+                        {% if session.language == 'zh' %}
+                        <h5>此功能需要更高级的订阅计划</h5>
+                        <p class="text-muted">您当前的 <strong>{{ current_plan|title }}</strong> 计划无法访问 <strong>{{ feature }}</strong> 功能。</p>
+                        <p>请升级到 <strong>{{ required_plan|title }}</strong> 或更高计划以解锁此功能。</p>
+                        {% else %}
+                        <h5>This Feature Requires an Upgrade</h5>
+                        <p class="text-muted">Your current <strong>{{ current_plan|title }}</strong> plan doesn't include access to <strong>{{ feature }}</strong>.</p>
+                        <p>Please upgrade to <strong>{{ required_plan|title }}</strong> or higher to unlock this feature.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Plan Comparison -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card bg-secondary {% if current_plan == 'free' %}border-primary{% endif %}">
+                                <div class="card-header text-center">
+                                    <h6>Free</h6>
+                                    <h4>$0<small class="text-muted">/month</small></h4>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-unstyled">
+                                        <li><i class="bi bi-check text-success"></i> 基础挖矿计算器</li>
+                                        <li><i class="bi bi-check text-success"></i> 3种矿机型号</li>
+                                        <li><i class="bi bi-check text-success"></i> 7天历史数据</li>
+                                        <li><i class="bi bi-x text-danger"></i> 批量计算器</li>
+                                        <li><i class="bi bi-x text-danger"></i> CRM系统</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-secondary {% if current_plan == 'basic' %}border-primary{% endif %} {% if required_plan == 'basic' %}border-warning{% endif %}">
+                                <div class="card-header text-center {% if required_plan == 'basic' %}bg-warning text-dark{% endif %}">
+                                    <h6>Basic</h6>
+                                    <h4>$29<small class="text-muted">/month</small></h4>
+                                    {% if required_plan == 'basic' %}
+                                    <span class="badge bg-dark">推荐 Recommended</span>
+                                    {% endif %}
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-unstyled">
+                                        <li><i class="bi bi-check text-success"></i> 所有免费功能</li>
+                                        <li><i class="bi bi-check text-success"></i> 批量计算器</li>
+                                        <li><i class="bi bi-check text-success"></i> CRM系统</li>
+                                        <li><i class="bi bi-check text-success"></i> 42种矿机型号</li>
+                                        <li><i class="bi bi-check text-success"></i> 30天历史数据</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-secondary {% if current_plan == 'pro' %}border-primary{% endif %} {% if required_plan == 'pro' %}border-warning{% endif %}">
+                                <div class="card-header text-center {% if required_plan == 'pro' %}bg-warning text-dark{% endif %}">
+                                    <h6>Pro</h6>
+                                    <h4>$99<small class="text-muted">/month</small></h4>
+                                    {% if required_plan == 'pro' %}
+                                    <span class="badge bg-dark">推荐 Recommended</span>
+                                    {% endif %}
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-unstyled">
+                                        <li><i class="bi bi-check text-success"></i> 所有基础功能</li>
+                                        <li><i class="bi bi-check text-success"></i> 高级分析平台</li>
+                                        <li><i class="bi bi-check text-success"></i> 用户管理系统</li>
+                                        <li><i class="bi bi-check text-success"></i> 专业报告生成</li>
+                                        <li><i class="bi bi-check text-success"></i> 无限历史数据</li>
+                                        <li><i class="bi bi-check text-success"></i> API访问</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="text-center">
+                        <a href="/pricing" class="btn btn-warning btn-lg me-3">
+                            <i class="bi bi-arrow-up-circle"></i>
+                            {% if session.language == 'zh' %}
+                            查看升级选项
+                            {% else %}
+                            View Upgrade Options
+                            {% endif %}
+                        </a>
+                        <a href="/dashboard" class="btn btn-secondary">
+                            {% if session.language == 'zh' %}
+                            返回仪表板
+                            {% else %}
+                            Back to Dashboard
+                            {% endif %}
+                        </a>
+                    </div>
+
+                    <!-- Contact Support -->
+                    <div class="text-center mt-4">
+                        <small class="text-muted">
+                            {% if session.language == 'zh' %}
+                            有问题？<a href="/contact" class="text-warning">联系支持团队</a>
+                            {% else %}
+                            Questions? <a href="/contact" class="text-warning">Contact Support</a>
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

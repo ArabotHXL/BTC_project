@@ -1,0 +1,3252 @@
+<!DOCTYPE html>
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ tr('hashinsight_treasury_management') }}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+    
+    <!-- Bootstrap JavaScript Bundle (includes Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom Styles -->
+    <style>
+        :root {
+            --bg-primary: #0d1421;
+            --bg-secondary: #1a2332;
+            --bg-tertiary: #2d3748;
+            --text-primary: #ffffff;
+            --text-secondary: #a0aec0;
+            --accent-gold: #f39c12;
+            --accent-purple: #764ba2;
+            --accent-blue: #667eea;
+            --success: #48bb78;
+            --warning: #ed8936;
+            --danger: #f56565;
+            --info: #4299e1;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        /* Force all text to be white except disclaimer icon */
+        *, *::before, *::after {
+            color: white !important;
+        }
+        
+        /* Exception for disclaimer icon - must come after global rule */
+        .disclaimer-icon, 
+        .disclaimer-icon::before, 
+        .disclaimer-icon::after {
+            color: #dc3545 !important;
+        }
+        
+
+
+        /* Override specific elements that might have different colors */
+        h1, h2, h3, h4, h5, h6, p, span, div, a, label, li, td, th, 
+        .card-title, .card-text, .metric-label, .text-muted, 
+        .text-secondary, .text-primary, .small, .lead, .navbar-text,
+        .dropdown-item, .form-label, .btn, .badge,
+        .alert, .progress-bar, .list-group-item, .nav-link, 
+        .breadcrumb-item, .card-header, .card-footer, .modal-header,
+        .modal-body, .modal-footer, .table, .form-text, .input-group-text,
+        .text-info, .text-success, .text-warning, .text-danger {
+            color: white !important;
+        }
+
+        /* Input fields with black text */
+        .form-control, input, textarea, select {
+            color: black !important;
+            background-color: white !important;
+        }
+
+        /* Ensure input placeholders are also white */
+        ::placeholder {
+            color: rgba(255, 255, 255, 0.7) !important;
+        }
+
+        /* Override Bootstrap text utility classes */
+        .text-dark, .text-black-50, .text-body {
+            color: white !important;
+        }
+
+        /* Alert improvements for better visibility */
+        .alert-warning {
+            background-color: rgba(237, 137, 54, 0.15) !important;
+            border: 1px solid rgba(237, 137, 54, 0.5) !important;
+            color: #ffd700 !important;
+        }
+        
+        .alert-warning * {
+            color: #ffd700 !important;
+        }
+        
+        /* Educational disclaimer - enhanced readability */
+        .disclaimer-text {
+            color: #000000 !important;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+        
+        .alert-warning.disclaimer-text {
+            background: linear-gradient(135deg, #fff9e6, #fef3d0) !important;
+            border: 2px solid #f39c12 !important;
+            color: #000000 !important;
+            box-shadow: 0 4px 12px rgba(243, 156, 18, 0.15);
+            border-radius: 12px;
+        }
+
+        .disclaimer-text strong {
+            color: #000000 !important;
+            font-weight: 600;
+        }
+        
+        /* Override alert-warning global styles for disclaimer specifically */
+        .alert-warning.disclaimer-text * {
+            color: #000000 !important;
+        }
+        
+        /* Make icon red with highest specificity - must come after the * rule */
+        .alert-warning.disclaimer-text .bi-info-circle,
+        .alert-warning.disclaimer-text i.bi-info-circle,
+        .alert-warning.disclaimer-text > .bi-info-circle {
+            color: #dc3545 !important;
+        }
+        
+        /* Additional specificity for icon */
+        .disclaimer-text .bi-info-circle,
+        .disclaimer-icon {
+            color: #dc3545 !important;
+        }
+        
+        /* Force red color for disclaimer icon with maximum specificity - MUST override global white rule */
+        .alert-warning.disclaimer-text .disclaimer-icon,
+        .disclaimer-icon.bi-info-circle,
+        i.disclaimer-icon {
+            color: #dc3545 !important;
+        }
+        
+        /* Override global white color rule specifically for disclaimer icon */
+        .disclaimer-icon::before,
+        .disclaimer-icon::after,
+        .disclaimer-icon {
+            color: #dc3545 !important;
+        }
+        
+
+
+        /* Navigation Bar */
+        .navbar {
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+            padding: 1rem 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+        }
+
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white !important;
+        }
+
+        /* Cards */
+        .card {
+            background: linear-gradient(145deg, var(--bg-secondary), #1e2a3a);
+            border: 1px solid rgba(116, 75, 162, 0.2);
+            border-radius: 16px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(116, 75, 162, 0.2), 0 5px 20px rgba(0,0,0,0.3);
+            border-color: rgba(116, 75, 162, 0.4);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--bg-tertiary), #3a4b5c);
+            border-bottom: 2px solid rgba(243, 156, 18, 0.3);
+            border-bottom: 2px solid var(--accent-gold);
+            font-weight: 600;
+            padding: 1rem 1.25rem;
+        }
+
+        /* Treasury Overview Cards */
+        .treasury-card {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .treasury-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-gold), var(--accent-purple), var(--accent-blue));
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--accent-gold);
+        }
+
+        .metric-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Signal Indicators */
+        .signal-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        .signal-green { background: var(--success); }
+        .signal-yellow { background: var(--warning); }
+        .signal-red { background: var(--danger); }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Strategy Cards */
+        .strategy-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .strategy-card:hover {
+            border-color: var(--accent-gold);
+            transform: scale(1.02);
+        }
+
+        .strategy-card.selected {
+            border-color: var(--accent-blue);
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        /* Execution Panel */
+        .execution-panel {
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .execution-btn {
+            background: linear-gradient(135deg, var(--accent-gold) 0%, #e67e22 100%);
+            border: none;
+            color: white;
+            padding: 0.8rem 2.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .execution-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .execution-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(243, 156, 18, 0.5);
+            background: linear-gradient(135deg, #e67e22 0%, var(--accent-gold) 100%);
+        }
+
+        .execution-btn:hover::before {
+            left: 100%;
+        }
+
+        /* Alert Badge */
+        .alert-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        /* Tabs */
+        .nav-tabs {
+            border-bottom: 2px solid var(--bg-tertiary);
+            background: linear-gradient(135deg, rgba(116, 75, 162, 0.1), rgba(102, 126, 234, 0.05));
+            border-radius: 12px 12px 0 0;
+            padding: 0.5rem;
+        }
+
+        .nav-tabs .nav-link {
+            color: #ffffff !important;
+            border: none;
+            padding: 1rem 1.5rem;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            font-weight: 500;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .nav-tabs .nav-link:hover {
+            color: #ffffff !important;
+            background: rgba(243, 156, 18, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .nav-tabs .nav-link.active {
+            color: #ffffff !important;
+            background: linear-gradient(135deg, var(--accent-gold), #e67e22);
+            border-bottom: none;
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+            font-weight: 600;
+        }
+
+        /* Loading Animation */
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--bg-tertiary);
+            border-top-color: var(--accent-gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive Grid */
+        @media (max-width: 768px) {
+            .metric-value { font-size: 1.5rem; }
+            .card { margin-bottom: 1rem; }
+        }
+
+        /* Risk Level Indicators */
+        .risk-low { 
+            color: var(--success); 
+            text-shadow: 0 0 8px rgba(72, 187, 120, 0.3);
+        }
+        .risk-medium { 
+            color: var(--warning); 
+            text-shadow: 0 0 8px rgba(237, 137, 54, 0.3);
+        }
+        .risk-high { 
+            color: var(--danger); 
+            text-shadow: 0 0 8px rgba(245, 101, 101, 0.3);
+        }
+
+        /* Signal Indicators */
+        .signal-indicator {
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            animation: signalPulse 2s ease-in-out infinite;
+        }
+
+        .signal-bullish {
+            background: linear-gradient(135deg, rgba(72, 187, 120, 0.2), rgba(72, 187, 120, 0.1));
+            color: var(--success);
+            border: 1px solid rgba(72, 187, 120, 0.3);
+        }
+
+        .signal-bearish {
+            background: linear-gradient(135deg, rgba(245, 101, 101, 0.2), rgba(245, 101, 101, 0.1));
+            color: var(--danger);
+            border: 1px solid rgba(245, 101, 101, 0.3);
+        }
+
+        .signal-neutral {
+            background: linear-gradient(135deg, rgba(237, 137, 54, 0.2), rgba(237, 137, 54, 0.1));
+            color: var(--warning);
+            border: 1px solid rgba(237, 137, 54, 0.3);
+        }
+
+        @keyframes signalPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        /* Progress Bars */
+        .progress {
+            height: 10px;
+            background: rgba(45, 55, 72, 0.6);
+            border-radius: 50px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        
+        .progress::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.1), transparent);
+            border-radius: 50px 50px 0 0;
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, var(--accent-gold), var(--accent-purple), var(--accent-blue));
+            background-size: 200% 100%;
+            animation: progressShimmer 2s ease-in-out infinite;
+            transition: width 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            border-radius: 50px;
+            position: relative;
+        }
+
+        @keyframes progressShimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Tooltips */
+        .info-tooltip {
+            cursor: help;
+            color: var(--info);
+            margin-left: 5px;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--bg-tertiary), #3a4b5c);
+            border-radius: 4px;
+            transition: background 0.3s ease;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-purple));
+        }
+
+        /* Metric Values Enhancement */
+        .metric-value {
+            background: linear-gradient(135deg, #fff, #f8f9fa);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Form Controls Enhancement */
+        .form-control, .form-select {
+            background: rgba(26, 35, 50, 0.8) !important;
+            border: 1px solid rgba(116, 75, 162, 0.3) !important;
+            color: white !important;
+            border-radius: 8px !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--accent-gold) !important;
+            box-shadow: 0 0 0 0.2rem rgba(243, 156, 18, 0.25) !important;
+            background: rgba(26, 35, 50, 0.9) !important;
+        }
+
+        /* Tab Icons Enhancement */
+        .nav-tabs .nav-link i {
+            font-size: 1.1rem;
+            margin-right: 0.5rem;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+        }
+
+        .nav-tabs .nav-link.active i {
+            color: #ffffff;
+            text-shadow: 0 0 8px rgba(255,255,255,0.3);
+        }
+
+        /* Navigation Buttons Enhancement */
+        .nav-btn {
+            background: linear-gradient(135deg, rgba(243, 156, 18, 0.9), rgba(230, 126, 34, 0.9)) !important;
+            border: 2px solid rgba(243, 156, 18, 0.6) !important;
+            color: #ffffff !important;
+            font-weight: 600 !important;
+            padding: 0.5rem 1rem !important;
+            border-radius: 8px !important;
+            transition: all 0.3s ease !important;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
+            box-shadow: 0 2px 8px rgba(243, 156, 18, 0.2) !important;
+        }
+
+        .nav-btn:hover {
+            background: linear-gradient(135deg, rgba(243, 156, 18, 1), rgba(230, 126, 34, 1)) !important;
+            border-color: rgba(243, 156, 18, 0.8) !important;
+            color: #ffffff !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3) !important;
+        }
+
+        .nav-btn i {
+            font-size: 1rem !important;
+            filter: drop-shadow(0 1px 1px rgba(0,0,0,0.2)) !important;
+        }
+
+        /* Dropdown menu styling */
+        .dropdown-menu {
+            background: var(--bg-secondary) !important;
+            border: 1px solid rgba(116, 75, 162, 0.3) !important;
+            border-radius: 8px !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .dropdown-item {
+            color: white !important;
+            transition: all 0.3s ease !important;
+            padding: 0.7rem 1rem !important;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(243, 156, 18, 0.2) !important;
+            color: #f39c12 !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <div class="container-fluid px-4">
+        <nav class="navbar navbar-expand-lg">
+            <div class="container-fluid">
+                <div class="navbar-brand d-flex align-items-center">
+                    <i class="bi bi-bank2 me-2"></i>
+                    {{ tr('hashinsight_treasury_management') }}
+                </div>
+                
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Last Update Timestamp -->
+                    <small class="text-muted">
+                        <i class="bi bi-clock-history me-1"></i>
+                        <span id="lastUpdateTime">Last update: --</span>
+                    </small>
+                    
+                    <!-- Alert Indicator -->
+                    <div class="position-relative">
+                        <button class="btn nav-btn" id="alertsBtn">
+                            <i class="bi bi-bell"></i>
+                            <span class="alert-badge" id="alertCount" style="display: none;">0</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Language Switcher -->
+                    <div class="dropdown">
+                        <button type="button" class="btn nav-btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="languageDropdown">
+                            <i class="bi bi-globe me-1"></i>
+                            <span id="currentLangDisplay">{{ 'CN' if current_lang == 'zh' else 'EN' }}</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown" 
+                            style="background: var(--bg-secondary) !important; border: 1px solid rgba(116, 75, 162, 0.3) !important; z-index: 1050;">
+                            <li>
+                                <a class="dropdown-item" href="#" onclick="switchLanguage('zh')" 
+                                   style="color: white !important; padding: 12px 20px !important; display: block !important;">
+                                    <i class="bi bi-translate me-2"></i>中文
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" onclick="switchLanguage('en')" 
+                                   style="color: white !important; padding: 12px 20px !important; display: block !important;">
+                                    <i class="bi bi-translate me-2"></i>English
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Back to Main -->
+                    <a href="/main" class="btn nav-btn">
+                        <i class="bi bi-house-door me-1"></i>
+                        {{ '主页' if current_lang == 'zh' else 'Home' }}
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Next Sell Indicator Card -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card next-sell-card" style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(247, 147, 30, 0.1) 100%); border: 2px solid rgba(255, 193, 7, 0.3); border-radius: 15px;">
+                    <div class="card-body">
+                        <!-- Main Price Header -->
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div>
+                                    <div class="d-flex align-items-baseline gap-2">
+                                        <span class="display-6 text-warning fw-bold" id="nextSellPrice">$144,400</span>
+                                        <span class="badge bg-warning text-dark fs-6" id="nextSellLayer">L2</span>
+                                    </div>
+                                    <div class="text-muted">
+                                        <i class="bi bi-bullseye me-1"></i>{{ tr('next_sell_price') }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <button class="btn btn-warning btn-lg px-4 py-2" onclick="generateNextSellOrder()">
+                                    <i class="bi bi-list-ol me-2"></i>{{ tr('generate_order') }}
+                                </button>
+                                <div class="small text-muted mt-2">
+                                    <i class="bi bi-shield-check me-1"></i>{{ tr('stop') }}: $<span id="fallbackStop">99,363</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Key Metrics Row -->
+                        <div class="row g-4">
+                            <!-- Target Zone -->
+                            <div class="col-md-4">
+                                <div class="p-3 rounded" style="background: rgba(255, 255, 255, 0.03);">
+                                    <label class="form-label small text-warning mb-2 d-block">{{ tr('target_zone') }}</label>
+                                    <div class="text-light fw-semibold mb-2" id="nextSellZone">$144,111 - $144,688</div>
+                                    <div class="progress mb-2" style="height: 8px; background: rgba(255,255,255,0.1);">
+                                        <div class="progress-bar bg-warning" role="progressbar" id="proximityBar" style="width: 81%"></div>
+                                    </div>
+                                    <small class="text-muted"><span id="proximityText">81</span>% {{ tr('proximity') }}</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Quantity & Confidence -->
+                            <div class="col-md-4">
+                                <div class="p-3 rounded" style="background: rgba(255, 255, 255, 0.03);">
+                                    <div class="row g-3">
+                                        <div class="col-6 text-center border-end" style="border-color: rgba(255,255,255,0.1) !important;">
+                                            <div class="text-warning fw-bold fs-5" id="nextSellQty">1.875</div>
+                                            <small class="text-muted">BTC {{ tr('quantity') }}</small>
+                                            <div class="small text-muted mt-1" id="opexReserveNote"></div>
+                                        </div>
+                                        <div class="col-6 text-center">
+                                            <span class="badge bg-success fs-6 px-3 py-2" id="confidenceBadge">High</span>
+                                            <div><small class="text-muted">{{ tr('confidence') }}</small></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Analysis Details -->
+                            <div class="col-md-4">
+                                <div class="p-3 rounded" style="background: rgba(255, 255, 255, 0.03);">
+                                    <label class="form-label small text-warning mb-2 d-block">{{ tr('analysis_details') }}</label>
+                                    <div class="small text-light" id="confidenceReason">RSI 66.0 ≥ 65</div>
+                                    <div class="small text-muted mt-1">{{ tr('risk_level') }}: Medium</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Reasons/Notes and Personal Layer Selector -->
+                        <div class="row mt-3">
+                            <div class="col-md-8">
+                                <div class="next-sell-reasons" id="nextSellReasons">
+                                    <!-- Dynamic content loaded by JavaScript -->
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <!-- Personal Layer Selector - Better positioned -->
+                                <div class="card" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 193, 7, 0.3);">
+                                    <div class="card-header py-2" style="background: rgba(255, 193, 7, 0.1); border-bottom: 1px solid rgba(255, 193, 7, 0.2);">
+                                        <small class="text-warning fw-bold d-flex align-items-center">
+                                            <i class="bi bi-layers me-2"></i>
+                                            {% if session.language == 'en' %}
+                                                Personal Strategy Layer
+                                            {% else %}
+                                                个人策略层级
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                    <div class="card-body py-2 px-3">
+                                        <!-- 层级选择器 -->
+                                        <div class="row g-2 mb-2">
+                                            <div class="col-8">
+                                                <select id="personalLayerSelector" class="form-select form-select-sm">
+                                                    {% if session.language == 'en' %}
+                                                        <option value="L1">L1 - Conservative (1.25x)</option>
+                                                        <option value="L2" selected>L2 - Balanced (1.52x)</option>
+                                                        <option value="L3">L3 - Aggressive (1.85x)</option>
+                                                        <option value="L4">L4 - Maximum (2.20x)</option>
+                                                    {% else %}
+                                                        <option value="L1">L1 - 保守型 (1.25倍)</option>
+                                                        <option value="L2" selected>L2 - 平衡型 (1.52倍)</option>
+                                                        <option value="L3">L3 - 激进型 (1.85倍)</option>
+                                                        <option value="L4">L4 - 极致型 (2.20倍)</option>
+                                                    {% endif %}
+                                                </select>
+                                            </div>
+                                            <div class="col-4">
+                                                <button id="applyPersonalLayerBtn" class="btn btn-warning btn-sm w-100">
+                                                    <i class="bi bi-check-circle-fill"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- 配额比例选择器 -->
+                                        <div class="row g-2 mb-2">
+                                            <div class="col-5">
+                                                <label class="form-label small text-warning mb-1 d-block">
+                                                    {% if session.language == 'en' %}
+                                                        Quota %
+                                                    {% else %}
+                                                        配额比例
+                                                    {% endif %}
+                                                </label>
+                                            </div>
+                                            <div class="col-7">
+                                                <select id="quotaPercentSelector" class="form-select form-select-sm">
+                                                    <option value="0.03">3% - Ultra Safe</option>
+                                                    <option value="0.05">5% - Conservative</option>
+                                                    <option value="0.08" selected>8% - Moderate</option>
+                                                    <option value="0.10">10% - Balanced</option>
+                                                    <option value="0.12">12% - Aggressive</option>
+                                                    <option value="0.15">15% - High Risk</option>
+                                                    <option value="0.20">20% - Maximum</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <small class="text-muted">
+                                                <span id="currentPersonalRisk">
+                                                    {% if session.language == 'en' %}
+                                                        Medium Risk
+                                                    {% else %}
+                                                        中等风险
+                                                    {% endif %}
+                                                </span>
+                                            </small>
+                                            <small class="text-info fw-bold" id="layerExplanation">
+                                                {% if session.language == 'en' %}
+                                                    Target: $144,400
+                                                {% else %}
+                                                    目标: $144,400
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Treasury Overview Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="mb-3 text-white">
+                    <i class="bi bi-wallet2 me-2 text-warning"></i>
+                    {{ tr('btc_treasury_overview') }}
+                </h2>
+            </div>
+            
+            <!-- Key Metrics -->
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card treasury-card">
+                    <div class="card-body">
+                        <div class="metric-label">
+                            {{ tr('btc_inventory') }}
+                            <i class="bi bi-info-circle ms-1" data-bs-toggle="tooltip" title="{{ tr('btc_inventory_tooltip') }}"></i>
+                        </div>
+                        <div class="metric-value" id="btcInventory">0.0000</div>
+                        <small class="text-muted">≈ $<span id="btcInventoryUSD">0</span></small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card treasury-card">
+                    <div class="card-body">
+                        <div class="metric-label">
+                            {{ tr('cost_basis') }}
+                            <i class="bi bi-info-circle ms-1" data-bs-toggle="tooltip" title="{{ tr('fifo_method_tooltip') }}"></i>
+                        </div>
+                        <div class="metric-value" id="avgCostBasis">$0</div>
+                        <small class="text-success" id="unrealizedPL">+0.00%</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card treasury-card">
+                    <div class="card-body">
+                        <div class="metric-label">
+                            {{ tr('cash_coverage_days') }}
+                            <i class="bi bi-info-circle ms-1" data-bs-toggle="tooltip" title="{{ tr('cash_coverage_tooltip') }}"></i>
+                        </div>
+                        <div class="metric-value" id="cashCoverage">0</div>
+                        <small class="text-muted">{{ tr('days_of_opex') }}</small>
+                        <div class="progress mt-2">
+                            <div class="progress-bar" id="cashCoverageBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card treasury-card">
+                    <div class="card-body">
+                        <div class="metric-label">
+                            {{ tr('next_month_due') }}
+                            <i class="bi bi-info-circle ms-1" data-bs-toggle="tooltip" title="{{ tr('monthly_opex_tooltip') }}"></i>
+                        </div>
+                        <div class="metric-value text-warning" id="nextMonthDue">$0</div>
+                        <small class="text-muted">{{ tr('opex_bills') }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Tabs -->
+        <ul class="nav nav-tabs mb-4" id="mainTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="strategy-tab" data-bs-toggle="tab" data-bs-target="#strategy" type="button">
+                    <i class="bi bi-diagram-3 me-1"></i> {{ tr('strategy_templates') }}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="signals-tab" data-bs-toggle="tab" data-bs-target="#signals" type="button">
+                    <i class="bi bi-speedometer2 me-1"></i> {{ tr('signal_aggregation') }}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="execution-tab" data-bs-toggle="tab" data-bs-target="#execution" type="button">
+                    <i class="bi bi-play-circle me-1"></i> {{ tr('execution_panel') }}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="backtest-tab" data-bs-toggle="tab" data-bs-target="#backtest" type="button">
+                    <i class="bi bi-graph-up me-1"></i> {{ tr('backtest_engine') }}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button">
+                    <i class="bi bi-gear me-1"></i> 
+                    {% if session.language == 'en' %}
+                        Risk Management
+                    {% else %}
+                        风险管理
+                    {% endif %}
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="mainTabContent">
+            <!-- Strategy Tab -->
+            <div class="tab-pane fade show active" id="strategy" role="tabpanel">
+                
+                <div class="row">
+                    <div class="col-12 mb-3">
+                        <h4>
+                            {% if session.language == 'en' %}
+                                Strategy Templates
+                            {% else %}
+                                策略模板
+                            {% endif %}
+                        </h4>
+                        <p class="text-muted">
+                            {% if session.language == 'en' %}
+                                Choose a strategy template that matches your treasury management goals
+                            {% else %}
+                                选择符合您资金库管理目标的策略模板
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <!-- Strategy A: OPEX Coverage -->
+                    <div class="col-md-4 mb-3">
+                        <div class="card strategy-card" data-strategy="opex">
+                            <div class="card-header">
+                                <i class="bi bi-shield-check me-2 text-success"></i>
+                                {% if session.language == 'en' %}
+                                    Strategy A: OPEX Coverage
+                                {% else %}
+                                    策略A: 运营费用
+                                {% endif %}
+                            </div>
+                            <div class="card-body">
+                                <h6 class="text-warning">
+                                    {% if session.language == 'en' %}
+                                        Cash Flow Priority
+                                    {% else %}
+                                        现金流优先
+                                    {% endif %}
+                                </h6>
+                                <p class="small">
+                                    {% if session.language == 'en' %}
+                                        Ensures 30-60 days of operational expenses
+                                    {% else %}
+                                        确保30-60天运营费用
+                                    {% endif %}
+                                </p>
+                                <ul class="small">
+                                    {% if session.language == 'en' %}
+                                        <li>Auto-sells when cash < OPEX needs</li>
+                                        <li>Conservative approach</li>
+                                        <li>Survival-focused</li>
+                                    {% else %}
+                                        <li>现金≤运营费用时自动卖出</li>
+                                        <li>保守策略</li>
+                                        <li>生存导向</li>
+                                    {% endif %}
+                                </ul>
+                                <div class="mt-3">
+                                    {% if session.language == 'en' %}
+                                        <span class="badge bg-success">Low Risk</span>
+                                        <span class="badge bg-info">Automated</span>
+                                    {% else %}
+                                        <span class="badge bg-success">低风险</span>
+                                        <span class="badge bg-info">自动化</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Strategy B: Layered Profit Taking -->
+                    <div class="col-md-4 mb-3">
+                        <div class="card strategy-card" data-strategy="layered">
+                            <div class="card-header">
+                                <i class="bi bi-layers me-2 text-info"></i>
+                                {% if session.language == 'en' %}
+                                    Strategy B: Layered Profit
+                                {% else %}
+                                    策略B: 分层获利
+                                {% endif %}
+                            </div>
+                            <div class="card-body">
+                                <h6 class="text-warning">
+                                    {% if session.language == 'en' %}
+                                        Most Popular
+                                    {% else %}
+                                        最受欢迎
+                                    {% endif %}
+                                </h6>
+                                <p class="small">
+                                    {% if session.language == 'en' %}
+                                        3-5 price targets with trailing stop
+                                    {% else %}
+                                        3-5个价格目标+移动止损
+                                    {% endif %}
+                                </p>
+                                <ul class="small">
+                                    {% if session.language == 'en' %}
+                                        <li>Sells at 1.2x, 1.5x, 1.8x, 2.2x cost</li>
+                                        <li>20-40% reserve with trailing stop</li>
+                                        <li>RSI>70 filter option</li>
+                                    {% else %}
+                                        <li>在1.2x, 1.5x, 1.8x, 2.2x成本卖出</li>
+                                        <li>20-40%储备+移动止损</li>
+                                        <li>RSI>70激活选项</li>
+                                    {% endif %}
+                                </ul>
+                                <div class="mt-3">
+                                    {% if session.language == 'en' %}
+                                        <span class="badge bg-warning">Medium Risk</span>
+                                        <span class="badge bg-primary">Balanced</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">中等风险</span>
+                                        <span class="badge bg-primary">平衡型</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Strategy C: Mining Cycle -->
+                    <div class="col-md-4 mb-3">
+                        <div class="card strategy-card" data-strategy="mining">
+                            <div class="card-header">
+                                <i class="bi bi-cpu me-2 text-warning"></i>
+                                {% if session.language == 'en' %}
+                                    Strategy C: Mining Cycle
+                                {% else %}
+                                    策略C: 挖矿周期
+                                {% endif %}
+                            </div>
+                            <div class="card-body">
+                                <h6 class="text-warning">
+                                    {% if session.language == 'en' %}
+                                        Miner-Focused
+                                    {% else %}
+                                        矿工导向
+                                    {% endif %}
+                                </h6>
+                                <p class="small">
+                                    {% if session.language == 'en' %}
+                                        Based on Hashprice & Puell Multiple
+                                    {% else %}
+                                        基于算力价格&Puell倍数
+                                    {% endif %}
+                                </p>
+                                <ul class="small">
+                                    {% if session.language == 'en' %}
+                                        <li>Hashprice >70% percentile → Sell 15%</li>
+                                        <li>Puell Multiple >1.8 → Sell signal</li>
+                                        <li>Hash Ribbons recovery tracking</li>
+                                    {% else %}
+                                        <li>算力价格>70%分位时卖出15%</li>
+                                        <li>Puell倍数>1.8时卖出信号</li>
+                                        <li>算力彩带复苏验证</li>
+                                    {% endif %}
+                                </ul>
+                                <div class="mt-3">
+                                    {% if session.language == 'en' %}
+                                        <span class="badge bg-info">Data-Driven</span>
+                                        <span class="badge bg-secondary">Advanced</span>
+                                    {% else %}
+                                        <span class="badge bg-info">数据驱动</span>
+                                        <span class="badge bg-secondary">高级</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Strategy Configuration -->
+                <div class="row mt-4" id="strategyConfig" style="display: none;">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>
+                                    {% if session.language == 'en' %}
+                                        Configure Strategy Parameters
+                                    {% else %}
+                                        配置策略参数
+                                    {% endif %}
+                                </h5>
+                            </div>
+                            <div class="card-body" id="strategyConfigContent">
+                                <!-- Dynamic content based on selected strategy -->
+                            </div>
+                            <div class="card-footer">
+                                <button class="btn execution-btn" onclick="saveStrategy()">
+                                    <i class="bi bi-save me-2"></i>
+                                    {% if session.language == 'en' %}
+                                        Save Strategy
+                                    {% else %}
+                                        保存策略
+                                    {% endif %}
+                                </button>
+                                <button class="btn btn-secondary ms-2" onclick="previewStrategy()">
+                                    <i class="bi bi-eye me-2"></i>
+                                    {% if session.language == 'en' %}
+                                        Preview
+                                    {% else %}
+                                        预览
+                                    {% endif %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Signals Tab -->
+            <div class="tab-pane fade" id="signals" role="tabpanel">
+                <div class="row">
+                    <!-- Technical Signals -->
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="bi bi-graph-up me-2"></i>{{ tr('technical') }}
+                            </div>
+                            <div class="card-body">
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-green"></span>
+                                    <span>{{ tr('ma_bullish') }}</span>
+                                </div>
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-yellow"></span>
+                                    <span>{{ tr('rsi_14_value') }}</span>
+                                    <small class="text-muted d-block">{{ tr('rsi_near_70') }}</small>
+                                </div>
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-green"></span>
+                                    <span>{{ tr('bollinger_mid') }}</span>
+                                </div>
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-red"></span>
+                                    <span>{{ tr('atr_high_vol') }}</span>
+                                    <small class="text-muted d-block">{{ tr('above_1_5_percent') }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- On-Chain Signals -->
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="bi bi-link-45deg me-2"></i>{{ tr('on_chain') }}
+                            </div>
+                            <div class="card-body">
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-yellow"></span>
+                                    <span>{{ tr('puell_trigger') }}</span>
+                                    <small class="text-muted d-block">{{ tr('trigger_above_1_8') }}</small>
+                                </div>
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-green"></span>
+                                    <span>{{ tr('sopr_profitable') }}</span>
+                                    <small class="text-muted d-block">{{ tr('profitable') }}</small>
+                                </div>
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-green"></span>
+                                    <span>{{ tr('mvrv_fair_value') }}</span>
+                                    <small class="text-muted d-block">{{ tr('fair_value') }}</small>
+                                </div>
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-green"></span>
+                                    <span>{{ tr('mpi_low') }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Mining Signals -->
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="bi bi-cpu me-2"></i>{{ tr('mining') }}
+                            </div>
+                            <div class="card-body">
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-yellow"></span>
+                                    <span>{{ tr('hashprice_65_percentile') }}</span>
+                                    <small class="text-muted d-block">{{ tr('trigger_above_70_percentile') }}</small>
+                                </div>
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-green"></span>
+                                    <span>{{ tr('hash_ribbons_neutral') }}</span>
+                                </div>
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-green"></span>
+                                    <span>{{ tr('difficulty_increase') }}</span>
+                                    <small class="text-muted d-block">{{ tr('normal_range') }}</small>
+                                </div>
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-yellow"></span>
+                                    <span>{{ tr('miner_exchange_normal') }}</span>
+                                    <small class="text-muted d-block">{{ tr('no_stress') }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Market Structure -->
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="bi bi-bar-chart me-2"></i>{{ tr('market') }}
+                            </div>
+                            <div class="card-body">
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-green"></span>
+                                    <span>{{ tr('funding_001_percent') }}</span>
+                                    <small class="text-muted d-block">{{ tr('neutral_zone') }}</small>
+                                </div>
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-yellow"></span>
+                                    <span>{{ tr('basis_5_2_percent') }}</span>
+                                    <small class="text-muted d-block">{{ tr('near_alert') }}</small>
+                                </div>
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-green"></span>
+                                    <span>{{ tr('oi_stable') }}</span>
+                                </div>
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-green"></span>
+                                    <span>{{ tr('spread_002_percent') }}</span>
+                                    <small class="text-muted d-block">{{ tr('low_liquidity') }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Combined Signal -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5>{{ tr('aggregated_signal_recommendation') }}</h5>
+                                <button class="btn btn-sm btn-outline-light" onclick="exportSignal()">
+                                    <i class="bi bi-download me-1"></i>{{ tr('export') }}
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6>{{ tr('current_signal') }}: <span class="text-warning">NEUTRAL-BULLISH</span></h6>
+                                        <div class="progress mb-2" style="height: 20px;">
+                                            <div class="progress-bar bg-danger" style="width: 20%">Sell</div>
+                                            <div class="progress-bar bg-warning" style="width: 40%">Hold</div>
+                                            <div class="progress-bar bg-success" style="width: 40%">Buy</div>
+                                        </div>
+                                        <small class="text-muted">
+                                            <i class="bi bi-calculator me-1"></i>
+                                            {{ tr('weighted_score') }}
+                                        </small>
+                                        <div class="mt-2">
+                                            <small class="text-success">
+                                                <i class="bi bi-check-circle me-1"></i>
+                                                {{ tr('confidence_high') }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6>{{ tr('recommended_action') }}:</h6>
+                                        <p class="mb-1"><i class="bi bi-info-circle text-info me-2"></i>
+                                            {{ tr('price_action_advice') }}
+                                        </p>
+                                        <div class="alert alert-warning py-2 px-3 mt-2" style="font-size: 0.9rem; background-color: rgba(237, 137, 54, 0.15); border: 1px solid rgba(237, 137, 54, 0.5); color: #ffd700 !important;">
+                                            <i class="bi bi-exclamation-triangle me-2" style="color: #ffd700 !important;"></i>
+                                            <strong style="color: #ffd700 !important;">{{ tr('next_trigger') }}</strong>
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-warning mt-2" onclick="document.getElementById('execution-tab').click()">
+                                            <i class="bi bi-arrow-right-circle me-1"></i>
+                                            {{ tr('execute_recommended') }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Execution Tab -->
+            <div class="tab-pane fade" id="execution" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>{{ tr('order_execution_panel') }}</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Execution Type -->
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">{{ tr('execution_type') }}</label>
+                                        <select class="form-select" id="executionType">
+                                            <option value="market">{{ tr('market_order') }}</option>
+                                            <option value="limit">{{ tr('limit_order') }}</option>
+                                            <option value="ladder">{{ tr('ladder_limit') }}</option>
+                                            <option value="twap">{{ tr('twap_order') }}</option>
+                                            <option value="vwap">{{ tr('vwap_order') }}</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">{{ tr('amount_btc') }}</label>
+                                        <input type="number" class="form-control" id="executionAmount" step="0.0001" value="0.0" onchange="generateOrders()">
+                                    </div>
+                                </div>
+                                
+                                <!-- Dynamic Parameters based on execution type -->
+                                <div id="executionParams" class="mb-3">
+                                    <!-- Filled dynamically -->
+                                </div>
+                                
+                                <!-- Exchange Selection -->
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">{{ tr('exchange') }}</label>
+                                        <select class="form-select" id="exchangeSelect">
+                                            <option value="spot">{{ tr('spot_exchange') }}</option>
+                                            <option value="otc">{{ tr('otc_desk') }}</option>
+                                            <option value="block">{{ tr('block_trade') }}</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">{{ tr('slippage_tolerance') }}</label>
+                                        <input type="number" class="form-control" id="slippageTolerance" value="0.5" step="0.1">
+                                        <small class="text-muted">{{ tr('maximum_acceptable_slippage') }}</small>
+                                    </div>
+                                </div>
+                                
+                                <!-- Preview -->
+                                <div class="execution-panel mb-3">
+                                    <h6>{{ tr('execution_preview') }}</h6>
+                                    <div id="executionPreview">
+                                        <p class="text-muted">{{ tr('configure_parameters_preview') }}</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Action Buttons -->
+                                <div class="d-flex gap-2">
+                                    <button class="btn execution-btn" onclick="generateOrders()">
+                                        <i class="bi bi-list-ol me-2"></i>{{ tr('generate_order_list') }}
+                                    </button>
+                                    <button class="btn btn-outline-info" onclick="simulateExecution()">
+                                        <i class="bi bi-play-circle me-2"></i>{{ tr('simulate') }}
+                                    </button>
+                                    <button class="btn btn-outline-danger" onclick="clearExecution()">
+                                        <i class="bi bi-x-circle me-2"></i>{{ tr('clear') }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Execution Log -->
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>{{ tr('recent_executions') }}</h5>
+                            </div>
+                            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                                <div id="executionLog">
+                                    <div class="mb-2 p-2 bg-dark rounded">
+                                        <small class="text-muted">2025-08-21 10:30</small><br>
+                                        <span class="text-success">Sold 0.5 BTC @ $113,820</span><br>
+                                        <small>TWAP execution over 30 min</small>
+                                    </div>
+                                    <div class="mb-2 p-2 bg-dark rounded">
+                                        <small class="text-muted">2025-08-20 15:45</small><br>
+                                        <span class="text-success">Sold 0.25 BTC @ $114,200</span><br>
+                                        <small>Layer 2 target reached</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Backtest Tab -->
+            <div class="tab-pane fade" id="backtest" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>{{ tr('strategy_backtesting') }}</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Backtest Parameters -->
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">{{ tr('start_date_label') }}</label>
+                                        <input type="date" class="form-control" id="backtestStart">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">{{ tr('end_date_label') }}</label>
+                                        <input type="date" class="form-control" id="backtestEnd">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">{{ tr('initial_btc_label') }}</label>
+                                        <input type="number" class="form-control" id="backtestInitialBTC" value="10" step="0.1">
+                                    </div>
+                                </div>
+                                
+                                <!-- Strategy Selection for Backtest -->
+                                <div class="mb-3">
+                                    <label class="form-label">{{ tr('strategy_to_test') }}</label>
+                                    <select class="form-select" id="backtestStrategy">
+                                        <option value="hold">{{ tr('buy_hold_baseline') }}</option>
+                                        <option value="dca">{{ tr('dca_template') }}</option>
+                                        <option value="opex">{{ tr('opex_template') }}</option>
+                                        <option value="layered">{{ tr('layered_profit_template') }}</option>
+                                        <option value="mining">{{ tr('mining_cycle_template') }}</option>
+                                    </select>
+                                </div>
+                                
+                                <button class="btn execution-btn" onclick="runBacktest(this)">
+                                    <i class="bi bi-play-fill me-2"></i>{{ tr('run_backtest') }}
+                                </button>
+                                
+                                <!-- Results Chart -->
+                                <div class="mt-4" style="height: 300px; position: relative;">
+                                    <canvas id="backtestChart" style="width: 100%; height: 100%;"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Backtest Metrics -->
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>{{ tr('performance_metrics') }}</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <div class="metric-label">{{ tr('total_return_label') }}</div>
+                                    <div class="metric-value text-success" id="backtestReturn">+0.00%</div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="metric-label">{{ tr('max_drawdown_label') }}</div>
+                                    <div class="metric-value text-danger" id="backtestDrawdown">-0.00%</div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="metric-label">{{ tr('sharpe_ratio_label') }}</div>
+                                    <div class="metric-value" id="backtestSharpe">0.00</div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="metric-label">{{ tr('win_rate_label') }}</div>
+                                    <div class="metric-value" id="backtestWinRate">0%</div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="metric-label">{{ tr('avg_slippage') }}</div>
+                                    <div class="metric-value" id="backtestSlippage">0.00%</div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="metric-label">{{ tr('total_trades') }}</div>
+                                    <div class="metric-value" id="backtestTrades">0</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div class="tab-pane fade" id="settings" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>{{ tr('core_inputs') }}</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">{{ tr('current_btc_inventory') }}</label>
+                                    <input type="number" class="form-control" id="settingsBTCInventory" step="0.0001">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">{{ tr('average_cost_basis') }}</label>
+                                    <input type="number" class="form-control" id="settingsCostBasis" step="100">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">{{ tr('monthly_opex') }}</label>
+                                    <input type="number" class="form-control" id="settingsMonthlyOPEX" step="1000">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">{{ tr('minimum_cash_reserve') }}</label>
+                                    <input type="number" class="form-control" id="settingsMinCash" step="1000">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">{{ tr('cost_method') }}</label>
+                                    <select class="form-select" id="settingsCostMethod">
+                                        <option value="fifo">{{ tr('fifo') }}</option>
+                                        <option value="lifo">LIFO</option>
+                                        <option value="specific">{{ tr('specific_id') }}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>{{ tr('risk_execution_settings') }}</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">{{ tr('risk_profile') }}</label>
+                                    <select class="form-select" id="settingsRiskProfile">
+                                        <option value="conservative">{{ tr('conservative') }}</option>
+                                        <option value="moderate">{{ tr('moderate') }}</option>
+                                        <option value="aggressive">{{ tr('aggressive') }}</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">{{ tr('max_daily_sell_percent') }}</label>
+                                    <input type="number" class="form-control" id="settingsMaxDailySell" value="10" min="1" max="100">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">{{ tr('allow_derivatives_hedging') }}</label>
+                                    <select class="form-select" id="settingsAllowHedging">
+                                        <option value="no">{{ tr('no') }}</option>
+                                        <option value="yes">{{ tr('yes') }}</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">{{ tr('preferred_exchange') }}</label>
+                                    <select class="form-select" id="settingsExchange">
+                                        <option value="auto">{{ tr('auto_select') }}</option>
+                                        <option value="coinbase">Coinbase</option>
+                                        <option value="binance">Binance</option>
+                                        <option value="kraken">Kraken</option>
+                                        <option value="otc">OTC Desk</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">{{ tr('alert_channels') }}</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="alertEmail">
+                                        <label class="form-check-label" for="alertEmail">{{ tr('email') }}</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="alertTelegram">
+                                        <label class="form-check-label" for="alertTelegram">{{ tr('telegram') }}</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="alertDiscord">
+                                        <label class="form-check-label" for="alertDiscord">{{ tr('discord_webhook') }}</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12 text-center">
+                        <button class="btn execution-btn" onclick="saveSettings()">
+                            <i class="bi bi-save me-2"></i>{{ tr('save_all_settings') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="alert alert-warning disclaimer-text" style="background-color: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3);">
+                    <i class="bi bi-info-circle me-2 disclaimer-icon" style="color: #dc3545 !important; font-size: 1.1em !important;"></i>
+                    <strong style="color: #000000 !important;">{{ tr('educational_purpose_only') }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // Add global Promise rejection handlers to prevent unhandledrejection errors
+        window.addEventListener('unhandledrejection', function(event) {
+            console.warn('Caught unhandled promise rejection:', event.reason);
+            // Prevent the default unhandled rejection error
+            event.preventDefault();
+        });
+        
+        window.addEventListener('rejectionhandled', function(event) {
+            console.log('Promise rejection handled:', event.reason);
+        });
+        
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            // Debug: Check current language
+            const currentLang = '{{ current_lang }}';
+            console.log('Current language:', currentLang);
+            
+            // Update language display
+            const langDisplay = document.getElementById('currentLangDisplay');
+            if (langDisplay) {
+                langDisplay.textContent = currentLang === 'zh' ? 'CN' : 'EN';
+                console.log('Language display updated to:', langDisplay.textContent);
+            }
+            
+            initializeDashboard();
+            loadTreasuryData();
+            setupStrategyCards();
+            
+            // Update Next Sell Price dynamic content for language change
+            updateNextSellPriceDynamicContent(currentLang);
+            setupExecutionPanel();
+            
+            // Force disclaimer icon to be red (backup solution)
+            const disclaimerIcon = document.querySelector('.disclaimer-icon');
+            if (disclaimerIcon) {
+                disclaimerIcon.style.color = '#dc3545';
+                disclaimerIcon.style.setProperty('color', '#dc3545', 'important');
+            }
+            initializeCharts();
+            initTooltips();
+            initAlertsSystem(); // Initialize alerts functionality
+            initLanguageDropdown(); // Initialize language dropdown
+            updateTimestamp();
+            
+            // Initialize settings form when the settings tab is shown
+            const settingsButton = document.querySelector('#settings-tab');
+            if (settingsButton) {
+                settingsButton.addEventListener('click', function() {
+                    setTimeout(() => {
+                        loadCurrentSettings();
+                    }, 100); // Small delay to ensure tab is shown
+                });
+            }
+            
+            // Update timestamp every minute
+            setInterval(updateTimestamp, 60000);
+        });
+
+        // Global language variable
+        let currentLang = '{{ current_lang }}';
+
+        // Language switching function
+        function switchLanguage(lang) {
+            console.log('Switching language to:', lang);
+            
+            // Close dropdown first
+            const dropdown = bootstrap.Dropdown.getInstance(document.getElementById('languageDropdown'));
+            if (dropdown) {
+                dropdown.hide();
+            }
+            
+            // Update display immediately
+            const langDisplay = document.getElementById('currentLangDisplay');
+            if (langDisplay) {
+                langDisplay.textContent = lang === 'zh' ? 'CN' : 'EN';
+            }
+            
+            // Update global language variable
+            currentLang = lang;
+            
+            // Use instant language switching
+            I18n.setLanguage(lang);
+        }
+        
+        // Initialize dropdown manually if Bootstrap doesn't work
+        function initLanguageDropdown() {
+            const dropdownBtn = document.getElementById('languageDropdown');
+            const dropdownMenu = dropdownBtn.nextElementSibling;
+            
+            if (dropdownBtn && dropdownMenu) {
+                dropdownBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Toggle dropdown visibility
+                    const isVisible = dropdownMenu.style.display === 'block';
+                    if (isVisible) {
+                        dropdownMenu.style.display = 'none';
+                        dropdownBtn.setAttribute('aria-expanded', 'false');
+                    } else {
+                        dropdownMenu.style.display = 'block';
+                        dropdownBtn.setAttribute('aria-expanded', 'true');
+                    }
+                });
+                
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                        dropdownMenu.style.display = 'none';
+                        dropdownBtn.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            }
+        }
+
+        function initializeDashboard() {
+            // Load saved settings
+            const settings = JSON.parse(localStorage.getItem('hashinsight_settings') || '{}');
+            
+            // Apply settings to UI
+            if (settings.btcInventory) {
+                document.getElementById('btcInventory').textContent = settings.btcInventory.toFixed(4);
+            }
+            
+            // Start real-time updates
+            setInterval(updateMarketData, 30000); // Update every 30 seconds
+        }
+
+        function loadTreasuryData() {
+            // Fetch treasury data from backend
+            fetch('/api/treasury/overview')
+                .then(response => response.json())
+                .then(data => {
+                    updateTreasuryOverview(data);
+                })
+                .catch(error => console.error('Error loading treasury data:', error));
+            
+            // Load advanced algorithm signals
+            loadAdvancedSignals();
+        }
+        
+        function loadAdvancedSignals() {
+            fetch('/api/treasury/advanced-signals')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updateAdvancedSignalsDisplay(data);
+                        console.log('Advanced algorithm signals loaded:', data);
+                    } else {
+                        console.warn('Advanced signals unavailable:', data.error);
+                        showAdvancedSignalsFallback();
+                    }
+                })
+                .catch(error => {
+                    console.warn('Error loading advanced signals:', error);
+                    showAdvancedSignalsFallback();
+                });
+        }
+        
+        function updateAdvancedSignalsDisplay(data) {
+            // 只在Signal Aggregation tab中显示Advanced Algorithm Engine
+            const signalsTab = document.getElementById('signals');
+            if (!signalsTab) {
+                console.warn('Signals tab not found');
+                return;
+            }
+            
+            // 查找信号聚合tab内的"Aggregated Signal"卡片
+            let targetCard = null;
+            const signalsCards = signalsTab.querySelectorAll('.card');
+            signalsCards.forEach(card => {
+                const header = card.querySelector('.card-header h5');
+                if (header && (header.textContent.includes('Aggregated Signal') || header.textContent.includes('聚合信号'))) {
+                    targetCard = card;
+                }
+            });
+            
+            if (targetCard) {
+                const cardBody = targetCard.querySelector('.card-body');
+                
+                // 在现有内容后添加高级算法部分
+                let advancedDiv = document.getElementById('advanced-signals');
+                if (!advancedDiv) {
+                    advancedDiv = document.createElement('div');
+                    advancedDiv.id = 'advanced-signals';
+                    cardBody.appendChild(advancedDiv);
+                }
+                
+                // 翻译notes内容
+                const translatedNotes = (data.notes || []).map(note => {
+                    if (currentLang === 'en') {
+                        // 简单的中译英映射
+                        return note
+                            .replace('动能不足：RSI<55', 'Momentum Weak: RSI<55')
+                            .replace('动能确认：RSI≥55', 'Momentum Confirmed: RSI≥55')
+                            .replace('接近阻力位：', 'Near Resistance: ')
+                            .replace('检测到拒绝形态：上影线', 'Rejection Pattern Detected: Upper Shadow')
+                            .replace('波动率扩张：突破可能不持续', 'Volatility Expansion: Breakout May Not Sustain')
+                            .replace('Puell Multiple偏低：', 'Puell Multiple Low: ')
+                            .replace('矿工卖压小', 'Low Miner Selling Pressure')
+                            .replace('Hash Price偏高：', 'Hash Price High: ')
+                            .replace('分位', 'th Percentile')
+                            .replace('震荡/下降+高波动：建议降低门槛', 'Range/Decline + High Vol: Suggest Lower Threshold');
+                    }
+                    return note;
+                });
+
+                advancedDiv.innerHTML = `
+                    <hr class="my-3">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h6 class="mb-2">
+                                <i class="bi bi-cpu me-2"></i>${currentLang === 'zh' ? '高级算法引擎' : 'Advanced Algorithm Engine'}
+                                <span class="badge bg-success ms-2">${data.phase || 'Phase 2 (5 Modules: A-E)'}</span>
+                            </h6>
+                            <div class="text-muted small mb-2">
+                                ${data.modules_count || 5}/5 ${currentLang === 'zh' ? '活跃模块' : 'Active Modules'} | ${Math.round((data.confidence || 0) * 100)}% ${currentLang === 'zh' ? '置信度' : 'Confidence'}
+                            </div>
+                            <div class="advanced-notes">
+                                ${translatedNotes.map(note => `<div class="small text-info mb-1">• ${note}</div>`).join('')}
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="h3 ${data.sell_score >= 70 ? 'text-danger' : data.sell_score >= 50 ? 'text-warning' : 'text-success'} mb-1">
+                                ${data.sell_score}/100
+                            </div>
+                            <div class="text-muted small">${currentLang === 'zh' ? '高级评分' : 'Advanced Score'}</div>
+                            <div class="mt-2">
+                                <span class="badge ${data.sell_score >= 70 ? 'bg-danger' : data.sell_score >= 50 ? 'bg-warning' : 'bg-success'}">
+                                    ${data.recommendation || 'HOLD'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                console.log('Advanced signals display updated successfully');
+            } else {
+                console.warn('Could not find target card for advanced signals display');
+            }
+        }
+        
+        function showAdvancedSignalsFallback() {
+            // 显示基础状态
+            updateAdvancedSignalsDisplay({
+                sell_score: 50,
+                recommendation: 'HOLD',
+                confidence: 0,
+                notes: ['Phase 2算法正在初始化...'],
+                phase: 'Phase 2 Loading',
+                modules_count: 5
+            });
+        }
+
+        function setupStrategyCards() {
+            // Setup strategy card click handlers
+            const strategyCards = document.querySelectorAll('.strategy-card');
+            strategyCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    const strategy = this.dataset.strategy;
+                    if (strategy) {
+                        loadStrategyConfig(strategy);
+                    }
+                });
+            });
+        }
+        
+        function updateTreasuryOverview(data) {
+            // Update BTC inventory
+            const btcInventory = data.btc_inventory || 0;
+            const btcPrice = data.btc_price || 113820;
+            const inventoryUSD = btcInventory * btcPrice;
+            
+            document.getElementById('btcInventory').textContent = btcInventory.toFixed(4);
+            document.getElementById('btcInventoryUSD').textContent = inventoryUSD.toLocaleString();
+            
+            // Update cost basis and unrealized P/L
+            const costBasis = data.avg_cost_basis || 95000;
+            const unrealizedPL = ((btcPrice - costBasis) / costBasis * 100).toFixed(2);
+            
+            document.getElementById('avgCostBasis').textContent = '$' + costBasis.toLocaleString();
+            document.getElementById('unrealizedPL').textContent = (unrealizedPL > 0 ? '+' : '') + unrealizedPL + '%';
+            document.getElementById('unrealizedPL').className = unrealizedPL > 0 ? 'text-success' : 'text-danger';
+            
+            // Update cash coverage
+            const cashCoverage = data.cash_coverage_days || 45;
+            document.getElementById('cashCoverage').textContent = cashCoverage;
+            document.getElementById('cashCoverageBar').style.width = Math.min(cashCoverage / 90 * 100, 100) + '%';
+            
+            // Update next month due
+            const nextMonthDue = data.next_month_due || 250000;
+            document.getElementById('nextMonthDue').textContent = '$' + nextMonthDue.toLocaleString();
+        }
+
+        function setupStrategyCards() {
+            const strategyCards = document.querySelectorAll('.strategy-card');
+            
+            strategyCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    // Remove selected class from all cards
+                    strategyCards.forEach(c => c.classList.remove('selected'));
+                    
+                    // Add selected class to clicked card
+                    this.classList.add('selected');
+                    
+                    // Show configuration panel
+                    const strategy = this.dataset.strategy;
+                    showStrategyConfig(strategy);
+                });
+            });
+        }
+
+        function showStrategyConfig(strategy) {
+            const configDiv = document.getElementById('strategyConfig');
+            const contentDiv = document.getElementById('strategyConfigContent');
+            
+            // Generate configuration content based on strategy
+            let configHTML = '';
+            
+            switch(strategy) {
+                case 'opex':
+                    configHTML = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label">Coverage Days</label>
+                                <input type="number" class="form-control" value="30" min="7" max="90">
+                                <small class="text-muted">Days of OPEX to maintain</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Max Daily Sell</label>
+                                <input type="number" class="form-control" value="5" min="1" max="20">
+                                <small class="text-muted">Maximum % of inventory per day</small>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'layered':
+                    configHTML = `
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">Price Layers (multiplier of cost basis)</label>
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text">Layer 1</span>
+                                    <input type="number" class="form-control" value="1.2" step="0.1">
+                                    <span class="input-group-text">Sell %</span>
+                                    <input type="number" class="form-control" value="15" min="5" max="50">
+                                </div>
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text">Layer 2</span>
+                                    <input type="number" class="form-control" value="1.5" step="0.1">
+                                    <span class="input-group-text">Sell %</span>
+                                    <input type="number" class="form-control" value="15" min="5" max="50">
+                                </div>
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text">Layer 3</span>
+                                    <input type="number" class="form-control" value="1.8" step="0.1">
+                                    <span class="input-group-text">Sell %</span>
+                                    <input type="number" class="form-control" value="20" min="5" max="50">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Trailing Stop %</label>
+                                <input type="number" class="form-control" value="8" min="3" max="20">
+                                <small class="text-muted">For reserve position</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">RSI Filter</label>
+                                <select class="form-select">
+                                    <option value="enabled">Enabled (RSI > 70)</option>
+                                    <option value="disabled">Disabled</option>
+                                </select>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'mining':
+                    configHTML = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label">Hashprice Trigger Percentile</label>
+                                <input type="number" class="form-control" value="70" min="50" max="95">
+                                <small class="text-muted">Sell when above this percentile</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Puell Multiple Trigger</label>
+                                <input type="number" class="form-control" value="1.8" step="0.1" min="1.0" max="3.0">
+                                <small class="text-muted">Sell signal threshold</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Hash Ribbons</label>
+                                <select class="form-select">
+                                    <option value="enabled">Track Recovery</option>
+                                    <option value="disabled">Ignore</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Sell Amount per Signal</label>
+                                <input type="number" class="form-control" value="15" min="5" max="30">
+                                <small class="text-muted">% of inventory</small>
+                            </div>
+                        </div>
+                    `;
+                    break;
+            }
+            
+            contentDiv.innerHTML = configHTML;
+            configDiv.style.display = 'block';
+        }
+
+        function setupExecutionPanel() {
+            const executionType = document.getElementById('executionType');
+            
+            executionType.addEventListener('change', function() {
+                updateExecutionParams(this.value);
+            });
+        }
+
+        function updateExecutionParams(type) {
+            const paramsDiv = document.getElementById('executionParams');
+            let paramsHTML = '';
+            
+            switch(type) {
+                case 'limit':
+                    paramsHTML = `
+                        <label class="form-label">Limit Price ($)</label>
+                        <input type="number" class="form-control" id="limitPrice" step="100">
+                    `;
+                    break;
+                    
+                case 'ladder':
+                    paramsHTML = `
+                        <label class="form-label">Number of Levels</label>
+                        <input type="number" class="form-control" id="ladderLevels" value="3" min="2" max="6">
+                        <label class="form-label mt-2">Price Range ($)</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="ladderMin" placeholder="Min">
+                            <span class="input-group-text">to</span>
+                            <input type="number" class="form-control" id="ladderMax" placeholder="Max">
+                        </div>
+                    `;
+                    break;
+                    
+                case 'twap':
+                case 'vwap':
+                    paramsHTML = `
+                        <label class="form-label">Duration (minutes)</label>
+                        <input type="number" class="form-control" id="twapDuration" value="30" min="5" max="240">
+                    `;
+                    break;
+            }
+            
+            paramsDiv.innerHTML = paramsHTML;
+        }
+
+        function initializeCharts() {
+            // Initialize backtest chart
+            const ctx = document.getElementById('backtestChart').getContext('2d');
+            window.backtestChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Portfolio Value',
+                        data: [],
+                        borderColor: '#f39c12',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: { color: '#ffffff' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#a0aec0' },
+                            grid: { color: '#2d3748' }
+                        },
+                        y: {
+                            ticks: { color: '#a0aec0' },
+                            grid: { color: '#2d3748' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateMarketData() {
+            // Fetch and update real-time market data
+            fetch('/api/analytics/market-data')
+                .then(response => response.json())
+                .then(data => {
+                    // Update relevant UI elements
+                    console.log('Market data updated:', data);
+                })
+                .catch(error => console.error('Error updating market data:', error));
+        }
+
+        // Strategy functions
+        function saveStrategy() {
+            // Save configured strategy
+            console.log('Saving strategy configuration...');
+            // Implementation here
+        }
+
+        function previewStrategy() {
+            // Preview strategy execution
+            console.log('Previewing strategy...');
+            // Implementation here
+        }
+
+        // Execution functions
+        function generateOrders() {
+            const amount = parseFloat(document.getElementById('executionAmount').value) || 0;
+            const type = document.getElementById('executionType').value;
+            const exchange = document.getElementById('exchangeSelect').value;
+            const slippageTolerance = parseFloat(document.getElementById('slippageTolerance').value) || 0.5;
+            
+            if (amount <= 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+            
+            // Calculate estimated slippage based on amount and type
+            let estimatedSlippage = 0;
+            if (type === 'market') {
+                estimatedSlippage = amount > 1 ? 0.15 + (amount * 0.02) : 0.1;
+            } else if (type === 'ladder') {
+                estimatedSlippage = 0.05;
+            } else if (type === 'twap' || type === 'vwap') {
+                estimatedSlippage = 0.03;
+            }
+            
+            const btcPrice = 113820;
+            const totalValue = amount * btcPrice;
+            const slippageCost = totalValue * (estimatedSlippage / 100);
+            const netProceeds = totalValue - slippageCost;
+            
+            const preview = `
+                <div class="alert alert-info mb-3">
+                    <h6 class="mb-2"><i class="bi bi-calculator me-2"></i>Order Details</h6>
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-muted">Type:</small><br>
+                            <strong>${type.toUpperCase()}</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Amount:</small><br>
+                            <strong>${amount} BTC</strong>
+                        </div>
+                    </div>
+                    <hr class="my-2">
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-muted">Est. Slippage:</small><br>
+                            <strong class="text-warning">${estimatedSlippage.toFixed(2)}%</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Slippage Cost:</small><br>
+                            <strong class="text-warning">$${slippageCost.toFixed(2)}</strong>
+                        </div>
+                    </div>
+                    <hr class="my-2">
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-muted">Gross Value:</small><br>
+                            <strong>$${totalValue.toLocaleString()}</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Net Proceeds:</small><br>
+                            <strong class="text-success">$${netProceeds.toLocaleString()}</strong>
+                        </div>
+                    </div>
+                    ${estimatedSlippage > slippageTolerance ? 
+                        '<div class="alert alert-warning mt-2 mb-0 py-1"><i class="bi bi-exclamation-triangle me-1"></i>Est. slippage exceeds tolerance!</div>' : 
+                        '<div class="alert alert-success mt-2 mb-0 py-1"><i class="bi bi-check-circle me-1"></i>Within slippage tolerance</div>'}
+                </div>
+            `;
+            
+            document.getElementById('executionPreview').innerHTML = preview;
+        }
+
+        function simulateExecution() {
+            const amount = parseFloat(document.getElementById('executionAmount').value) || 0;
+            if (amount <= 0) {
+                alert('Please configure execution parameters first');
+                return;
+            }
+            
+            // Add to execution log
+            const now = new Date();
+            const timeStr = now.toLocaleString('en-US', {
+                timeZone: 'America/New_York',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            const logEntry = `
+                <div class="mb-2 p-2 bg-dark rounded">
+                    <small class="text-muted">${timeStr} (Simulated)</small><br>
+                    <span class="text-info">Simulated: ${amount} BTC @ $113,820</span><br>
+                    <small>${document.getElementById('executionType').value.toUpperCase()} execution</small>
+                </div>
+            `;
+            
+            const logDiv = document.getElementById('executionLog');
+            logDiv.insertAdjacentHTML('afterbegin', logEntry);
+            
+            alert('Simulation complete! Check the execution log for details.');
+        }
+
+        function clearExecution() {
+            document.getElementById('executionAmount').value = '0';
+            document.getElementById('executionPreview').innerHTML = '<p class="text-muted">Configure parameters to see execution preview</p>';
+            document.getElementById('executionParams').innerHTML = '';
+        }
+
+        // Backtest functions
+        async function runBacktest(buttonElement) {
+            console.log('Running backtest...');
+            
+            // Declare variables at function scope
+            let button = null;
+            let originalText = '';
+            
+            try {
+                // Get parameters
+                const startDate = document.getElementById('backtestStart').value;
+                const endDate = document.getElementById('backtestEnd').value;
+                const initialBTC = document.getElementById('backtestInitialBTC').value;
+                const strategy = document.getElementById('backtestStrategy').value;
+                
+                // Validate inputs
+                if (!startDate || !endDate) {
+                    alert('请选择开始和结束日期');
+                    return;
+                }
+                
+                // Show loading state - find the specific backtest button
+                button = buttonElement;
+                if (!button) {
+                    button = document.querySelector('button[onclick="runBacktest(this)"]');
+                }
+                if (!button) {
+                    console.error('Backtest button not found');
+                    return;
+                }
+                originalText = button.innerHTML;
+                console.log('Setting loading state, original text:', originalText);
+                button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>运行中...';
+                button.disabled = true;
+                
+                // Call backend API
+                const response = await fetch('/api/treasury/backtest', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        strategy: strategy,
+                        start_date: startDate,
+                        end_date: endDate,
+                        initial_btc: parseFloat(initialBTC)
+                    })
+                });
+                
+                // Check if the response is ok
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('Backtest response received:', result);
+                
+                if (result.success) {
+                    // Update metrics with proper formatting
+                    const totalReturn = result.total_return || 0;
+                    const maxDrawdown = result.max_drawdown || 0;
+                    const sharpeRatio = result.sharpe_ratio || 0;
+                    
+                    // Format return percentage (handle both positive and negative)
+                    const returnPct = (totalReturn * 100).toFixed(2);
+                    document.getElementById('backtestReturn').textContent = 
+                        totalReturn >= 0 ? `+${returnPct}%` : `${returnPct}%`;
+                    
+                    // Format drawdown (always negative)
+                    document.getElementById('backtestDrawdown').textContent = 
+                        `-${(Math.abs(maxDrawdown) * 100).toFixed(2)}%`;
+                    
+                    // Format Sharpe ratio
+                    document.getElementById('backtestSharpe').textContent = sharpeRatio.toFixed(2);
+                    
+                    // Update chart if data is available
+                    if (result.dates && result.portfolio_values) {
+                        try {
+                            updateBacktestChart(result.dates, result.portfolio_values);
+                        } catch (chartError) {
+                            console.warn('Chart update failed:', chartError);
+                            // Show data in text format as fallback
+                            displayBacktestDataAsText(result.dates, result.portfolio_values);
+                        }
+                    }
+                    
+                    // Also update win rate if available
+                    if (result.win_rate !== undefined) {
+                        document.getElementById('backtestWinRate').textContent = result.win_rate + '%';
+                    }
+                    
+                    console.log('Backtest completed successfully:', result);
+                    
+                    // Restore button state immediately after success
+                    if (button && originalText) {
+                        console.log('Restoring button state after success:', originalText);
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                    }
+                    
+                    // Show success message using DOM instead of alert to avoid promise issues
+                    console.log('Backtest success! Total return:', returnPct + '%', 'Max drawdown:', (Math.abs(maxDrawdown) * 100).toFixed(2) + '%', 'Sharpe ratio:', sharpeRatio.toFixed(2));
+                } else {
+                    console.error('Backtest failed:', result.error);
+                    alert('回测失败: ' + (result.error || '未知错误'));
+                    
+                    // Restore button state on error too
+                    if (button && originalText) {
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Backtest error:', error);
+                alert('回测执行出错: ' + error.message);
+                
+                // Restore button state on exception
+                if (button) {
+                    button.innerHTML = originalText || '运行回测';
+                    button.disabled = false;
+                }
+            } finally {
+                // Final button state restoration
+                if (button && originalText) {
+                    console.log('Final button restore:', originalText);
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                } else if (button) {
+                    console.log('Restoring button with fallback text');
+                    button.innerHTML = '运行回测';
+                    button.disabled = false;
+                } else {
+                    console.warn('No button reference for final restore');
+                }
+            }
+        }
+        
+        // Test Chart.js availability on page load
+        function testChartJS() {
+            if (typeof Chart !== 'undefined') {
+                console.log('Chart.js is available, version:', Chart.version || 'unknown');
+                return true;
+            } else {
+                console.error('Chart.js is not available');
+                return false;
+            }
+        }
+        
+        // Fallback: Display data as text when chart fails
+        function displayBacktestDataAsText(dates, values) {
+            const chartContainer = document.querySelector('#backtestChart').parentElement;
+            chartContainer.innerHTML = `
+                <div class="chart-fallback" style="background: var(--bg-secondary); padding: 20px; border-radius: 8px;">
+                    <h6 style="color: #f39c12; margin-bottom: 15px;">📈 投资组合价值变化</h6>
+                    <div class="row">
+                        ${dates.map((date, i) => `
+                            <div class="col-6 col-md-3 mb-2">
+                                <small style="color: #a0aec0;">${date}</small><br>
+                                <strong style="color: #fff;">$${Number(values[i]).toLocaleString()}</strong>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <small style="color: #a0aec0; margin-top: 10px; display: block;">
+                        ⚠️ 图表显示功能暂时不可用，以上为数据列表
+                    </small>
+                </div>
+            `;
+        }
+        
+        // Simplified chart creation compatible with Chart.js v4
+        function updateBacktestChart(dates, values) {
+            console.log('Updating backtest chart with dates:', dates, 'values:', values);
+            
+            // Test Chart.js first
+            if (!testChartJS()) {
+                console.warn('Chart.js not available, using fallback display');
+                displayBacktestDataAsText(dates, values);
+                return;
+            }
+            
+            const chartCanvas = document.getElementById('backtestChart');
+            if (!chartCanvas) {
+                console.error('Chart canvas not found');
+                displayBacktestDataAsText(dates, values);
+                return;
+            }
+            
+            // Validate data
+            if (!dates || !values || dates.length === 0 || values.length === 0) {
+                console.warn('Invalid chart data');
+                displayBacktestDataAsText(dates, values);
+                return;
+            }
+            
+            try {
+                // Properly destroy existing chart using Chart.js v4 method
+                const existingChart = Chart.getChart(chartCanvas);
+                if (existingChart) {
+                    console.log('Destroying existing chart instance');
+                    existingChart.destroy();
+                }
+                
+                // Also clear our global reference
+                if (window.backtestChartInstance) {
+                    window.backtestChartInstance = null;
+                }
+                
+                // Get context
+                const ctx = chartCanvas.getContext('2d');
+                if (!ctx) {
+                    throw new Error('Cannot get canvas context');
+                }
+                
+                // Chart.js v4 compatible configuration
+                const config = {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: '投资组合价值',
+                            data: values,
+                            borderColor: '#f39c12',
+                            backgroundColor: 'rgba(243, 156, 18, 0.1)',
+                            fill: true,
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                ticks: { 
+                                    color: '#fff'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            },
+                            y: {
+                                ticks: { 
+                                    color: '#fff',
+                                    callback: function(value, index, ticks) {
+                                        try {
+                                            return '$' + Number(value).toLocaleString();
+                                        } catch (e) {
+                                            return '$' + value;
+                                        }
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                labels: { 
+                                    color: '#fff'
+                                }
+                            }
+                        }
+                    }
+                };
+                
+                console.log('Creating chart with config:', config);
+                window.backtestChartInstance = new Chart(ctx, config);
+                console.log('Chart created successfully');
+                
+            } catch (error) {
+                console.error('Error creating chart:', error.message, error.stack);
+                console.log('Falling back to text display due to error:', error.message);
+                displayBacktestDataAsText(dates, values);
+            }
+        }
+
+        // Load current settings into the form
+        function loadCurrentSettings() {
+            // Use the treasury data we already have
+            if (window.latestTreasuryData) {
+                const data = window.latestTreasuryData;
+                
+                // Fill in current values
+                document.getElementById('settingsBTCInventory').value = data.btc_inventory || 12.5;
+                document.getElementById('settingsCostBasis').value = data.avg_cost_basis || 95000;
+                document.getElementById('settingsMonthlyOPEX').value = data.monthly_opex || 200000;
+                document.getElementById('settingsMinCash').value = data.cash_reserves || 600000;
+                
+                console.log('Settings loaded from current treasury data:', data);
+            } else {
+                // Fetch fresh data if not available
+                fetchTreasuryData();
+                setTimeout(loadCurrentSettings, 1000); // Retry after data loads
+            }
+        }
+        
+        // Settings functions
+        function saveSettings() {
+            const settings = {
+                btcInventory: parseFloat(document.getElementById('settingsBTCInventory').value) || 0,
+                costBasis: parseFloat(document.getElementById('settingsCostBasis').value) || 0,
+                monthlyOPEX: parseFloat(document.getElementById('settingsMonthlyOPEX').value) || 0,
+                minCash: parseFloat(document.getElementById('settingsMinCash').value) || 0,
+                costMethod: document.getElementById('settingsCostMethod').value,
+                riskProfile: document.getElementById('settingsRiskProfile').value,
+                maxDailySell: parseFloat(document.getElementById('settingsMaxDailySell').value) || 10,
+                allowHedging: document.getElementById('settingsAllowHedging').value === 'yes',
+                exchange: document.getElementById('settingsExchange').value,
+                alerts: {
+                    email: document.getElementById('alertEmail').checked,
+                    telegram: document.getElementById('alertTelegram').checked,
+                    discord: document.getElementById('alertDiscord').checked
+                }
+            };
+            
+            // Save to localStorage
+            localStorage.setItem('hashinsight_settings', JSON.stringify(settings));
+            
+            // Show success message
+            alert('设置已保存成功！');
+            
+            // Update the treasury data display immediately with new settings
+            updateTreasuryDisplay({
+                btc_inventory: settings.btcInventory,
+                avg_cost_basis: settings.costBasis,
+                monthly_opex: settings.monthlyOPEX,
+                cash_reserves: settings.minCash,
+                inventory_usd: settings.btcInventory * (window.currentBTCPrice || 113000),
+                cash_coverage_days: Math.round(settings.minCash / (settings.monthlyOPEX / 30)),
+                unrealized_pl: ((window.currentBTCPrice || 113000) - settings.costBasis) / settings.costBasis * 100
+            });
+            
+            console.log('Settings updated and treasury display refreshed');
+            
+            // Reload dashboard with new settings
+            fetchTreasuryData().catch(error => {
+                console.warn('Failed to reload treasury data after settings save:', error);
+            });
+        }
+        
+        // Initialize tooltips
+        function initTooltips() {
+            try {
+                // Check if Bootstrap is loaded
+                if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+                    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                    tooltipTriggerList.map(function (tooltipTriggerEl) {
+                        return new bootstrap.Tooltip(tooltipTriggerEl);
+                    });
+                    console.log('Tooltips initialized successfully');
+                } else {
+                    console.log('Bootstrap not loaded, tooltips disabled');
+                }
+            } catch (error) {
+                console.error('Error initializing tooltips:', error);
+            }
+        }
+        
+        // Update timestamp
+        function updateTimestamp() {
+            const now = new Date();
+            const formattedTime = now.toLocaleString('en-US', {
+                timeZone: 'America/New_York',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            }) + ' ET';
+            const timestampElement = document.getElementById('lastUpdateTime');
+            if (timestampElement) {
+                timestampElement.textContent = `Last update: ${formattedTime}`;
+            }
+        }
+        
+        // Export signal data
+        function exportSignal() {
+            const signalData = {
+                timestamp: new Date().toISOString(),
+                signal: 'NEUTRAL-BULLISH',
+                weightedScore: 26,
+                components: {
+                    technical: 18,
+                    onChain: 6,
+                    mining: 4,
+                    market: -2
+                },
+                recommendation: 'Consider taking 15% profit at Layer 2 target',
+                nextTrigger: {
+                    price: 113800,
+                    action: 'sell',
+                    amount: 0.75,
+                    unit: 'BTC'
+                },
+                confidence: 'High',
+                indicators: {
+                    rsi: 68.5,
+                    puell: 1.65,
+                    hashprice: '65%ile',
+                    funding: 0.01
+                }
+            };
+            
+            const dataStr = JSON.stringify(signalData, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportLink = document.createElement('a');
+            exportLink.setAttribute('href', dataUri);
+            exportLink.setAttribute('download', `signal_${new Date().toISOString()}.json`);
+            document.body.appendChild(exportLink);
+            exportLink.click();
+            document.body.removeChild(exportLink);
+        }
+        
+        // Alerts/Notifications functionality
+        function initAlertsSystem() {
+            console.log('Initializing alerts system...');
+            
+            const alertsBtn = document.getElementById('alertsBtn');
+            if (alertsBtn) {
+                console.log('Alerts button found, adding click listener');
+                alertsBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Alerts button clicked - showing panel');
+                    showAlertsPanel();
+                });
+            } else {
+                console.error('Alerts button not found');
+            }
+            
+            // Check for alerts on page load
+            checkAlerts();
+        }
+        
+        function showAlertsPanel() {
+            console.log('Showing alerts panel...');
+            
+            // Create alerts modal if it doesn't exist
+            let alertsModal = document.getElementById('alertsModal');
+            if (!alertsModal) {
+                console.log('Creating new alerts modal');
+                alertsModal = createAlertsModal();
+                document.body.appendChild(alertsModal);
+            }
+            
+            try {
+                // Show the modal using Bootstrap
+                const modal = new bootstrap.Modal(alertsModal);
+                console.log('Modal created, showing...');
+                modal.show();
+                
+                // Load latest alerts
+                loadAlerts();
+            } catch (error) {
+                console.error('Error showing modal:', error);
+                
+                // Fallback: show modal manually
+                alertsModal.style.display = 'block';
+                alertsModal.classList.add('show');
+                document.body.classList.add('modal-open');
+                
+                // Create backdrop
+                const backdrop = document.createElement('div');
+                backdrop.className = 'modal-backdrop fade show';
+                backdrop.id = 'alertsBackdrop';
+                document.body.appendChild(backdrop);
+                
+                loadAlerts();
+            }
+        }
+        
+        function createAlertsModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal fade';
+            modal.id = 'alertsModal';
+            modal.tabIndex = -1;
+            modal.innerHTML = `
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content" style="background: var(--bg-secondary); color: white;">
+                        <div class="modal-header" style="border-color: rgba(116, 75, 162, 0.2);">
+                            <h5 class="modal-title">
+                                <i class="bi bi-bell me-2 text-warning"></i>
+                                {{ '系统提醒' if current_lang == 'zh' else 'System Alerts' }}
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body" id="alertsContent">
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-warning" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-2">{{ '加载中...' if current_lang == 'zh' else 'Loading alerts...' }}</p>
+                            </div>
+                        </div>
+                        <div class="modal-footer" style="border-color: rgba(116, 75, 162, 0.2);">
+                            <button type="button" class="btn btn-outline-warning" onclick="markAllRead()">
+                                <i class="bi bi-check-all me-1"></i>
+                                {{ '全部已读' if current_lang == 'zh' else 'Mark All Read' }}
+                            </button>
+                            <button type="button" class="btn nav-btn" data-bs-dismiss="modal">
+                                {{ '关闭' if current_lang == 'zh' else 'Close' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return modal;
+        }
+        
+        function loadAlerts() {
+            const alertsContent = document.getElementById('alertsContent');
+            if (!alertsContent) return;
+            
+            // Simulate loading alerts
+            setTimeout(() => {
+                const alertsHTML = `
+                    <div class="alert alert-warning d-flex align-items-center mb-3" role="alert">
+                        <i class="bi bi-exclamation-triangle me-3 fs-4"></i>
+                        <div>
+                            <strong>{{ '价格提醒' if current_lang == 'zh' else 'Price Alert' }}</strong>
+                            <p class="mb-0">BTC {{ '突破' if current_lang == 'zh' else 'broke above' }} $113,500 - {{ '第2层获利目标' if current_lang == 'zh' else 'Layer 2 profit target' }}</p>
+                            <small class="text-muted">2 {{ '分钟前' if current_lang == 'zh' else 'minutes ago' }}</small>
+                        </div>
+                    </div>
+                    <div class="alert alert-info d-flex align-items-center mb-3" role="alert" style="background: rgba(66, 153, 225, 0.15) !important; border: 1px solid rgba(66, 153, 225, 0.3) !important;">
+                        <i class="bi bi-graph-up me-3 fs-4" style="color: #4299e1 !important;"></i>
+                        <div>
+                            <strong style="color: #ffffff !important;">Technical Signal</strong>
+                            <p class="mb-0" style="color: #e2e8f0 !important;">RSI approaching overbought territory (68.5)</p>
+                            <small style="color: #a0aec0 !important;">15 minutes ago</small>
+                        </div>
+                    </div>
+                    <div class="alert alert-success d-flex align-items-center mb-3" role="alert">
+                        <i class="bi bi-check-circle me-3 fs-4"></i>
+                        <div>
+                            <strong>{{ '系统状态' if current_lang == 'zh' else 'System Status' }}</strong>
+                            <p class="mb-0">{{ '所有数据源正常运行' if current_lang == 'zh' else 'All data sources operational' }}</p>
+                            <small class="text-muted">1 {{ '小时前' if current_lang == 'zh' else 'hour ago' }}</small>
+                        </div>
+                    </div>
+                    <div class="text-muted text-center">
+                        <small>{{ '显示最近的3个提醒' if current_lang == 'zh' else 'Showing 3 most recent alerts' }}</small>
+                    </div>
+                `;
+                
+                alertsContent.innerHTML = alertsHTML;
+                
+                // Update alert count
+                updateAlertCount(2); // 2 unread alerts
+            }, 500);
+        }
+        
+        function checkAlerts() {
+            // Simulate checking for new alerts
+            setTimeout(() => {
+                updateAlertCount(2); // Show 2 unread alerts
+            }, 1000);
+        }
+        
+        function updateAlertCount(count) {
+            const alertBadge = document.getElementById('alertCount');
+            if (alertBadge) {
+                if (count > 0) {
+                    alertBadge.textContent = count;
+                    alertBadge.style.display = 'inline-block';
+                    alertBadge.className = 'position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger';
+                    alertBadge.style.fontSize = '0.75rem';
+                } else {
+                    alertBadge.style.display = 'none';
+                }
+            }
+        }
+        
+        function markAllRead() {
+            updateAlertCount(0);
+            // Show confirmation
+            const alertsContent = document.getElementById('alertsContent');
+            if (alertsContent) {
+                alertsContent.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="bi bi-check-circle text-success fs-1"></i>
+                        <h5 class="mt-3">{{ '所有提醒已标记为已读' if current_lang == 'zh' else 'All alerts marked as read' }}</h5>
+                        <p class="text-muted">{{ '没有新的提醒' if current_lang == 'zh' else 'No new alerts to show' }}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Next Sell Indicator Functions
+        async function fetchNextSellIndicator() {
+            try {
+                // 获取当前配额设置
+                const quotaSelector = document.querySelector('#quotaPercentSelector');
+                const currentQuota = quotaSelector ? quotaSelector.value : 0.08;
+                
+                const response = await fetch(`/api/treasury/next-sell-indicator?quota=${currentQuota}`);
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    updateNextSellIndicator(result.data);
+                } else {
+                    console.error('Next sell indicator error:', result.error);
+                }
+            } catch (error) {
+                console.error('Failed to fetch next sell indicator:', error);
+            }
+        }
+
+        function updateNextSellIndicator(data) {
+            // Update main price
+            document.getElementById('nextSellPrice').textContent = `$${data.next_price.toLocaleString()}`;
+            document.getElementById('nextSellLayer').textContent = `(${data.layer})`;
+            
+            // Update target zone
+            document.getElementById('nextSellZone').textContent = 
+                `$${data.zone_low.toLocaleString()} - $${data.zone_high.toLocaleString()}`;
+            
+            // Update proximity
+            const proximityPct = Math.min(Math.max(data.proximity_pct, 0), 100);
+            document.getElementById('proximityBar').style.width = `${proximityPct}%`;
+            document.getElementById('proximityText').textContent = `${proximityPct}%`;
+            
+            // Update quantity
+            document.getElementById('nextSellQty').textContent = data.qty_btc;
+            
+            // Update OPEX reserve note
+            const opexNote = document.getElementById('opexReserveNote');
+            if (data.opex_reserved_btc > 0) {
+                const lang = getCurrentLanguage();
+                const noteText = lang === 'zh' ? 
+                    `已预留 ${data.opex_reserved_btc} BTC 用于 OPEX 覆盖` :
+                    `${data.opex_reserved_btc} BTC reserved for OPEX`;
+                opexNote.textContent = noteText;
+                opexNote.className = 'text-warning small';
+            } else {
+                opexNote.textContent = '';
+            }
+            
+            // Update confidence
+            const badge = document.getElementById('confidenceBadge');
+            const lang = getCurrentLanguage();
+            const confidenceText = getConfidenceText(data.confidence, lang);
+            badge.textContent = confidenceText;
+            badge.className = `badge bg-${getConfidenceColor(data.confidence)}`;
+            
+            // Update confidence reason
+            if (data.reasons && data.reasons.length > 0) {
+                document.getElementById('confidenceReason').textContent = data.reasons[data.reasons.length - 1];
+            }
+            
+            // Update fallback stop
+            document.getElementById('fallbackStop').textContent = data.fallback_stop.toLocaleString();
+            
+            // Update reasons
+            if (data.reasons) {
+                const reasonsEl = document.getElementById('nextSellReasons');
+                reasonsEl.innerHTML = data.reasons.map(reason => 
+                    `<small class="text-info">• ${reason}</small>`
+                ).join('<br>');
+            }
+        }
+
+        function getConfidenceColor(confidence) {
+            switch (confidence) {
+                case 'high': return 'success';
+                case 'medium': return 'warning';
+                case 'low': return 'danger';
+                default: return 'secondary';
+            }
+        }
+
+        function getConfidenceText(confidence, lang) {
+            const confidenceMap = {
+                'high': { 'zh': '高', 'en': 'High' },
+                'medium': { 'zh': '中', 'en': 'Medium' },
+                'low': { 'zh': '低', 'en': 'Low' }
+            };
+            
+            return confidenceMap[confidence]?.[lang] || confidence.charAt(0).toUpperCase() + confidence.slice(1);
+        }
+
+        function updateNextSellPriceDynamicContent(lang) {
+            // Update confidence badge text if it exists
+            const confidenceBadge = document.getElementById('confidenceBadge');
+            if (confidenceBadge) {
+                const currentConfidence = confidenceBadge.textContent.toLowerCase();
+                const confidenceKey = currentConfidence === 'high' || currentConfidence === '高' ? 'high' :
+                                    currentConfidence === 'medium' || currentConfidence === '中' ? 'medium' :
+                                    currentConfidence === 'low' || currentConfidence === '低' ? 'low' : 'high';
+                confidenceBadge.textContent = getConfidenceText(confidenceKey, lang);
+            }
+        }
+
+        function generateNextSellOrder() {
+            // 获取当前数据
+            const price = document.getElementById('nextSellPrice').textContent.replace(/[$,]/g, '');
+            const qty = document.getElementById('nextSellQty').textContent;
+            const zone = document.getElementById('nextSellZone').textContent;
+            const lang = getCurrentLanguage();
+            
+            // 显示订单生成对话框
+            const orderDetails = lang === 'zh' ? `
+建议卖出订单:
+价格区间: ${zone}
+数量: ${qty} BTC
+类型: 限价单 (WCL 0.2%)
+
+是否生成此订单？
+            ` : `
+Suggested Sell Order:
+Price Zone: ${zone}
+Quantity: ${qty} BTC
+Type: Limit Order (WCL 0.2%)
+
+Generate this order?
+            `;
+            
+            if (confirm(orderDetails)) {
+                const message = lang === 'zh' ? 
+                    '订单生成功能正在开发中。\n此为教育演示版本，不构成投资建议。' :
+                    'Order generation feature is under development.\nThis is for educational purposes only and does not constitute investment advice.';
+                alert(message);
+            }
+        }
+
+        function getCurrentLanguage() {
+            return window.currentLang || document.documentElement.lang || 'en';
+        }
+
+        // Fetch Treasury Overview Data
+        function fetchTreasuryData() {
+            return fetch('/api/treasury/overview')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Treasury data loaded:', data);
+                    if (data.success) {
+                        updateTreasuryDisplay(data);
+                    }
+                    return data;
+                })
+                .catch(error => {
+                    console.error('Treasury data error:', error);
+                    throw error;
+                });
+        }
+        
+        // Update Treasury Display
+        function updateTreasuryDisplay(data) {
+            // Store data globally for settings form
+            window.latestTreasuryData = data;
+            
+            // Update BTC inventory
+            if (document.getElementById('btcInventory')) {
+                document.getElementById('btcInventory').textContent = data.btc_inventory?.toFixed(4) || '0.0000';
+            }
+            if (document.getElementById('btcInventoryUSD')) {
+                document.getElementById('btcInventoryUSD').textContent = 
+                    data.inventory_usd ? Math.round(data.inventory_usd).toLocaleString() : '0';
+            }
+            
+            // Update cash coverage
+            if (document.getElementById('cashCoverage')) {
+                document.getElementById('cashCoverage').textContent = data.cash_coverage_days || '0';
+            }
+            
+            // Update cash reserves
+            if (document.getElementById('cashReserves')) {
+                document.getElementById('cashReserves').textContent = 
+                    data.cash_reserves ? `$${Math.round(data.cash_reserves).toLocaleString()}` : '$0';
+            }
+            
+            // Update unrealized P&L
+            if (document.getElementById('unrealizedPL')) {
+                const pl = data.unrealized_pl || 0;
+                const element = document.getElementById('unrealizedPL');
+                element.textContent = `${pl >= 0 ? '+' : ''}${pl.toFixed(1)}%`;
+                element.className = pl >= 0 ? 'text-success' : 'text-danger';
+            }
+            
+            // Update cost basis
+            if (document.getElementById('costBasis')) {
+                document.getElementById('costBasis').textContent = 
+                    data.avg_cost_basis ? `$${Math.round(data.avg_cost_basis).toLocaleString()}` : '$0';
+            }
+        }
+
+        // Setup Event Listeners
+        function setupEventListeners() {
+            // Add any additional event listeners here if needed
+            console.log('Event listeners setup completed');
+        }
+
+        // Initialize and update Next Sell Indicator
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initial calls
+            fetchTreasuryData();
+            fetchNextSellIndicator(); 
+            setupEventListeners();
+            
+            // Update data every 30 seconds
+            setInterval(() => {
+                fetchTreasuryData();
+                fetchNextSellIndicator();
+            }, 30000);
+        });
+
+        // ========================================
+        // 个人层级选择器管理系统 (Personal Layer Manager)
+        // ========================================
+        class PersonalLayerManager {
+            constructor() {
+                this.config = {
+                    defaultLayer: 'L2',
+                    costBasis: 95000,
+                    multipliers: {
+                        'L1': 1.25,  // +25% 保守策略
+                        'L2': 1.52,  // +52% 平衡策略  
+                        'L3': 1.85,  // +85% 激进策略
+                        'L4': 2.20   // +120% 极致策略
+                    },
+                    riskLevels: {
+                        'L1': { zh: '低风险', en: 'Low Risk' },
+                        'L2': { zh: '中等风险', en: 'Medium Risk' },
+                        'L3': { zh: '高风险', en: 'High Risk' },
+                        'L4': { zh: '极高风险', en: 'Very High Risk' }
+                    },
+                    selectors: {
+                        layerSelect: '#personalLayerSelector',
+                        applyButton: '#applyPersonalLayerBtn',
+                        currentRisk: '#currentPersonalRisk',
+                        explanation: '#layerExplanation',
+                        strategyPane: '#strategy'
+                    }
+                };
+                
+                this.currentLayer = this.config.defaultLayer;
+                this.isProcessing = false;
+                
+                console.log('PersonalLayerManager initialized');
+            }
+
+            // 获取层级信息
+            getLayerInfo(layer) {
+                return {
+                    layer: layer,
+                    multiplier: this.config.multipliers[layer] || this.config.multipliers[this.config.defaultLayer],
+                    risk: this.config.riskLevels[layer] || this.config.riskLevels[this.config.defaultLayer],
+                    targetPrice: this.calculateTargetPrice(layer)
+                };
+            }
+
+            // 计算目标价格
+            calculateTargetPrice(layer) {
+                const multiplier = this.config.multipliers[layer] || this.config.multipliers[this.config.defaultLayer];
+                return this.config.costBasis * multiplier;
+            }
+
+            // 更新显示界面
+            updateDisplay(layer, language) {
+                const layerInfo = this.getLayerInfo(layer);
+                
+                // 更新风险等级显示
+                const riskElement = document.querySelector(this.config.selectors.currentRisk);
+                if (riskElement) {
+                    riskElement.textContent = layerInfo.risk[language] || layerInfo.risk.zh;
+                }
+                
+                // 更新目标价格解释
+                const explanationElement = document.querySelector(this.config.selectors.explanation);
+                if (explanationElement) {
+                    explanationElement.textContent = language === 'zh' ? 
+                        `目标: $${layerInfo.targetPrice.toLocaleString()}` : 
+                        `Target: $${layerInfo.targetPrice.toLocaleString()}`;
+                }
+                
+                console.log(`Layer display updated: ${layer} -> $${layerInfo.targetPrice.toLocaleString()}`);
+            }
+
+            // 更新按钮状态
+            updateButtonState(state, language) {
+                const button = document.querySelector(this.config.selectors.applyButton);
+                if (!button) return;
+
+                const states = {
+                    loading: {
+                        zh: '<i class="bi bi-clock me-1"></i>应用中...',
+                        en: '<i class="bi bi-clock me-1"></i>Applying...'
+                    },
+                    success: {
+                        zh: '<i class="bi bi-check-circle-fill"></i>',
+                        en: '<i class="bi bi-check-circle-fill"></i>'
+                    },
+                    error: {
+                        zh: '<i class="bi bi-x-circle me-1"></i>重试',
+                        en: '<i class="bi bi-x-circle me-1"></i>Retry'
+                    },
+                    ready: {
+                        zh: '<i class="bi bi-check-circle-fill"></i>',
+                        en: '<i class="bi bi-check-circle-fill"></i>'
+                    }
+                };
+
+                button.innerHTML = states[state][language] || states[state].en;
+                button.disabled = (state === 'loading');
+            }
+
+            // 显示成功消息 - 紧贴Personal Strategy Layer卡片上方
+            showSuccessMessage(message) {
+                // 使用ID定位Personal Layer选择器，找到其父容器
+                const personalLayerSelector = document.querySelector('#personalLayerSelector');
+                if (!personalLayerSelector) {
+                    console.warn('Personal Layer selector not found');
+                    return;
+                }
+                
+                const personalLayerContainer = personalLayerSelector.closest('.col-md-4');
+                if (!personalLayerContainer) {
+                    console.warn('Personal Layer container not found');
+                    return;
+                }
+                
+                // 移除已存在的消息
+                const existingAlert = personalLayerContainer.querySelector('.personal-layer-success-alert');
+                if (existingAlert) {
+                    existingAlert.remove();
+                }
+                
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-success alert-dismissible fade show personal-layer-success-alert';
+                alert.style.cssText = `
+                    padding: 0.4rem 0.7rem; 
+                    font-size: 0.8rem; 
+                    margin-bottom: 0.5rem;
+                    border-radius: 0.3rem;
+                    background: rgba(40, 167, 69, 0.15);
+                    border: 1px solid rgba(40, 167, 69, 0.3);
+                    color: #28a745;
+                `;
+                alert.innerHTML = `
+                    <i class="bi bi-check-circle-fill me-1" style="font-size: 0.8rem;"></i> 
+                    <span style="font-size: 0.8rem;">${message}</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" style="font-size: 0.7rem; padding: 0.2rem; opacity: 0.6;"></button>
+                `;
+                
+                // 插入到Personal Strategy Layer容器的开头
+                personalLayerContainer.insertBefore(alert, personalLayerContainer.firstChild);
+                
+                // 2.5秒后自动消失
+                setTimeout(() => alert?.remove(), 2500);
+            }
+
+            // 应用层级设置（核心功能）
+            async applyLayerSetting() {
+                if (this.isProcessing) return;
+                
+                const layerSelector = document.querySelector(this.config.selectors.layerSelect);
+                if (!layerSelector) {
+                    console.error('Layer selector not found');
+                    return;
+                }
+
+                const selectedLayer = layerSelector.value;
+                const quotaSelector = document.querySelector('#quotaPercentSelector');
+                const selectedQuota = quotaSelector ? quotaSelector.value : 0.08;
+                const language = getCurrentLanguage();
+
+                this.isProcessing = true;
+                this.updateButtonState('loading', language);
+
+                try {
+                    // API请求
+                    const response = await fetch('/api/treasury/set-layer', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ layer: selectedLayer, quota: selectedQuota })
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // 更新当前层级
+                        this.currentLayer = selectedLayer;
+                        this.updateDisplay(selectedLayer, language);
+                        
+                        // 刷新Next Sell Price数据
+                        await fetchNextSellIndicator();
+                        
+                        // 显示成功消息
+                        const message = result.message || (language === 'zh' ? 
+                            `层级已更新至 ${selectedLayer}` : 
+                            `Layer updated to ${selectedLayer}`);
+                        this.showSuccessMessage(message);
+                        
+                        console.log(`Personal layer successfully updated to: ${selectedLayer}, quota: ${(selectedQuota*100)}%`);
+                    } else {
+                        throw new Error(result.error || 'Layer setting failed');
+                    }
+                    
+                } catch (error) {
+                    console.error('PersonalLayerManager apply error:', error);
+                    this.updateButtonState('error', language);
+                    return;
+                }
+                
+                // 重置状态
+                this.updateButtonState('success', language);
+                this.isProcessing = false;
+            }
+
+            // 初始化系统
+            initialize() {
+                const layerSelector = document.querySelector(this.config.selectors.layerSelect);
+                const applyButton = document.querySelector(this.config.selectors.applyButton);
+                
+                if (!layerSelector || !applyButton) {
+                    console.warn('PersonalLayerManager: Required elements not found');
+                    return;
+                }
+
+                // 绑定事件
+                applyButton.addEventListener('click', () => this.applyLayerSetting());
+                
+                // 初始化显示
+                const initialLayer = layerSelector.value || this.config.defaultLayer;
+                const language = getCurrentLanguage();
+                this.currentLayer = initialLayer;
+                this.updateDisplay(initialLayer, language);
+                
+                console.log(`PersonalLayerManager initialized with layer: ${initialLayer}`);
+            }
+        }
+
+        // 创建全局实例
+        const personalLayerManager = new PersonalLayerManager();
+
+        // 页面加载时自动初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            personalLayerManager.initialize();
+            
+            // 添加配额选择器变化监听
+            const quotaSelector = document.querySelector('#quotaPercentSelector');
+            if (quotaSelector) {
+                quotaSelector.addEventListener('change', function() {
+                    console.log('Quota changed to:', this.value);
+                    // 立即刷新Next Sell数据
+                    fetchNextSellIndicator();
+                });
+            }
+        });
+
+    </script>
+    <script src="/static/js/i18n.js"></script>
+</body>
+</html>

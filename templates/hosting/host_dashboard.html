@@ -1,0 +1,198 @@
+{% extends "hosting/hosting_base.html" %}
+
+{% block page_title %}<span data-i18n="hosting.host_dashboard">Host Dashboard</span>{% endblock %}
+{% block page_subtitle %}<span data-i18n="hosting.manage_sites_devices">Manage hosting sites, devices and customers</span>{% endblock %}
+
+{% block content %}
+
+<!-- 概览统计 -->
+<div class="hosting-stats-grid">
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="total-sites">--</div>
+        <div class="hosting-stat-label" data-i18n="hosting.hosting_sites">Hosting Sites</div>
+        <i class="bi bi-geo-alt hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="total-devices">--</div>
+        <div class="hosting-stat-label" data-i18n="hosting.hosted_devices">Hosted Devices</div>
+        <i class="bi bi-cpu hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="total-capacity">--</div>
+        <div class="hosting-stat-label" data-i18n="hosting.total_capacity_mw">Total Capacity (MW)</div>
+        <i class="bi bi-lightning hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="monthly-revenue">--</div>
+        <div class="hosting-stat-label" data-i18n="hosting.monthly_revenue">Monthly Revenue</div>
+        <i class="bi bi-currency-dollar hosting-stat-icon"></i>
+    </div>
+</div>
+
+<!-- 站点总览 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-building me-2"></i><span data-i18n="hosting.sites_overview">Sites Overview</span>
+        </h5>
+        <div class="btn-group" role="group">
+            <button class="btn btn-hosting-secondary btn-sm" onclick="refreshSites()">
+                <i class="bi bi-arrow-clockwise me-1"></i><span data-i18n="common.refresh">Refresh</span>
+            </button>
+            <a href="/hosting/host/devices" class="btn btn-hosting-primary btn-sm">
+                <i class="bi bi-cpu me-1"></i><span data-i18n="hosting.miner_management">Miner Management</span>
+            </a>
+        </div>
+    </div>
+    <div class="hosting-card-body">
+        <div class="hosting-table">
+            <table class="table table-hover" id="sites-table">
+                <thead>
+                    <tr>
+                        <th data-i18n="hosting.site_name">Site Name</th>
+                        <th data-i18n="hosting.location">Location</th>
+                        <th data-i18n="hosting.capacity">Capacity</th>
+                        <th data-i18n="hosting.used">Used</th>
+                        <th data-i18n="hosting.devices">Devices</th>
+                        <th data-i18n="hosting.status">Status</th>
+                        <th data-i18n="hosting.actions">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 数据通过JavaScript加载 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 事件监控 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-exclamation-triangle me-2"></i><span data-i18n="hosting.recent_events">Recent Events</span>
+        </h5>
+    </div>
+    <div class="hosting-card-body">
+        <div id="events-list">
+            <div class="text-center text-muted py-4">
+                <i class="bi bi-clock-history fs-1 mb-3"></i>
+                <p data-i18n="hosting.no_recent_events">No recent events</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardData();
+    
+    // 监听语言变化，重新渲染表格
+    if (window.I18n) {
+        I18n.onLangChange(function(newLang, oldLang) {
+            loadSitesOverview();
+        });
+    }
+});
+
+function loadDashboardData() {
+    // 加载概览统计
+    loadSitesOverview();
+    loadEventsData();
+}
+
+function loadSitesOverview() {
+    fetch('/hosting/api/sites')
+        .then(response => response.json())
+        .then(data => {
+            const sitesTable = document.getElementById('sites-table').getElementsByTagName('tbody')[0];
+            sitesTable.innerHTML = '';
+            
+            let totalCapacity = 0;
+            let usedCapacity = 0;
+            let totalDevices = 0;
+            let totalRevenue = 0;
+            
+            // Get current language for server-side fallback text
+            const currentLang = getLanguage();
+            const viewText = currentLang === 'en' ? 'View' : '查看';
+            
+            data.sites.forEach(site => {
+                const row = sitesTable.insertRow();
+                row.innerHTML = `
+                    <td><a href="/hosting/host/sites/${site.id}" class="text-decoration-none text-warning">${site.name}</a></td>
+                    <td>${site.location}</td>
+                    <td>${site.capacity_mw} MW</td>
+                    <td>${site.used_capacity_mw} MW</td>
+                    <td><span class="badge bg-success">${site.device_count || 0}</span></td>
+                    <td><span class="badge bg-${site.status === 'active' ? 'success' : 'warning'}">${getStatusText(site.status)}</span></td>
+                    <td>
+                        <a href="/hosting/host/sites/${site.id}" class="btn btn-hosting-outline btn-sm">
+                            <i class="bi bi-eye"></i> <span data-i18n="hosting.view">${viewText}</span>
+                        </a>
+                    </td>
+                `;
+                
+                totalCapacity += parseFloat(site.capacity_mw || 0);
+                usedCapacity += parseFloat(site.used_capacity_mw || 0);
+                totalDevices += parseInt(site.device_count || 0);
+                totalRevenue += parseFloat(site.monthly_revenue || 0);
+            });
+            
+            // 更新统计数据
+            document.getElementById('total-sites').textContent = data.sites.length;
+            document.getElementById('total-devices').textContent = totalDevices;
+            document.getElementById('total-capacity').textContent = totalCapacity.toFixed(1);
+            document.getElementById('monthly-revenue').textContent = '$' + totalRevenue.toLocaleString();
+            
+            // Update translations for newly added elements (always attempt - i18n.js handles not-ready state)
+            if (window.I18n) {
+                I18n.updatePageTranslations();
+            }
+        })
+        .catch(error => {
+            console.error('Error loading sites overview:', error);
+        });
+}
+
+function loadEventsData() {
+    // 模拟加载事件数据
+    const eventsList = document.getElementById('events-list');
+    // 这里可以添加实际的事件数据加载逻辑
+}
+
+function refreshSites() {
+    loadSitesOverview();
+}
+
+function getStatusText(status) {
+    if (window.I18n && I18n.initialized) {
+        const statusMap = {
+            'active': I18n.t('hosting.online'),
+            'maintenance': I18n.t('hosting.maintenance'),
+            'offline': I18n.t('hosting.offline')
+        };
+        return statusMap[status] || status;
+    }
+    // Fallback using meta tag language
+    const language = getLanguage();
+    const statusMap = {
+        'active': language === 'en' ? 'Online' : '在线',
+        'maintenance': language === 'en' ? 'Maintenance' : '维护中',
+        'offline': language === 'en' ? 'Offline' : '离线'
+    };
+    return statusMap[status] || status;
+}
+
+function getLanguage() {
+    if (window.I18n && I18n.initialized) {
+        return I18n.getLang();
+    }
+    const meta = document.querySelector('meta[name="language"]');
+    return meta ? meta.content : 'en';
+}
+</script>
+{% endblock %}

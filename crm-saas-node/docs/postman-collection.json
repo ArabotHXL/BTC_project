@@ -1,0 +1,744 @@
+{
+  "info": {
+    "name": "HashInsight CRM Platform API",
+    "_postman_id": "crm-api-collection-v1",
+    "description": "企业级比特币矿业CRM管理平台API测试集合 / Enterprise Bitcoin Mining CRM Platform API Test Collection\n\n## 使用说明 / Usage Instructions\n\n1. 导入此Collection到Postman / Import this collection to Postman\n2. 配置环境变量 / Configure environment variables:\n   - `base_url`: API服务器地址 (e.g., https://api.hashinsight.net/v1)\n   - `token`: JWT访问令牌 (通过登录接口获取)\n3. 先调用登录接口获取token / First call login to get token\n4. Token会自动保存到环境变量 / Token will be automatically saved to environment variable\n5. 其他接口会自动使用token进行认证 / Other endpoints will automatically use token for authentication",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000/v1",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication / 认证",
+      "item": [
+        {
+          "name": "用户登录 / User Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// 验证状态码 / Verify status code",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "// 验证响应格式 / Verify response format",
+                  "pm.test('Response has success field', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('success');",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});",
+                  "",
+                  "// 保存token到环境变量 / Save token to environment variable",
+                  "pm.test('Token is present and saved', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.have.property('token');",
+                  "    pm.environment.set('token', jsonData.data.token);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@hashinsight.net\",\n  \"password\": \"SecureP@ssw0rd\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "使用邮箱和密码登录系统，返回JWT访问令牌\n\nLogin to the system using email and password, returns JWT access token"
+          },
+          "response": []
+        },
+        {
+          "name": "用户注册 / User Registration",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Response contains user data', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.have.property('user');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newuser@example.com\",\n  \"password\": \"SecureP@ssw0rd\",\n  \"name\": \"Zhang San\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "description": "创建新用户账户 / Create a new user account"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "CRM Core / CRM核心",
+      "item": [
+        {
+          "name": "获取线索列表 / Get Leads List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has pagination', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.have.property('pagination');",
+                  "    pm.expect(jsonData.data).to.have.property('items');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/leads?page=1&pageSize=20&status=NEW",
+              "host": ["{{base_url}}"],
+              "path": ["api", "leads"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "NEW"
+                }
+              ]
+            },
+            "description": "获取销售线索列表，支持分页、过滤和排序 / Get sales leads list with pagination, filtering and sorting"
+          },
+          "response": []
+        },
+        {
+          "name": "创建线索 / Create Lead",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Lead created successfully', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.have.property('id');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"source\": \"WEBSITE\",\n  \"company\": \"Bitcoin Mining Corp\",\n  \"contactName\": \"John Doe\",\n  \"email\": \"john@btcmining.com\",\n  \"phone\": \"+86-138-0000-0000\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/leads",
+              "host": ["{{base_url}}"],
+              "path": ["api", "leads"]
+            },
+            "description": "创建新的销售线索 / Create a new sales lead"
+          },
+          "response": []
+        },
+        {
+          "name": "更新线索 / Update Lead",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Lead updated successfully', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"QUALIFIED\",\n  \"score\": 85\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/leads/:id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "leads", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "550e8400-e29b-41d4-a716-446655440000"
+                }
+              ]
+            },
+            "description": "更新现有线索信息 / Update existing lead information"
+          },
+          "response": []
+        },
+        {
+          "name": "转换线索为商机 / Convert Lead to Deal",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Conversion successful', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.have.property('deal');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountId\": \"660e8400-e29b-41d4-a716-446655440000\",\n  \"dealTitle\": \"Q1 2025 Mining Equipment Deal\",\n  \"dealValue\": 500000.00,\n  \"expectedClose\": \"2025-03-31\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/leads/:id/convert",
+              "host": ["{{base_url}}"],
+              "path": ["api", "leads", ":id", "convert"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "550e8400-e29b-41d4-a716-446655440000"
+                }
+              ]
+            },
+            "description": "将合格线索转换为销售商机 / Convert qualified lead to sales deal"
+          },
+          "response": []
+        },
+        {
+          "name": "获取商机列表 / Get Deals List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has pagination', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.have.property('pagination');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/deals?page=1&pageSize=20&stage=PROPOSAL",
+              "host": ["{{base_url}}"],
+              "path": ["api", "deals"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "stage",
+                  "value": "PROPOSAL"
+                }
+              ]
+            },
+            "description": "获取销售商机列表，支持分页和过滤 / Get sales deals list with pagination and filtering"
+          },
+          "response": []
+        },
+        {
+          "name": "更新商机阶段 / Update Deal Stage",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Deal stage updated', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stage\": \"NEGOTIATION\",\n  \"probability\": 85,\n  \"notes\": \"Client requested pricing adjustment\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/deals/:id/stage",
+              "host": ["{{base_url}}"],
+              "path": ["api", "deals", ":id", "stage"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "770e8400-e29b-41d4-a716-446655440000"
+                }
+              ]
+            },
+            "description": "更新商机的销售阶段 / Update the sales stage of a deal"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Billing / 计费",
+      "item": [
+        {
+          "name": "获取发票列表 / Get Invoices List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has pagination', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.have.property('pagination');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/invoices?page=1&pageSize=20&status=SENT",
+              "host": ["{{base_url}}"],
+              "path": ["api", "invoices"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "SENT"
+                }
+              ]
+            },
+            "description": "获取发票列表，支持分页和状态过滤 / Get invoices list with pagination and status filtering"
+          },
+          "response": []
+        },
+        {
+          "name": "创建发票 / Create Invoice",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Invoice created successfully', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.have.property('invoiceNumber');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountId\": \"660e8400-e29b-41d4-a716-446655440000\",\n  \"issueDate\": \"2025-10-01\",\n  \"dueDate\": \"2025-10-31\",\n  \"lineItems\": [\n    {\n      \"description\": \"Mining Hosting Fee - October 2025\",\n      \"quantity\": 100,\n      \"unitPrice\": 50.00,\n      \"type\": \"HOSTING_FEE\"\n    },\n    {\n      \"description\": \"Electricity - October 2025\",\n      \"quantity\": 72000,\n      \"unitPrice\": 0.05,\n      \"type\": \"ELECTRICITY\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/invoices",
+              "host": ["{{base_url}}"],
+              "path": ["api", "invoices"]
+            },
+            "description": "创建新的账单发票 / Create a new billing invoice"
+          },
+          "response": []
+        },
+        {
+          "name": "记录付款 / Record Payment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Payment recorded successfully', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.have.property('status');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"invoiceId\": \"880e8400-e29b-41d4-a716-446655440000\",\n  \"amount\": 8600.00,\n  \"paymentDate\": \"2025-10-15T10:30:00Z\",\n  \"method\": \"BANK_TRANSFER\",\n  \"reference\": \"TXN-2025-10-15-001\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/payments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "payments"]
+            },
+            "description": "记录客户付款信息 / Record customer payment information"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Asset Management / 资产管理",
+      "item": [
+        {
+          "name": "获取矿机资产列表 / Get Miner Assets List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has pagination', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.have.property('pagination');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/assets?page=1&pageSize=20&status=OPERATIONAL",
+              "host": ["{{base_url}}"],
+              "path": ["api", "assets"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "OPERATIONAL"
+                }
+              ]
+            },
+            "description": "获取矿机资产列表，支持分页和状态过滤 / Get miner assets list with pagination and status filtering"
+          },
+          "response": []
+        },
+        {
+          "name": "批量导入资产 / Batch Import Assets",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Batch import results', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.have.property('successCount');",
+                  "    pm.expect(jsonData.data).to.have.property('failCount');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountId\": \"660e8400-e29b-41d4-a716-446655440000\",\n  \"assets\": [\n    {\n      \"model\": \"Antminer S19 Pro\",\n      \"serialNumber\": \"S19PRO-2025-001234\",\n      \"hashrate\": 110.00,\n      \"power\": 3250.00,\n      \"location\": \"DC-Beijing-Rack-A01\"\n    },\n    {\n      \"model\": \"Antminer S19 Pro\",\n      \"serialNumber\": \"S19PRO-2025-001235\",\n      \"hashrate\": 110.00,\n      \"power\": 3250.00,\n      \"location\": \"DC-Beijing-Rack-A02\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/assets/batch-import",
+              "host": ["{{base_url}}"],
+              "path": ["api", "assets", "batch-import"]
+            },
+            "description": "批量导入矿机资产信息 / Batch import miner assets information"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Operations / 运维",
+      "item": [
+        {
+          "name": "获取工单列表 / Get Tickets List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has pagination', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.have.property('pagination');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/tickets?page=1&pageSize=20&status=OPEN&priority=HIGH",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tickets"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "OPEN"
+                },
+                {
+                  "key": "priority",
+                  "value": "HIGH"
+                }
+              ]
+            },
+            "description": "获取运维工单列表，支持分页和状态过滤 / Get operations tickets list with pagination and status filtering"
+          },
+          "response": []
+        },
+        {
+          "name": "创建工单 / Create Ticket",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Ticket created successfully', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.have.property('id');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountId\": \"660e8400-e29b-41d4-a716-446655440000\",\n  \"assetId\": \"990e8400-e29b-41d4-a716-446655440000\",\n  \"type\": \"HARDWARE_ISSUE\",\n  \"priority\": \"HIGH\",\n  \"subject\": \"Miner S19-001234 hashrate dropped\",\n  \"description\": \"Hashrate dropped from 110TH/s to 85TH/s over the past 24 hours. Need immediate investigation.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tickets",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tickets"]
+            },
+            "description": "创建新的运维工单 / Create a new operations ticket"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

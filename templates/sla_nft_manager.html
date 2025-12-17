@@ -1,0 +1,1246 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if current_lang == 'en' %}SLA NFT Certificate Manager{% else %}SLA NFT证书管理器{% endif %} - Web3 Dashboard
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* SLA NFT证书管理器样式 */
+:root {
+    --nft-primary: #8b5cf6;
+    --nft-secondary: #06d6a0;
+    --nft-accent: #f72585;
+    --nft-gold: #ffd700;
+    --nft-silver: #c0c0c0;
+    --nft-bronze: #cd7f32;
+    --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
+    --card-bg: rgba(255, 255, 255, 0.08);
+    --card-border: rgba(139, 92, 246, 0.3);
+    --text-primary: #ffffff;
+    --text-secondary: #b8b8b8;
+    --shadow-glow: 0 8px 32px rgba(139, 92, 246, 0.2);
+    --neon-glow: 0 0 20px rgba(139, 92, 246, 0.6);
+}
+
+body {
+    background: var(--bg-gradient);
+    min-height: 100vh;
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.nft-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* 页面头部 */
+.nft-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    position: relative;
+}
+
+.nft-title {
+    font-size: 3rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--nft-primary), var(--nft-secondary), var(--nft-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 30px rgba(139, 92, 246, 0.3);
+}
+
+.nft-subtitle {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* 统计面板 */
+.stats-panel {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 2rem;
+    text-align: center;
+    backdrop-filter: blur(20px);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-glow);
+    border-color: var(--nft-primary);
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, transparent, rgba(139, 92, 246, 0.05), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.stat-card:hover::before {
+    opacity: 1;
+}
+
+.stat-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 2;
+}
+
+.stat-icon.gold {
+    color: var(--nft-gold);
+    filter: drop-shadow(0 0 10px var(--nft-gold));
+}
+
+.stat-icon.silver {
+    color: var(--nft-silver);
+    filter: drop-shadow(0 0 10px var(--nft-silver));
+}
+
+.stat-icon.bronze {
+    color: var(--nft-bronze);
+    filter: drop-shadow(0 0 10px var(--nft-bronze));
+}
+
+.stat-icon.primary {
+    color: var(--nft-primary);
+    filter: drop-shadow(0 0 10px var(--nft-primary));
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--nft-primary);
+    margin-bottom: 0.5rem;
+    position: relative;
+    z-index: 2;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+    z-index: 2;
+}
+
+/* 过滤和搜索 */
+.filter-section {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(20px);
+}
+
+.filter-controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    align-items: end;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.filter-input, .filter-select {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.filter-input:focus, .filter-select:focus {
+    outline: none;
+    border-color: var(--nft-primary);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.filter-btn {
+    background: linear-gradient(135deg, var(--nft-primary), var(--nft-secondary));
+    border: none;
+    color: #000;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.filter-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+}
+
+/* NFT证书网格 */
+.nft-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.nft-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    overflow: hidden;
+    backdrop-filter: blur(20px);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+}
+
+.nft-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: var(--shadow-glow);
+    border-color: var(--nft-primary);
+}
+
+.nft-card.verified {
+    border-color: var(--nft-secondary);
+}
+
+.nft-card.pending {
+    border-color: var(--nft-gold);
+}
+
+.nft-card.failed {
+    border-color: var(--nft-accent);
+}
+
+.nft-header-img {
+    height: 200px;
+    background: linear-gradient(135deg, var(--nft-primary), var(--nft-secondary));
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.nft-header-img::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+    opacity: 0.5;
+}
+
+.nft-trophy {
+    font-size: 4rem;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+    position: relative;
+    z-index: 2;
+}
+
+.nft-content {
+    padding: 2rem;
+}
+
+.nft-title-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 1rem;
+}
+
+.nft-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.nft-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.nft-status.verified {
+    background: rgba(6, 214, 160, 0.2);
+    color: var(--nft-secondary);
+    border: 1px solid var(--nft-secondary);
+}
+
+.nft-status.pending {
+    background: rgba(255, 215, 0, 0.2);
+    color: var(--nft-gold);
+    border: 1px solid var(--nft-gold);
+}
+
+.nft-status.failed {
+    background: rgba(247, 37, 133, 0.2);
+    color: var(--nft-accent);
+    border: 1px solid var(--nft-accent);
+}
+
+.nft-details {
+    margin-bottom: 1.5rem;
+}
+
+.nft-detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nft-detail-item:last-child {
+    border-bottom: none;
+}
+
+.nft-detail-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.nft-detail-value {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.nft-score {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.nft-score-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, var(--nft-primary) 0deg, var(--nft-secondary) calc(var(--score, 95) * 3.6deg), rgba(255, 255, 255, 0.1) calc(var(--score, 95) * 3.6deg));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.5rem;
+    position: relative;
+}
+
+.nft-score-circle::before {
+    content: '';
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    background: var(--card-bg);
+    position: absolute;
+}
+
+.nft-score-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    position: relative;
+    z-index: 2;
+}
+
+.nft-score-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+/* NFT操作按钮 */
+.nft-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.nft-btn {
+    flex: 1;
+    padding: 0.75rem;
+    border: 1px solid var(--nft-primary);
+    background: rgba(139, 92, 246, 0.1);
+    color: var(--nft-primary);
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.nft-btn:hover {
+    background: var(--nft-primary);
+    color: #000;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
+}
+
+.nft-btn.secondary {
+    border-color: var(--nft-secondary);
+    background: rgba(6, 214, 160, 0.1);
+    color: var(--nft-secondary);
+}
+
+.nft-btn.secondary:hover {
+    background: var(--nft-secondary);
+    color: #000;
+    box-shadow: 0 5px 15px rgba(6, 214, 160, 0.4);
+}
+
+/* 分页 */
+.pagination-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 3rem;
+}
+
+.pagination-btn {
+    padding: 0.75rem 1.5rem;
+    border: 1px solid var(--nft-primary);
+    background: rgba(139, 92, 246, 0.1);
+    color: var(--nft-primary);
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: var(--nft-primary);
+    color: #000;
+    transform: translateY(-2px);
+}
+
+.pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-info {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* 空状态 */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-secondary);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.empty-desc {
+    font-size: 1rem;
+    margin-bottom: 2rem;
+}
+
+/* 加载动画 */
+.loading-spinner {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(139, 92, 246, 0.3);
+    border-radius: 50%;
+    border-top-color: var(--nft-primary);
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-section {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .nft-container {
+        padding: 1rem;
+    }
+    
+    .nft-title {
+        font-size: 2.5rem;
+    }
+    
+    .stats-panel {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .filter-controls {
+        grid-template-columns: 1fr;
+    }
+    
+    .nft-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .nft-actions {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-panel {
+        grid-template-columns: 1fr;
+    }
+    
+    .stat-icon {
+        font-size: 2.5rem;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+    }
+}
+
+/* 证书详情模态框 */
+.certificate-modal .modal-content {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    backdrop-filter: blur(20px);
+    color: var(--text-primary);
+}
+
+.certificate-modal .modal-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.certificate-modal .modal-body {
+    padding: 2rem;
+}
+
+/* 浮动效果 */
+.floating {
+    animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+/* 渐变背景动画 */
+.gradient-bg {
+    background: linear-gradient(-45deg, #1a1a2e, #16213e, #0f0f23, #1a1a2e);
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="nft-container gradient-bg">
+    <!-- 页面头部 -->
+    <div class="nft-header">
+        <h1 class="nft-title floating">
+            {% if current_lang == 'en' %}
+                SLA NFT Certificate Manager
+            {% else %}
+                SLA NFT证书管理器
+            {% endif %}
+        </h1>
+        <p class="nft-subtitle">
+            {% if current_lang == 'en' %}
+                Manage and verify your SLA NFT certificates with blockchain transparency
+            {% else %}
+                管理和验证您的SLA NFT证书，享受区块链透明度保障
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- 统计面板 -->
+    <div class="stats-panel">
+        <div class="stat-card">
+            <div class="stat-icon gold">🏆</div>
+            <div class="stat-value" id="totalCertificates">0</div>
+            <div class="stat-label">
+                {% if current_lang == 'en' %}Total Certificates{% else %}总证书数{% endif %}
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon silver">✅</div>
+            <div class="stat-value" id="verifiedCertificates">0</div>
+            <div class="stat-label">
+                {% if current_lang == 'en' %}Verified{% else %}已验证{% endif %}
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon bronze">⏳</div>
+            <div class="stat-value" id="pendingCertificates">0</div>
+            <div class="stat-label">
+                {% if current_lang == 'en' %}Pending{% else %}待处理{% endif %}
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon primary">📊</div>
+            <div class="stat-value" id="averageScore">95.0</div>
+            <div class="stat-label">
+                {% if current_lang == 'en' %}Average Score{% else %}平均评分{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 过滤和搜索 -->
+    <div class="filter-section">
+        <div class="filter-controls">
+            <div class="filter-group">
+                <label class="filter-label">
+                    {% if current_lang == 'en' %}Status{% else %}状态{% endif %}
+                </label>
+                <select class="filter-select" id="statusFilter">
+                    <option value="">{% if current_lang == 'en' %}All Status{% else %}所有状态{% endif %}</option>
+                    <option value="MINTED">{% if current_lang == 'en' %}Verified{% else %}已验证{% endif %}</option>
+                    <option value="PENDING">{% if current_lang == 'en' %}Pending{% else %}待处理{% endif %}</option>
+                    <option value="FAILED">{% if current_lang == 'en' %}Failed{% else %}失败{% endif %}</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label class="filter-label">
+                    {% if current_lang == 'en' %}Month/Year{% else %}月份/年份{% endif %}
+                </label>
+                <input type="text" class="filter-input" id="monthYearFilter" placeholder="202409">
+            </div>
+            
+            <div class="filter-group">
+                <label class="filter-label">
+                    {% if current_lang == 'en' %}Search{% else %}搜索{% endif %}
+                </label>
+                <input type="text" class="filter-input" id="searchInput" 
+                       placeholder="{% if current_lang == 'en' %}Search certificates...{% else %}搜索证书...{% endif %}">
+            </div>
+            
+            <div class="filter-group">
+                <button class="filter-btn" onclick="applyFilters()">
+                    {% if current_lang == 'en' %}Apply Filters{% else %}应用筛选{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NFT证书网格 -->
+    <div class="nft-grid" id="certificatesGrid">
+        <!-- 证书卡片将通过JavaScript动态加载 -->
+    </div>
+
+    <!-- 加载状态 -->
+    <div class="loading-section" id="loadingSection" style="display: none;">
+        <div class="loading-spinner"></div>
+        <div style="margin-top: 1rem; color: var(--text-secondary);">
+            {% if current_lang == 'en' %}Loading certificates...{% else %}加载证书中...{% endif %}
+        </div>
+    </div>
+
+    <!-- 空状态 -->
+    <div class="empty-state" id="emptyState" style="display: none;">
+        <div class="empty-icon">🏆</div>
+        <div class="empty-title">
+            {% if current_lang == 'en' %}No Certificates Found{% else %}未找到证书{% endif %}
+        </div>
+        <div class="empty-desc">
+            {% if current_lang == 'en' %}
+                You don't have any SLA NFT certificates yet. Complete monthly SLA requirements to earn certificates.
+            {% else %}
+                您还没有SLA NFT证书。完成月度SLA要求即可获得证书。
+            {% endif %}
+        </div>
+        <button class="filter-btn" onclick="requestNewCertificate()">
+            {% if current_lang == 'en' %}Request Certificate{% else %}申请证书{% endif %}
+        </button>
+    </div>
+
+    <!-- 分页 -->
+    <div class="pagination-section" id="paginationSection" style="display: none;">
+        <button class="pagination-btn" id="prevPageBtn" onclick="previousPage()" disabled>
+            {% if current_lang == 'en' %}Previous{% else %}上一页{% endif %}
+        </button>
+        <div class="pagination-info" id="paginationInfo">
+            Page 1 of 1
+        </div>
+        <button class="pagination-btn" id="nextPageBtn" onclick="nextPage()" disabled>
+            {% if current_lang == 'en' %}Next{% else %}下一页{% endif %}
+        </button>
+    </div>
+</div>
+
+<!-- 证书详情模态框 -->
+<div class="modal fade certificate-modal" id="certificateModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    {% if current_lang == 'en' %}Certificate Details{% else %}证书详情{% endif %}
+                </h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span style="color: var(--text-primary);">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="certificateModalBody">
+                <!-- 证书详情将通过JavaScript动态加载 -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// SLA NFT证书管理器JavaScript
+
+// 全局变量
+let currentPage = 1;
+let totalPages = 1;
+let currentFilters = {
+    status: '',
+    month_year: '',
+    search: ''
+};
+let certificates = [];
+let allCertificates = [];
+
+// 页面初始化
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCertificateManager();
+    loadCertificates();
+});
+
+// 初始化证书管理器
+function initializeCertificateManager() {
+    console.log('Initializing SLA NFT Certificate Manager...');
+    
+    // 设置事件监听器
+    document.getElementById('searchInput').addEventListener('input', debounce(applyFilters, 500));
+    
+    // 添加浮动动画延迟
+    const cards = document.querySelectorAll('.stat-card');
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+        card.classList.add('floating');
+    });
+}
+
+// 加载证书列表
+async function loadCertificates() {
+    showLoading();
+    
+    try {
+        const params = new URLSearchParams({
+            page: currentPage,
+            per_page: 12,
+            ...currentFilters
+        });
+        
+        // 移除空值
+        for (let [key, value] of params.entries()) {
+            if (!value) params.delete(key);
+        }
+        
+        const response = await fetch(`/api/sla/certificates?${params.toString()}`, {
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            certificates = data.data.certificates;
+            allCertificates = [...certificates];
+            
+            updateStatistics();
+            renderCertificates();
+            updatePagination(data.data.pagination);
+        } else {
+            console.error('Failed to load certificates:', data.error);
+            showEmptyState();
+        }
+    } catch (error) {
+        console.error('Error loading certificates:', error);
+        showEmptyState();
+    } finally {
+        hideLoading();
+    }
+}
+
+// 更新统计信息
+function updateStatistics() {
+    const total = allCertificates.length;
+    const verified = allCertificates.filter(cert => cert.mint_status === 'MINTED').length;
+    const pending = allCertificates.filter(cert => cert.mint_status === 'PENDING').length;
+    
+    // 计算平均评分
+    const scores = allCertificates
+        .filter(cert => cert.sla_metrics && cert.sla_metrics.composite_sla_score)
+        .map(cert => parseFloat(cert.sla_metrics.composite_sla_score));
+    
+    const averageScore = scores.length > 0 ? 
+        (scores.reduce((sum, score) => sum + score, 0) / scores.length).toFixed(1) : 
+        95.0;
+    
+    // 更新UI
+    document.getElementById('totalCertificates').textContent = total;
+    document.getElementById('verifiedCertificates').textContent = verified;
+    document.getElementById('pendingCertificates').textContent = pending;
+    document.getElementById('averageScore').textContent = averageScore;
+}
+
+// 渲染证书列表
+function renderCertificates() {
+    const grid = document.getElementById('certificatesGrid');
+    grid.innerHTML = '';
+    
+    if (certificates.length === 0) {
+        showEmptyState();
+        return;
+    }
+    
+    certificates.forEach(cert => {
+        const card = createCertificateCard(cert);
+        grid.appendChild(card);
+    });
+    
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('paginationSection').style.display = 'flex';
+}
+
+// 创建证书卡片
+function createCertificateCard(cert) {
+    const card = document.createElement('div');
+    card.className = `nft-card ${getStatusClass(cert.mint_status)}`;
+    
+    const score = cert.sla_metrics ? parseFloat(cert.sla_metrics.composite_sla_score) || 95 : 95;
+    const monthYear = cert.month_year.toString();
+    const year = monthYear.substring(0, 4);
+    const month = monthYear.substring(4);
+    
+    const statusText = getStatusText(cert.mint_status);
+    const statusClass = getStatusClass(cert.mint_status);
+    
+    card.innerHTML = `
+        <div class="nft-header-img">
+            <div class="nft-trophy">🏆</div>
+        </div>
+        <div class="nft-content">
+            <div class="nft-title-section">
+                <h3 class="nft-title">SLA ${year}/${month}</h3>
+                <span class="nft-status ${statusClass}">${statusText}</span>
+            </div>
+            
+            <div class="nft-details">
+                <div class="nft-detail-item">
+                    <span class="nft-detail-label">{% if current_lang == 'en' %}Certificate ID{% else %}证书ID{% endif %}</span>
+                    <span class="nft-detail-value">#${cert.id.toString().padStart(4, '0')}</span>
+                </div>
+                <div class="nft-detail-item">
+                    <span class="nft-detail-label">{% if current_lang == 'en' %}Issue Date{% else %}签发日期{% endif %}</span>
+                    <span class="nft-detail-value">${new Date(cert.created_at).toLocaleDateString()}</span>
+                </div>
+                ${cert.token_id ? `
+                <div class="nft-detail-item">
+                    <span class="nft-detail-label">{% if current_lang == 'en' %}Token ID{% else %}代币ID{% endif %}</span>
+                    <span class="nft-detail-value">#${cert.token_id}</span>
+                </div>
+                ` : ''}
+            </div>
+            
+            <div class="nft-score">
+                <div class="nft-score-circle" style="--score: ${score}">
+                    <div class="nft-score-value">${score.toFixed(1)}</div>
+                </div>
+                <div class="nft-score-label">{% if current_lang == 'en' %}SLA Score{% else %}SLA评分{% endif %}</div>
+            </div>
+            
+            <div class="nft-actions">
+                <button class="nft-btn" onclick="viewCertificateDetails(${cert.id})">
+                    {% if current_lang == 'en' %}View Details{% else %}查看详情{% endif %}
+                </button>
+                ${cert.mint_status === 'MINTED' ? `
+                <button class="nft-btn secondary" onclick="verifyCertificate(${cert.id})">
+                    {% if current_lang == 'en' %}Verify{% else %}验证{% endif %}
+                </button>
+                ` : `
+                <button class="nft-btn secondary" onclick="checkMintStatus(${cert.id})">
+                    {% if current_lang == 'en' %}Check Status{% else %}检查状态{% endif %}
+                </button>
+                `}
+            </div>
+        </div>
+    `;
+    
+    return card;
+}
+
+// 获取状态样式类
+function getStatusClass(status) {
+    switch (status) {
+        case 'MINTED': return 'verified';
+        case 'PENDING': return 'pending';
+        case 'FAILED': return 'failed';
+        default: return 'pending';
+    }
+}
+
+// 获取状态文本
+function getStatusText(status) {
+    const texts = {
+        en: {
+            'MINTED': 'Verified',
+            'PENDING': 'Pending',
+            'FAILED': 'Failed'
+        },
+        zh: {
+            'MINTED': '已验证',
+            'PENDING': '待处理',
+            'FAILED': '失败'
+        }
+    };
+    
+    const lang = '{{ current_lang }}' === 'en' ? 'en' : 'zh';
+    return texts[lang][status] || texts[lang]['PENDING'];
+}
+
+// 查看证书详情
+async function viewCertificateDetails(certificateId) {
+    try {
+        const response = await fetch(`/api/sla/certificates/${certificateId}`, {
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showCertificateModal(data.data);
+        } else {
+            alert(data.error || '{% if current_lang == "en" %}Failed to load certificate details{% else %}加载证书详情失败{% endif %}');
+        }
+    } catch (error) {
+        console.error('Error loading certificate details:', error);
+        alert('{% if current_lang == "en" %}Error loading certificate details{% else %}加载证书详情时发生错误{% endif %}');
+    }
+}
+
+// 显示证书详情模态框
+function showCertificateModal(cert) {
+    const modal = document.getElementById('certificateModalBody');
+    const score = cert.sla_metrics ? parseFloat(cert.sla_metrics.composite_sla_score) || 95 : 95;
+    
+    modal.innerHTML = `
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+            <div>
+                <h6 style="color: var(--nft-primary); margin-bottom: 1rem;">
+                    {% if current_lang == 'en' %}Basic Information{% else %}基础信息{% endif %}
+                </h6>
+                <div class="nft-detail-item">
+                    <span class="nft-detail-label">{% if current_lang == 'en' %}Certificate ID{% else %}证书ID{% endif %}</span>
+                    <span class="nft-detail-value">#${cert.id.toString().padStart(4, '0')}</span>
+                </div>
+                <div class="nft-detail-item">
+                    <span class="nft-detail-label">{% if current_lang == 'en' %}Month/Year{% else %}月份/年份{% endif %}</span>
+                    <span class="nft-detail-value">${cert.month_year}</span>
+                </div>
+                <div class="nft-detail-item">
+                    <span class="nft-detail-label">{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</span>
+                    <span class="nft-status ${getStatusClass(cert.mint_status)}">${getStatusText(cert.mint_status)}</span>
+                </div>
+                <div class="nft-detail-item">
+                    <span class="nft-detail-label">{% if current_lang == 'en' %}Created At{% else %}创建时间{% endif %}</span>
+                    <span class="nft-detail-value">${new Date(cert.created_at).toLocaleString()}</span>
+                </div>
+                ${cert.token_id ? `
+                <div class="nft-detail-item">
+                    <span class="nft-detail-label">{% if current_lang == 'en' %}Token ID{% else %}代币ID{% endif %}</span>
+                    <span class="nft-detail-value">#${cert.token_id}</span>
+                </div>
+                ` : ''}
+                ${cert.recipient_address ? `
+                <div class="nft-detail-item">
+                    <span class="nft-detail-label">{% if current_lang == 'en' %}Recipient{% else %}接收者{% endif %}</span>
+                    <span class="nft-detail-value" style="word-break: break-all;">${cert.recipient_address}</span>
+                </div>
+                ` : ''}
+            </div>
+            
+            <div>
+                <h6 style="color: var(--nft-secondary); margin-bottom: 1rem;">
+                    {% if current_lang == 'en' %}SLA Metrics{% else %}SLA指标{% endif %}
+                </h6>
+                ${cert.sla_metrics ? `
+                <div class="nft-detail-item">
+                    <span class="nft-detail-label">{% if current_lang == 'en' %}Composite Score{% else %}综合评分{% endif %}</span>
+                    <span class="nft-detail-value">${score.toFixed(2)}%</span>
+                </div>
+                <div class="nft-detail-item">
+                    <span class="nft-detail-label">{% if current_lang == 'en' %}Uptime Score{% else %}在线时间评分{% endif %}</span>
+                    <span class="nft-detail-value">${(cert.sla_metrics.uptime_score || 100).toFixed(2)}%</span>
+                </div>
+                <div class="nft-detail-item">
+                    <span class="nft-detail-label">{% if current_lang == 'en' %}Performance Score{% else %}性能评分{% endif %}</span>
+                    <span class="nft-detail-value">${(cert.sla_metrics.performance_score || 100).toFixed(2)}%</span>
+                </div>
+                <div class="nft-detail-item">
+                    <span class="nft-detail-label">{% if current_lang == 'en' %}Efficiency Score{% else %}效率评分{% endif %}</span>
+                    <span class="nft-detail-value">${(cert.sla_metrics.efficiency_score || 100).toFixed(2)}%</span>
+                </div>
+                ` : `
+                <div style="color: var(--text-secondary); font-style: italic;">
+                    {% if current_lang == 'en' %}SLA metrics not available{% else %}SLA指标暂不可用{% endif %}
+                </div>
+                `}
+            </div>
+        </div>
+        
+        ${cert.metadata_ipfs_hash || cert.etherscan_url || cert.opensea_url ? `
+        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+            <h6 style="color: var(--nft-accent); margin-bottom: 1rem;">
+                {% if current_lang == 'en' %}External Links{% else %}外部链接{% endif %}
+            </h6>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                ${cert.metadata_ipfs_hash ? `
+                <a href="https://ipfs.io/ipfs/${cert.metadata_ipfs_hash}" target="_blank" class="nft-btn">
+                    {% if current_lang == 'en' %}View Metadata{% else %}查看元数据{% endif %}
+                </a>
+                ` : ''}
+                ${cert.etherscan_url ? `
+                <a href="${cert.etherscan_url}" target="_blank" class="nft-btn secondary">
+                    {% if current_lang == 'en' %}View on Etherscan{% else %}在Etherscan查看{% endif %}
+                </a>
+                ` : ''}
+                ${cert.opensea_url ? `
+                <a href="${cert.opensea_url}" target="_blank" class="nft-btn">
+                    {% if current_lang == 'en' %}View on OpenSea{% else %}在OpenSea查看{% endif %}
+                </a>
+                ` : ''}
+            </div>
+        </div>
+        ` : ''}
+    `;
+    
+    $('#certificateModal').modal('show');
+}
+
+// 验证证书
+async function verifyCertificate(certificateId) {
+    try {
+        const response = await fetch(`/api/sla/blockchain-verify/${certificateId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('{% if current_lang == "en" %}Certificate verification completed successfully!{% else %}证书验证成功完成！{% endif %}');
+        } else {
+            alert(data.error || '{% if current_lang == "en" %}Certificate verification failed{% else %}证书验证失败{% endif %}');
+        }
+    } catch (error) {
+        console.error('Error verifying certificate:', error);
+        alert('{% if current_lang == "en" %}Error verifying certificate{% else %}验证证书时发生错误{% endif %}');
+    }
+}
+
+// 检查铸造状态
+async function checkMintStatus(certificateId) {
+    try {
+        const response = await fetch(`/api/sla/certificates/${certificateId}`, {
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            const status = getStatusText(data.data.mint_status);
+            alert(`{% if current_lang == "en" %}Current status: ${status}{% else %}当前状态: ${status}{% endif %}`);
+            
+            // 刷新页面数据
+            loadCertificates();
+        } else {
+            alert(data.error || '{% if current_lang == "en" %}Failed to check status{% else %}检查状态失败{% endif %}');
+        }
+    } catch (error) {
+        console.error('Error checking mint status:', error);
+        alert('{% if current_lang == "en" %}Error checking status{% else %}检查状态时发生错误{% endif %}');
+    }
+}
+
+// 申请新证书
+async function requestNewCertificate() {
+    try {
+        const response = await fetch('/api/sla/mint-certificate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('{% if current_lang == "en" %}New certificate request submitted successfully!{% else %}新证书申请已成功提交！{% endif %}');
+            loadCertificates();
+        } else {
+            alert(data.error || '{% if current_lang == "en" %}Failed to request certificate{% else %}申请证书失败{% endif %}');
+        }
+    } catch (error) {
+        console.error('Error requesting certificate:', error);
+        alert('{% if current_lang == "en" %}Error requesting certificate{% else %}申请证书时发生错误{% endif %}');
+    }
+}
+
+// 应用筛选器
+function applyFilters() {
+    currentFilters = {
+        status: document.getElementById('statusFilter').value,
+        month_year: document.getElementById('monthYearFilter').value,
+        search: document.getElementById('searchInput').value
+    };
+    
+    currentPage = 1;
+    loadCertificates();
+}
+
+// 分页功能
+function updatePagination(pagination) {
+    if (!pagination) return;
+    
+    currentPage = pagination.page;
+    totalPages = pagination.pages;
+    
+    document.getElementById('prevPageBtn').disabled = !pagination.has_prev;
+    document.getElementById('nextPageBtn').disabled = !pagination.has_next;
+    document.getElementById('paginationInfo').textContent = 
+        `{% if current_lang == "en" %}Page ${pagination.page} of ${pagination.pages}{% else %}第 ${pagination.page} 页，共 ${pagination.pages} 页{% endif %}`;
+    
+    document.getElementById('paginationSection').style.display = 
+        pagination.pages > 1 ? 'flex' : 'none';
+}
+
+function previousPage() {
+    if (currentPage > 1) {
+        currentPage--;
+        loadCertificates();
+    }
+}
+
+function nextPage() {
+    if (currentPage < totalPages) {
+        currentPage++;
+        loadCertificates();
+    }
+}
+
+// 显示/隐藏状态
+function showLoading() {
+    document.getElementById('loadingSection').style.display = 'block';
+    document.getElementById('certificatesGrid').style.display = 'none';
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('paginationSection').style.display = 'none';
+}
+
+function hideLoading() {
+    document.getElementById('loadingSection').style.display = 'none';
+    document.getElementById('certificatesGrid').style.display = 'grid';
+}
+
+function showEmptyState() {
+    document.getElementById('loadingSection').style.display = 'none';
+    document.getElementById('certificatesGrid').style.display = 'none';
+    document.getElementById('emptyState').style.display = 'block';
+    document.getElementById('paginationSection').style.display = 'none';
+}
+
+// 防抖函数
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+</script>
+{% endblock %}

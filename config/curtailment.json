@@ -1,0 +1,6 @@
+{
+  "price_threshold": 0.10,
+  "max_throttle": 0.5,
+  "require_confirm": true,
+  "notes": "Curtailment strategy configuration - price in USD/kWh"
+}

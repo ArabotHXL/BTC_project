@@ -1,0 +1,1205 @@
+{% extends "hosting/hosting_base.html" %}
+
+{% block page_title %}{% if current_lang == 'en' %}Smart Power Curtailment{% else %}智能限电管理{% endif %}{% endblock %}
+{% block page_subtitle %}{% if current_lang == 'en' %}AI-powered performance-based load management{% else %}基于性能的AI智能负载管理{% endif %}{% endblock %}
+
+{% block content %}
+
+<!-- 全局站点选择器 -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="hosting-card">
+            <div class="hosting-card-body">
+                <label class="form-label fw-bold">
+                    <i class="bi bi-building me-2"></i>{% if current_lang == 'en' %}Select Mining Site{% else %}选择矿场{% endif %}
+                </label>
+                <select class="form-select" id="site-select" required>
+                    <option value="">{% if current_lang == 'en' %}Select Site{% else %}选择站点{% endif %}</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 标签页导航 -->
+<ul class="nav nav-tabs mb-4" role="tablist">
+    <li class="nav-item">
+        <a class="nav-link active" data-bs-toggle="tab" href="#calculator-tab">
+            <i class="bi bi-calculator me-2"></i>{% if current_lang == 'en' %}Calculator{% else %}计算器{% endif %}
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#schedule-tab">
+            <i class="bi bi-calendar-check me-2"></i>{% if current_lang == 'en' %}Schedule Management{% else %}计划管理{% endif %}
+        </a>
+    </li>
+</ul>
+
+<!-- 标签页内容 -->
+<div class="tab-content">
+    <!-- 计算器标签页 -->
+    <div class="tab-pane fade show active" id="calculator-tab" role="tabpanel">
+
+<!-- KPI卡片行（3列） -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="hosting-card">
+            <div class="hosting-card-body">
+                <h6 class="text-muted mb-1"><i class="bi bi-cpu me-2"></i>{% if current_lang == 'en' %}Total Miners{% else %}矿机总数{% endif %}</h6>
+                <h3 id="total-miners-count">--</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="hosting-card">
+            <div class="hosting-card-body">
+                <h6 class="text-muted mb-1"><i class="bi bi-power me-2"></i>{% if current_lang == 'en' %}Curtailed{% else %}限电中{% endif %}</h6>
+                <h3 id="curtailed-count" class="text-warning">--</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="hosting-card">
+            <div class="hosting-card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-muted mb-1"><i class="bi bi-lightning-charge me-2"></i>{% if current_lang == 'en' %}Power Saved{% else %}节省功率{% endif %}</h6>
+                    <h3 id="power-saved" class="text-success">-- kW</h3>
+                </div>
+                <button class="btn btn-danger" id="emergency-restore-btn" onclick="emergencyRestore()">
+                    <i class="bi bi-exclamation-triangle me-2"></i>{% if current_lang == 'en' %}Emergency Restore{% else %}紧急恢复{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI智能预测板块 -->
+<div class="hosting-card mb-4">
+    <div class="hosting-card-header d-flex justify-content-between align-items-center">
+        <h5 class="hosting-card-title mb-0">
+            <i class="bi bi-robot me-2"></i>{% if current_lang == 'en' %}AI Smart Prediction{% else %}AI智能预测{% endif %}
+        </h5>
+        <button class="btn btn-sm btn-primary" onclick="getAIPrediction()" id="ai-predict-btn">
+            <i class="bi bi-magic me-2"></i>{% if current_lang == 'en' %}Get 24h Prediction{% else %}获取24小时预测{% endif %}
+        </button>
+    </div>
+    <div class="hosting-card-body">
+        <p class="text-muted mb-3">
+            <i class="bi bi-info-circle me-1"></i>
+            {% if current_lang == 'en' %}
+                AI predicts optimal curtailment schedule for next 24 hours based on BTC price forecast, difficulty prediction, and electricity pricing.
+            {% else %}
+                AI预测未来24小时最佳限电时间表，基于BTC价格预测、难度预测和电价分析。
+            {% endif %}
+        </p>
+        
+        <!-- 预测结果显示区域 -->
+        <div id="ai-prediction-result" style="display:none;">
+            <!-- 推荐策略卡片 -->
+            <div class="alert alert-success mb-3" id="ai-recommendation">
+                <h6 class="mb-2">
+                    <i class="bi bi-lightbulb me-2"></i>{% if current_lang == 'en' %}AI Recommendation{% else %}AI推荐策略{% endif %}
+                </h6>
+                <p class="mb-0" id="ai-recommendation-text">--</p>
+            </div>
+            
+            <!-- 汇总统计 -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-3">
+                    <div class="text-center p-2 bg-dark rounded">
+                        <small class="text-muted d-block">{% if current_lang == 'en' %}Hours to Curtail{% else %}建议限电时数{% endif %}</small>
+                        <h5 class="text-warning mb-0" id="ai-hours-curtailed">--</h5>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center p-2 bg-dark rounded">
+                        <small class="text-muted d-block">{% if current_lang == 'en' %}Cost Saved{% else %}节省成本{% endif %}</small>
+                        <h5 class="text-success mb-0" id="ai-cost-saved">--</h5>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center p-2 bg-dark rounded">
+                        <small class="text-muted d-block">{% if current_lang == 'en' %}Revenue Lost{% else %}损失收益{% endif %}</small>
+                        <h5 class="text-danger mb-0" id="ai-revenue-lost">--</h5>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center p-2 bg-dark rounded">
+                        <small class="text-muted d-block">{% if current_lang == 'en' %}Net Benefit{% else %}净收益{% endif %}</small>
+                        <h5 class="text-info mb-0" id="ai-net-benefit">--</h5>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 24小时预测图表 -->
+            <div class="bg-dark p-3 rounded">
+                <h6 class="text-white mb-3">
+                    <i class="bi bi-graph-up me-2"></i>{% if current_lang == 'en' %}24-Hour Forecast{% else %}24小时预测曲线{% endif %}
+                </h6>
+                <canvas id="ai-prediction-chart" height="80"></canvas>
+            </div>
+            
+            <!-- 使用AI推荐按钮 -->
+            <div class="mt-3">
+                <button class="btn btn-success" onclick="applyAIRecommendation()" id="apply-ai-btn">
+                    <i class="bi bi-check-circle me-2"></i>{% if current_lang == 'en' %}Apply AI Recommendation{% else %}应用AI推荐{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 限电计算器向导（主要功能卡片） -->
+<div class="hosting-card mb-4">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-calculator me-2"></i>{% if current_lang == 'en' %}Curtailment Planner{% else %}限电方案计算器{% endif %}
+        </h5>
+    </div>
+    <div class="hosting-card-body">
+        <form id="curtailment-form">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">{% if current_lang == 'en' %}Strategy{% else %}策略{% endif %}</label>
+                    <select class="form-select" id="strategy-select" required>
+                        <option value="">{% if current_lang == 'en' %}Select Strategy{% else %}选择策略{% endif %}</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{% if current_lang == 'en' %}Target Power Reduction (kW){% else %}目标功率削减 (kW){% endif %}</label>
+                    <input type="number" class="form-control" id="target-power" min="1" step="0.1" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{% if current_lang == 'en' %}Execution Mode{% else %}执行模式{% endif %}</label>
+                    <select class="form-select" id="execution-mode" required>
+                        <option value="semi_auto">{% if current_lang == 'en' %}Semi-Auto (Review First){% else %}半自动（先审核）{% endif %}</option>
+                        <option value="auto">{% if current_lang == 'en' %}Auto (Execute Now){% else %}自动（立即执行）{% endif %}</option>
+                        <option value="manual">{% if current_lang == 'en' %}Manual{% else %}手动{% endif %}</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-3">
+                <button type="button" class="btn btn-hosting-primary" onclick="calculatePlan()">
+                    <i class="bi bi-cpu me-2"></i>{% if current_lang == 'en' %}Calculate Plan{% else %}计算方案{% endif %}
+                </button>
+                <button type="button" class="btn btn-success ms-2" id="execute-btn" onclick="executePlan()" style="display:none;">
+                    <i class="bi bi-play-circle me-2"></i>{% if current_lang == 'en' %}Execute Plan{% else %}执行方案{% endif %}
+                </button>
+            </div>
+        </form>
+        
+        <!-- 计算结果显示区域 -->
+        <div id="plan-result" class="mt-4" style="display:none;">
+            <hr>
+            <h6>{% if current_lang == 'en' %}Recommended Shutdown List{% else %}建议关机矿机列表{% endif %}</h6>
+            <div class="hosting-table">
+                <table class="table table-sm" id="shutdown-list-table">
+                    <thead>
+                        <tr>
+                            <th>{% if current_lang == 'en' %}Serial Number{% else %}序列号{% endif %}</th>
+                            <th>{% if current_lang == 'en' %}Model{% else %}型号{% endif %}</th>
+                            <th>{% if current_lang == 'en' %}Performance Score{% else %}性能评分{% endif %}</th>
+                            <th>{% if current_lang == 'en' %}Power (W){% else %}功耗 (W){% endif %}</th>
+                            <th>{% if current_lang == 'en' %}Customer{% else %}客户{% endif %}</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="alert alert-info">
+                <strong>{% if current_lang == 'en' %}Economic Impact{% else %}经济影响{% endif %}:</strong>
+                <span id="economic-impact">--</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 执行历史表格 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-clock-history me-2"></i>{% if current_lang == 'en' %}Execution History{% else %}执行历史{% endif %}
+        </h5>
+    </div>
+    <div class="hosting-card-body">
+        <div class="hosting-table">
+            <table class="table table-hover" id="history-table">
+                <thead>
+                    <tr>
+                        <th>{% if current_lang == 'en' %}Plan ID{% else %}计划ID{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Site{% else %}站点{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Strategy{% else %}策略{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Target Power{% else %}目标功率{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Created At{% else %}创建时间{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+    </div>
+    <!-- 计算器标签页结束 -->
+
+    <!-- 计划管理标签页 -->
+    <div class="tab-pane fade" id="schedule-tab" role="tabpanel">
+        
+        <!-- 创建计划表单 -->
+        <div class="hosting-card mb-4">
+            <div class="hosting-card-header">
+                <h5 class="hosting-card-title">
+                    <i class="bi bi-calendar-plus me-2"></i>{% if current_lang == 'en' %}Create Schedule{% else %}创建计划{% endif %}
+                </h5>
+            </div>
+            <div class="hosting-card-body">
+                <form id="schedule-form">
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label fw-bold">{% if current_lang == 'en' %}Plan Name{% else %}计划名称{% endif %} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="schedule-plan-name" required 
+                                   placeholder="{% if current_lang == 'en' %}e.g., Emergency Curtailment - Nov 15{% else %}例如：紧急限电 - 11月15日{% endif %}">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">{% if current_lang == 'en' %}Start Time{% else %}开始时间{% endif %} <span class="text-danger">*</span></label>
+                            <input type="datetime-local" class="form-control" id="schedule-start-time" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% if current_lang == 'en' %}End Time{% else %}结束时间{% endif %}</label>
+                            <input type="datetime-local" class="form-control" id="schedule-end-time">
+                            <small class="text-muted">{% if current_lang == 'en' %}Leave empty for manual recovery{% else %}留空表示手动恢复{% endif %}</small>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label class="form-label">{% if current_lang == 'en' %}Target Reduction (kW){% else %}目标削减功率 (kW){% endif %} <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="schedule-target-kw" required min="0" step="0.1">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% if current_lang == 'en' %}Strategy{% else %}限电策略{% endif %} <span class="text-danger">*</span></label>
+                            <select class="form-control" id="schedule-strategy" required>
+                                <option value="">{% if current_lang == 'en' %}Select Strategy{% else %}选择策略{% endif %}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-calendar-plus me-2"></i>{% if current_lang == 'en' %}Create Schedule{% else %}创建计划{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 活跃计划 -->
+        <div class="hosting-card mb-4">
+            <div class="hosting-card-header">
+                <h5 class="hosting-card-title">
+                    <i class="bi bi-lightning-charge me-2"></i>{% if current_lang == 'en' %}Active Plans{% else %}活跃计划{% endif %}
+                </h5>
+            </div>
+            <div class="hosting-card-body">
+                <div id="active-plans-container">
+                    <p class="text-muted text-center">{% if current_lang == 'en' %}No active plans{% else %}暂无活跃计划{% endif %}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 历史记录表格 -->
+        <div class="hosting-card mb-4">
+            <div class="hosting-card-header d-flex justify-content-between align-items-center">
+                <h5 class="hosting-card-title mb-0">
+                    <i class="bi bi-clock-history me-2"></i>{% if current_lang == 'en' %}History{% else %}历史记录{% endif %}
+                </h5>
+                <select class="form-select form-select-sm" style="width: auto;" id="schedule-history-status-filter">
+                    <option value="">{% if current_lang == 'en' %}All{% else %}全部{% endif %}</option>
+                    <option value="pending">PENDING</option>
+                    <option value="executing">EXECUTING</option>
+                    <option value="completed">COMPLETED</option>
+                    <option value="cancelled">CANCELLED</option>
+                </select>
+            </div>
+            <div class="hosting-card-body">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover">
+                        <thead>
+                            <tr>
+                                <th>{% if current_lang == 'en' %}Plan Name{% else %}计划名称{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Start Time{% else %}开始时间{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}End Time{% else %}结束时间{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Target (kW){% else %}目标 (kW){% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
+                            </tr>
+                        </thead>
+                        <tbody id="schedule-history-table-body">
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">{% if current_lang == 'en' %}No schedule history{% else %}暂无历史记录{% endif %}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <!-- 计划管理标签页结束 -->
+
+</div>
+<!-- 标签页内容结束 -->
+
+<!-- Chart.js for AI prediction visualization -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+let currentPlan = null;
+let currentLang = '{{ current_lang }}';
+let aiPredictionData = null;
+let predictionChart = null;
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', function() {
+    loadSites();
+    loadKPIs();
+    loadHistory();
+    loadScheduleStrategies();
+    loadScheduleHistory();
+    
+    document.getElementById('schedule-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        createSchedule();
+    });
+    
+    document.getElementById('schedule-history-status-filter').addEventListener('change', function() {
+        loadScheduleHistory();
+    });
+    
+    const scheduleTab = document.querySelector('a[href="#schedule-tab"]');
+    if (scheduleTab) {
+        scheduleTab.addEventListener('shown.bs.tab', function() {
+            loadActivePlans();
+            loadScheduleHistory();
+        });
+    }
+});
+
+// 加载站点列表
+function loadSites() {
+    fetch('/hosting/api/sites/list')
+        .then(r => r.json())
+        .then(data => {
+            const select = document.getElementById('site-select');
+            data.sites.forEach(site => {
+                const option = document.createElement('option');
+                option.value = site.id;
+                option.textContent = site.name;
+                select.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading sites:', error);
+        });
+}
+
+// 站点选择变化时加载策略
+document.getElementById('site-select').addEventListener('change', function() {
+    const siteId = this.value;
+    if (!siteId) return;
+    
+    fetch(`/hosting/api/curtailment/strategies?site_id=${siteId}`)
+        .then(r => r.json())
+        .then(data => {
+            const select = document.getElementById('strategy-select');
+            select.innerHTML = '<option value="">' + (currentLang === 'en' ? 'Select Strategy' : '选择策略') + '</option>';
+            data.strategies.forEach(s => {
+                const option = document.createElement('option');
+                option.value = s.id;
+                option.textContent = s.name;
+                select.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading strategies:', error);
+        });
+});
+
+// 计算限电方案
+function calculatePlan() {
+    const data = {
+        site_id: parseInt(document.getElementById('site-select').value),
+        strategy_id: parseInt(document.getElementById('strategy-select').value),
+        target_power_reduction_kw: parseFloat(document.getElementById('target-power').value)
+    };
+    
+    if (!data.site_id || !data.strategy_id || !data.target_power_reduction_kw) {
+        alert(currentLang === 'en' ? 'Please fill in all required fields' : '请填写所有必填字段');
+        return;
+    }
+    
+    fetch('/hosting/api/curtailment/calculate', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.success) {
+            currentPlan = result.plan;
+            displayPlan(result.plan);
+            document.getElementById('execute-btn').style.display = 'inline-block';
+        } else {
+            alert(result.error || (currentLang === 'en' ? 'Calculation failed' : '计算失败'));
+        }
+    })
+    .catch(error => {
+        console.error('Error calculating plan:', error);
+        alert(currentLang === 'en' ? 'Error calculating plan' : '计算方案时出错');
+    });
+}
+
+// 显示方案结果
+function displayPlan(plan) {
+    const tbody = document.querySelector('#shutdown-list-table tbody');
+    tbody.innerHTML = '';
+    
+    if (!plan || !plan.selected_miners || plan.selected_miners.length === 0) {
+        const noMinersText = currentLang === 'en' ? 'No miners selected' : '没有选中矿机';
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center">${noMinersText}</td></tr>`;
+        return;
+    }
+    
+    plan.selected_miners.forEach(m => {
+        const perfScore = (m.performance_score !== undefined && m.performance_score !== null) 
+            ? (m.performance_score * 100).toFixed(1) + '%' 
+            : '--';
+        const power = m.power_consumption !== undefined ? m.power_consumption : '--';
+        
+        const row = `<tr>
+            <td>${m.serial_number || '--'}</td>
+            <td>${m.model || '--'}</td>
+            <td>${perfScore}</td>
+            <td>${power}</td>
+            <td>${m.customer_name || '--'}</td>
+        </tr>`;
+        tbody.insertAdjacentHTML('beforeend', row);
+    });
+    
+    const impact = plan.economic_impact || {};
+    const revenueLost = (impact.revenue_lost_usd !== undefined) ? impact.revenue_lost_usd.toFixed(2) : '0.00';
+    const costSaved = (impact.power_cost_saved_usd !== undefined) ? impact.power_cost_saved_usd.toFixed(2) : '0.00';
+    
+    document.getElementById('economic-impact').textContent = 
+        `${currentLang === 'en' ? 'Revenue Lost' : '营收损失'}: $${revenueLost}, ` +
+        `${currentLang === 'en' ? 'Cost Saved' : '成本节省'}: $${costSaved}`;
+    
+    document.getElementById('plan-result').style.display = 'block';
+}
+
+// 执行方案
+function executePlan() {
+    if (!currentPlan) return;
+    
+    const data = {
+        site_id: parseInt(document.getElementById('site-select').value),
+        strategy_id: parseInt(document.getElementById('strategy-select').value),
+        target_power_reduction_kw: parseFloat(document.getElementById('target-power').value),
+        execution_mode: document.getElementById('execution-mode').value
+    };
+    
+    fetch('/hosting/api/curtailment/execute', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.success) {
+            alert(result.message);
+            loadKPIs();
+            loadHistory();
+            document.getElementById('execute-btn').style.display = 'none';
+            document.getElementById('plan-result').style.display = 'none';
+            currentPlan = null;
+        } else {
+            alert(result.error || (currentLang === 'en' ? 'Execution failed' : '执行失败'));
+        }
+    })
+    .catch(error => {
+        console.error('Error executing plan:', error);
+        alert(currentLang === 'en' ? 'Error executing plan' : '执行方案时出错');
+    });
+}
+
+// 紧急恢复
+function emergencyRestore() {
+    const siteId = document.getElementById('site-select').value;
+    if (!siteId) {
+        alert(currentLang === 'en' ? 'Please select a site first' : '请先选择站点');
+        return;
+    }
+    
+    if (!confirm(currentLang === 'en' ? 'Restore all curtailed miners?' : '确认恢复所有限电矿机？')) return;
+    
+    fetch('/hosting/api/curtailment/emergency-restore', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({site_id: parseInt(siteId)})
+    })
+    .then(r => r.json())
+    .then(result => {
+        alert(result.message);
+        loadKPIs();
+        loadHistory();
+    })
+    .catch(error => {
+        console.error('Error during emergency restore:', error);
+        alert(currentLang === 'en' ? 'Error during emergency restore' : '紧急恢复时出错');
+    });
+}
+
+// 加载KPI
+function loadKPIs() {
+    const siteId = document.getElementById('site-select').value;
+    const url = siteId ? `/hosting/api/curtailment/kpis?site_id=${siteId}` : '/hosting/api/curtailment/kpis';
+    
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success && data.kpis) {
+                const kpis = data.kpis;
+                document.getElementById('total-miners-count').textContent = kpis.total_miners || '0';
+                document.getElementById('curtailed-count').textContent = kpis.curtailed_count || '0';
+                document.getElementById('power-saved').textContent = kpis.power_saved_kw !== undefined ? `${kpis.power_saved_kw.toFixed(1)} kW` : '0.0 kW';
+            } else {
+                console.error('KPI data format error:', data);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading KPIs:', error);
+        });
+}
+
+// 加载历史
+function loadHistory() {
+    const siteId = document.getElementById('site-select').value;
+    const url = siteId ? `/hosting/api/curtailment/history?site_id=${siteId}` : '/hosting/api/curtailment/history';
+    
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            const tbody = document.querySelector('#history-table tbody');
+            tbody.innerHTML = '';
+            
+            // API returns 'history' not 'plans'
+            const plans = data.history || data.plans || [];
+            
+            if (plans.length > 0) {
+                plans.forEach(plan => {
+                    const statusBadge = getStatusBadge(plan.status);
+                    // API returns 'target_power_reduction_kw' not 'target_power_kw'
+                    const targetPower = plan.target_power_reduction_kw || plan.target_power_kw || 0;
+                    const row = `<tr>
+                        <td>${plan.id}</td>
+                        <td>${plan.site_name || '--'}</td>
+                        <td>${plan.strategy_name || '--'}</td>
+                        <td>${targetPower} kW</td>
+                        <td>${statusBadge}</td>
+                        <td>${new Date(plan.created_at).toLocaleString(currentLang === 'en' ? 'en-US' : 'zh-CN')}</td>
+                        <td>
+                            <button class="btn btn-sm btn-hosting-outline" onclick="viewPlanDetails(${plan.id})">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </td>
+                    </tr>`;
+                    tbody.insertAdjacentHTML('beforeend', row);
+                });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">${currentLang === 'en' ? 'No execution history' : '暂无执行历史'}</td></tr>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading history:', error);
+        });
+}
+
+// 获取状态徽章
+function getStatusBadge(status) {
+    const badges = {
+        'pending': `<span class="badge bg-warning">${currentLang === 'en' ? 'Pending' : '待处理'}</span>`,
+        'executing': `<span class="badge bg-info">${currentLang === 'en' ? 'Executing' : '执行中'}</span>`,
+        'completed': `<span class="badge bg-success">${currentLang === 'en' ? 'Completed' : '已完成'}</span>`,
+        'failed': `<span class="badge bg-danger">${currentLang === 'en' ? 'Failed' : '失败'}</span>`,
+        'cancelled': `<span class="badge bg-secondary">${currentLang === 'en' ? 'Cancelled' : '已取消'}</span>`
+    };
+    return badges[status] || `<span class="badge bg-secondary">${status}</span>`;
+}
+
+// 查看计划详情
+function viewPlanDetails(planId) {
+    fetch(`/hosting/api/curtailment/plan/${planId}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                // API returns 'target_power_reduction_kw' not 'target_power_kw'
+                const targetPower = data.plan.target_power_reduction_kw || data.plan.target_power_kw || 0;
+                alert(currentLang === 'en' ? 
+                    `Plan Details:\nID: ${data.plan.id}\nSite: ${data.plan.site_name}\nStrategy: ${data.plan.strategy_name}\nTarget Power: ${targetPower} kW\nStatus: ${data.plan.status}` :
+                    `计划详情:\nID: ${data.plan.id}\n站点: ${data.plan.site_name}\n策略: ${data.plan.strategy_name}\n目标功率: ${targetPower} kW\n状态: ${data.plan.status}`
+                );
+            }
+        })
+        .catch(error => {
+            console.error('Error loading plan details:', error);
+        });
+}
+
+// ========== AI预测相关函数 ==========
+
+// 获取AI预测
+function getAIPrediction() {
+    const siteId = document.getElementById('site-select').value;
+    if (!siteId) {
+        alert(currentLang === 'en' ? 'Please select a site first' : '请先选择站点');
+        return;
+    }
+    
+    const btn = document.getElementById('ai-predict-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>' + 
+                    (currentLang === 'en' ? 'Predicting...' : '预测中...');
+    
+    fetch('/hosting/api/curtailment/predict', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            site_id: parseInt(siteId),
+            target_reduction_kw: null
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            aiPredictionData = data;
+            displayAIPrediction(data);
+        } else {
+            alert(data.error || (currentLang === 'en' ? 'Prediction failed' : '预测失败'));
+        }
+    })
+    .catch(error => {
+        console.error('Error getting AI prediction:', error);
+        alert(currentLang === 'en' ? 'Error getting AI prediction' : '获取AI预测时出错');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-magic me-2"></i>' + 
+                       (currentLang === 'en' ? 'Get 24h Prediction' : '获取24小时预测');
+    });
+}
+
+// 显示AI预测结果
+function displayAIPrediction(data) {
+    document.getElementById('ai-prediction-result').style.display = 'block';
+    
+    const recommendation = data.recommendation || {};
+    document.getElementById('ai-recommendation-text').textContent = recommendation.reason || '--';
+    
+    const summary = data.summary || {};
+    document.getElementById('ai-hours-curtailed').textContent = summary.total_hours_curtailed || '0';
+    document.getElementById('ai-cost-saved').textContent = summary.total_cost_saved ? 
+        `$${summary.total_cost_saved.toFixed(2)}` : '$0.00';
+    document.getElementById('ai-revenue-lost').textContent = summary.total_revenue_lost ? 
+        `$${summary.total_revenue_lost.toFixed(2)}` : '$0.00';
+    document.getElementById('ai-net-benefit').textContent = summary.net_benefit ? 
+        `$${summary.net_benefit.toFixed(2)}` : '$0.00';
+    
+    renderPredictionChart(data.hourly_schedule || []);
+}
+
+// 渲染预测图表
+function renderPredictionChart(hourlySchedule) {
+    const ctx = document.getElementById('ai-prediction-chart').getContext('2d');
+    
+    if (predictionChart) {
+        predictionChart.destroy();
+    }
+    
+    const labels = hourlySchedule.map(h => `${h.hour_of_day}:00`);
+    const netBenefits = hourlySchedule.map(h => h.net_benefit);
+    const shouldCurtail = hourlySchedule.map(h => h.should_curtail ? h.net_benefit : null);
+    
+    predictionChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: currentLang === 'en' ? 'Net Benefit (USD)' : '净收益 (USD)',
+                    data: netBenefits,
+                    borderColor: '#17a2b8',
+                    backgroundColor: 'rgba(23, 162, 184, 0.1)',
+                    tension: 0.3,
+                    yAxisID: 'y',
+                    fill: true
+                },
+                {
+                    label: currentLang === 'en' ? 'Curtail Recommended' : '建议限电',
+                    data: shouldCurtail,
+                    borderColor: '#28a745',
+                    backgroundColor: '#28a745',
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    showLine: false,
+                    yAxisID: 'y'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: {
+                        color: '#fff'
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        afterLabel: function(context) {
+                            const index = context.dataIndex;
+                            const hour = hourlySchedule[index];
+                            return [
+                                `BTC: $${hour.btc_price.toFixed(2)}`,
+                                `${currentLang === 'en' ? 'Power Cost' : '电价'}: $${hour.power_cost_per_kwh.toFixed(6)}/kWh`,
+                                `${currentLang === 'en' ? 'Revenue' : '收益'}: $${hour.revenue_usd.toFixed(2)}`,
+                                `${currentLang === 'en' ? 'Cost' : '成本'}: $${hour.power_cost_usd.toFixed(2)}`
+                            ];
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#fff',
+                        callback: function(value) {
+                            if (value >= 0) {
+                                return '$' + value.toFixed(2);
+                            } else {
+                                return '-$' + Math.abs(value).toFixed(2);
+                            }
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#fff'
+                    }
+                }
+            }
+        }
+    });
+}
+
+// 应用AI推荐
+function applyAIRecommendation() {
+    if (!aiPredictionData || !aiPredictionData.recommendation) {
+        alert(currentLang === 'en' ? 'No AI recommendation available' : '无AI推荐可用');
+        return;
+    }
+    
+    const recommendation = aiPredictionData.recommendation;
+    const summary = aiPredictionData.summary;
+    
+    if (recommendation.action === 'no_curtailment') {
+        alert(currentLang === 'en' ? 
+            'AI recommends NO curtailment. Mining is more profitable.' : 
+            'AI建议不限电，持续挖矿更有利。');
+        return;
+    }
+    
+    const targetPower = summary.total_power_saved_kwh / summary.total_hours_curtailed;
+    if (targetPower > 0) {
+        document.getElementById('target-power').value = targetPower.toFixed(2);
+    }
+    
+    document.querySelector('#curtailment-form').scrollIntoView({ behavior: 'smooth' });
+    
+    alert(currentLang === 'en' ? 
+        `AI recommendation applied! Target power reduction: ${targetPower.toFixed(2)} kW` : 
+        `AI推荐已应用！目标功率削减: ${targetPower.toFixed(2)} kW`);
+}
+
+// ========== 计划管理相关函数 ==========
+
+let activeScheduleInterval = null;
+
+function loadScheduleStrategies() {
+    const siteId = document.getElementById('site-select').value;
+    if (!siteId) return;
+    
+    fetch(`/hosting/api/curtailment/strategies?site_id=${siteId}`)
+        .then(r => r.json())
+        .then(data => {
+            const select = document.getElementById('schedule-strategy');
+            select.innerHTML = '<option value="">' + (currentLang === 'en' ? 'Select Strategy' : '选择策略') + '</option>';
+            data.strategies.forEach(s => {
+                const option = document.createElement('option');
+                option.value = s.id;
+                option.textContent = s.name;
+                select.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading strategies:', error);
+        });
+}
+
+document.getElementById('site-select').addEventListener('change', function() {
+    loadScheduleStrategies();
+    loadActivePlans();
+    loadScheduleHistory();
+});
+
+function createSchedule() {
+    const siteId = document.getElementById('site-select').value;
+    if (!siteId) {
+        alert(currentLang === 'en' ? 'Please select a site first' : '请先选择站点');
+        return;
+    }
+    
+    const planName = document.getElementById('schedule-plan-name').value.trim();
+    const data = {
+        site_id: parseInt(siteId),
+        plan_name: planName,
+        strategy_id: parseInt(document.getElementById('schedule-strategy').value),
+        scheduled_start_time: document.getElementById('schedule-start-time').value,
+        scheduled_end_time: document.getElementById('schedule-end-time').value || null,
+        target_power_reduction_kw: parseFloat(document.getElementById('schedule-target-kw').value)
+    };
+    
+    if (!planName || !data.strategy_id || !data.scheduled_start_time || !data.target_power_reduction_kw) {
+        alert(currentLang === 'en' ? 'Please fill in all required fields' : '请填写所有必填字段');
+        return;
+    }
+    
+    fetch('/hosting/api/curtailment/schedules', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.success) {
+            alert(currentLang === 'en' ? 'Schedule created successfully' : '计划创建成功');
+            document.getElementById('schedule-form').reset();
+            loadActivePlans();
+            loadScheduleHistory();
+        } else {
+            alert(result.error || (currentLang === 'en' ? 'Failed to create schedule' : '创建计划失败'));
+        }
+    })
+    .catch(error => {
+        console.error('Error creating schedule:', error);
+        alert(currentLang === 'en' ? 'Error creating schedule' : '创建计划时出错');
+    });
+}
+
+function loadActivePlans() {
+    const siteId = document.getElementById('site-select').value;
+    const url = siteId ? `/hosting/api/curtailment/schedules?site_id=${siteId}&status=pending,executing` : '/hosting/api/curtailment/schedules?status=pending,executing';
+    
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            const container = document.getElementById('active-plans-container');
+            container.innerHTML = '';
+            
+            if (data.schedules && data.schedules.length > 0) {
+                data.schedules.forEach(schedule => {
+                    const card = createActivePlanCard(schedule);
+                    container.insertAdjacentHTML('beforeend', card);
+                });
+                
+                if (activeScheduleInterval) {
+                    clearInterval(activeScheduleInterval);
+                }
+                activeScheduleInterval = setInterval(updateCountdowns, 1000);
+            } else {
+                container.innerHTML = '<p class="text-muted text-center">' + 
+                    (currentLang === 'en' ? 'No active plans' : '暂无活跃计划') + '</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading active plans:', error);
+        });
+}
+
+function createActivePlanCard(schedule) {
+    const startTime = new Date(schedule.start_time);
+    const endTime = schedule.end_time ? new Date(schedule.end_time) : null;
+    const now = new Date();
+    
+    const statusBadge = schedule.status === 'executing' ? 
+        '<span class="badge bg-info">' + (currentLang === 'en' ? 'Executing' : '执行中') + '</span>' :
+        '<span class="badge bg-warning">' + (currentLang === 'en' ? 'Pending' : '待执行') + '</span>';
+    
+    const countdown = getCountdownText(schedule);
+    
+    return `
+        <div class="alert alert-dark border border-info mb-3">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <h6 class="mb-2">
+                        <i class="bi bi-calendar-event me-2"></i>
+                        ${currentLang === 'en' ? 'Schedule' : '计划'} #${schedule.id}
+                        ${statusBadge}
+                    </h6>
+                    <div class="mb-2">
+                        <small class="text-muted">
+                            <i class="bi bi-clock me-1"></i>
+                            ${currentLang === 'en' ? 'Start' : '开始'}: ${startTime.toLocaleString(currentLang === 'en' ? 'en-US' : 'zh-CN')}
+                        </small>
+                        ${endTime ? '<br><small class="text-muted"><i class="bi bi-clock-fill me-1"></i>' + 
+                            (currentLang === 'en' ? 'End' : '结束') + ': ' + endTime.toLocaleString(currentLang === 'en' ? 'en-US' : 'zh-CN') + '</small>' : ''}
+                    </div>
+                    <div class="mb-2">
+                        <small>
+                            <i class="bi bi-lightning me-1"></i>
+                            ${currentLang === 'en' ? 'Target' : '目标'}: ${schedule.target_power_reduction_kw} kW
+                        </small>
+                    </div>
+                    <div class="countdown" data-schedule-id="${schedule.id}" data-start="${schedule.start_time}" data-end="${schedule.end_time || ''}">
+                        <strong>${countdown}</strong>
+                    </div>
+                </div>
+                <div class="btn-group-vertical ms-3">
+                    ${schedule.status === 'pending' ? 
+                        '<button class="btn btn-sm btn-success mb-1" onclick="executeSchedule(' + schedule.id + ')"><i class="bi bi-play-fill"></i></button>' : ''}
+                    <button class="btn btn-sm btn-danger mb-1" onclick="cancelSchedule(${schedule.id})">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                    ${schedule.status === 'executing' ? 
+                        '<button class="btn btn-sm btn-warning" onclick="recoverSchedule(' + schedule.id + ')"><i class="bi bi-arrow-counterclockwise"></i></button>' : ''}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function getCountdownText(schedule) {
+    const now = new Date();
+    const startTime = new Date(schedule.start_time);
+    const endTime = schedule.end_time ? new Date(schedule.end_time) : null;
+    
+    if (schedule.status === 'executing') {
+        if (endTime) {
+            const diff = endTime - now;
+            if (diff > 0) {
+                return (currentLang === 'en' ? 'Ends in: ' : '结束倒计时: ') + formatTimeDiff(diff);
+            }
+            return currentLang === 'en' ? 'Should have ended' : '应该已结束';
+        }
+        return currentLang === 'en' ? 'Manual recovery required' : '需要手动恢复';
+    } else {
+        const diff = startTime - now;
+        if (diff > 0) {
+            return (currentLang === 'en' ? 'Starts in: ' : '开始倒计时: ') + formatTimeDiff(diff);
+        }
+        return currentLang === 'en' ? 'Ready to execute' : '可以执行';
+    }
+}
+
+function formatTimeDiff(ms) {
+    const hours = Math.floor(ms / 3600000);
+    const minutes = Math.floor((ms % 3600000) / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    
+    if (hours > 0) {
+        return `${hours}h ${minutes}m ${seconds}s`;
+    } else if (minutes > 0) {
+        return `${minutes}m ${seconds}s`;
+    } else {
+        return `${seconds}s`;
+    }
+}
+
+function updateCountdowns() {
+    const countdowns = document.querySelectorAll('.countdown');
+    countdowns.forEach(cd => {
+        const scheduleId = cd.dataset.scheduleId;
+        const startTime = new Date(cd.dataset.start);
+        const endTime = cd.dataset.end ? new Date(cd.dataset.end) : null;
+        const now = new Date();
+        
+        const executing = cd.closest('.alert').querySelector('.badge-info, .bg-info');
+        
+        if (executing) {
+            if (endTime) {
+                const diff = endTime - now;
+                if (diff > 0) {
+                    cd.innerHTML = '<strong>' + (currentLang === 'en' ? 'Ends in: ' : '结束倒计时: ') + formatTimeDiff(diff) + '</strong>';
+                } else {
+                    cd.innerHTML = '<strong class="text-warning">' + (currentLang === 'en' ? 'Should have ended' : '应该已结束') + '</strong>';
+                }
+            } else {
+                cd.innerHTML = '<strong>' + (currentLang === 'en' ? 'Manual recovery required' : '需要手动恢复') + '</strong>';
+            }
+        } else {
+            const diff = startTime - now;
+            if (diff > 0) {
+                cd.innerHTML = '<strong>' + (currentLang === 'en' ? 'Starts in: ' : '开始倒计时: ') + formatTimeDiff(diff) + '</strong>';
+            } else {
+                cd.innerHTML = '<strong class="text-success">' + (currentLang === 'en' ? 'Ready to execute' : '可以执行') + '</strong>';
+            }
+        }
+    });
+}
+
+function executeSchedule(scheduleId) {
+    if (!confirm(currentLang === 'en' ? 'Execute this schedule now?' : '确认立即执行此计划？')) return;
+    
+    fetch(`/hosting/api/curtailment/schedules/${scheduleId}/execute`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.success) {
+            alert(result.message || (currentLang === 'en' ? 'Schedule executed successfully' : '计划执行成功'));
+            loadActivePlans();
+            loadScheduleHistory();
+            loadKPIs();
+        } else {
+            alert(result.error || (currentLang === 'en' ? 'Failed to execute schedule' : '执行计划失败'));
+        }
+    })
+    .catch(error => {
+        console.error('Error executing schedule:', error);
+        alert(currentLang === 'en' ? 'Error executing schedule' : '执行计划时出错');
+    });
+}
+
+function cancelSchedule(scheduleId) {
+    if (!confirm(currentLang === 'en' ? 'Cancel this schedule?' : '确认取消此计划？')) return;
+    
+    fetch(`/hosting/api/curtailment/schedules/${scheduleId}`, {
+        method: 'DELETE'
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.success) {
+            alert(result.message || (currentLang === 'en' ? 'Schedule cancelled successfully' : '计划已取消'));
+            loadActivePlans();
+            loadScheduleHistory();
+        } else {
+            alert(result.error || (currentLang === 'en' ? 'Failed to cancel schedule' : '取消计划失败'));
+        }
+    })
+    .catch(error => {
+        console.error('Error cancelling schedule:', error);
+        alert(currentLang === 'en' ? 'Error cancelling schedule' : '取消计划时出错');
+    });
+}
+
+function recoverSchedule(scheduleId) {
+    if (!confirm(currentLang === 'en' ? 'Recover miners from this schedule?' : '确认恢复此计划的矿机？')) return;
+    
+    fetch(`/hosting/api/curtailment/schedules/${scheduleId}/recover`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.success) {
+            alert(result.message || (currentLang === 'en' ? 'Miners recovered successfully' : '矿机已恢复'));
+            loadActivePlans();
+            loadScheduleHistory();
+            loadKPIs();
+        } else {
+            alert(result.error || (currentLang === 'en' ? 'Failed to recover miners' : '恢复矿机失败'));
+        }
+    })
+    .catch(error => {
+        console.error('Error recovering miners:', error);
+        alert(currentLang === 'en' ? 'Error recovering miners' : '恢复矿机时出错');
+    });
+}
+
+function loadScheduleHistory() {
+    const siteId = document.getElementById('site-select').value;
+    const statusFilter = document.getElementById('schedule-history-status-filter').value;
+    
+    let url = '/hosting/api/curtailment/schedules?';
+    if (siteId) url += `site_id=${siteId}&`;
+    if (statusFilter) url += `status=${statusFilter}`;
+    
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            const tbody = document.getElementById('schedule-history-table-body');
+            tbody.innerHTML = '';
+            
+            if (data.schedules && data.schedules.length > 0) {
+                data.schedules.forEach(schedule => {
+                    const startTime = new Date(schedule.start_time);
+                    const endTime = schedule.end_time ? new Date(schedule.end_time) : null;
+                    
+                    const statusBadge = getScheduleStatusBadge(schedule.status);
+                    
+                    const row = `<tr>
+                        <td>${currentLang === 'en' ? 'Schedule' : '计划'} #${schedule.id}</td>
+                        <td>${startTime.toLocaleString(currentLang === 'en' ? 'en-US' : 'zh-CN')}</td>
+                        <td>${endTime ? endTime.toLocaleString(currentLang === 'en' ? 'en-US' : 'zh-CN') : (currentLang === 'en' ? 'Manual' : '手动')}</td>
+                        <td>${schedule.target_power_reduction_kw} kW</td>
+                        <td>${statusBadge}</td>
+                        <td>
+                            ${schedule.status === 'pending' ? 
+                                '<button class="btn btn-sm btn-success me-1" onclick="executeSchedule(' + schedule.id + ')"><i class="bi bi-play-fill"></i></button>' : ''}
+                            ${schedule.status === 'pending' || schedule.status === 'executing' ? 
+                                '<button class="btn btn-sm btn-danger me-1" onclick="cancelSchedule(' + schedule.id + ')"><i class="bi bi-x-circle"></i></button>' : ''}
+                            ${schedule.status === 'executing' ? 
+                                '<button class="btn btn-sm btn-warning" onclick="recoverSchedule(' + schedule.id + ')"><i class="bi bi-arrow-counterclockwise"></i></button>' : ''}
+                        </td>
+                    </tr>`;
+                    tbody.insertAdjacentHTML('beforeend', row);
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">' + 
+                    (currentLang === 'en' ? 'No schedule history' : '暂无历史记录') + '</td></tr>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading schedule history:', error);
+        });
+}
+
+function getScheduleStatusBadge(status) {
+    const badges = {
+        'pending': `<span class="badge bg-warning">${currentLang === 'en' ? 'Pending' : '待执行'}</span>`,
+        'executing': `<span class="badge bg-info">${currentLang === 'en' ? 'Executing' : '执行中'}</span>`,
+        'completed': `<span class="badge bg-success">${currentLang === 'en' ? 'Completed' : '已完成'}</span>`,
+        'cancelled': `<span class="badge bg-secondary">${currentLang === 'en' ? 'Cancelled' : '已取消'}</span>`
+    };
+    return badges[status] || `<span class="badge bg-secondary">${status}</span>`;
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,693 @@
+{% extends "crm/base.html" %}
+
+{% block title %}{{ t('customer_management') }} | BTC Mining CRM{% endblock %}
+
+{% block page_title %}{{ t('customer_management') }} / Customer Management{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('index') }}"><span data-i18n="home">{{ t('home') }}</span></a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('crm.crm_dashboard') }}">CRM</a></li>
+<li class="breadcrumb-item active" aria-current="page"><span data-i18n="customers">{{ t('customers') }}</span></li>
+{% endblock %}
+
+{% block action_buttons %}
+<button class="btn btn-outline-light me-2" onclick="exportToExcel()">
+    <i class="bi bi-download me-1"></i> <span data-i18n="export_excel">{{ t('export_excel') }}</span>
+</button>
+<button class="btn btn-outline-light me-2" onclick="batchImport()">
+    <i class="bi bi-upload me-1"></i> <span data-i18n="batch_import">{{ t('batch_import') }}</span>
+</button>
+<a href="{{ url_for('crm.new_customer') }}" class="action-button">
+    <i class="bi bi-plus-circle me-1"></i> <span data-i18n="add_customer">{{ t('add_customer') }}</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- KPI Cards Section -->
+<div class="row g-4 mb-4">
+    <!-- Total Customers -->
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="kpi-card" style="animation: fadeInUp 0.5s ease-out;">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <p class="text-muted mb-1" data-i18n="total_customers">{{ t('total_customers') }}</p>
+                    <h2 class="mb-0" id="total-customers" data-countup="0">0</h2>
+                </div>
+                <div class="p-3 rounded" style="background: rgba(247, 147, 26, 0.1);">
+                    <i class="bi bi-people-fill text-gold" style="font-size: 1.8rem;"></i>
+                </div>
+            </div>
+            <div class="d-flex align-items-center">
+                <span class="badge bg-success me-2">+<span id="this-month-customers">0</span></span>
+                <small class="text-muted" data-i18n="this_month">{{ t('this_month') }}</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Capacity -->
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="kpi-card" style="animation: fadeInUp 0.5s ease-out 0.1s; animation-fill-mode: both;">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <p class="text-muted mb-1" data-i18n="hosting_capacity">{{ t('hosting_capacity') }}</p>
+                    <h2 class="mb-0"><span id="total-capacity" data-countup="0">0</span> <small class="text-muted">MW</small></h2>
+                </div>
+                <div class="p-3 rounded" style="background: rgba(16, 185, 129, 0.1);">
+                    <i class="bi bi-lightning-charge-fill" style="font-size: 1.8rem; color: #10b981;"></i>
+                </div>
+            </div>
+            <div class="d-flex align-items-center">
+                <small class="text-muted"><span data-i18n="utilization">{{ t('utilization') }}</span>: </small>
+                <span class="text-gold ms-2 fw-bold" id="utilization-rate">0%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Customers -->
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="kpi-card" style="animation: fadeInUp 0.5s ease-out 0.2s; animation-fill-mode: both;">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <p class="text-muted mb-1" data-i18n="active_customers">{{ t('active_customers') }}</p>
+                    <h2 class="mb-0" id="active-customers" data-countup="0">0</h2>
+                </div>
+                <div class="p-3 rounded" style="background: rgba(59, 130, 246, 0.1);">
+                    <i class="bi bi-activity" style="font-size: 1.8rem; color: #3b82f6;"></i>
+                </div>
+            </div>
+            <div class="d-flex align-items-center">
+                <i class="bi bi-arrow-up-short text-success" style="font-size: 1.5rem;"></i>
+                <span class="text-success fw-bold" id="growth-rate">0%</span>
+                <small class="text-muted ms-2" data-i18n="growth">{{ t('growth') }}</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Revenue -->
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="kpi-card" style="animation: fadeInUp 0.5s ease-out 0.3s; animation-fill-mode: both;">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <p class="text-muted mb-1" data-i18n="monthly_revenue">{{ t('monthly_revenue') }}</p>
+                    <h2 class="mb-0 text-gold">$<span id="monthly-revenue" data-countup="0">0</span></h2>
+                </div>
+                <div class="p-3 rounded" style="background: rgba(251, 191, 36, 0.1);">
+                    <i class="bi bi-currency-dollar" style="font-size: 1.8rem; color: #fbbf24;"></i>
+                </div>
+            </div>
+            <div class="d-flex align-items-center">
+                <span class="badge bg-warning me-2" data-i18n="hosting_fee">{{ t('hosting_fee') }}</span>
+                <small class="text-muted" data-i18n="this_month">{{ t('this_month') }}</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row g-4 mb-4">
+    <!-- Capacity Distribution Pie Chart -->
+    <div class="col-12 col-lg-6">
+        <div class="chart-container" style="animation: fadeInUp 0.5s ease-out 0.4s; animation-fill-mode: both;">
+            <h5 class="mb-3">
+                <i class="bi bi-pie-chart-fill text-gold me-2"></i>
+                <span data-i18n="capacity_distribution">{{ t('capacity_distribution') }}</span>
+            </h5>
+            <canvas id="capacity-chart" height="300"></canvas>
+        </div>
+    </div>
+
+    <!-- Customer Type Bar Chart -->
+    <div class="col-12 col-lg-6">
+        <div class="chart-container" style="animation: fadeInUp 0.5s ease-out 0.5s; animation-fill-mode: both;">
+            <h5 class="mb-3">
+                <i class="bi bi-bar-chart-fill text-gold me-2"></i>
+                <span data-i18n="customer_type_distribution">{{ t('customer_type_distribution') }}</span>
+            </h5>
+            <canvas id="customer-type-chart" height="300"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="card mb-4" style="background: var(--btc-card-bg); border: 1px solid var(--btc-border); animation: fadeInUp 0.5s ease-out 0.6s; animation-fill-mode: both;">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-12 col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0" style="border-color: var(--btc-border);">
+                        <i class="bi bi-search text-gold"></i>
+                    </span>
+                    <input type="text" class="form-control border-start-0" id="search-input" 
+                           placeholder="{{ t('search_customers') }}" data-i18n-placeholder="search_customers"
+                           style="background: transparent; border-color: var(--btc-border); color: var(--btc-text-primary);">
+                </div>
+            </div>
+            <div class="col-12 col-md-3">
+                <select class="form-select" id="status-filter" style="background: transparent; border-color: var(--btc-border); color: var(--btc-text-primary);">
+                    <option value="" data-i18n="all_status">{{ t('all_status') }}</option>
+                    <option value="active" data-i18n="active">{{ t('active') }}</option>
+                    <option value="inactive" data-i18n="inactive">{{ t('inactive') }}</option>
+                    <option value="pending" data-i18n="pending">{{ t('pending') }}</option>
+                    <option value="new" data-i18n="new">{{ t('new') }}</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-3">
+                <select class="form-select" id="type-filter" style="background: transparent; border-color: var(--btc-border); color: var(--btc-text-primary);">
+                    <option value="" data-i18n="all_types">{{ t('all_types') }}</option>
+                    <option value="企业" data-i18n="enterprise">{{ t('enterprise') }}</option>
+                    <option value="个人" data-i18n="individual">{{ t('individual') }}</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Customer List Table -->
+<div class="card" style="background: var(--btc-card-bg); border: 1px solid var(--btc-border); animation: fadeInUp 0.5s ease-out 0.7s; animation-fill-mode: both;">
+    <div class="card-header d-flex justify-content-between align-items-center" style="background: transparent; border-bottom: 1px solid var(--btc-border);">
+        <h5 class="mb-0">
+            <i class="bi bi-list-ul text-gold me-2"></i>
+            <span data-i18n="customer_list">{{ t('customer_list') }}</span>
+        </h5>
+        <span class="badge" style="background: rgba(247, 147, 26, 0.2); color: var(--btc-gold);">
+            <span id="customer-count">0</span> <span data-i18n="customers">{{ t('customers') }}</span>
+        </span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table data-table mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th class="sortable" data-sort="name">
+                            <span data-i18n="company_name">{{ t('company_name') }}</span>
+                            <i class="bi bi-arrow-down-up ms-1"></i>
+                        </th>
+                        <th><span data-i18n="contact">{{ t('contact') }}</span></th>
+                        <th class="sortable text-end" data-sort="mining_capacity">
+                            <span data-i18n="capacity">{{ t('capacity') }}</span>
+                            <i class="bi bi-arrow-down-up ms-1"></i>
+                        </th>
+                        <th class="text-center"><span data-i18n="miners">{{ t('miners') }}</span></th>
+                        <th class="text-end"><span data-i18n="electricity_cost">{{ t('electricity_cost') }}</span></th>
+                        <th class="sortable text-end" data-sort="total_revenue">
+                            <span data-i18n="monthly_revenue">{{ t('monthly_revenue') }}</span>
+                            <i class="bi bi-arrow-down-up ms-1"></i>
+                        </th>
+                        <th class="text-center"><span data-i18n="status">{{ t('status') }}</span></th>
+                        <th class="text-center"><span data-i18n="actions">{{ t('actions') }}</span></th>
+                    </tr>
+                </thead>
+                <tbody id="customers-table-body">
+                    <tr>
+                        <td colspan="9" class="text-center py-5">
+                            <div class="spinner-border text-gold" role="status">
+                                <span class="visually-hidden" data-i18n="loading">{{ t('loading') }}</span>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer d-flex justify-content-between align-items-center" style="background: transparent; border-top: 1px solid var(--btc-border);">
+        <div>
+            <small class="text-muted">
+                <span data-i18n="showing">{{ t('showing') }}</span> 
+                <span id="page-info">0-0</span> 
+                <span data-i18n="of">{{ t('of') }}</span> 
+                <span id="total-count">0</span>
+            </small>
+        </div>
+        <nav>
+            <ul class="pagination pagination-sm mb-0" id="pagination">
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background: var(--btc-card-bg); border: 1px solid var(--btc-border);">
+            <div class="modal-header" style="border-bottom: 1px solid var(--btc-border);">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+                    <span data-i18n="confirm_delete">{{ t('confirm_delete') }}</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p data-i18n="delete_customer_warning">{{ t('delete_customer_warning') }}</p>
+                <p class="text-warning mb-0">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <span data-i18n="delete_warning_text">{{ t('delete_warning_text') }}</span>
+                </p>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid var(--btc-border);">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <span data-i18n="cancel">{{ t('cancel') }}</span>
+                </button>
+                <button type="button" class="btn btn-danger" id="confirm-delete-btn">
+                    <span data-i18n="delete">{{ t('delete') }}</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/countup@1.8.2/dist/countUp.min.js"></script>
+
+<script>
+let allCustomers = [];
+let currentPage = 1;
+let itemsPerPage = 20;
+let sortColumn = null;
+let sortDirection = 'asc';
+let capacityChart = null;
+let customerTypeChart = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadKPIData();
+    loadCharts();
+    loadCustomers();
+    setupEventListeners();
+});
+
+async function loadKPIData() {
+    try {
+        const customerKPI = await fetch('/crm/api/kpi/customers').then(r => r.json());
+        if (customerKPI.success) {
+            initCountUp('total-customers', customerKPI.total);
+            document.getElementById('this-month-customers').textContent = customerKPI.this_month;
+            document.getElementById('growth-rate').textContent = customerKPI.growth_rate + '%';
+        }
+
+        const capacityKPI = await fetch('/crm/api/kpi/capacity').then(r => r.json());
+        if (capacityKPI.success) {
+            initCountUp('total-capacity', capacityKPI.total_mw, { decimalPlaces: 1 });
+            document.getElementById('utilization-rate').textContent = capacityKPI.utilization_rate + '%';
+        }
+
+        const dealsKPI = await fetch('/crm/api/kpi/deals').then(r => r.json());
+        if (dealsKPI.success) {
+            initCountUp('monthly-revenue', dealsKPI.this_month_value, { decimalPlaces: 0 });
+        }
+
+        const activeKPI = await fetch('/crm/api/kpi/active-deals').then(r => r.json());
+        if (activeKPI.success) {
+            initCountUp('active-customers', activeKPI.count);
+        }
+    } catch (error) {
+        console.error('Error loading KPI data:', error);
+    }
+}
+
+async function loadCharts() {
+    try {
+        const capacityData = await fetch('/crm/api/analytics/capacity-distribution').then(r => r.json());
+        if (capacityData.success && capacityData.labels.length > 0) {
+            const ctx1 = document.getElementById('capacity-chart');
+            capacityChart = initChart(ctx1, {
+                type: 'pie',
+                data: {
+                    labels: capacityData.labels,
+                    datasets: [{
+                        data: capacityData.data,
+                        backgroundColor: capacityData.colors,
+                        borderColor: '#1a1d2e',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#e0e6ed',
+                                padding: 15,
+                                font: { size: 11 }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.parsed.toFixed(1) + ' MW';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        const typeData = await fetch('/crm/api/analytics/customer-type').then(r => r.json());
+        if (typeData.success && typeData.labels.length > 0) {
+            const ctx2 = document.getElementById('customer-type-chart');
+            customerTypeChart = initChart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: typeData.labels,
+                    datasets: [{
+                        label: window.getTranslation ? window.getTranslation('customer_count') : '{{ t("customer_count") }}',
+                        data: typeData.data,
+                        backgroundColor: 'rgba(247, 147, 26, 0.7)',
+                        borderColor: '#f7931a',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                                color: '#9ca3af'
+                            },
+                            grid: {
+                                color: 'rgba(61, 68, 88, 0.3)'
+                            }
+                        },
+                        x: {
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: 'rgba(61, 68, 88, 0.3)' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error loading charts:', error);
+    }
+}
+
+async function loadCustomers() {
+    try {
+        const response = await fetch('/crm/api/customers');
+        const data = await response.json();
+        
+        if (data.success) {
+            allCustomers = data.data;
+            document.getElementById('customer-count').textContent = allCustomers.length;
+            renderCustomers();
+        }
+    } catch (error) {
+        console.error('Error loading customers:', error);
+        showToast(window.getTranslation ? window.getTranslation('error_loading_data') : '{{ t("error_loading_data") }}', 'error');
+    }
+}
+
+function renderCustomers() {
+    const tbody = document.getElementById('customers-table-body');
+    const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    const statusFilter = document.getElementById('status-filter').value;
+    const typeFilter = document.getElementById('type-filter').value;
+    
+    let filteredCustomers = allCustomers.filter(customer => {
+        const matchesSearch = !searchTerm || 
+            (customer.name && customer.name.toLowerCase().includes(searchTerm)) ||
+            (customer.company && customer.company.toLowerCase().includes(searchTerm)) ||
+            (customer.email && customer.email.toLowerCase().includes(searchTerm));
+        
+        const matchesStatus = !statusFilter || (customer.status || 'active') === statusFilter;
+        const matchesType = !typeFilter || customer.customer_type === typeFilter;
+        
+        return matchesSearch && matchesStatus && matchesType;
+    });
+    
+    if (sortColumn) {
+        filteredCustomers.sort((a, b) => {
+            let aVal = a[sortColumn] || 0;
+            let bVal = b[sortColumn] || 0;
+            
+            if (sortColumn === 'name') {
+                aVal = (a.name || '').toLowerCase();
+                bVal = (b.name || '').toLowerCase();
+            }
+            
+            if (sortDirection === 'asc') {
+                return aVal > bVal ? 1 : -1;
+            } else {
+                return aVal < bVal ? 1 : -1;
+            }
+        });
+    }
+    
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedCustomers = filteredCustomers.slice(startIndex, endIndex);
+    
+    if (paginatedCustomers.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="9" class="text-center py-5">
+                    <i class="bi bi-inbox" style="font-size: 3rem; color: var(--btc-text-secondary);"></i>
+                    <p class="text-muted mt-3" data-i18n="no_customers_found">{{ t("no_customers_found") }}</p>
+                </td>
+            </tr>
+        `;
+    } else {
+        tbody.innerHTML = paginatedCustomers.map(customer => {
+            const statusBadge = getStatusBadge(customer.status || 'active');
+            const capacity = customer.mining_capacity ? customer.mining_capacity.toFixed(2) : '0.00';
+            const revenue = customer.total_revenue ? customer.total_revenue.toFixed(0) : '0';
+            const electricityCost = customer.electricity_cost ? customer.electricity_cost.toFixed(3) : '0.000';
+            
+            return `
+                <tr style="border-left: 3px solid transparent; transition: all 0.3s ease;" 
+                    onmouseover="this.style.background='rgba(247,147,26,0.05)'; this.style.borderLeftColor='#f7931a';"
+                    onmouseout="this.style.background=''; this.style.borderLeftColor='transparent';">
+                    <td class="text-muted">#${customer.id}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-building text-gold me-2"></i>
+                            <div>
+                                <div class="fw-bold">${customer.company || customer.name || 'N/A'}</div>
+                                ${customer.company ? `<small class="text-muted">${customer.name || ''}</small>` : ''}
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        ${customer.email ? `<div><i class="bi bi-envelope me-1"></i> ${customer.email}</div>` : ''}
+                        ${customer.phone ? `<div class="text-muted"><i class="bi bi-telephone me-1"></i> ${customer.phone}</div>` : ''}
+                    </td>
+                    <td class="text-end">
+                        <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981; font-size: 0.9rem;">
+                            ${capacity} MW
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <span class="mining-badge">
+                            <i class="bi bi-cpu"></i> ${getMinerCount(customer)}
+                        </span>
+                    </td>
+                    <td class="text-end text-warning">$${electricityCost}</td>
+                    <td class="text-end">
+                        <span class="text-gold fw-bold" style="cursor: help;" 
+                              title="{{ t('monthly_hosting_fee') }}" data-i18n-title="monthly_hosting_fee">
+                            $${formatNumber(revenue)}
+                        </span>
+                    </td>
+                    <td class="text-center">${statusBadge}</td>
+                    <td class="text-center">
+                        <div class="btn-group btn-group-sm">
+                            <a href="/crm/customer/${customer.id}" class="btn btn-outline-info" 
+                               style="transition: transform 0.2s;" 
+                               onmouseover="this.style.transform='scale(1.1)';" 
+                               onmouseout="this.style.transform='scale(1)';"
+                               title="{{ t('view_details') }}" data-i18n-title="view_details">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="/crm/customer/${customer.id}/edit" class="btn btn-outline-warning"
+                               style="transition: transform 0.2s;" 
+                               onmouseover="this.style.transform='scale(1.1)';" 
+                               onmouseout="this.style.transform='scale(1)';"
+                               title="{{ t('edit') }}" data-i18n-title="edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <button class="btn btn-outline-primary" onclick="viewAnalytics(${customer.id})"
+                                    style="transition: transform 0.2s;" 
+                                    onmouseover="this.style.transform='scale(1.1)';" 
+                                    onmouseout="this.style.transform='scale(1)';"
+                                    title="{{ t('analytics') }}" data-i18n-title="analytics">
+                                <i class="bi bi-bar-chart"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="confirmDelete(${customer.id}, '${customer.name || customer.company}')"
+                                    style="transition: transform 0.2s;" 
+                                    onmouseover="this.style.transform='scale(1.1)';" 
+                                    onmouseout="this.style.transform='scale(1)';"
+                                    title="{{ t('delete') }}" data-i18n-title="delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+    
+    updatePagination(filteredCustomers.length);
+}
+
+function getStatusBadge(status) {
+    const t = window.getTranslation || (k => '{{ t("' + k + '") }}');
+    const badges = {
+        'active': `<span class="badge-status success" data-i18n="active">🟢 ${t('active')}</span>`,
+        'pending': `<span class="badge-status warning" data-i18n="pending">🟡 ${t('pending')}</span>`,
+        'inactive': `<span class="badge-status danger" data-i18n="inactive">🔴 ${t('inactive')}</span>`,
+        'new': `<span class="badge-status info" data-i18n="new">⚪ ${t('new')}</span>`
+    };
+    return badges[status] || badges['active'];
+}
+
+function getMinerCount(customer) {
+    return Math.floor(Math.random() * 50) + 1;
+}
+
+function formatNumber(num) {
+    return new Intl.NumberFormat('en-US').format(Math.round(num));
+}
+
+function updatePagination(totalItems) {
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const pagination = document.getElementById('pagination');
+    const startItem = (currentPage - 1) * itemsPerPage + 1;
+    const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+    
+    document.getElementById('page-info').textContent = `${startItem}-${endItem}`;
+    document.getElementById('total-count').textContent = totalItems;
+    
+    let paginationHTML = '';
+    
+    paginationHTML += `
+        <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+        </li>
+    `;
+    
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+            paginationHTML += `
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
+                </li>
+            `;
+        } else if (i === currentPage - 2 || i === currentPage + 2) {
+            paginationHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+        }
+    }
+    
+    paginationHTML += `
+        <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        </li>
+    `;
+    
+    pagination.innerHTML = paginationHTML;
+}
+
+function changePage(page) {
+    const totalPages = Math.ceil(allCustomers.length / itemsPerPage);
+    if (page >= 1 && page <= totalPages) {
+        currentPage = page;
+        renderCustomers();
+    }
+}
+
+function setupEventListeners() {
+    document.getElementById('search-input').addEventListener('input', function() {
+        currentPage = 1;
+        renderCustomers();
+    });
+    
+    document.getElementById('status-filter').addEventListener('change', function() {
+        currentPage = 1;
+        renderCustomers();
+    });
+    
+    document.getElementById('type-filter').addEventListener('change', function() {
+        currentPage = 1;
+        renderCustomers();
+    });
+    
+    document.querySelectorAll('.sortable').forEach(th => {
+        th.style.cursor = 'pointer';
+        th.addEventListener('click', function() {
+            const column = this.getAttribute('data-sort');
+            
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            
+            document.querySelectorAll('.sortable i').forEach(icon => {
+                icon.className = 'bi bi-arrow-down-up ms-1';
+            });
+            
+            const icon = this.querySelector('i');
+            icon.className = sortDirection === 'asc' ? 'bi bi-arrow-up ms-1' : 'bi bi-arrow-down ms-1';
+            
+            renderCustomers();
+        });
+    });
+}
+
+let deleteCustomerId = null;
+function confirmDelete(customerId, customerName) {
+    deleteCustomerId = customerId;
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+
+document.getElementById('confirm-delete-btn').addEventListener('click', async function() {
+    if (deleteCustomerId) {
+        try {
+            const response = await fetch(`/crm/customer/${deleteCustomerId}/delete`, {
+                method: 'POST'
+            });
+            
+            if (response.ok) {
+                showToast(window.getTranslation ? window.getTranslation('customer_deleted') : '{{ t("customer_deleted") }}', 'success');
+                loadCustomers();
+                const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+                modal.hide();
+            } else {
+                showToast(window.getTranslation ? window.getTranslation('delete_failed') : '{{ t("delete_failed") }}', 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting customer:', error);
+            showToast(window.getTranslation ? window.getTranslation('error_occurred') : '{{ t("error_occurred") }}', 'error');
+        }
+    }
+});
+
+function viewAnalytics(customerId) {
+    window.location.href = `/crm/customer/${customerId}?tab=analytics`;
+}
+
+function exportToExcel() {
+    showToast(window.getTranslation ? window.getTranslation('export_started') : '{{ t("export_started") }}', 'info');
+}
+
+function batchImport() {
+    showToast(window.getTranslation ? window.getTranslation('batch_import_coming_soon') : '{{ t("batch_import_coming_soon") }}', 'info');
+}
+</script>
+{% endblock %}

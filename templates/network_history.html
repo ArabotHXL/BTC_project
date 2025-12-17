@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+
+{% block title %}网络历史数据 | BTC Mining Calculator{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar Navigation -->
+        <nav class="col-md-3 col-lg-2 d-md-block sidebar">
+            <div class="position-sticky">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('analytics_dashboard') }}">
+                            <i class="bi bi-graph-up"></i>
+                            {% if session.language == 'zh' %}分析仪表盘{% else %}Analytics Dashboard{% endif %}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('network_history') }}">
+                            <i class="bi bi-clock-history"></i>
+                            {% if session.language == 'zh' %}网络历史数据{% else %}Network History{% endif %}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('batch_calculator.batch_calculator') }}">
+                            <i class="bi bi-calculator"></i>
+                            {% if session.language == 'zh' %}批量计算器{% else %}Batch Calculator{% endif %}
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    <i class="bi bi-clock-history text-warning"></i>
+                    {% if session.language == 'zh' %}网络历史数据分析{% else %}Network Historical Data Analysis{% endif %}
+                </h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <button type="button" class="btn btn-outline-warning btn-sm" onclick="refreshData()">
+                            <i class="bi bi-arrow-clockwise"></i>
+                            {% if session.language == 'zh' %}刷新数据{% else %}Refresh Data{% endif %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-dark border-warning">
+                        <div class="card-body">
+                            <h5 class="card-title text-warning">
+                                <i class="bi bi-currency-bitcoin"></i>
+                                {% if session.language == 'zh' %}BTC价格{% else %}BTC Price{% endif %}
+                            </h5>
+                            <h3 class="card-text text-light">
+                                ${{ "{:,.2f}".format(stats.current_price) }}
+                            </h3>
+                            <small class="text-{% if stats.price_change >= 0 %}success{% else %}danger{% endif %}">
+                                {% if stats.price_change >= 0 %}+{% endif %}{{ "{:.2f}".format(stats.price_change) }}%
+                                {% if session.language == 'zh' %}（30天）{% else %}(30 days){% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-dark border-warning">
+                        <div class="card-body">
+                            <h5 class="card-title text-warning">
+                                <i class="bi bi-gear"></i>
+                                {% if session.language == 'zh' %}网络难度{% else %}Network Difficulty{% endif %}
+                            </h5>
+                            <h3 class="card-text text-light">
+                                {{ "{:.2f}T".format(stats.current_difficulty / 1000000000000) }}
+                            </h3>
+                            <small class="text-{% if stats.difficulty_change >= 0 %}danger{% else %}success{% endif %}">
+                                {% if stats.difficulty_change >= 0 %}+{% endif %}{{ "{:.2f}".format(stats.difficulty_change) }}%
+                                {% if session.language == 'zh' %}（30天）{% else %}(30 days){% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-dark border-warning">
+                        <div class="card-body">
+                            <h5 class="card-title text-warning">
+                                <i class="bi bi-lightning"></i>
+                                {% if session.language == 'zh' %}网络算力{% else %}Network Hashrate{% endif %}
+                            </h5>
+                            <h3 class="card-text text-light">
+                                {{ "{:.1f} EH/s".format(stats.current_hashrate) }}
+                            </h3>
+                            <small class="text-{% if stats.hashrate_change >= 0 %}success{% else %}danger{% endif %}">
+                                {% if stats.hashrate_change >= 0 %}+{% endif %}{{ "{:.2f}".format(stats.hashrate_change) }}%
+                                {% if session.language == 'zh' %}（30天）{% else %}(30 days){% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-dark border-warning">
+                        <div class="card-body">
+                            <h5 class="card-title text-warning">
+                                <i class="bi bi-database"></i>
+                                {% if session.language == 'zh' %}数据点{% else %}Data Points{% endif %}
+                            </h5>
+                            <h3 class="card-text text-light">
+                                {{ stats.data_points }}
+                            </h3>
+                            <small class="text-muted">
+                                {% if session.language == 'zh' %}最近30天{% else %}Last 30 days{% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card bg-dark border-warning mb-4">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0">
+                                <i class="bi bi-graph-up"></i>
+                                {% if session.language == 'zh' %}BTC价格趋势（30天）{% else %}BTC Price Trend (30 Days){% endif %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="priceChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card bg-dark border-warning mb-4">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0">
+                                <i class="bi bi-gear"></i>
+                                {% if session.language == 'zh' %}网络难度变化{% else %}Network Difficulty Change{% endif %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="difficultyChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card bg-dark border-warning mb-4">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0">
+                                <i class="bi bi-lightning"></i>
+                                {% if session.language == 'zh' %}网络算力变化{% else %}Network Hashrate Change{% endif %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="hashrateChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// 图表数据
+const chartData = {{ chart_data | tojson }};
+
+// 价格趋势图表
+const priceCtx = document.getElementById('priceChart').getContext('2d');
+const priceChart = new Chart(priceCtx, {
+    type: 'line',
+    data: {
+        labels: chartData.dates,
+        datasets: [{
+            label: 'BTC Price ($)',
+            data: chartData.price_data,
+            borderColor: '#f8d000',
+            backgroundColor: 'rgba(248, 208, 0, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                labels: {
+                    color: '#ffffff'
+                }
+            }
+        },
+        scales: {
+            x: {
+                ticks: {
+                    color: '#ffffff'
+                },
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.1)'
+                }
+            },
+            y: {
+                ticks: {
+                    color: '#ffffff',
+                    callback: function(value) {
+                        return '$' + value.toLocaleString();
+                    }
+                },
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.1)'
+                }
+            }
+        }
+    }
+});
+
+// 难度趋势图表
+const difficultyCtx = document.getElementById('difficultyChart').getContext('2d');
+const difficultyChart = new Chart(difficultyCtx, {
+    type: 'line',
+    data: {
+        labels: chartData.dates,
+        datasets: [{
+            label: '{% if session.language == "zh" %}网络难度{% else %}Network Difficulty{% endif %}',
+            data: chartData.difficulty_data.map(d => d / 1000000000000), // Convert to T
+            borderColor: '#dc3545',
+            backgroundColor: 'rgba(220, 53, 69, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                labels: {
+                    color: '#ffffff'
+                }
+            }
+        },
+        scales: {
+            x: {
+                ticks: {
+                    color: '#ffffff'
+                },
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.1)'
+                }
+            },
+            y: {
+                ticks: {
+                    color: '#ffffff',
+                    callback: function(value) {
+                        return value.toFixed(2) + 'T';
+                    }
+                },
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.1)'
+                }
+            }
+        }
+    }
+});
+
+// 算力趋势图表
+const hashrateCtx = document.getElementById('hashrateChart').getContext('2d');
+const hashrateChart = new Chart(hashrateCtx, {
+    type: 'line',
+    data: {
+        labels: chartData.dates,
+        datasets: [{
+            label: '{% if session.language == "zh" %}网络算力 (EH/s){% else %}Network Hashrate (EH/s){% endif %}',
+            data: chartData.hashrate_data,
+            borderColor: '#28a745',
+            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                labels: {
+                    color: '#ffffff'
+                }
+            }
+        },
+        scales: {
+            x: {
+                ticks: {
+                    color: '#ffffff'
+                },
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.1)'
+                }
+            },
+            y: {
+                ticks: {
+                    color: '#ffffff',
+                    callback: function(value) {
+                        return value.toFixed(1) + ' EH/s';
+                    }
+                },
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.1)'
+                }
+            }
+        }
+    }
+});
+
+function refreshData() {
+    window.location.reload();
+}
+</script>
+{% endblock %}

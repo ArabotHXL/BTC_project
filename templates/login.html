@@ -1,0 +1,906 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {{ t('login_title') }} - BTC Mining Calculator
+{% endblock %}
+
+{% block header_title %}
+    {{ t('login_title') }}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* CSS Variables for consistent theming */
+:root {
+    --primary-gold: #ffc107;
+    --primary-dark: #1a1a2e;
+    --secondary-dark: #16213e;
+    --accent-purple: #6c5ce7;
+    --text-primary: #f8f9fa;
+    --text-secondary: #adb5bd;
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 193, 7, 0.2);
+}
+
+body {
+    background: linear-gradient(135deg, 
+        #1a1a2e 0%, 
+        #16213e 25%, 
+        #0f3460 50%, 
+        #16213e 75%, 
+        #1a1a2e 100%);
+    background-attachment: fixed;
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    padding: 1rem 0;
+}
+
+/* Animated background particles */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(2px 2px at 20px 30px, rgba(255, 193, 7, 0.3), transparent),
+        radial-gradient(2px 2px at 40px 70px, rgba(108, 92, 231, 0.3), transparent),
+        radial-gradient(1px 1px at 90px 40px, rgba(255, 193, 7, 0.2), transparent),
+        radial-gradient(1px 1px at 130px 80px, rgba(108, 92, 231, 0.2), transparent);
+    background-repeat: repeat;
+    background-size: 150px 150px;
+    animation: float 20s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(180deg); }
+}
+
+.login-container {
+    width: 100%;
+    max-width: 450px;
+    padding: 3rem 2.5rem;
+    background: rgba(26, 26, 46, 0.9);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(255, 193, 7, 0.1);
+    position: relative;
+    overflow: hidden;
+    animation: slideInUp 0.8s ease-out;
+}
+
+.login-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, transparent, rgba(255, 193, 7, 0.05), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.login-container:hover::before {
+    opacity: 1;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.login-logo {
+    text-align: center;
+    margin-bottom: 2rem;
+    position: relative;
+    z-index: 2;
+}
+
+.login-title {
+    color: var(--primary-gold);
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-top: 1rem;
+    text-shadow: 0 0 20px rgba(255, 193, 7, 0.3);
+}
+
+.btc-icon {
+    display: inline-block;
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--primary-gold), #e67e22);
+    border-radius: 50%;
+    text-align: center;
+    line-height: 80px;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    transform: rotate(12deg);
+    color: #ffffff;
+    box-shadow: 
+        0 15px 35px rgba(255, 193, 7, 0.3),
+        0 0 0 3px rgba(255, 193, 7, 0.2);
+    transition: all 0.3s ease;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.btc-icon:hover {
+    transform: rotate(12deg) scale(1.1);
+    box-shadow: 
+        0 20px 50px rgba(255, 193, 7, 0.5),
+        0 0 0 5px rgba(255, 193, 7, 0.3);
+}
+
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 15px 35px rgba(255, 193, 7, 0.3), 0 0 0 3px rgba(255, 193, 7, 0.2); }
+    50% { box-shadow: 0 20px 45px rgba(255, 193, 7, 0.4), 0 0 0 6px rgba(255, 193, 7, 0.3); }
+}
+
+/* Language Switcher */
+.btn-group .btn-outline-light {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 193, 7, 0.3);
+    color: var(--text-secondary);
+    border-radius: 12px;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-group .btn-outline-light:hover,
+.btn-group .btn-outline-light.active {
+    background: var(--primary-gold);
+    border-color: var(--primary-gold);
+    color: #000;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 193, 7, 0.3);
+}
+
+/* Form Styling */
+.form-label {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+}
+
+.form-control {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 193, 7, 0.2);
+    border-radius: 16px;
+    color: var(--text-primary);
+    padding: 1rem 1.25rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.form-control:focus {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--primary-gold);
+    box-shadow: 
+        0 0 0 4px rgba(255, 193, 7, 0.15),
+        0 8px 25px rgba(255, 193, 7, 0.2);
+    color: var(--text-primary);
+    transform: translateY(-2px);
+}
+
+.form-control::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+/* Primary Button */
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-gold), #e67e22);
+    border: none;
+    border-radius: 16px;
+    color: #000;
+    font-weight: 700;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(255, 193, 7, 0.3);
+}
+
+.btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #e67e22, var(--primary-gold));
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(255, 193, 7, 0.4);
+}
+
+.btn-primary:hover::before {
+    left: 100%;
+}
+
+.btn-primary:active {
+    transform: translateY(-1px);
+}
+
+/* Alert Styling */
+.alert {
+    border-radius: 16px;
+    border: none;
+    backdrop-filter: blur(10px);
+    font-weight: 500;
+    animation: slideInDown 0.5s ease-out;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.alert-danger {
+    background: rgba(220, 53, 85, 0.2);
+    color: #ff6b8a;
+    border-left: 4px solid #dc3545;
+}
+
+.alert-success {
+    background: rgba(40, 167, 69, 0.2);
+    color: #6bcf7f;
+    border-left: 4px solid #28a745;
+}
+
+/* Links */
+.text-primary {
+    color: var(--primary-gold) !important;
+    transition: all 0.3s ease;
+}
+
+.text-primary:hover {
+    color: #e67e22 !important;
+    text-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+}
+
+.text-warning {
+    color: var(--primary-gold) !important;
+}
+
+.text-info {
+    color: #17a2b8 !important;
+}
+
+.form-text {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+/* Enhanced Responsive Design */
+/* Extra small devices (phones, 320px and up) */
+@media (max-width: 375px) {
+    body {
+        padding: 0.5rem;
+        overflow-y: auto;
+        min-height: 100vh;
+        height: auto;
+    }
+    
+    .login-container {
+        margin: 0.5rem;
+        padding: 1.5rem 1rem;
+        max-width: none;
+        min-height: auto;
+        border-radius: 16px;
+    }
+    
+    .btc-icon {
+        width: 60px;
+        height: 60px;
+        line-height: 60px;
+        font-size: 1.8rem;
+    }
+    
+    .login-title {
+        font-size: 1.3rem;
+        margin-top: 0.5rem;
+    }
+    
+    .form-control {
+        padding: 0.8rem 1rem;
+        font-size: 0.95rem;
+    }
+    
+    .btn-primary {
+        padding: 0.8rem 1.5rem;
+        font-size: 1rem;
+    }
+    
+    .btn-group .btn-outline-light {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.85rem;
+    }
+}
+
+/* Small devices (phones, 376px to 575px) */
+@media (min-width: 376px) and (max-width: 575px) {
+    body {
+        padding: 0.75rem;
+        overflow-y: auto;
+        min-height: 100vh;
+        height: auto;
+    }
+    
+    .login-container {
+        margin: 0.75rem;
+        padding: 2rem 1.25rem;
+        max-width: none;
+        border-radius: 18px;
+    }
+    
+    .btc-icon {
+        width: 65px;
+        height: 65px;
+        line-height: 65px;
+        font-size: 2rem;
+    }
+    
+    .login-title {
+        font-size: 1.4rem;
+    }
+}
+
+/* Medium devices (tablets, 576px to 767px) */
+@media (min-width: 576px) and (max-width: 767px) {
+    .login-container {
+        margin: 1rem;
+        padding: 2.5rem 2rem;
+        max-width: 480px;
+        margin: 1rem auto;
+    }
+    
+    .btc-icon {
+        width: 70px;
+        height: 70px;
+        line-height: 70px;
+        font-size: 2.2rem;
+    }
+    
+    .login-title {
+        font-size: 1.6rem;
+    }
+}
+
+/* Large devices (tablets and small desktops, 768px to 991px) */
+@media (min-width: 768px) and (max-width: 991px) {
+    .login-container {
+        max-width: 500px;
+        padding: 2.75rem 2.25rem;
+    }
+    
+    .login-title {
+        font-size: 1.7rem;
+    }
+}
+
+/* Extra large devices (large desktops, 992px and up) */
+@media (min-width: 992px) {
+    .login-container {
+        max-width: 450px;
+    }
+}
+
+/* Landscape orientation fixes */
+@media (orientation: landscape) and (max-height: 500px) {
+    body {
+        height: auto;
+        min-height: 100vh;
+        overflow-y: auto;
+        padding: 1rem 0;
+    }
+    
+    .login-container {
+        margin: 1rem auto;
+        padding: 1.5rem 2rem;
+    }
+    
+    .btc-icon {
+        width: 50px;
+        height: 50px;
+        line-height: 50px;
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .login-title {
+        font-size: 1.2rem;
+        margin-top: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .login-logo {
+        margin-bottom: 1rem;
+    }
+}
+
+/* High DPI screens */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 2dppx) {
+    .btc-icon {
+        border-width: 2px;
+    }
+    
+    .form-control {
+        border-width: 1px;
+    }
+}
+
+/* Additional modern touches */
+.card-title {
+    color: var(--text-primary);
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 1.3rem;
+}
+
+/* Smooth transitions for all interactive elements */
+* {
+    transition: all 0.3s ease;
+}
+
+/* Ensure links are clickable */
+a, a:hover, a:focus, a:active {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    z-index: 1000;
+    position: relative;
+}
+
+/* Fix specific register link styling */
+.text-primary.text-decoration-none {
+    display: inline-block;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    z-index: 1001;
+    position: relative;
+    text-decoration: none !important;
+}
+
+.text-primary.text-decoration-none:hover {
+    text-decoration: underline !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5">
+                <div class="login-container">
+                    <div class="login-logo">
+                        <div class="btc-icon">₿</div>
+                        <div class="login-title" data-i18n="btc_mining_calculator">{{ t('btc_mining_calculator') }}</div>
+                    </div>
+                    
+                    <!-- 语言切换 / Language Switcher (无刷新即时切换) -->
+                    <div class="text-center mb-3">
+                        <div class="btn-group btn-group-sm" role="group" aria-label="{{ t('language') }}">
+                            <button type="button" data-lang-switch="zh" data-lang="zh" 
+                                    class="btn btn-outline-light lang-switch-btn {{ 'active' if current_lang == 'zh' else '' }}">中文</button>
+                            <button type="button" data-lang-switch="en" data-lang="en" 
+                                    class="btn btn-outline-light lang-switch-btn {{ 'active' if current_lang == 'en' else '' }}">English</button>
+                        </div>
+                    </div>
+                    
+                    <!-- 消息提示 / Flash Messages -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}" role="alert">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <div class="card-body">
+                        <h5 class="card-title text-center mb-4" data-i18n="email_verification_login">{{ t('email_verification_login') }}</h5>
+
+                        <!-- Email/Password Login -->
+                        <form class="login-form" method="post" action="{{ url_for('auth.login') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}"/>
+                            <div class="mb-3">
+                                <label for="email" class="form-label" data-i18n="email_or_username">{{ t('email_or_username') }}</label>
+                                <input type="text" class="form-control" id="email" name="email" 
+                                       placeholder="{{ t('email_placeholder') }}" data-i18n-placeholder="email_placeholder" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label" data-i18n="password">{{ t('password') }}</label>
+                                <input type="password" class="form-control" id="password" name="password" 
+                                       placeholder="{{ t('password_placeholder') }}" data-i18n-placeholder="password_placeholder">
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary" data-i18n="login">{{ t('login') }}</button>
+                            </div>
+                        </form>
+                        <div class="text-center mt-4">
+                            <p class="text-muted">
+                                <span data-i18n="no_account">{{ t('no_account') }}</span> 
+                                <a href="{{ url_for('auth.register') }}" class="text-primary text-decoration-none" data-i18n="register_now">
+                                    {{ t('register_now') }}
+                                </a>
+                            </p>
+                            <p class="text-muted">
+                                <a href="{{ url_for('auth.forgot_password') }}" class="text-primary text-decoration-none" data-i18n="forgot_password">
+                                    {{ t('forgot_password') }}
+                                </a>
+                            </p>
+                            {% if session.get('role') in ['owner', 'admin'] %}
+                            <p class="text-muted mt-2">
+                                <a href="{{ url_for('admin.admin_create_user') }}" class="text-warning text-decoration-none">
+                                    <i class="bi bi-gear-fill me-1"></i>管理员创建用户
+                                </a>
+                                |
+                                <a href="{{ url_for('admin.admin_user_list') }}" class="text-info text-decoration-none">
+                                    <i class="bi bi-people-fill me-1"></i>用户列表
+                                </a>
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Ethers.js library for Web3 functionality -->
+<script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>
+
+<script>
+let currentWalletAddress = null;
+let currentNonce = null;
+
+// SECURITY ENHANCEMENT: 支持的网络配置
+const SUPPORTED_NETWORKS = {
+    // 主要以太坊网络
+    '0x1': { name: 'Ethereum Mainnet', symbol: 'ETH' },
+    '0x38': { name: 'BNB Smart Chain', symbol: 'BNB' },
+    '0x89': { name: 'Polygon', symbol: 'MATIC' },
+    // 测试网络（开发环境）
+    '0x5': { name: 'Goerli Testnet', symbol: 'ETH' },
+    '0xaa36a7': { name: 'Sepolia Testnet', symbol: 'ETH' }
+};
+
+// SECURITY ENHANCEMENT: 验证和切换网络
+async function validateAndSwitchNetwork() {
+    try {
+        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        
+        if (!SUPPORTED_NETWORKS[chainId]) {
+            const networkNames = Object.values(SUPPORTED_NETWORKS).map(n => n.name).join(', ');
+            throw new Error(`{% if current_lang == "zh" %}不支持的网络。请切换到支持的网络: {% else %}Unsupported network. Please switch to supported networks: {% endif %}${networkNames}`);
+        }
+        
+        const network = SUPPORTED_NETWORKS[chainId];
+        console.log(`Connected to ${network.name} (${chainId})`);
+        return { chainId, network };
+        
+    } catch (error) {
+        console.error('Network validation error:', error);
+        throw error;
+    }
+}
+
+// Wallet connection and authentication functions
+async function connectWallet() {
+    const button = document.getElementById('connect-wallet-btn');
+    const status = document.getElementById('wallet-status');
+    
+    try {
+        // SECURITY ENHANCEMENT: 检查MetaMask和Web3支持
+        if (typeof window.ethereum === 'undefined') {
+            updateWalletStatus('{% if current_lang == "zh" %}请安装MetaMask钱包{% else %}Please install MetaMask wallet{% endif %}', 'error');
+            return;
+        }
+
+        // 检查是否为MetaMask
+        if (!window.ethereum.isMetaMask) {
+            updateWalletStatus('{% if current_lang == "zh" %}请使用MetaMask钱包{% else %}Please use MetaMask wallet{% endif %}', 'error');
+            return;
+        }
+
+        // Disable button and show loading
+        button.disabled = true;
+        button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>{% if current_lang == "zh" %}连接中...{% else %}Connecting...{% endif %}';
+        
+        // SECURITY ENHANCEMENT: 验证网络
+        updateWalletStatus('{% if current_lang == "zh" %}正在验证网络...{% else %}Validating network...{% endif %}', 'info');
+        const { chainId, network } = await validateAndSwitchNetwork();
+        
+        // Request account access
+        updateWalletStatus('{% if current_lang == "zh" %}请求账户访问...{% else %}Requesting account access...{% endif %}', 'info');
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        
+        if (accounts.length === 0) {
+            throw new Error('{% if current_lang == "zh" %}未找到账户{% else %}No accounts found{% endif %}');
+        }
+
+        currentWalletAddress = accounts[0];
+        
+        // SECURITY ENHANCEMENT: 显示网络和地址信息
+        const networkDisplay = network.name.includes('Testnet') ? ` (${network.name})` : '';
+        updateWalletStatus(`{% if current_lang == "zh" %}已连接${networkDisplay}: {% else %}Connected${networkDisplay}: {% endif %}${currentWalletAddress.slice(0,8)}...${currentWalletAddress.slice(-6)}`, 'success');
+        
+        // Get nonce from server and sign message
+        await signAndLogin();
+        
+    } catch (error) {
+        console.error('Wallet connection error:', error);
+        
+        // SECURITY ENHANCEMENT: 改进错误处理和用户反馈
+        let errorMessage = error.message;
+        if (error.code === 4001) {
+            errorMessage = '{% if current_lang == "zh" %}用户拒绝了连接请求{% else %}User rejected the connection request{% endif %}';
+        } else if (error.code === -32002) {
+            errorMessage = '{% if current_lang == "zh" %}请检查MetaMask并完成待处理的请求{% else %}Please check MetaMask and complete pending requests{% endif %}';
+        } else if (error.message.includes('network')) {
+            errorMessage = `{% if current_lang == "zh" %}网络错误: {% else %}Network error: {% endif %}${error.message}`;
+        }
+        
+        updateWalletStatus(`{% if current_lang == "zh" %}连接失败: {% else %}Connection failed: {% endif %}${errorMessage}`, 'error');
+    } finally {
+        // Re-enable button
+        button.disabled = false;
+        button.innerHTML = '<i class="bi bi-wallet2 me-2"></i>{% if current_lang == "zh" %}连接钱包登录{% else %}Connect Wallet to Login{% endif %}';
+    }
+}
+
+async function signAndLogin() {
+    try {
+        updateWalletStatus('{% if current_lang == "zh" %}正在获取签名消息...{% else %}Getting signature message...{% endif %}', 'info');
+        
+        // SECURITY ENHANCEMENT: 再次验证网络状态
+        const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
+        if (!SUPPORTED_NETWORKS[currentChainId]) {
+            throw new Error('{% if current_lang == "zh" %}网络已更改为不支持的网络{% else %}Network changed to unsupported network{% endif %}');
+        }
+        
+        // Get nonce from server with enhanced error handling
+        const nonceResponse = await fetch('/api/wallet/nonce', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                wallet_address: currentWalletAddress,
+                chain_id: currentChainId  // SECURITY ENHANCEMENT: 发送链ID
+            })
+        });
+        
+        // SECURITY ENHANCEMENT: 改进服务器响应错误处理
+        if (!nonceResponse.ok) {
+            const errorData = await nonceResponse.json().catch(() => ({}));
+            
+            if (nonceResponse.status === 429) {
+                throw new Error('{% if current_lang == "zh" %}请求频率过高，请稍后再试{% else %}Too many requests, please try again later{% endif %}');
+            } else if (nonceResponse.status === 403) {
+                throw new Error('{% if current_lang == "zh" %}访问被拒绝，请刷新页面重试{% else %}Access denied, please refresh and try again{% endif %}');
+            } else {
+                throw new Error(errorData.error || '{% if current_lang == "zh" %}获取签名消息失败{% else %}Failed to get signature message{% endif %}');
+            }
+        }
+        
+        const nonceData = await nonceResponse.json();
+        
+        if (!nonceData.success) {
+            throw new Error(nonceData.error || '{% if current_lang == "zh" %}服务器响应无效{% else %}Invalid server response{% endif %}');
+        }
+        
+        currentNonce = nonceData.nonce;
+        const message = nonceData.message;
+        
+        updateWalletStatus('{% if current_lang == "zh" %}请在钱包中签名...{% else %}Please sign in your wallet...{% endif %}', 'info');
+        
+        // SECURITY ENHANCEMENT: 增强签名安全性检查
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+        
+        // 确认签名者地址匹配
+        const signerAddress = await signer.getAddress();
+        if (signerAddress.toLowerCase() !== currentWalletAddress.toLowerCase()) {
+            throw new Error('{% if current_lang == "zh" %}签名账户与连接账户不匹配{% else %}Signer account does not match connected account{% endif %}');
+        }
+        
+        const signature = await signer.signMessage(message);
+        
+        updateWalletStatus('{% if current_lang == "zh" %}正在验证签名...{% else %}Verifying signature...{% endif %}', 'info');
+        
+        // Send signature to server for verification with enhanced data
+        const loginResponse = await fetch('/api/wallet/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                wallet_address: currentWalletAddress,
+                signature: signature,
+                nonce: currentNonce,
+                chain_id: currentChainId,  // SECURITY ENHANCEMENT: 包含链ID
+                message: message  // SECURITY ENHANCEMENT: 包含原始消息以供验证
+            })
+        });
+        
+        // SECURITY ENHANCEMENT: 改进登录响应错误处理
+        if (!loginResponse.ok) {
+            const errorData = await loginResponse.json().catch(() => ({}));
+            
+            if (loginResponse.status === 429) {
+                throw new Error('{% if current_lang == "zh" %}登录尝试次数过多，请稍后再试{% else %}Too many login attempts, please try again later{% endif %}');
+            } else if (loginResponse.status === 401) {
+                throw new Error('{% if current_lang == "zh" %}签名验证失败{% else %}Signature verification failed{% endif %}');
+            } else if (loginResponse.status === 403) {
+                throw new Error('{% if current_lang == "zh" %}访问被拒绝{% else %}Access denied{% endif %}');
+            } else {
+                throw new Error(errorData.error || '{% if current_lang == "zh" %}登录失败{% else %}Login failed{% endif %}');
+            }
+        }
+        
+        const loginData = await loginResponse.json();
+        
+        if (loginData.success) {
+            updateWalletStatus('{% if current_lang == "zh" %}登录成功！正在重定向...{% else %}Login successful! Redirecting...{% endif %}', 'success');
+            
+            // SECURITY ENHANCEMENT: 安全重定向
+            const redirectUrl = loginData.redirect_url && loginData.redirect_url.startsWith('/') 
+                                ? loginData.redirect_url 
+                                : '/';
+                                
+            setTimeout(() => {
+                window.location.href = redirectUrl;
+            }, 1500);
+        } else {
+            throw new Error(loginData.error || '{% if current_lang == "zh" %}登录验证失败{% else %}Login verification failed{% endif %}');
+        }
+        
+    } catch (error) {
+        console.error('Sign and login error:', error);
+        
+        // SECURITY ENHANCEMENT: 改进错误分类和用户反馈
+        let errorMessage = error.message;
+        
+        if (error.code === 4001) {
+            errorMessage = '{% if current_lang == "zh" %}用户取消了签名{% else %}User cancelled signing{% endif %}';
+        } else if (error.code === -32603) {
+            errorMessage = '{% if current_lang == "zh" %}签名过程中发生内部错误{% else %}Internal error during signing{% endif %}';
+        } else if (error.message.includes('nonce')) {
+            errorMessage = '{% if current_lang == "zh" %}签名已过期，请重试{% else %}Signature expired, please try again{% endif %}';
+        }
+        
+        updateWalletStatus(`{% if current_lang == "zh" %}签名失败: {% else %}Signature failed: {% endif %}${errorMessage}`, 'error');
+    }
+}
+
+function updateWalletStatus(message, type) {
+    const status = document.getElementById('wallet-status');
+    status.style.display = 'block';
+    status.className = `text-center small mb-3 ${type === 'error' ? 'text-danger' : type === 'success' ? 'text-success' : 'text-info'}`;
+    status.textContent = message;
+}
+
+// SECURITY ENHANCEMENT: 处理账户和网络变更事件
+if (typeof window.ethereum !== 'undefined') {
+    // 处理账户变更
+    window.ethereum.on('accountsChanged', function (accounts) {
+        if (accounts.length === 0) {
+            currentWalletAddress = null;
+            currentNonce = null;  // 清除nonce
+            updateWalletStatus('{% if current_lang == "zh" %}钱包已断开连接{% else %}Wallet disconnected{% endif %}', 'error');
+        } else if (accounts[0] !== currentWalletAddress) {
+            currentWalletAddress = accounts[0];
+            currentNonce = null;  // 清除旧的nonce
+            updateWalletStatus(`{% if current_lang == "zh" %}账户已更改: {% else %}Account changed: {% endif %}${currentWalletAddress.slice(0,8)}...${currentWalletAddress.slice(-6)}`, 'info');
+        }
+    });
+    
+    // SECURITY ENHANCEMENT: 处理网络变更
+    window.ethereum.on('chainChanged', function (chainId) {
+        console.log('Network changed to:', chainId);
+        currentNonce = null;  // 清除nonce
+        
+        if (SUPPORTED_NETWORKS[chainId]) {
+            const network = SUPPORTED_NETWORKS[chainId];
+            updateWalletStatus(`{% if current_lang == "zh" %}网络已切换至 {% else %}Network switched to {% endif %}${network.name}`, 'info');
+        } else {
+            updateWalletStatus('{% if current_lang == "zh" %}当前网络不受支持，请切换到支持的网络{% else %}Current network is not supported, please switch to a supported network{% endif %}', 'error');
+        }
+    });
+    
+    // SECURITY ENHANCEMENT: 处理连接断开
+    window.ethereum.on('disconnect', function (error) {
+        console.log('MetaMask disconnected:', error);
+        currentWalletAddress = null;
+        currentNonce = null;
+        updateWalletStatus('{% if current_lang == "zh" %}MetaMask连接已断开{% else %}MetaMask connection lost{% endif %}', 'error');
+    });
+}
+</script>
+
+<style>
+.wallet-login-section {
+    border-radius: 12px;
+    padding: 1rem;
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #ffc107, #f39c12);
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+}
+
+.btn-warning:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 193, 7, 0.4);
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+}
+
+.btn-warning:active {
+    transform: translateY(0);
+}
+
+.divider-section span {
+    background: rgba(26, 26, 46, 0.9);
+    padding: 0 1rem;
+    font-size: 0.9rem;
+}
+
+.text-success {
+    color: #28a745 !important;
+}
+
+.text-danger {
+    color: #dc3545 !important;
+}
+
+.text-info {
+    color: #17a2b8 !important;
+}
+</style>
+{% endblock %}

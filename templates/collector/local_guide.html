@@ -1,0 +1,468 @@
+{% extends "base.html" %}
+{% block title %}
+{% if lang == 'zh' %}本地部署指南{% else %}Local Deployment Guide{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('collector_routes.index') }}" class="text-warning">{% if lang == 'zh' %}采集器监控{% else %}Collector Monitor{% endif %}</a></li>
+                    <li class="breadcrumb-item active text-muted">{% if lang == 'zh' %}本地部署指南{% else %}Local Deployment Guide{% endif %}</li>
+                </ol>
+            </nav>
+            <h2 class="text-warning mb-0">
+                <i class="bi bi-hdd-network me-2"></i>
+                {% if lang == 'zh' %}本地部署指南 - 直接连接矿机{% else %}Local Deployment Guide - Direct Miner Connection{% endif %}
+            </h2>
+            <p class="text-muted">
+                {% if lang == 'zh' %}在矿场内网部署系统，直接通过 CGMiner API 采集矿机数据{% else %}Deploy system on mining farm LAN, collect miner data directly via CGMiner API{% endif %}
+            </p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card bg-dark border-secondary mb-4">
+                <div class="card-header bg-warning bg-opacity-10">
+                    <h5 class="mb-0 text-warning">
+                        <i class="bi bi-diagram-3 me-2"></i>
+                        {% if lang == 'zh' %}架构说明{% else %}Architecture Overview{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <pre class="bg-black p-3 rounded text-success small mb-3" style="font-family: monospace;">
+{% if lang == 'zh' %}
+矿场内网 (同一局域网)
+┌───────────────────────────────────────────────────┐
+│                                                   │
+│  ┌─────────────────────┐      ┌────┐ ┌────┐      │
+│  │  HashInsight 系统    │      │矿机│ │矿机│ ...  │
+│  │  (本地服务器)        │      │    │ │    │      │
+│  │                     │      └──┬─┘ └──┬─┘      │
+│  │  - 数据采集         │         │      │        │
+│  │  - 监控告警         │◄────────┴──────┘        │
+│  │  - 分析报表         │   CGMiner API           │
+│  │                     │   端口 4028             │
+│  └─────────────────────┘                         │
+│                                                   │
+└───────────────────────────────────────────────────┘
+{% else %}
+Mining Farm LAN (Same Network)
+┌───────────────────────────────────────────────────┐
+│                                                   │
+│  ┌─────────────────────┐      ┌────┐ ┌────┐      │
+│  │  HashInsight System │      │ASIC│ │ASIC│ ...  │
+│  │  (Local Server)     │      │    │ │    │      │
+│  │                     │      └──┬─┘ └──┬─┘      │
+│  │  - Data Collection  │         │      │        │
+│  │  - Monitoring       │◄────────┴──────┘        │
+│  │  - Analytics        │   CGMiner API           │
+│  │                     │   Port 4028             │
+│  └─────────────────────┘                         │
+│                                                   │
+└───────────────────────────────────────────────────┘
+{% endif %}</pre>
+                    <div class="alert alert-success mb-0">
+                        <i class="bi bi-check-circle me-2"></i>
+                        {% if lang == 'zh' %}
+                        <strong>优势:</strong> 无需 Edge Collector，架构更简单，数据实时性更好
+                        {% else %}
+                        <strong>Advantage:</strong> No Edge Collector needed, simpler architecture, better real-time data
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-dark border-secondary mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <span class="badge bg-warning text-dark me-2">1</span>
+                        {% if lang == 'zh' %}网络要求{% else %}Network Requirements{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="p-3 border border-secondary rounded h-100">
+                                <h6 class="text-info"><i class="bi bi-hdd-network me-2"></i>{% if lang == 'zh' %}服务器位置{% else %}Server Location{% endif %}</h6>
+                                <ul class="mb-0 small text-muted">
+                                    <li>{% if lang == 'zh' %}与矿机在<strong class="text-warning">同一局域网</strong>{% else %}On the <strong class="text-warning">same LAN</strong> as miners{% endif %}</li>
+                                    <li>{% if lang == 'zh' %}能直接 ping 通矿机 IP{% else %}Can directly ping miner IPs{% endif %}</li>
+                                    <li>{% if lang == 'zh' %}推荐：机房内服务器或工控机{% else %}Recommended: Server or IPC in data center{% endif %}</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 border border-secondary rounded h-100">
+                                <h6 class="text-info"><i class="bi bi-shield-check me-2"></i>{% if lang == 'zh' %}端口要求{% else %}Port Requirements{% endif %}</h6>
+                                <ul class="mb-0 small text-muted">
+                                    <li>{% if lang == 'zh' %}矿机端口 <code class="text-warning">4028</code> (CGMiner API){% else %}Miner port <code class="text-warning">4028</code> (CGMiner API){% endif %}</li>
+                                    <li>{% if lang == 'zh' %}确保防火墙允许访问{% else %}Ensure firewall allows access{% endif %}</li>
+                                    <li>{% if lang == 'zh' %}部分固件可能使用其他端口{% else %}Some firmware may use different ports{% endif %}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-dark border-secondary mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <span class="badge bg-warning text-dark me-2">2</span>
+                        {% if lang == 'zh' %}验证网络连通性{% else %}Verify Network Connectivity{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-info mb-3"><i class="bi bi-terminal me-2"></i>{% if lang == 'zh' %}测试矿机连接{% else %}Test Miner Connection{% endif %}</h6>
+                    <pre class="bg-black p-3 rounded text-success small"><code># {% if lang == 'zh' %}1. 测试 ping 连通{% else %}1. Test ping connectivity{% endif %}
+ping 192.168.1.100
+
+# {% if lang == 'zh' %}2. 测试 CGMiner API 端口{% else %}2. Test CGMiner API port{% endif %}
+nc -zv 192.168.1.100 4028
+
+# {% if lang == 'zh' %}3. 发送 CGMiner 命令测试（注意末尾换行符）{% else %}3. Send CGMiner command test (note trailing newline){% endif %}
+echo -e '{"command":"summary"}\n' | nc 192.168.1.100 4028
+
+# {% if lang == 'zh' %}或使用 Python 测试（更可靠）{% else %}Or use Python test (more reliable){% endif %}
+python3 -c "import socket; s=socket.socket(); s.connect(('192.168.1.100',4028)); s.sendall(b'{\"command\":\"summary\"}\\n'); print(s.recv(4096).decode()); s.close()"</code></pre>
+                    <div class="alert alert-warning mt-3 mb-2 small">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        {% if lang == 'zh' %}
+                        <strong>注意:</strong> 不同系统的 <code>nc</code> (netcat) 命令可能有差异。如果 <code>nc -zv</code> 不工作，请尝试 <code>ncat</code> 或上面的 Python 命令。
+                        {% else %}
+                        <strong>Note:</strong> The <code>nc</code> (netcat) command varies across systems. If <code>nc -zv</code> doesn't work, try <code>ncat</code> or the Python command above.
+                        {% endif %}
+                    </div>
+                    <div class="alert alert-info mb-0 small">
+                        <i class="bi bi-info-circle me-2"></i>
+                        {% if lang == 'zh' %}
+                        如果连接失败，请检查：1) 矿机是否开启 API 2) 防火墙设置 3) IP 地址是否正确
+                        {% else %}
+                        If connection fails, check: 1) Miner API enabled 2) Firewall settings 3) Correct IP address
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-dark border-secondary mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <span class="badge bg-warning text-dark me-2">3</span>
+                        {% if lang == 'zh' %}添加矿机到系统{% else %}Add Miners to System{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-info mb-3"><i class="bi bi-plus-circle me-2"></i>{% if lang == 'zh' %}配置方法{% else %}Configuration Method{% endif %}</h6>
+                    
+                    <div class="mb-4">
+                        <h6 class="text-muted small mb-2">{% if lang == 'zh' %}方法一：单个添加{% else %}Method 1: Add Individually{% endif %}</h6>
+                        <ol class="small text-muted">
+                            <li>{% if lang == 'zh' %}进入 <strong>托管服务</strong> → <strong>设备管理</strong>{% else %}Go to <strong>Hosting Services</strong> → <strong>Device Management</strong>{% endif %}</li>
+                            <li>{% if lang == 'zh' %}点击 <strong>添加矿机</strong>{% else %}Click <strong>Add Miner</strong>{% endif %}</li>
+                            <li>{% if lang == 'zh' %}填写矿机 IP 地址（如 <code>192.168.1.100</code>）{% else %}Enter miner IP address (e.g., <code>192.168.1.100</code>){% endif %}</li>
+                            <li>{% if lang == 'zh' %}选择矿机类型和站点{% else %}Select miner type and site{% endif %}</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="text-muted small mb-2">{% if lang == 'zh' %}方法二：批量导入{% else %}Method 2: Batch Import{% endif %}</h6>
+                        <ol class="small text-muted">
+                            <li>{% if lang == 'zh' %}进入 <strong>托管服务</strong> → <strong>设备管理</strong>{% else %}Go to <strong>Hosting Services</strong> → <strong>Device Management</strong>{% endif %}</li>
+                            <li>{% if lang == 'zh' %}点击 <strong>批量导入</strong> 按钮{% else %}Click the <strong>Batch Import</strong> button{% endif %}</li>
+                            <li>{% if lang == 'zh' %}输入 IP 范围（如 <code>192.168.1.100-192.168.1.200</code>）{% else %}Enter IP range (e.g., <code>192.168.1.100-192.168.1.200</code>){% endif %}</li>
+                            <li>{% if lang == 'zh' %}选择矿机类型和命名前缀{% else %}Select miner type and naming prefix{% endif %}</li>
+                            <li>{% if lang == 'zh' %}系统会自动扫描并添加在线矿机{% else %}System will auto-scan and add online miners{% endif %}</li>
+                        </ol>
+                        <div class="alert alert-success mt-2 mb-0 small py-2">
+                            <i class="bi bi-check-circle me-2"></i>
+                            {% if lang == 'zh' %}
+                            批量导入支持自动检测矿机型号和在线状态
+                            {% else %}
+                            Batch import auto-detects miner model and online status
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-dark border-secondary mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <span class="badge bg-warning text-dark me-2">4</span>
+                        {% if lang == 'zh' %}CGMiner API 说明{% else %}CGMiner API Reference{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">
+                        {% if lang == 'zh' %}系统通过 CGMiner API 采集以下数据：{% else %}System collects following data via CGMiner API:{% endif %}
+                    </p>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-dark table-sm small">
+                            <thead>
+                                <tr>
+                                    <th>{% if lang == 'zh' %}命令{% else %}Command{% endif %}</th>
+                                    <th>{% if lang == 'zh' %}数据{% else %}Data{% endif %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>summary</code></td>
+                                    <td>{% if lang == 'zh' %}总算力、拒绝率、运行时间{% else %}Total hashrate, reject rate, uptime{% endif %}</td>
+                                </tr>
+                                <tr>
+                                    <td><code>stats</code></td>
+                                    <td>{% if lang == 'zh' %}芯片温度、频率、风扇转速{% else %}Chip temp, frequency, fan speed{% endif %}</td>
+                                </tr>
+                                <tr>
+                                    <td><code>devs</code></td>
+                                    <td>{% if lang == 'zh' %}单板算力、状态{% else %}Hashboard hashrate, status{% endif %}</td>
+                                </tr>
+                                <tr>
+                                    <td><code>pools</code></td>
+                                    <td>{% if lang == 'zh' %}矿池连接状态{% else %}Pool connection status{% endif %}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="alert alert-secondary mt-3 mb-0 small">
+                        <i class="bi bi-gear me-2"></i>
+                        {% if lang == 'zh' %}
+                        <strong>默认端口:</strong> Antminer = 4028, Whatsminer = 4028, Avalon = 4028
+                        {% else %}
+                        <strong>Default Ports:</strong> Antminer = 4028, Whatsminer = 4028, Avalon = 4028
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-dark border-secondary mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <span class="badge bg-warning text-dark me-2">5</span>
+                        {% if lang == 'zh' %}常见问题{% else %}Troubleshooting{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="accordion accordion-flush" id="faqAccordion">
+                        <div class="accordion-item bg-dark">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                    {% if lang == 'zh' %}连接超时怎么办？{% else %}Connection timeout?{% endif %}
+                                </button>
+                            </h2>
+                            <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body small text-muted">
+                                    {% if lang == 'zh' %}
+                                    <ol>
+                                        <li>确认服务器和矿机在同一子网</li>
+                                        <li>检查矿机防火墙是否开放 4028 端口</li>
+                                        <li>部分固件默认关闭 API，需在矿机设置中开启</li>
+                                        <li>使用 <code>nc -zv IP 4028</code> 测试端口连通性</li>
+                                    </ol>
+                                    {% else %}
+                                    <ol>
+                                        <li>Confirm server and miners are on same subnet</li>
+                                        <li>Check miner firewall allows port 4028</li>
+                                        <li>Some firmware disables API by default, enable in miner settings</li>
+                                        <li>Use <code>nc -zv IP 4028</code> to test port connectivity</li>
+                                    </ol>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item bg-dark">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                    {% if lang == 'zh' %}如何找到矿机 IP 地址？{% else %}How to find miner IP addresses?{% endif %}
+                                </button>
+                            </h2>
+                            <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body small text-muted">
+                                    {% if lang == 'zh' %}
+                                    <ul>
+                                        <li>登录矿机管理界面查看</li>
+                                        <li>查看路由器 DHCP 客户端列表</li>
+                                        <li>使用 IP 扫描工具（如 nmap）扫描网段</li>
+                                        <li>矿机厂商提供的 IP 报告工具</li>
+                                    </ul>
+                                    {% else %}
+                                    <ul>
+                                        <li>Check miner web management interface</li>
+                                        <li>View router DHCP client list</li>
+                                        <li>Use IP scanning tools (e.g., nmap) to scan subnet</li>
+                                        <li>Miner vendor's IP reporter tool</li>
+                                    </ul>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item bg-dark">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                    {% if lang == 'zh' %}数据采集频率是多少？{% else %}What's the data collection frequency?{% endif %}
+                                </button>
+                            </h2>
+                            <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body small text-muted">
+                                    {% if lang == 'zh' %}
+                                    默认每 <strong>30 秒</strong> 采集一次数据。可在系统设置中调整采集间隔。对于大规模矿场（1000+ 矿机），建议设置为 60 秒以减少负载。
+                                    {% else %}
+                                    Default is every <strong>30 seconds</strong>. You can adjust the interval in system settings. For large farms (1000+ miners), recommend 60 seconds to reduce load.
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card bg-dark border-warning mb-4">
+                <div class="card-header bg-warning bg-opacity-10">
+                    <h5 class="mb-0 text-warning">
+                        <i class="bi bi-lightning-charge me-2"></i>
+                        {% if lang == 'zh' %}快速检查清单{% else %}Quick Checklist{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="check1">
+                        <label class="form-check-label small text-muted" for="check1">
+                            {% if lang == 'zh' %}服务器与矿机在同一局域网{% else %}Server on same LAN as miners{% endif %}
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="check2">
+                        <label class="form-check-label small text-muted" for="check2">
+                            {% if lang == 'zh' %}可以 ping 通矿机 IP{% else %}Can ping miner IPs{% endif %}
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="check3">
+                        <label class="form-check-label small text-muted" for="check3">
+                            {% if lang == 'zh' %}端口 4028 可访问{% else %}Port 4028 accessible{% endif %}
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="check4">
+                        <label class="form-check-label small text-muted" for="check4">
+                            {% if lang == 'zh' %}矿机 API 已开启{% else %}Miner API enabled{% endif %}
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="check5">
+                        <label class="form-check-label small text-muted" for="check5">
+                            {% if lang == 'zh' %}已添加矿机到系统{% else %}Miners added to system{% endif %}
+                        </label>
+                    </div>
+                    <hr class="border-secondary">
+                    <a href="{{ url_for('hosting.devices') }}" class="btn btn-outline-warning btn-sm w-100">
+                        <i class="bi bi-cpu me-2"></i>
+                        {% if lang == 'zh' %}前往设备管理{% else %}Go to Device Management{% endif %}
+                    </a>
+                </div>
+            </div>
+
+            <div class="card bg-dark border-secondary mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-cpu me-2"></i>
+                        {% if lang == 'zh' %}支持的矿机{% else %}Supported Miners{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="text-info small">Bitmain Antminer</h6>
+                        <span class="badge bg-secondary me-1">S19</span>
+                        <span class="badge bg-secondary me-1">S19 Pro</span>
+                        <span class="badge bg-secondary me-1">S19j Pro</span>
+                        <span class="badge bg-secondary me-1">S19 XP</span>
+                        <span class="badge bg-secondary me-1">S21</span>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="text-info small">MicroBT Whatsminer</h6>
+                        <span class="badge bg-secondary me-1">M30S</span>
+                        <span class="badge bg-secondary me-1">M30S+</span>
+                        <span class="badge bg-secondary me-1">M30S++</span>
+                        <span class="badge bg-secondary me-1">M50</span>
+                        <span class="badge bg-secondary me-1">M60</span>
+                    </div>
+                    <div>
+                        <h6 class="text-info small">Canaan Avalon</h6>
+                        <span class="badge bg-secondary me-1">A1246</span>
+                        <span class="badge bg-secondary me-1">A1266</span>
+                        <span class="badge bg-secondary me-1">A1346</span>
+                        <span class="badge bg-secondary me-1">A1366</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-dark border-secondary mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-question-circle me-2"></i>
+                        {% if lang == 'zh' %}其他方案{% else %}Other Options{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted mb-3">
+                        {% if lang == 'zh' %}如果无法在矿场本地部署系统：{% else %}If local deployment isn't possible:{% endif %}
+                    </p>
+                    <a href="{{ url_for('collector_routes.guide') }}" class="btn btn-outline-secondary btn-sm w-100 mb-2">
+                        <i class="bi bi-cloud-upload me-2"></i>
+                        {% if lang == 'zh' %}Edge Collector 方案{% else %}Edge Collector Option{% endif %}
+                    </a>
+                    <p class="small text-muted mt-2 mb-0">
+                        {% if lang == 'zh' %}
+                        在矿场部署轻量级采集器，通过 HTTPS 将数据上传到云端系统
+                        {% else %}
+                        Deploy lightweight collector at farm, upload data to cloud via HTTPS
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+
+            <div class="card bg-dark border-info">
+                <div class="card-header bg-info bg-opacity-10">
+                    <h5 class="mb-0 text-info">
+                        <i class="bi bi-lightbulb me-2"></i>
+                        {% if lang == 'zh' %}使用技巧{% else %}Tips{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body small text-muted">
+                    <ul class="mb-0">
+                        <li class="mb-2">
+                            {% if lang == 'zh' %}
+                            给矿机配置<strong>静态 IP</strong> 避免 DHCP 变化
+                            {% else %}
+                            Configure <strong>static IP</strong> for miners to avoid DHCP changes
+                            {% endif %}
+                        </li>
+                        <li class="mb-2">
+                            {% if lang == 'zh' %}
+                            按机架/排分配 IP 段，方便管理
+                            {% else %}
+                            Assign IP ranges by rack/row for easy management
+                            {% endif %}
+                        </li>
+                        <li>
+                            {% if lang == 'zh' %}
+                            使用 <strong>VLAN</strong> 隔离矿机网络，提高安全性
+                            {% else %}
+                            Use <strong>VLAN</strong> to isolate miner network for better security
+                            {% endif %}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

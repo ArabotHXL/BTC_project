@@ -1,0 +1,27 @@
+name: "Lead 24h Follow-up Reminder"
+description: "Send reminder if lead not contacted within 24 hours"
+trigger:
+  type: SCHEDULED
+  schedule: "0 */6 * * *" # Every 6 hours
+
+conditions:
+  - field: "lead.status"
+    operator: "equals"
+    value: "NEW"
+  - field: "lead.last_contact_at"
+    operator: "is_null"
+    value: true
+  - field: "lead.created_at"
+    operator: "older_than"
+    value: "24h"
+
+actions:
+  - type: "send_email"
+    params:
+      to: "{{lead.assigned_to.email}}"
+      subject: "⚠️ Follow up required: {{lead.company_name}}"
+      template: "lead_follow_up_reminder"
+  - type: "create_notification"
+    params:
+      user_id: "{{lead.assigned_to_id}}"
+      message: "Lead {{lead.company_name}} awaiting contact for 24+ hours"

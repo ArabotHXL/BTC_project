@@ -1,0 +1,841 @@
+// This is your Prisma schema file
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===================================
+// ENUMS
+// ===================================
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum AccountStatus {
+  ACTIVE
+  INACTIVE
+  PROSPECT
+  CHURNED
+}
+
+enum AccountSize {
+  SMALL
+  MEDIUM
+  LARGE
+  ENTERPRISE
+}
+
+enum LeadSource {
+  WEBSITE
+  REFERRAL
+  EMAIL
+  PHONE
+  SOCIAL_MEDIA
+  TRADE_SHOW
+  PARTNER
+  OTHER
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  UNQUALIFIED
+  CONVERTED
+  LOST
+}
+
+enum DealStage {
+  PROSPECTING
+  QUALIFICATION
+  PROPOSAL
+  NEGOTIATION
+  CLOSED_WON
+  CLOSED_LOST
+}
+
+enum ContractStatus {
+  DRAFT
+  ACTIVE
+  EXPIRED
+  TERMINATED
+  RENEWED
+}
+
+enum ActivityType {
+  CALL
+  EMAIL
+  MEETING
+  TASK
+  DEMO
+  FOLLOW_UP
+}
+
+enum EntityType {
+  ACCOUNT
+  CONTACT
+  LEAD
+  DEAL
+  CONTRACT
+  TICKET
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  ISSUED
+  PARTIAL
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum InvoiceLineItemType {
+  MINING_OUTPUT
+  HOSTING_FEE
+  ELECTRICITY
+  SERVICE_FEE
+  MAINTENANCE
+  EQUIPMENT
+  OTHER
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+  CREDIT_CARD
+  CRYPTO
+  CHECK
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  CONFIRMED
+  CLEARED
+  COMPLETED
+  FAILED
+  REJECTED
+  REFUNDED
+}
+
+enum MinerAssetStatus {
+  ORDERED
+  IN_TRANSIT
+  RECEIVED
+  IN_STORAGE
+  DEPLOYED
+  MINING
+  MAINTENANCE
+  DELAYED
+  CANCELLED
+  DECOMMISSIONED
+}
+
+enum BatchStatus {
+  ORDERED
+  IN_TRANSIT
+  ARRIVED
+  DEPLOYED
+  CANCELLED
+}
+
+enum ShipmentStatus {
+  PENDING
+  SHIPPED
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+enum TicketType {
+  HARDWARE_ISSUE
+  NETWORK_ISSUE
+  PERFORMANCE
+  MAINTENANCE
+  SUPPORT
+  OTHER
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+  CANCELLED
+}
+
+enum MaintenanceType {
+  PREVENTIVE
+  CORRECTIVE
+  EMERGENCY
+  UPGRADE
+}
+
+enum AutomationTrigger {
+  LEAD_CREATED
+  DEAL_STAGE_CHANGED
+  INVOICE_OVERDUE
+  TICKET_CREATED
+  ASSET_OFFLINE
+  SCHEDULED
+}
+
+enum AutomationStatus {
+  SUCCESS
+  FAILED
+  SKIPPED
+}
+
+enum EventQueueStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// ===================================
+// 1. USER & PERMISSION MODULE (5 tables)
+// ===================================
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  passwordHash  String         @map("password_hash")
+  name          String?
+  roleId        String?        @map("role_id")
+  status        UserStatus     @default(ACTIVE)
+  createdAt     DateTime?      @default(now()) @map("created_at")
+  updatedAt     DateTime?      @updatedAt @map("updated_at")
+  
+  role          Role?          @relation(fields: [roleId], references: [id])
+  auditLogs     AuditLog[]
+  apiKeys       ApiKey[]
+  refreshTokens RefreshToken[]
+  ownedAccounts Account[]      @relation("AccountOwner")
+  ownedDeals    Deal[]         @relation("DealOwner")
+  activities    Activity[]
+  notes         Note[]
+  assignedLeads Lead[]         @relation("LeadAssignee")
+  assignedTickets OpsTicket[]  @relation("TicketAssignee")
+  maintenanceLogs MaintenanceLog[] @relation("MaintenancePerformer")
+
+  @@index([email])
+  @@index([roleId])
+  @@index([status])
+  @@map("users")
+}
+
+model Role {
+  id              String       @id @default(uuid())
+  name            String       @unique
+  permissionsJson Json         @map("permissions_json")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+  
+  users           User[]
+  permissions     Permission[]
+
+  @@index([name])
+  @@map("roles")
+}
+
+model Permission {
+  id        String   @id @default(uuid())
+  resource  String
+  action    String
+  roleId    String   @map("role_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([resource, action, roleId])
+  @@index([roleId])
+  @@map("permissions")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  action    String
+  resource  String
+  details   Json?
+  ip        String?
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([action])
+  @@index([resource])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model ApiKey {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  keyHash   String    @unique @map("key_hash")
+  name      String
+  scopes    String[]
+  expiresAt DateTime? @map("expires_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  lastUsed  DateTime? @map("last_used")
+  
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("api_keys")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+// ===================================
+// 2. CORE CRM MODULE (8 tables)
+// ===================================
+
+model Account {
+  id          String        @id @default(uuid())
+  name        String
+  industry    String?
+  size        AccountSize?
+  status      AccountStatus @default(PROSPECT)
+  ownerId     String        @map("owner_id")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  
+  owner       User          @relation("AccountOwner", fields: [ownerId], references: [id])
+  contacts    Contact[]
+  deals       Deal[]
+  contracts   Contract[]
+  invoices    Invoice[]
+  minerAssets MinerAsset[]
+  tickets     OpsTicket[]
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([industry])
+  @@index([name])
+  @@map("accounts")
+}
+
+model Contact {
+  id        String   @id @default(uuid())
+  accountId String   @map("account_id")
+  name      String
+  email     String?
+  phone     String?
+  title     String?
+  isPrimary Boolean  @default(false) @map("is_primary")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([email])
+  @@index([isPrimary])
+  @@map("contacts")
+}
+
+model Lead {
+  id          String     @id @default(uuid())
+  source      LeadSource
+  company     String
+  contactName String     @map("contact_name")
+  email       String?
+  phone       String?
+  status      LeadStatus @default(NEW)
+  score       Int?       @default(0)
+  assignedTo  String?    @map("assigned_to")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  
+  assignee    User?      @relation("LeadAssignee", fields: [assignedTo], references: [id])
+  deals       Deal[]
+
+  @@index([status])
+  @@index([source])
+  @@index([assignedTo])
+  @@index([score])
+  @@index([createdAt])
+  @@map("leads")
+}
+
+model Deal {
+  id            String    @id @default(uuid())
+  leadId        String?   @map("lead_id")
+  accountId     String    @map("account_id")
+  title         String
+  value         Decimal   @db.Decimal(15, 2)
+  stage         DealStage @default(PROSPECTING)
+  probability   Int?      @default(0)
+  expectedClose DateTime? @map("expected_close")
+  ownerId       String    @map("owner_id")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  
+  lead          Lead?     @relation(fields: [leadId], references: [id])
+  account       Account   @relation(fields: [accountId], references: [id])
+  owner         User      @relation("DealOwner", fields: [ownerId], references: [id])
+  contracts     Contract[]
+
+  @@index([leadId])
+  @@index([accountId])
+  @@index([ownerId])
+  @@index([stage])
+  @@index([expectedClose])
+  @@map("deals")
+}
+
+model Contract {
+  id             String         @id @default(uuid())
+  dealId         String?        @map("deal_id")
+  accountId      String         @map("account_id")
+  contractNumber String         @unique @map("contract_number")
+  startDate      DateTime       @map("start_date")
+  endDate        DateTime       @map("end_date")
+  value          Decimal        @db.Decimal(15, 2)
+  status         ContractStatus @default(DRAFT)
+  signedDate     DateTime?      @map("signed_date")
+  pdfUrl         String?        @map("pdf_url")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  
+  deal           Deal?          @relation(fields: [dealId], references: [id])
+  account        Account        @relation(fields: [accountId], references: [id])
+  invoices       Invoice[]
+  billingCycles  BillingCycle[]
+
+  @@index([dealId])
+  @@index([accountId])
+  @@index([status])
+  @@index([startDate])
+  @@index([endDate])
+  @@map("contracts")
+}
+
+model Activity {
+  id          String       @id @default(uuid())
+  type        ActivityType
+  entityType  EntityType   @map("entity_type")
+  entityId    String       @map("entity_id")
+  userId      String       @map("user_id")
+  subject     String
+  description String?      @db.Text
+  scheduledAt DateTime?    @map("scheduled_at")
+  completedAt DateTime?    @map("completed_at")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  
+  user        User         @relation(fields: [userId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([type])
+  @@index([scheduledAt])
+  @@map("activities")
+}
+
+model Note {
+  id         String     @id @default(uuid())
+  entityType EntityType @map("entity_type")
+  entityId   String     @map("entity_id")
+  userId     String     @map("user_id")
+  content    String     @db.Text
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @updatedAt @map("updated_at")
+  
+  user       User       @relation(fields: [userId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("notes")
+}
+
+model Tag {
+  id         String     @id @default(uuid())
+  name       String
+  color      String?
+  entityType EntityType @map("entity_type")
+  entityId   String     @map("entity_id")
+  createdAt  DateTime   @default(now()) @map("created_at")
+  
+  @@unique([name, entityType, entityId])
+  @@index([entityType, entityId])
+  @@map("tags")
+}
+
+// ===================================
+// 3. BILLING MODULE (5 tables)
+// ===================================
+
+model Invoice {
+  id                  String               @id @default(uuid())
+  accountId           String               @map("account_id")
+  contractId          String?              @map("contract_id")
+  invoiceNumber       String               @unique @map("invoice_number")
+  issueDate           DateTime             @map("issue_date")
+  dueDate             DateTime             @map("due_date")
+  totalAmount         Decimal              @db.Decimal(15, 2) @map("total_amount")
+  amountPaid          Decimal              @default(0) @db.Decimal(15, 2) @map("amount_paid")
+  status              InvoiceStatus        @default(DRAFT)
+  pdfUrl              String?              @map("pdf_url")
+  createdAt           DateTime             @default(now()) @map("created_at")
+  updatedAt           DateTime             @updatedAt @map("updated_at")
+  
+  account             Account              @relation(fields: [accountId], references: [id])
+  contract            Contract?            @relation(fields: [contractId], references: [id])
+  lineItems           InvoiceLineItem[]
+  payments            Payment[]
+  revenueRecognitions RevenueRecognition[]
+
+  @@index([accountId])
+  @@index([contractId])
+  @@index([status])
+  @@index([issueDate])
+  @@index([dueDate])
+  @@map("invoices")
+}
+
+model InvoiceLineItem {
+  id          String               @id @default(uuid())
+  invoiceId   String               @map("invoice_id")
+  description String
+  quantity    Decimal              @db.Decimal(10, 2)
+  unitPrice   Decimal              @db.Decimal(15, 2) @map("unit_price")
+  amount      Decimal              @db.Decimal(15, 2)
+  type        InvoiceLineItemType
+  createdAt   DateTime             @default(now()) @map("created_at")
+  
+  invoice     Invoice              @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@index([type])
+  @@map("invoice_line_items")
+}
+
+model Payment {
+  id          String        @id @default(uuid())
+  invoiceId   String        @map("invoice_id")
+  amount      Decimal       @db.Decimal(15, 2)
+  paymentDate DateTime      @map("payment_date")
+  method      PaymentMethod
+  reference   String?
+  status      PaymentStatus @default(PENDING)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  
+  invoice     Invoice       @relation(fields: [invoiceId], references: [id])
+
+  @@index([invoiceId])
+  @@index([status])
+  @@index([paymentDate])
+  @@map("payments")
+}
+
+model BillingCycle {
+  id            String   @id @default(uuid())
+  contractId    String   @map("contract_id")
+  startDate     DateTime @map("start_date")
+  endDate       DateTime @map("end_date")
+  btcProduced   Decimal? @db.Decimal(18, 8) @map("btc_produced")
+  powerConsumed Decimal? @db.Decimal(15, 2) @map("power_consumed")
+  serviceFee    Decimal? @db.Decimal(15, 2) @map("service_fee")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  
+  contract      Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@index([contractId])
+  @@index([startDate])
+  @@index([endDate])
+  @@map("billing_cycles")
+}
+
+model RevenueRecognition {
+  id           String   @id @default(uuid())
+  invoiceId    String   @map("invoice_id")
+  period       String
+  amount       Decimal  @db.Decimal(15, 2)
+  recognizedAt DateTime @map("recognized_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  
+  invoice      Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@index([period])
+  @@index([recognizedAt])
+  @@map("revenue_recognitions")
+}
+
+// ===================================
+// 4. ASSET & OPERATIONS MODULE (6 tables)
+// ===================================
+
+model MinerAsset {
+  id             String            @id @default(uuid())
+  accountId      String            @map("account_id")
+  shipmentId     String?           @map("shipment_id")
+  model          String
+  serialNumber   String            @unique @map("serial_number")
+  hashrate       Decimal?          @db.Decimal(15, 2)
+  power          Decimal?          @db.Decimal(10, 2)
+  status         MinerAssetStatus  @default(ORDERED)
+  location       String?
+  purchasedAt    DateTime?         @map("purchased_at")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+  
+  account        Account           @relation(fields: [accountId], references: [id])
+  shipment       Shipment?         @relation(fields: [shipmentId], references: [id])
+  tickets        OpsTicket[]
+  maintenanceLogs MaintenanceLog[]
+
+  @@index([accountId])
+  @@index([shipmentId])
+  @@index([model])
+  @@index([status])
+  @@index([serialNumber])
+  @@map("miner_assets")
+}
+
+model MinerBatch {
+  id          String      @id @default(uuid())
+  batchNumber String      @unique @map("batch_number")
+  totalUnits  Int         @map("total_units")
+  arrivalDate DateTime?   @map("arrival_date")
+  status      BatchStatus @default(ORDERED)
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  
+  shipments   Shipment[]
+
+  @@index([status])
+  @@index([arrivalDate])
+  @@map("miner_batches")
+}
+
+model Shipment {
+  id             String         @id @default(uuid())
+  batchId        String         @map("batch_id")
+  trackingNumber String?        @map("tracking_number")
+  carrier        String?
+  shippedAt      DateTime?      @map("shipped_at")
+  deliveredAt    DateTime?      @map("delivered_at")
+  status         ShipmentStatus @default(PENDING)
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  
+  batch          MinerBatch     @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  assets         MinerAsset[]
+
+  @@index([batchId])
+  @@index([status])
+  @@index([trackingNumber])
+  @@map("shipments")
+}
+
+model OpsTicket {
+  id              String           @id @default(uuid())
+  accountId       String           @map("account_id")
+  assetId         String?          @map("asset_id")
+  type            TicketType
+  priority        TicketPriority   @default(MEDIUM)
+  status          TicketStatus     @default(OPEN)
+  subject         String
+  description     String?          @db.Text
+  assignedTo      String?          @map("assigned_to")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  resolvedAt      DateTime?        @map("resolved_at")
+  
+  account         Account          @relation(fields: [accountId], references: [id])
+  asset           MinerAsset?      @relation(fields: [assetId], references: [id])
+  assignee        User?            @relation("TicketAssignee", fields: [assignedTo], references: [id])
+  maintenanceLogs MaintenanceLog[]
+
+  @@index([accountId])
+  @@index([assetId])
+  @@index([assignedTo])
+  @@index([status])
+  @@index([priority])
+  @@index([type])
+  @@map("ops_tickets")
+}
+
+model MaintenanceLog {
+  id          String          @id @default(uuid())
+  assetId     String          @map("asset_id")
+  ticketId    String?         @map("ticket_id")
+  type        MaintenanceType
+  description String          @db.Text
+  cost        Decimal?        @db.Decimal(15, 2)
+  performedBy String          @map("performed_by")
+  performedAt DateTime        @map("performed_at")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  
+  asset       MinerAsset      @relation(fields: [assetId], references: [id])
+  ticket      OpsTicket?      @relation(fields: [ticketId], references: [id])
+  performer   User            @relation("MaintenancePerformer", fields: [performedBy], references: [id])
+
+  @@index([assetId])
+  @@index([ticketId])
+  @@index([type])
+  @@index([performedAt])
+  @@map("maintenance_logs")
+}
+
+model Inventory {
+  id             String   @id @default(uuid())
+  model          String
+  availableUnits Int      @default(0) @map("available_units")
+  reservedUnits  Int      @default(0) @map("reserved_units")
+  location       String
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  
+  @@unique([model, location])
+  @@index([model])
+  @@index([location])
+  @@map("inventory")
+}
+
+// ===================================
+// 5. ANALYTICS & AUTOMATION MODULE (6 tables)
+// ===================================
+
+model AnalyticSnapshot {
+  id           String   @id @default(uuid())
+  snapshotDate DateTime @map("snapshot_date")
+  metricType   String   @map("metric_type")
+  metricValue  Decimal  @db.Decimal(20, 4) @map("metric_value")
+  metadataJson Json?    @map("metadata_json")
+  createdAt    DateTime @default(now()) @map("created_at")
+  
+  @@index([metricType])
+  @@index([snapshotDate])
+  @@map("analytic_snapshots")
+}
+
+model Forecast {
+  id             String     @id @default(uuid())
+  entityType     EntityType @map("entity_type")
+  entityId       String     @map("entity_id")
+  metric         String
+  predictedValue Decimal    @db.Decimal(20, 4) @map("predicted_value")
+  confidence     Decimal    @db.Decimal(5, 2)
+  forecastDate   DateTime   @map("forecast_date")
+  createdAt      DateTime   @default(now()) @map("created_at")
+  
+  @@index([entityType, entityId])
+  @@index([metric])
+  @@index([forecastDate])
+  @@map("forecasts")
+}
+
+model AutomationRule {
+  id             String            @id @default(uuid())
+  name           String
+  triggerType    AutomationTrigger @map("trigger_type")
+  conditionsJson Json              @map("conditions_json")
+  actionsJson    Json              @map("actions_json")
+  enabled        Boolean           @default(true)
+  lastRun        DateTime?         @map("last_run")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+  
+  logs           AutomationLog[]
+
+  @@index([triggerType])
+  @@index([enabled])
+  @@map("automation_rules")
+}
+
+model AutomationLog {
+  id           String           @id @default(uuid())
+  ruleId       String           @map("rule_id")
+  entityType   EntityType?      @map("entity_type")
+  entityId     String?          @map("entity_id")
+  status       AutomationStatus
+  errorMessage String?          @db.Text @map("error_message")
+  executedAt   DateTime         @map("executed_at")
+  
+  rule         AutomationRule   @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  @@index([ruleId])
+  @@index([status])
+  @@index([executedAt])
+  @@map("automation_logs")
+}
+
+model EventQueue {
+  id           String           @id @default(uuid())
+  eventType    String           @map("event_type")
+  payloadJson  Json             @map("payload_json")
+  status       EventQueueStatus @default(PENDING)
+  retryCount   Int              @default(0) @map("retry_count")
+  createdAt    DateTime         @default(now()) @map("created_at")
+  processedAt  DateTime?        @map("processed_at")
+  failedAt     DateTime?        @map("failed_at")
+  errorMessage String?          @map("error_message")
+  
+  @@index([status, createdAt])
+  @@index([eventType])
+  @@map("event_queue")
+}
+
+model Webhook {
+  id        String   @id @default(uuid())
+  url       String
+  events    String[]
+  secret    String
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  @@index([enabled])
+  @@map("webhooks")
+}
+
+model WebhookLog {
+  id          String   @id @default(cuid())
+  source      String
+  eventType   String   @map("event_type")
+  payload     Json
+  processedAt DateTime @default(now()) @map("processed_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([source, eventType])
+  @@index([createdAt])
+  @@map("webhook_logs")
+}

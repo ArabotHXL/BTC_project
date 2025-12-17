@@ -1,0 +1,544 @@
+{% extends "crm/base.html" %}
+
+{% block title %}<span data-i18n="invoice_dashboard">{{ t('invoice_dashboard') }}</span> | BTC Mining CRM{% endblock %}
+
+{% block page_title %}<span data-i18n="invoice_dashboard">{{ t('invoice_dashboard') }}</span>{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page"><span data-i18n="invoices">{{ t('invoices') }}</span></li>
+{% endblock %}
+
+{% block action_buttons %}
+<a href="{{ url_for('crm.customers') }}" class="btn btn-primary">
+    <i class="bi bi-plus-circle me-1"></i> <span data-i18n="create_invoice">{{ t('create_invoice') }}</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- KPI Cards Section -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="card kpi-card bg-gradient-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-white-50 mb-1"><span data-i18n="total_revenue">{{ t('total_revenue') }}</span></p>
+                        <h3 class="mb-0 text-white">$<span id="kpi-total-revenue" data-countup="0">0</span></h3>
+                    </div>
+                    <div class="kpi-icon">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card kpi-card bg-gradient-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-white-50 mb-1"><span data-i18n="accounts_receivable">{{ t('accounts_receivable') }}</span></p>
+                        <h3 class="mb-0 text-white">$<span id="kpi-receivable" data-countup="0">0</span></h3>
+                    </div>
+                    <div class="kpi-icon">
+                        <i class="bi bi-hourglass-split"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card kpi-card bg-gradient-danger">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-white-50 mb-1"><span data-i18n="overdue_amount">{{ t('overdue_amount') }}</span></p>
+                        <h3 class="mb-0 text-white">$<span id="kpi-overdue" data-countup="0">0</span></h3>
+                    </div>
+                    <div class="kpi-icon">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card kpi-card bg-gradient-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-white-50 mb-1"><span data-i18n="monthly_revenue">{{ t('monthly_revenue') }}</span></p>
+                        <h3 class="mb-0 text-white">$<span id="kpi-monthly" data-countup="0">0</span></h3>
+                    </div>
+                    <div class="kpi-icon">
+                        <i class="bi bi-calendar-check"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter by Status -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ url_for('crm.invoices') }}" class="btn btn-sm btn-dark">
+                <span data-i18n="all_invoices">{{ t('all_invoices') }}</span>
+            </a>
+            <a href="{{ url_for('crm.invoices', status='draft') }}" class="btn btn-sm btn-outline-secondary">
+                <span data-i18n="draft">{{ t('draft') }}</span>
+            </a>
+            <a href="{{ url_for('crm.invoices', status='sent') }}" class="btn btn-sm btn-outline-info">
+                <span data-i18n="sent">{{ t('sent') }}</span>
+            </a>
+            <a href="{{ url_for('crm.invoices', status='paid') }}" class="btn btn-sm btn-outline-success">
+                <span data-i18n="paid">{{ t('paid') }}</span>
+            </a>
+            <a href="{{ url_for('crm.invoices', status='overdue') }}" class="btn btn-sm btn-outline-danger">
+                <span data-i18n="overdue">{{ t('overdue') }}</span>
+            </a>
+            <a href="{{ url_for('crm.invoices', status='cancelled') }}" class="btn btn-sm btn-outline-warning">
+                <span data-i18n="cancelled">{{ t('cancelled') }}</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content: Table + Charts -->
+<div class="row g-4">
+    <!-- Left Column: Invoice Table + Aging Chart -->
+    <div class="col-lg-8">
+        <!-- Invoices Table -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><span data-i18n="invoice_list">{{ t('invoice_list') }}</span></h5>
+                    <span class="badge bg-info" id="invoice-count">0</span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover mb-0" id="invoices-table">
+                        <thead>
+                            <tr>
+                                <th><span data-i18n="invoice_number">{{ t('invoice_number') }}</span></th>
+                                <th><span data-i18n="customer">{{ t('customer') }}</span></th>
+                                <th><span data-i18n="status">{{ t('status') }}</span></th>
+                                <th><span data-i18n="amount">{{ t('amount') }}</span></th>
+                                <th><span data-i18n="issue_date">{{ t('issue_date') }}</span></th>
+                                <th><span data-i18n="due_date">{{ t('due_date') }}</span></th>
+                                <th><span data-i18n="actions">{{ t('actions') }}</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <div class="spinner-border text-info" role="status">
+                                        <span class="visually-hidden" data-i18n="loading">{{ t('loading') }}</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Aging Analysis Chart -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><span data-i18n="aging_analysis">{{ t('aging_analysis') }}</span></h5>
+            </div>
+            <div class="card-body">
+                <canvas id="aging-chart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Charts -->
+    <div class="col-lg-4">
+        <!-- Revenue Trend Chart -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><span data-i18n="revenue_trend">{{ t('revenue_trend') }}</span></h5>
+            </div>
+            <div class="card-body">
+                <canvas id="revenue-trend-chart" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Top 5 Customers Chart -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><span data-i18n="top_customers">{{ t('top_customers') }}</span></h5>
+            </div>
+            <div class="card-body">
+                <canvas id="top-customers-chart" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Quick Stats Card -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><span data-i18n="quick_stats">{{ t('quick_stats') }}</span></h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom border-secondary">
+                    <div>
+                        <p class="text-muted mb-0"><span data-i18n="avg_invoice">{{ t('avg_invoice') }}</span></p>
+                        <h5 class="mb-0">$<span id="stat-avg-invoice">0</span></h5>
+                    </div>
+                    <i class="bi bi-calculator text-info" style="font-size: 2rem;"></i>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-0"><span data-i18n="overdue_rate">{{ t('overdue_rate') }}</span></p>
+                        <h5 class="mb-0"><span id="stat-overdue-rate">0</span>%</h5>
+                    </div>
+                    <i class="bi bi-speedometer text-warning" style="font-size: 2rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load all data on page load
+    loadKPIStats();
+    loadInvoicesList();
+    loadRevenueTrend();
+    loadAgingAnalysis();
+    loadTopCustomers();
+
+    function loadKPIStats() {
+        fetch('/crm/api/invoices/stats')
+            .then(response => response.json())
+            .then(result => {
+                if (result.success && result.data) {
+                    const data = result.data;
+                    
+                    // Update KPI cards with CountUp
+                    const totalRevenue = parseFloat(data.total_revenue) || 0;
+                    const receivable = parseFloat(data.accounts_receivable) || 0;
+                    const overdue = parseFloat(data.overdue_amount) || 0;
+                    const monthly = parseFloat(data.monthly_revenue) || 0;
+                    const avgInvoice = parseFloat(data.avg_invoice_amount) || 0;
+                    
+                    initCountUp('kpi-total-revenue', totalRevenue, { decimalPlaces: 2 });
+                    initCountUp('kpi-receivable', receivable, { decimalPlaces: 2 });
+                    initCountUp('kpi-overdue', overdue, { decimalPlaces: 2 });
+                    initCountUp('kpi-monthly', monthly, { decimalPlaces: 2 });
+                    
+                    // Update quick stats
+                    document.getElementById('stat-avg-invoice').textContent = avgInvoice.toFixed(2);
+                    
+                    // Calculate overdue rate
+                    const totalInvoices = data.total_invoices || 1;
+                    const overdueCount = data.invoice_counts.overdue || 0;
+                    const overdueRate = ((overdueCount / totalInvoices) * 100) || 0;
+                    document.getElementById('stat-overdue-rate').textContent = overdueRate.toFixed(1);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading KPI stats:', error);
+            });
+    }
+
+    function loadInvoicesList() {
+        // Get status filter from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const statusFilter = urlParams.get('status') || '';
+        
+        // Build API URL with status parameter
+        const apiUrl = statusFilter ? `/crm/api/invoices?status=${statusFilter}` : '/crm/api/invoices';
+        
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.data) {
+                    const tbody = document.querySelector('#invoices-table tbody');
+                    const invoiceCount = document.getElementById('invoice-count');
+                    
+                    invoiceCount.textContent = data.data.length;
+                    
+                    // Pre-define translated text with data-i18n for instant switching
+                    const noInvoicesText = '<span data-i18n="no_invoices">{{ t("no_invoices") }}</span>';
+                    
+                    if (data.data.length === 0) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <i class="bi bi-receipt text-secondary mb-3" style="font-size: 2rem;"></i>
+                                    <p class="text-muted mb-0">${noInvoicesText}</p>
+                                </td>
+                            </tr>
+                        `;
+                    } else {
+                        tbody.innerHTML = data.data.map(invoice => {
+                            const statusClass = {
+                                'draft': 'secondary',
+                                'sent': 'info',
+                                'paid': 'success',
+                                'overdue': 'danger',
+                                'cancelled': 'warning'
+                            }[invoice.status] || 'secondary';
+                            
+                            const amount = parseFloat(invoice.total_amount) || 0;
+                            
+                            return `
+                                <tr>
+                                    <td><strong>${invoice.invoice_number}</strong></td>
+                                    <td>${invoice.customer_name || 'N/A'}</td>
+                                    <td><span class="badge bg-${statusClass}">${invoice.status}</span></td>
+                                    <td>$${amount.toFixed(2)}</td>
+                                    <td>${invoice.issue_date ? new Date(invoice.issue_date).toLocaleDateString() : 'N/A'}</td>
+                                    <td>${invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : 'N/A'}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-info" onclick="viewInvoice(${invoice.id})">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error loading invoices:', error);
+                const tbody = document.querySelector('#invoices-table tbody');
+                
+                // Pre-define translated error text with data-i18n for instant switching
+                const errorText = '<span data-i18n="error_loading">{{ t("error_loading") }}</span>';
+                
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-danger">
+                            <i class="bi bi-exclamation-triangle mb-3" style="font-size: 2rem;"></i>
+                            <p class="mb-0">${errorText}</p>
+                        </td>
+                    </tr>
+                `;
+            });
+    }
+
+    function loadRevenueTrend() {
+        fetch('/crm/api/invoices/revenue-trend')
+            .then(response => response.json())
+            .then(result => {
+                if (result.success && result.data) {
+                    const labels = result.data.map(m => m.month_label);
+                    const revenues = result.data.map(m => parseFloat(m.revenue) || 0);
+                    
+                    const config = {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: '{{ t("revenue") }}',
+                                data: revenues,
+                                borderColor: '#f7931a',
+                                backgroundColor: 'rgba(247, 147, 26, 0.1)',
+                                tension: 0.4,
+                                fill: true,
+                                pointRadius: 4,
+                                pointHoverRadius: 6
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return '$' + context.parsed.y.toFixed(2);
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        callback: function(value) {
+                                            return '$' + value;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    };
+                    
+                    initChart('revenue-trend-chart', config);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading revenue trend:', error);
+            });
+    }
+
+    function loadAgingAnalysis() {
+        fetch('/crm/api/invoices/aging')
+            .then(response => response.json())
+            .then(result => {
+                if (result.success && result.data) {
+                    const data = result.data;
+                    
+                    const config = {
+                        type: 'bar',
+                        data: {
+                            labels: ['0-30 Days', '31-60 Days', '61-90 Days', '90+ Days'],
+                            datasets: [{
+                                label: '{{ t("amount") }}',
+                                data: [
+                                    parseFloat(data.aging_0_30.amount) || 0,
+                                    parseFloat(data.aging_31_60.amount) || 0,
+                                    parseFloat(data.aging_61_90.amount) || 0,
+                                    parseFloat(data.aging_90_plus.amount) || 0
+                                ],
+                                backgroundColor: [
+                                    '#28a745',
+                                    '#ffc107',
+                                    '#fd7e14',
+                                    '#dc3545'
+                                ]
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return '$' + context.parsed.y.toFixed(2);
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        callback: function(value) {
+                                            return '$' + value;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    };
+                    
+                    initChart('aging-chart', config);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading aging analysis:', error);
+            });
+    }
+
+    function loadTopCustomers() {
+        fetch('/crm/api/invoices/top-customers')
+            .then(response => response.json())
+            .then(result => {
+                if (result.success && result.data) {
+                    const labels = result.data.map(c => c.customer_name);
+                    const amounts = result.data.map(c => parseFloat(c.total_amount) || 0);
+                    
+                    const config = {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: '{{ t("total_paid") }}',
+                                data: amounts,
+                                backgroundColor: '#17a2b8',
+                                borderRadius: 6
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return '$' + context.parsed.x.toFixed(2);
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        callback: function(value) {
+                                            return '$' + value;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    };
+                    
+                    initChart('top-customers-chart', config);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading top customers:', error);
+            });
+    }
+});
+
+function viewInvoice(id) {
+    window.location.href = '/crm/invoice/' + id;
+}
+</script>
+
+<style>
+.kpi-card {
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.kpi-card .kpi-icon {
+    font-size: 2.5rem;
+    opacity: 0.3;
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.bg-gradient-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+}
+
+.bg-gradient-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #f7931a 0%, #ffa500 100%);
+}
+</style>
+{% endblock %}

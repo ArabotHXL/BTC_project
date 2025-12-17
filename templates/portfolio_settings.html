@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Settings - HashInsight</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <style>
+        .portfolio-header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #fff;
+            padding: 2rem 0;
+        }
+        .portfolio-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .form-label {
+            color: #ffc107;
+            font-weight: 500;
+        }
+        .btn-primary {
+            background: linear-gradient(45deg, #ffc107, #ff8c00);
+            border: none;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            border-radius: 25px;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #ff8c00, #ffc107);
+            transform: translateY(-2px);
+        }
+        .data-source-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="portfolio-header">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h1><i class="bi bi-wallet2"></i> Portfolio Settings</h1>
+                        <p class="mb-0">Configure your Bitcoin treasury management parameters</p>
+                    </div>
+                    <div class="col-auto">
+                        <button type="button" data-lang-switch="zh" data-lang="zh" 
+                                class="btn btn-sm btn-outline-light {{ 'active' if current_lang == 'zh' else '' }} lang-switch-btn me-1">
+                            中文
+                        </button>
+                        <button type="button" data-lang-switch="en" data-lang="en" 
+                                class="btn btn-sm btn-outline-light {{ 'active' if current_lang == 'en' else '' }} lang-switch-btn me-3">
+                            EN
+                        </button>
+                        <a href="/analytics_dashboard" class="btn btn-outline-light">
+                            <i class="bi bi-arrow-left"></i> {% if current_lang == 'en' %}Back to Dashboard{% else %}返回仪表盘{% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="container my-4">
+            <div class="row">
+                <div class="col-lg-8">
+                    <!-- Portfolio Configuration Form -->
+                    <div class="portfolio-card position-relative">
+                        <span class="badge bg-warning data-source-badge" id="dataSourceBadge">
+                            <i class="bi bi-info-circle"></i> Demo Data
+                        </span>
+                        
+                        <h3 class="mb-4"><i class="bi bi-gear-fill text-warning"></i> Portfolio Configuration</h3>
+                        
+                        <form id="portfolioForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="btc_inventory" class="form-label">BTC Inventory</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">₿</span>
+                                            <input type="number" class="form-control" id="btc_inventory" 
+                                                   step="0.00000001" min="0" placeholder="0.00000000">
+                                        </div>
+                                        <div class="form-text">Total Bitcoin holdings in your treasury</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="avg_cost_basis" class="form-label">Average Cost Basis</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number" class="form-control" id="avg_cost_basis" 
+                                                   min="0" placeholder="95000">
+                                        </div>
+                                        <div class="form-text">Average purchase price per BTC</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="cash_reserves" class="form-label">Cash Reserves</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number" class="form-control" id="cash_reserves" 
+                                                   min="0" placeholder="1500000">
+                                        </div>
+                                        <div class="form-text">Available cash for operations</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="monthly_opex" class="form-label">Monthly OPEX</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number" class="form-control" id="monthly_opex" 
+                                                   min="0" placeholder="250000">
+                                        </div>
+                                        <div class="form-text">Monthly operational expenses</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="electricity_cost_kwh" class="form-label">Electricity Cost</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">¢</span>
+                                            <input type="number" class="form-control" id="electricity_cost_kwh" 
+                                                   step="0.001" min="0" placeholder="5.5">
+                                            <span class="input-group-text">/kWh</span>
+                                        </div>
+                                        <div class="form-text">Cost per kilowatt-hour</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="facility_capacity_mw" class="form-label">Facility Capacity</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="facility_capacity_mw" 
+                                                   step="0.1" min="0" placeholder="25.0">
+                                            <span class="input-group-text">MW</span>
+                                        </div>
+                                        <div class="form-text">Total facility power capacity</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="notes" class="form-label">Notes</label>
+                                <textarea class="form-control" id="notes" rows="3" 
+                                          placeholder="Optional notes about your portfolio configuration..."></textarea>
+                            </div>
+                            
+                            <div class="d-grid d-md-flex justify-content-md-end gap-3">
+                                <button type="button" class="btn btn-outline-secondary" onclick="loadCurrentData()">
+                                    <i class="bi bi-arrow-clockwise"></i> Reload Current
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-lg"></i> Save Portfolio Settings
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <!-- Current Portfolio Summary -->
+                    <div class="portfolio-card">
+                        <h5 class="mb-3"><i class="bi bi-pie-chart-fill text-warning"></i> Current Portfolio</h5>
+                        <div id="portfolioSummary">
+                            <div class="d-flex justify-content-center">
+                                <div class="spinner-border text-warning" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Data Source Information -->
+                    <div class="portfolio-card">
+                        <h6 class="mb-3"><i class="bi bi-database-fill text-info"></i> Data Sources</h6>
+                        <div class="small">
+                            <div class="mb-2">
+                                <strong>BTC Price:</strong> Real-time APIs<br>
+                                <span class="text-muted">CoinGecko, Mining Calculator</span>
+                            </div>
+                            <div class="mb-2">
+                                <strong>Portfolio Data:</strong> User Configured<br>
+                                <span class="text-muted">Stored securely in database</span>
+                            </div>
+                            <div class="mb-2">
+                                <strong>Calculations:</strong> Real-time<br>
+                                <span class="text-muted">Live P&L, coverage metrics</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Load current portfolio data
+        async function loadCurrentData() {
+            try {
+                const response = await fetch('/api/treasury/overview');
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Populate form with current data
+                    document.getElementById('btc_inventory').value = data.btc_inventory || 0;
+                    document.getElementById('avg_cost_basis').value = data.avg_cost_basis || 0;
+                    document.getElementById('cash_reserves').value = data.cash_reserves || 0;
+                    document.getElementById('monthly_opex').value = data.monthly_opex || 0;
+                    
+                    // Update data source badge
+                    const badge = document.getElementById('dataSourceBadge');
+                    if (data.data_source === 'user_configured') {
+                        badge.innerHTML = '<i class="bi bi-check-circle"></i> User Data';
+                        badge.className = 'badge bg-success data-source-badge';
+                    }
+                    
+                    // Update portfolio summary
+                    updatePortfolioSummary(data);
+                }
+            } catch (error) {
+                console.error('Failed to load current data:', error);
+            }
+        }
+        
+        // Update portfolio summary display
+        function updatePortfolioSummary(data) {
+            const summary = document.getElementById('portfolioSummary');
+            const currentPrice = data.btc_price || 113000;
+            const inventoryValue = (data.btc_inventory || 0) * currentPrice;
+            
+            summary.innerHTML = `
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between">
+                            <span>BTC Holdings:</span>
+                            <span class="fw-bold">₿${(data.btc_inventory || 0).toFixed(8)}</span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between">
+                            <span>Value (USD):</span>
+                            <span class="fw-bold text-success">$${inventoryValue.toLocaleString()}</span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between">
+                            <span>Unrealized P&L:</span>
+                            <span class="fw-bold ${(data.unrealized_pl || 0) >= 0 ? 'text-success' : 'text-danger'}">
+                                ${(data.unrealized_pl || 0).toFixed(1)}%
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between">
+                            <span>Cash Coverage:</span>
+                            <span class="fw-bold">${data.cash_coverage_days || 0} days</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Form submission
+        document.getElementById('portfolioForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                btc_inventory: parseFloat(document.getElementById('btc_inventory').value) || 0,
+                avg_cost_basis: parseFloat(document.getElementById('avg_cost_basis').value) || 0,
+                cash_reserves: parseFloat(document.getElementById('cash_reserves').value) || 0,
+                monthly_opex: parseFloat(document.getElementById('monthly_opex').value) || 0,
+                electricity_cost_kwh: parseFloat(document.getElementById('electricity_cost_kwh').value) || 0.055,
+                facility_capacity_mw: parseFloat(document.getElementById('facility_capacity_mw').value) || 0,
+                notes: document.getElementById('notes').value || ''
+            };
+            
+            try {
+                const response = await fetch('/api/portfolio/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Show success message
+                    const alert = document.createElement('div');
+                    alert.className = 'alert alert-success alert-dismissible fade show';
+                    alert.innerHTML = `
+                        <i class="bi bi-check-circle"></i> Portfolio settings saved successfully!
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                    
+                    document.querySelector('.portfolio-card').prepend(alert);
+                    
+                    // Update data source badge
+                    const badge = document.getElementById('dataSourceBadge');
+                    badge.innerHTML = '<i class="bi bi-check-circle"></i> User Data';
+                    badge.className = 'badge bg-success data-source-badge';
+                    
+                    // Refresh summary
+                    setTimeout(loadCurrentData, 1000);
+                } else {
+                    throw new Error(result.error || 'Save failed');
+                }
+            } catch (error) {
+                console.error('Save failed:', error);
+                
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-danger alert-dismissible fade show';
+                alert.innerHTML = `
+                    <i class="bi bi-exclamation-triangle"></i> Failed to save: ${error.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                
+                document.querySelector('.portfolio-card').prepend(alert);
+            }
+        });
+        
+        // Load current data on page load
+        document.addEventListener('DOMContentLoaded', loadCurrentData);
+    </script>
+    <script src="/static/js/i18n.js"></script>
+</body>
+</html>

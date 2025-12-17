@@ -1,0 +1,1155 @@
+{% extends "crm/base.html" %}
+
+{% block title %}{{ customer.name }} - {{ t('customer_360_view') }} | BTC Mining CRM{% endblock %}
+
+{% block page_title %}
+    <div class="d-flex align-items-center">
+        <span>{{ customer.company or customer.name }}</span>
+        <span class="badge bg-{{ 'info' if customer.customer_type == '企业' else 'primary' }} ms-3">
+            {{ customer.customer_type }}
+        </span>
+        {% if customer.status %}
+        <span class="badge bg-{{ 'success' if customer.status == 'active' else 'secondary' }} ms-2">
+            {{ customer.status|upper }}
+        </span>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">{{ t('home') }}</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('crm.crm_dashboard') }}">CRM</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('crm.customers') }}">{{ t('customers') }}</a></li>
+<li class="breadcrumb-item active" aria-current="page">{{ customer.name }}</li>
+{% endblock %}
+
+{% block action_buttons %}
+<a href="{{ url_for('crm.edit_customer', customer_id=customer.id) }}" class="btn btn-primary me-2">
+    <i class="bi bi-pencil me-1"></i> {{ t('edit_customer') }}
+</a>
+<button class="btn btn-danger me-2" onclick="deleteCustomer({{ customer.id }})">
+    <i class="bi bi-trash me-1"></i> {{ t('delete_customer') }}
+</button>
+<a href="{{ url_for('crm.new_deal', customer_id=customer.id) }}" class="btn btn-success me-2">
+    <i class="bi bi-currency-dollar me-1"></i> {{ t('new_deal') }}
+</a>
+<button class="btn btn-outline-info" onclick="exportCustomerReport({{ customer.id }})">
+    <i class="bi bi-download me-1"></i> {{ t('export_report') }}
+</button>
+{% endblock %}
+
+{% block content %}
+<style>
+    /* Custom styles for customer 360 view */
+    .customer-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #f7931a 0%, #ffa500 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: bold;
+        color: #000;
+        box-shadow: 0 4px 12px rgba(247, 147, 26, 0.3);
+    }
+    
+    .kpi-card {
+        background: linear-gradient(135deg, #252a3f 0%, #2d3348 100%);
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid var(--btc-border);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .kpi-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(247, 147, 26, 0.2);
+    }
+    
+    .kpi-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--btc-gold);
+        margin: 10px 0;
+    }
+    
+    .kpi-label {
+        color: var(--btc-text-secondary);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .tab-button {
+        background: transparent;
+        border: none;
+        color: var(--btc-text-secondary);
+        padding: 12px 24px;
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+    
+    .tab-button:hover {
+        color: var(--btc-gold);
+        background: rgba(247, 147, 26, 0.1);
+    }
+    
+    .tab-button.active {
+        color: var(--btc-gold);
+        border-bottom-color: var(--btc-gold);
+    }
+    
+    .tab-content-panel {
+        display: none;
+        animation: fadeIn 0.5s ease;
+    }
+    
+    .tab-content-panel.active {
+        display: block;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .card-animated {
+        animation: fadeInUp 0.6s ease;
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-left: 40px;
+        padding-bottom: 30px;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: 15px;
+        top: 0;
+        bottom: -30px;
+        width: 2px;
+        background: var(--btc-border);
+    }
+    
+    .timeline-item::after {
+        content: '';
+        position: absolute;
+        left: 10px;
+        top: 0;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--btc-gold);
+        border: 3px solid var(--btc-dark-bg);
+    }
+    
+    .timeline-item:last-child::before {
+        display: none;
+    }
+    
+    .activity-item {
+        animation: slideIn 0.4s ease;
+    }
+    
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    
+    .asset-status-icon {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 8px;
+    }
+    
+    .status-active { background: #10b981; }
+    .status-maintenance { background: #f59e0b; }
+    .status-offline { background: #ef4444; }
+    
+    #leaflet-map {
+        height: 300px;
+        border-radius: 8px;
+        margin-top: 15px;
+    }
+    
+    .roi-metric {
+        text-align: center;
+        padding: 15px;
+        background: rgba(247, 147, 26, 0.1);
+        border-radius: 8px;
+        margin-bottom: 10px;
+    }
+    
+    .roi-metric-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--btc-gold);
+    }
+    
+    .roi-metric-label {
+        font-size: 0.85rem;
+        color: var(--btc-text-secondary);
+        margin-top: 5px;
+    }
+</style>
+
+<!-- Customer Overview Section -->
+<div class="row mb-4">
+    <!-- Left: Customer Basic Info -->
+    <div class="col-lg-4 mb-3">
+        <div class="card card-animated">
+            <div class="card-body">
+                <div class="d-flex align-items-start mb-3">
+                    <div class="customer-avatar me-3">
+                        {{ customer.name[0]|upper }}
+                    </div>
+                    <div class="flex-grow-1">
+                        <h3 class="mb-1">{{ customer.company or customer.name }}</h3>
+                        <p class="text-muted mb-2">{{ customer.name }}</p>
+                        <div>
+                            <span class="badge bg-{{ 'info' if customer.customer_type == '企业' else 'primary' }} me-1">
+                                {{ customer.customer_type }}
+                            </span>
+                            {% if customer.status %}
+                            <span class="badge bg-{{ 'success' if customer.status == 'active' else 'secondary' }}">
+                                {{ customer.status|upper }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="text-muted mb-2"><i class="bi bi-envelope me-2"></i>{{ t('contact_info') }}</h6>
+                    {% if customer.email %}
+                    <div class="mb-2">
+                        <i class="bi bi-envelope-fill me-2 text-info"></i>
+                        <a href="mailto:{{ customer.email }}" class="text-decoration-none">{{ customer.email }}</a>
+                    </div>
+                    {% endif %}
+                    {% if customer.phone %}
+                    <div class="mb-2">
+                        <i class="bi bi-telephone-fill me-2 text-success"></i>
+                        <a href="tel:{{ customer.phone }}" class="text-decoration-none">{{ customer.phone }}</a>
+                    </div>
+                    {% endif %}
+                    {% if customer.address %}
+                    <div class="mb-2">
+                        <i class="bi bi-geo-alt-fill me-2 text-warning"></i>
+                        {{ customer.address }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="border-top pt-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">{{ t('join_date') }}:</span>
+                        <strong>{{ customer.created_at.strftime('%Y-%m-%d') if customer.created_at else 'N/A' }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">{{ t('last_updated') }}:</span>
+                        <strong>{{ customer.updated_at.strftime('%Y-%m-%d') if customer.updated_at else 'N/A' }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right: Key Metrics KPI Cards -->
+    <div class="col-lg-8">
+        <div class="row">
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="kpi-card card-animated">
+                    <div class="kpi-label">{{ t('total_revenue') }}</div>
+                    <div class="kpi-value" id="total-revenue-value">$0</div>
+                    <div class="text-success small">
+                        <i class="bi bi-arrow-up"></i> {{ t('all_time') }}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="kpi-card card-animated">
+                    <div class="kpi-label">{{ t('hosting_capacity') }}</div>
+                    <div class="kpi-value" id="hosting-capacity-value">
+                        {{ customer.mining_capacity or 0 }} MW
+                    </div>
+                    <div class="text-info small">
+                        <i class="bi bi-lightning-charge"></i> {{ t('total_capacity') }}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="kpi-card card-animated">
+                    <div class="kpi-label">{{ t('active_deals') }}</div>
+                    <div class="kpi-value" id="active-deals-value">0</div>
+                    <div class="text-warning small">
+                        <i class="bi bi-briefcase"></i> {{ t('in_progress') }}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="kpi-card card-animated">
+                    <div class="kpi-label">{{ t('monthly_revenue') }}</div>
+                    <div class="kpi-value" id="monthly-revenue-value">$0</div>
+                    <div class="text-primary small">
+                        <i class="bi bi-calendar-month"></i> {{ t('avg_monthly') }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Area with Tabs -->
+<div class="row">
+    <!-- Left: Data Visualization Tabs (8 columns) -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <!-- Tab Navigation -->
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex overflow-auto">
+                    <button class="tab-button active" onclick="switchTab('revenue')">
+                        <i class="bi bi-graph-up me-2"></i>{{ t('revenue_tracking') }} 📊
+                    </button>
+                    <button class="tab-button" onclick="switchTab('assets')">
+                        <i class="bi bi-cpu me-2"></i>{{ t('miner_assets') }} ⚡
+                    </button>
+                    <button class="tab-button" onclick="switchTab('deals')">
+                        <i class="bi bi-cash-coin me-2"></i>{{ t('deal_history') }} 💰
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Tab Content -->
+            <div class="card-body">
+                <!-- Tab 1: Revenue Tracking -->
+                <div id="revenue-tab" class="tab-content-panel active">
+                    <h5 class="mb-3">{{ t('revenue_trend') }}</h5>
+                    <canvas id="revenue-trend-chart" height="80"></canvas>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <h6 class="mb-3">{{ t('roi_analysis') }}</h6>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="roi-metric">
+                                <div class="roi-metric-value" id="total-investment">$0</div>
+                                <div class="roi-metric-label">{{ t('total_investment') }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="roi-metric">
+                                <div class="roi-metric-value" id="total-return">$0</div>
+                                <div class="roi-metric-label">{{ t('total_return') }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="roi-metric">
+                                <div class="roi-metric-value" id="roi-percentage">0%</div>
+                                <div class="roi-metric-label">{{ t('roi_percent') }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="roi-metric">
+                                <div class="roi-metric-value" id="breakeven-months">0</div>
+                                <div class="roi-metric-label">{{ t('breakeven_months') }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3 p-3 bg-dark rounded">
+                        <h6 class="text-info mb-2">{{ t('estimated_annual_return') }}</h6>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">{{ t('projected_yearly_revenue') }}:</span>
+                            <strong class="text-success" id="annual-projection">$0</strong>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tab 2: Miner Assets -->
+                <div id="assets-tab" class="tab-content-panel">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h5 class="mb-3">{{ t('miner_list') }}</h5>
+                            <div class="table-responsive">
+                                <table class="table table-dark table-hover" id="assets-table">
+                                    <thead>
+                                        <tr>
+                                            <th>{{ t('model') }}</th>
+                                            <th>{{ t('quantity') }}</th>
+                                            <th>{{ t('status') }}</th>
+                                            <th>{{ t('location') }}</th>
+                                            <th>{{ t('power') }}</th>
+                                            <th>{{ t('hashrate') }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="assets-table-body">
+                                        <tr>
+                                            <td colspan="6" class="text-center py-4">
+                                                <div class="spinner-border text-info" role="status">
+                                                    <span class="visually-hidden">Loading...</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h5 class="mb-3">{{ t('capacity_utilization') }}</h5>
+                            <canvas id="capacity-gauge-chart" height="250"></canvas>
+                            <div class="text-center mt-3">
+                                <p class="text-muted mb-1">{{ t('utilization_rate') }}</p>
+                                <h4 class="text-info" id="utilization-percentage">0%</h4>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Mining-specific data -->
+                    {% if customer.electricity_cost %}
+                    <div class="mt-4 p-3 bg-dark rounded">
+                        <h6 class="text-warning mb-3">{{ t('electricity_cost_analysis') }}</h6>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <div class="text-muted small">{{ t('customer_rate') }}</div>
+                                    <div class="h5 text-warning">${{ "%.4f"|format(customer.electricity_cost) }}/kWh</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <div class="text-muted small">{{ t('industry_avg') }}</div>
+                                    <div class="h5 text-info">$0.0650/kWh</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <div class="text-muted small">{{ t('savings') }}</div>
+                                    <div class="h5 text-success">
+                                        {% set savings = (0.065 - (customer.electricity_cost or 0.065)) / 0.065 * 100 %}
+                                        {{ "%.1f"|format(savings if savings > 0 else 0) }}%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Hosting location map -->
+                    {% if customer.address %}
+                    <div class="mt-4">
+                        <h6 class="mb-3">{{ t('hosting_location') }}</h6>
+                        <div id="leaflet-map"></div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Tab 3: Deal History -->
+                <div id="deals-tab" class="tab-content-panel">
+                    <div class="row">
+                        <div class="col-md-7">
+                            <h5 class="mb-3">{{ t('deal_timeline') }}</h5>
+                            <div id="deals-timeline" style="max-height: 500px; overflow-y: auto;">
+                                <div class="text-center py-4">
+                                    <div class="spinner-border text-info" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <h5 class="mb-3">{{ t('deal_statistics') }}</h5>
+                            <canvas id="deal-type-chart" height="200"></canvas>
+                            <div class="mt-4">
+                                <h6 class="mb-3">{{ t('monthly_deals') }}</h6>
+                                <canvas id="monthly-deals-chart" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right: Activity Feed (4 columns) -->
+    <div class="col-lg-4">
+        <div class="card" style="position: sticky; top: 80px;">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>{{ t('activity_feed') }}</h5>
+                <button class="btn btn-sm btn-outline-info" onclick="refreshActivities()">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+            </div>
+            <div class="card-body p-0">
+                <div id="activity-feed" style="max-height: 600px; overflow-y: auto;">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-info" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer text-center">
+                <button class="btn btn-sm btn-link" onclick="loadMoreActivities()">
+                    {{ t('load_more') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Contacts Section (Collapsible) -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header" data-bs-toggle="collapse" data-bs-target="#contacts-section" style="cursor: pointer;">
+                <h5 class="mb-0">
+                    <i class="bi bi-people me-2"></i>{{ t('contact_management') }}
+                    <i class="bi bi-chevron-down float-end"></i>
+                </h5>
+            </div>
+            <div id="contacts-section" class="collapse">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0">{{ t('contact_list') }}</h6>
+                        <a href="{{ url_for('crm.new_contact', customer_id=customer.id) }}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-person-plus me-1"></i>{{ t('add_contact') }}
+                        </a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{{ t('name') }}</th>
+                                    <th>{{ t('position') }}</th>
+                                    <th>{{ t('email') }}</th>
+                                    <th>{{ t('phone') }}</th>
+                                    <th>{{ t('primary_contact') }}</th>
+                                    <th>{{ t('actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if customer.contacts %}
+                                    {% for contact in customer.contacts %}
+                                    <tr>
+                                        <td>{{ contact.name }}</td>
+                                        <td>{{ contact.position or '-' }}</td>
+                                        <td>
+                                            {% if contact.email %}
+                                            <a href="mailto:{{ contact.email }}">{{ contact.email }}</a>
+                                            {% else %}-{% endif %}
+                                        </td>
+                                        <td>
+                                            {% if contact.phone %}
+                                            <a href="tel:{{ contact.phone }}">{{ contact.phone }}</a>
+                                            {% else %}-{% endif %}
+                                        </td>
+                                        <td>
+                                            {% if contact.primary %}
+                                            <span class="badge bg-success">{{ t('yes') }}</span>
+                                            {% else %}
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="setPrimaryContact({{ contact.id }})">
+                                                {{ t('set_primary') }}
+                                            </button>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{{ url_for('crm.edit_contact', customer_id=customer.id, contact_id=contact.id) }}" class="btn btn-sm btn-outline-info">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteContact({{ contact.id }})">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4">
+                                            <p class="text-muted mb-2">{{ t('no_contacts') }}</p>
+                                            <a href="{{ url_for('crm.new_contact', customer_id=customer.id) }}" class="btn btn-sm btn-primary">
+                                                <i class="bi bi-person-plus me-1"></i>{{ t('add_first_contact') }}
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Charts and Interactions -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/countup.js@2.8.0/dist/countUp.umd.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+// Global variables
+const customerId = {{ customer.id }};
+let revenueChart = null;
+let capacityChart = null;
+let dealTypeChart = null;
+let monthlyDealsChart = null;
+let activityPage = 1;
+let leafletMap = null;
+
+// Tab switching
+function switchTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+    event.target.closest('.tab-button').classList.add('active');
+    
+    // Update tab content
+    document.querySelectorAll('.tab-content-panel').forEach(panel => panel.classList.remove('active'));
+    document.getElementById(tabName + '-tab').classList.add('active');
+    
+    // Load data for the active tab
+    if (tabName === 'revenue' && !revenueChart) {
+        loadRevenueData();
+    } else if (tabName === 'assets' && !capacityChart) {
+        loadAssetsData();
+    } else if (tabName === 'deals' && !dealTypeChart) {
+        loadDealsData();
+    }
+}
+
+// Load KPI data
+async function loadKPIs() {
+    try {
+        const response = await fetch(`/crm/api/customer/${customerId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const customerData = data.data;
+            
+            // Animate KPI values with CountUp
+            const totalRevenue = customerData.total_revenue || 0;
+            const monthlyRevenue = totalRevenue / 12;
+            const activeDeals = customerData.contracts?.filter(c => c.status !== 'COMPLETED').length || 0;
+            
+            new CountUp('total-revenue-value', totalRevenue, {
+                prefix: '$',
+                separator: ',',
+                decimal: '.',
+                duration: 2
+            }).start();
+            
+            new CountUp('monthly-revenue-value', monthlyRevenue, {
+                prefix: '$',
+                separator: ',',
+                decimal: '.',
+                duration: 2
+            }).start();
+            
+            new CountUp('active-deals-value', activeDeals, {
+                duration: 1.5
+            }).start();
+        }
+    } catch (error) {
+        console.error('Error loading KPIs:', error);
+    }
+}
+
+// Load revenue trend data
+async function loadRevenueData() {
+    try {
+        const response = await fetch(`/crm/api/customer/${customerId}/revenue-trend`);
+        const data = await response.json();
+        
+        if (data.success) {
+            // Create revenue trend chart
+            const ctx = document.getElementById('revenue-trend-chart').getContext('2d');
+            revenueChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.months,
+                    datasets: [
+                        {
+                            label: '{{ t("miner_sales") }}',
+                            data: data.miner_sales,
+                            borderColor: '#f7931a',
+                            backgroundColor: 'rgba(247, 147, 26, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: '{{ t("hosting_fees") }}',
+                            data: data.hosting_fees,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#e0e6ed' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
+                    }
+                }
+            });
+            
+            // Update ROI metrics
+            document.getElementById('total-investment').textContent = '$' + (data.total_investment || 0).toLocaleString();
+            document.getElementById('total-return').textContent = '$' + (data.total_return || 0).toLocaleString();
+            document.getElementById('roi-percentage').textContent = (data.roi_percent || 0) + '%';
+            document.getElementById('breakeven-months').textContent = data.breakeven_months || 0;
+            document.getElementById('annual-projection').textContent = '$' + (data.annual_projection || 0).toLocaleString();
+        }
+    } catch (error) {
+        console.error('Error loading revenue data:', error);
+    }
+}
+
+// Load assets data - Enhanced with real Hosting integration
+async function loadAssetsData() {
+    try {
+        // First try to load real hosting data
+        const hostingResponse = await fetch(`/crm/api/customer/${customerId}/hosting-stats`);
+        const hostingData = await hostingResponse.json();
+        
+        if (hostingData.success && hostingData.data.has_hosting) {
+            const stats = hostingData.data;
+            
+            // Update KPI cards with real hosting data
+            document.getElementById('hosting-capacity-value').textContent = stats.total_power_mw.toFixed(3) + ' MW';
+            
+            // Populate assets table with real miners
+            const tbody = document.getElementById('assets-table-body');
+            if (stats.miners && stats.miners.length > 0) {
+                tbody.innerHTML = stats.miners.map(miner => `
+                    <tr>
+                        <td>
+                            <strong>${miner.name}</strong>
+                            <small class="d-block text-muted">${miner.model}</small>
+                        </td>
+                        <td>${miner.quantity}</td>
+                        <td>
+                            <span class="asset-status-icon status-${miner.status}"></span>
+                            ${miner.status}
+                        </td>
+                        <td>${miner.location || '-'}</td>
+                        <td>${miner.total_power.toLocaleString()} W</td>
+                        <td>${miner.total_hashrate.toFixed(2)} TH/s</td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4">{{ t("no_assets") }}</td></tr>';
+            }
+            
+            // Add hosting summary card
+            const summaryHtml = `
+                <div class="alert alert-success mb-3" style="background: rgba(16, 185, 129, 0.15); border-color: #10b981;">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <strong><i class="bi bi-lightning-charge-fill me-2"></i>{{ t("live_hosting_data") }}</strong>
+                            <span class="badge bg-success ms-2">{{ t("connected") }}</span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-success" onclick="syncHostingData()">
+                            <i class="bi bi-arrow-repeat me-1"></i>{{ t("sync") }}
+                        </button>
+                    </div>
+                </div>
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="text-center p-3 bg-dark rounded">
+                            <div class="h4 text-info mb-1">${stats.miners_count}</div>
+                            <div class="small text-muted">{{ t("total_miners") }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center p-3 bg-dark rounded">
+                            <div class="h4 text-warning mb-1">${stats.total_hashrate.toFixed(2)} TH/s</div>
+                            <div class="small text-muted">{{ t("total_hashrate") }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center p-3 bg-dark rounded">
+                            <div class="h4 text-success mb-1">$${stats.net_profit_daily.toLocaleString()}</div>
+                            <div class="small text-muted">{{ t("daily_profit") }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center p-3 bg-dark rounded">
+                            <div class="h4 text-primary mb-1">${stats.estimated_daily_btc.toFixed(6)} BTC</div>
+                            <div class="small text-muted">{{ t("daily_btc") }}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Insert summary before the table
+            const tableContainer = document.querySelector('#assets-tab .table-responsive');
+            if (tableContainer) {
+                tableContainer.insertAdjacentHTML('beforebegin', summaryHtml);
+            }
+            
+            // Create capacity gauge chart based on active miners ratio
+            const activeRatio = stats.miners_count > 0 ? (stats.active_miners / stats.miners_count * 100) : 0;
+            document.getElementById('utilization-percentage').textContent = activeRatio.toFixed(1) + '%';
+            
+            const ctx = document.getElementById('capacity-gauge-chart').getContext('2d');
+            capacityChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['{{ t("active") }}', '{{ t("offline") }}', '{{ t("maintenance") }}'],
+                    datasets: [{
+                        data: [stats.active_miners, stats.offline_miners, stats.maintenance_miners],
+                        backgroundColor: ['#10b981', '#ef4444', '#f59e0b'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            labels: { color: '#e0e6ed' }
+                        }
+                    }
+                }
+            });
+        } else {
+            // Fallback to legacy assets API
+            const response = await fetch(`/crm/api/customer/${customerId}/assets`);
+            const data = await response.json();
+            
+            if (data.success) {
+                const tbody = document.getElementById('assets-table-body');
+                if (data.assets && data.assets.length > 0) {
+                    tbody.innerHTML = data.assets.map(asset => `
+                        <tr>
+                            <td>${asset.model || 'N/A'}</td>
+                            <td>${asset.quantity || 1}</td>
+                            <td>
+                                <span class="asset-status-icon status-${asset.status}"></span>
+                                ${asset.status}
+                            </td>
+                            <td>${asset.location || '-'}</td>
+                            <td>${asset.power_w || 0} W</td>
+                            <td>${asset.hashrate_th || 0} TH/s</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <div class="text-muted mb-2">{{ t("no_hosting_link") }}</div>
+                                <small class="text-info">{{ t("link_hosting_hint") }}</small>
+                            </td>
+                        </tr>
+                    `;
+                }
+                
+                const utilization = data.utilization_rate || 0;
+                document.getElementById('utilization-percentage').textContent = utilization + '%';
+                
+                const ctx = document.getElementById('capacity-gauge-chart').getContext('2d');
+                capacityChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['{{ t("used") }}', '{{ t("available") }}'],
+                        datasets: [{
+                            data: [utilization, 100 - utilization],
+                            backgroundColor: [
+                                utilization < 50 ? '#3b82f6' : utilization < 80 ? '#10b981' : '#ef4444',
+                                'rgba(255, 255, 255, 0.1)'
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        cutout: '70%',
+                        plugins: {
+                            legend: {
+                                labels: { color: '#e0e6ed' }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        // Initialize map if location available
+        {% if customer.address %}
+        initLeafletMap();
+        {% endif %}
+    } catch (error) {
+        console.error('Error loading assets data:', error);
+    }
+}
+
+// Sync hosting data to CRM
+async function syncHostingData() {
+    try {
+        const response = await fetch(`/crm/api/customer/${customerId}/sync-hosting`, {
+            method: 'POST'
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('{{ t("hosting_sync_success") }}');
+            location.reload();
+        } else {
+            alert(data.error || '{{ t("hosting_sync_failed") }}');
+        }
+    } catch (error) {
+        console.error('Error syncing hosting data:', error);
+        alert('{{ t("hosting_sync_failed") }}');
+    }
+}
+
+// Load deals data
+async function loadDealsData() {
+    try {
+        const response = await fetch(`/crm/api/customer/${customerId}/deals`);
+        const data = await response.json();
+        
+        if (data.success) {
+            // Create timeline
+            const timeline = document.getElementById('deals-timeline');
+            if (data.deals.length > 0) {
+                timeline.innerHTML = data.deals.map(deal => `
+                    <div class="timeline-item">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="mb-1">${deal.title}</h6>
+                            <span class="badge bg-${getStatusColor(deal.status)}">${deal.status}</span>
+                        </div>
+                        <p class="text-muted mb-1">
+                            <strong>$${deal.value.toLocaleString()}</strong>
+                        </p>
+                        <p class="text-muted small mb-0">
+                            <i class="bi bi-calendar me-1"></i>${deal.created_at || 'N/A'}
+                        </p>
+                        ${deal.description ? `<p class="mt-2 small">${deal.description}</p>` : ''}
+                    </div>
+                `).join('');
+            } else {
+                timeline.innerHTML = '<p class="text-center text-muted py-4">{{ t("no_deals") }}</p>';
+            }
+            
+            // Deal type distribution chart
+            const dealTypes = {};
+            data.deals.forEach(deal => {
+                dealTypes[deal.deal_type] = (dealTypes[deal.deal_type] || 0) + 1;
+            });
+            
+            const ctx1 = document.getElementById('deal-type-chart').getContext('2d');
+            dealTypeChart = new Chart(ctx1, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(dealTypes),
+                    datasets: [{
+                        data: Object.values(dealTypes),
+                        backgroundColor: ['#f7931a', '#10b981', '#3b82f6', '#f59e0b', '#ef4444']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#e0e6ed' }
+                        }
+                    }
+                }
+            });
+            
+            // Monthly deals chart
+            const ctx2 = document.getElementById('monthly-deals-chart').getContext('2d');
+            monthlyDealsChart = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: data.monthly_labels || [],
+                    datasets: [{
+                        label: '{{ t("deals_count") }}',
+                        data: data.monthly_counts || [],
+                        backgroundColor: '#f7931a'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#e0e6ed' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error loading deals data:', error);
+    }
+}
+
+// Load activities
+async function loadActivities() {
+    try {
+        const response = await fetch(`/crm/api/customer/${customerId}/activities?page=${activityPage}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const feed = document.getElementById('activity-feed');
+            if (data.activities.length > 0) {
+                feed.innerHTML = data.activities.map(activity => `
+                    <div class="activity-item p-3 border-bottom">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="mb-0">${activity.summary}</h6>
+                            <small class="text-muted">${formatTimeAgo(activity.created_at)}</small>
+                        </div>
+                        <span class="badge bg-${getActivityTypeColor(activity.type)} mb-2">${activity.type}</span>
+                        ${activity.details ? `<p class="mb-0 small text-muted">${activity.details}</p>` : ''}
+                        ${activity.created_by ? `<p class="mb-0 small text-muted mt-1"><i class="bi bi-person"></i> ${activity.created_by}</p>` : ''}
+                    </div>
+                `).join('');
+            } else {
+                feed.innerHTML = '<p class="text-center text-muted py-4">{{ t("no_activities") }}</p>';
+            }
+        }
+    } catch (error) {
+        console.error('Error loading activities:', error);
+    }
+}
+
+function loadMoreActivities() {
+    activityPage++;
+    loadActivities();
+}
+
+function refreshActivities() {
+    activityPage = 1;
+    loadActivities();
+}
+
+// Initialize Leaflet map
+function initLeafletMap() {
+    {% if customer.address %}
+    if (!leafletMap) {
+        leafletMap = L.map('leaflet-map').setView([40.7128, -74.0060], 10);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(leafletMap);
+        
+        L.marker([40.7128, -74.0060]).addTo(leafletMap)
+            .bindPopup('<b>{{ customer.company or customer.name }}</b><br>{{ customer.address }}')
+            .openPopup();
+    }
+    {% endif %}
+}
+
+// Utility functions
+function getStatusColor(status) {
+    const colors = {
+        'DRAFT': 'secondary',
+        'PENDING': 'info',
+        'APPROVED': 'primary',
+        'SIGNED': 'warning',
+        'COMPLETED': 'success',
+        'CANCELED': 'danger'
+    };
+    return colors[status] || 'secondary';
+}
+
+function getActivityTypeColor(type) {
+    const colors = {
+        '备注': 'info',
+        '电话': 'warning',
+        '会议': 'primary',
+        '邮件': 'secondary',
+        '创建': 'success'
+    };
+    return colors[type] || 'secondary';
+}
+
+function formatTimeAgo(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = Math.floor((now - date) / 1000);
+    
+    if (diff < 3600) return Math.floor(diff / 60) + '{{ t("minutes_ago") }}';
+    if (diff < 86400) return Math.floor(diff / 3600) + '{{ t("hours_ago") }}';
+    if (diff < 172800) return '{{ t("yesterday") }}';
+    return Math.floor(diff / 86400) + '{{ t("days_ago") }}';
+}
+
+// Action functions
+function deleteCustomer(id) {
+    if (confirm('{{ t("confirm_delete_customer") }}')) {
+        window.location.href = `/crm/customer/${id}/delete`;
+    }
+}
+
+function exportCustomerReport(id) {
+    window.location.href = `/crm/api/customer/${id}/export`;
+}
+
+function deleteContact(id) {
+    if (confirm('{{ t("confirm_delete_contact") }}')) {
+        window.location.href = `/crm/contact/${id}/delete`;
+    }
+}
+
+function setPrimaryContact(id) {
+    fetch(`/crm/api/contact/${id}/set-primary`, { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+    loadKPIs();
+    loadRevenueData();
+    loadActivities();
+    
+    // Auto-refresh activities every 30 seconds
+    setInterval(refreshActivities, 30000);
+});
+</script>
+{% endblock %}

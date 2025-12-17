@@ -1,0 +1,157 @@
+下面是你现在就能执行的、按“无金流（No-Money）版”定制的下一步路线图。每一步都配了明确交付与验收标准（DoD），方便直接丢进看板开干。
+
+Sprint 1｜把骨架跑起来（合并 + 安全 + 三个首屏）
+
+目标：合并两个包为同一工程，启用 Host/Client 双视角，先上实时可见性与公告页。
+
+要做什么
+
+代码合并
+
+以 Core 为主应用壳；把 Advanced 的 modules/* 挂为 Blueprint。
+
+删除 Advanced 下重复的 analytics_dashboard_files/backend/* 整棵目录。
+
+在 create_app() 中注册 integrate_modules(app)；在 modules/config.py 只启用 calculator、hosting，关闭 crm/支付/经纪相关模块。
+
+安全与配置
+
+所有密钥→.env；清理硬编码；开启 CSRF、基础限流、安全响应头。
+
+RBAC：组织（org）隔离 + owner/manager/viewer 守卫；所有写操作进 audit_logs。
+
+数据层与部署
+
+落库（Alembic 初始迁移）：organizations, users, sites, racks, miners, miner_telemetry, incidents, tickets, miner_assignments, audit_logs（先不建账单类表也能跑）。
+
+Docker/Compose（web+postgres）；/healthz 健康检查。
+
+生成演示数据（2 个站点、若干矿机、近 7 天遥测、2 条公告）。
+
+页面与接口（最小集）
+
+/host/overview：在线矿机数、在线率、当日估算产出/用电、事件时间线。
+
+/client/dashboard：我的资产总览（仅本人资产；公告条）。
+
+/status/:siteSlug：公开状态页（公告/检修/事故摘要，可分享）。
+
+GET /api/v1/host/summary?site_id=：返回 KPI + 最近事件。
+
+DoD
+
+三个页面可用、移动端适配；数据延迟 ≤60s；公开状态页可匿名访问。
+
+RBAC 生效；.env 接管敏感配置；容器启动与 /healthz 通过。
+
+Sprint 2｜对账雏形 + 用量估算 + 透明日志
+
+目标：账单只做“用量/成本估算”与“对账证据包”，不上任何金流。
+
+要做什么
+
+路由与命名
+
+将 /client/billing 改为 /client/usage（用量与成本估算；导出 CSV；显著“非金流声明”）。
+
+/host/billing/preview 仅做分项与草稿，不触发收款。
+
+对账中心 v0（矿池 CSV）
+
+POST /api/v1/reconcile/pool：上传矿池 CSV → 解析映射 → “应得 vs 实得”差异摘要。
+
+生成 “争议包（ZIP）”：包含 CSV、差异报告、时间戳与签名；自动建 tickets。
+
+透明日志（No-Money 可验证）
+
+每日计算核心数据增量哈希 → 生成 根哈希 + 服务器签名。
+
+/status 展示“今日验证哈希”；/client/reports/monthly 增“验真”按钮（给 ZIP 验签）。
+
+报告与导出
+
+/client/reports/monthly：在线率、事件、对账差异、SLA 摘要 → 一键导出（附签名与根哈希）。
+
+DoD
+
+/client/usage 与 /host/billing/preview 正常展示/导出；页面含“非金流声明”。
+
+矿池 CSV 能出差异摘要；能生成争议包并建工单。
+
+月报 ZIP 可在页面上验签通过；状态页展示当日根哈希。
+
+Sprint 3｜站点看板 + 能源对账 + 资产指派
+
+目标：定位问题到“站点/机架/矿机”，把电表/回路对账打通，把“矿机↔客户”的关系固化。
+
+要做什么
+
+/host/sites/:id：机架/回路视图、异常矿机列表、温度/拒绝率/功耗分布。
+
+能源对账 v1（电表 CSV）
+
+POST /api/v1/reconcile/energy：导入表计曲线/回路 → 电费分摊、异常点（电压波动/耗电异常）。
+
+统一“差异策略”：≤0.5% 自动通过，>0.5% 生成争议包并挂工单。
+
+资产指派
+
+/host/assignments：miner_assignments 维护矿机↔客户（时间区间/费率方案）；导出签名清单。
+
+客户明细
+
+/client/miners：实时/历史曲线、健康分、异常标红、CSV 导出。
+
+DoD
+
+站点看板能下钻到机架/回路/矿机；能源对账能出分摊与异常。
+
+指派变更写审计日志；历史区间查询不串台。
+
+Sprint 4｜专业化：告警、评分卡、削峰模拟（仍 No-Money）
+
+目标：运营效率与决策支撑，同时保持零金流。
+
+要做什么
+
+/client/alerts：客户自定义阈值（温度/掉线/拒绝率/账单异常）→ 邮件/Telegram/Webhook。
+
+/host/market/scorecard：托管评分卡（电价稳定/供电 SLA/透明度/PUE/兼容/合规；权重可配；一票否决项）。
+
+/host/tools/curtailment：削峰/需求响应模拟（合同条款×负荷×你现有 ROI 计算）；导出“停机补偿计算表”（仅报告，不结算）。
+
+只读集成（可选）
+
+对接 minerstat API 拉设备/事件/收益（读）；无平台的站点引导部署 Hiveon ASIC Hub（你的系统只读）。
+
+DoD
+
+告警可配置、触达可靠；评分卡生成可下载尽调报告；削峰模拟可复现计算过程（参数留痕）。
+
+长期轨道（按需）
+
+/host/miners 批量运维：先只读，再在白名单站点灰度开放“批量重启/限功率/刷固件”，所有写操作有回滚与审计。
+
+/host/fleet 多站点调度与容灾提示；/risk/policy 轻量政策/制裁/气候雷达。
+
+/finance/export 税务/会计导出（仅报表字段）。
+
+全程指标（上线即监控）
+
+可用性 ≥99.9%，数据延迟 ≤60s，API P95 ≤400ms。
+
+争议率（账单/收益对账）≤1–2%，争议闭环 ≤48h。
+
+SLA：工单首响 <15min、P1 恢复 <2h、RCA ≤48h。
+
+透明度评分 ≥90（披露完整度、响应时效、对账准确）。
+
+风险与前置条件（必须打勾）
+
+硬编码密钥已移除；.env.example 补齐；敏感值通过启动检查。
+
+依赖瘦身：移除/禁用支付与经纪相关包；数据科学类依赖移到可选。
+
+Alembic 迁移与 Docker 化完成；/healthz 就绪；日志与导出带追踪 ID。
+
+全站文案加入显著 “本系统不提供任何支付/托管/收益分发功能” 声明。

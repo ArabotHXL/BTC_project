@@ -1,0 +1,315 @@
+{
+  "name": "HashInsight KMS IAM权限配置模板",
+  "version": "1.0.0",
+  "description": "生产环境KMS权限配置最佳实践",
+  
+  "aws_kms": {
+    "description": "AWS KMS IAM策略模板",
+    
+    "application_role_policy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "AllowKMSEncryptDecrypt",
+          "Effect": "Allow",
+          "Action": [
+            "kms:Decrypt",
+            "kms:Encrypt",
+            "kms:GenerateDataKey",
+            "kms:DescribeKey"
+          ],
+          "Resource": "arn:aws:kms:us-east-1:ACCOUNT_ID:key/KEY_ID",
+          "Condition": {
+            "StringEquals": {
+              "kms:EncryptionContext:application": "hashinsight",
+              "kms:EncryptionContext:environment": "production"
+            }
+          }
+        }
+      ]
+    },
+    
+    "key_administrator_policy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "AllowKeyAdministration",
+          "Effect": "Allow",
+          "Action": [
+            "kms:Create*",
+            "kms:Describe*",
+            "kms:Enable*",
+            "kms:List*",
+            "kms:Put*",
+            "kms:Update*",
+            "kms:Revoke*",
+            "kms:Disable*",
+            "kms:Get*",
+            "kms:Delete*",
+            "kms:ScheduleKeyDeletion",
+            "kms:CancelKeyDeletion"
+          ],
+          "Resource": "*"
+        }
+      ]
+    },
+    
+    "key_policy": {
+      "Version": "2012-10-17",
+      "Id": "hashinsight-kms-key-policy",
+      "Statement": [
+        {
+          "Sid": "Enable IAM User Permissions",
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": "arn:aws:iam::ACCOUNT_ID:root"
+          },
+          "Action": "kms:*",
+          "Resource": "*"
+        },
+        {
+          "Sid": "Allow use of the key by application",
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": "arn:aws:iam::ACCOUNT_ID:role/hashinsight-application-role"
+          },
+          "Action": [
+            "kms:Decrypt",
+            "kms:Encrypt",
+            "kms:GenerateDataKey",
+            "kms:DescribeKey"
+          ],
+          "Resource": "*",
+          "Condition": {
+            "StringEquals": {
+              "kms:EncryptionContext:application": "hashinsight"
+            }
+          }
+        },
+        {
+          "Sid": "Allow CloudWatch Logs",
+          "Effect": "Allow",
+          "Principal": {
+            "Service": "logs.amazonaws.com"
+          },
+          "Action": [
+            "kms:Encrypt",
+            "kms:Decrypt",
+            "kms:ReEncrypt*",
+            "kms:GenerateDataKey*",
+            "kms:CreateGrant",
+            "kms:DescribeKey"
+          ],
+          "Resource": "*",
+          "Condition": {
+            "ArnLike": {
+              "kms:EncryptionContext:aws:logs:arn": "arn:aws:logs:*:ACCOUNT_ID:log-group:*"
+            }
+          }
+        }
+      ]
+    },
+    
+    "multi_region_replication": {
+      "primary_region": "us-east-1",
+      "replica_regions": ["us-west-2", "eu-west-1"],
+      "automatic_rotation_enabled": true,
+      "rotation_period_days": 365,
+      "deletion_window_days": 30
+    }
+  },
+  
+  "gcp_kms": {
+    "description": "GCP KMS IAM配置模板",
+    
+    "application_service_account_roles": [
+      "roles/cloudkms.cryptoKeyEncrypterDecrypter"
+    ],
+    
+    "key_administrator_roles": [
+      "roles/cloudkms.admin",
+      "roles/cloudkms.cryptoKeyVersionsEditor"
+    ],
+    
+    "keyring_configuration": {
+      "location": "us-east1",
+      "keyring_id": "hashinsight-production",
+      "keys": [
+        {
+          "key_id": "master-encryption-key",
+          "purpose": "ENCRYPT_DECRYPT",
+          "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION",
+          "rotation_period": "7776000s",
+          "protection_level": "HSM"
+        }
+      ]
+    },
+    
+    "iam_bindings": {
+      "bindings": [
+        {
+          "role": "roles/cloudkms.cryptoKeyEncrypterDecrypter",
+          "members": [
+            "serviceAccount:hashinsight-app@PROJECT_ID.iam.gserviceaccount.com"
+          ],
+          "condition": {
+            "title": "Production environment only",
+            "expression": "resource.labels.environment == 'production'"
+          }
+        }
+      ]
+    },
+    
+    "audit_logging": {
+      "enabled": true,
+      "log_types": ["ADMIN_READ", "DATA_READ", "DATA_WRITE"]
+    }
+  },
+  
+  "azure_key_vault": {
+    "description": "Azure Key Vault访问策略模板",
+    
+    "application_access_policy": {
+      "tenant_id": "TENANT_ID",
+      "object_id": "APPLICATION_OBJECT_ID",
+      "permissions": {
+        "keys": [
+          "get",
+          "list",
+          "encrypt",
+          "decrypt",
+          "wrapKey",
+          "unwrapKey"
+        ],
+        "secrets": [
+          "get",
+          "list"
+        ],
+        "certificates": [
+          "get",
+          "list"
+        ]
+      }
+    },
+    
+    "administrator_access_policy": {
+      "tenant_id": "TENANT_ID",
+      "object_id": "ADMIN_OBJECT_ID",
+      "permissions": {
+        "keys": [
+          "all"
+        ],
+        "secrets": [
+          "all"
+        ],
+        "certificates": [
+          "all"
+        ]
+      }
+    },
+    
+    "key_vault_configuration": {
+      "name": "hashinsight-kv-prod",
+      "location": "eastus",
+      "sku": "premium",
+      "enable_soft_delete": true,
+      "soft_delete_retention_days": 90,
+      "enable_purge_protection": true,
+      "enable_rbac_authorization": true,
+      "network_acls": {
+        "default_action": "Deny",
+        "bypass": "AzureServices",
+        "ip_rules": ["52.1.2.3/32"],
+        "virtual_network_rules": [
+          "/subscriptions/SUBSCRIPTION_ID/resourceGroups/RG_NAME/providers/Microsoft.Network/virtualNetworks/VNET_NAME/subnets/SUBNET_NAME"
+        ]
+      }
+    },
+    
+    "diagnostic_settings": {
+      "enabled": true,
+      "logs": [
+        {
+          "category": "AuditEvent",
+          "enabled": true,
+          "retention_days": 365
+        }
+      ],
+      "metrics": [
+        {
+          "category": "AllMetrics",
+          "enabled": true,
+          "retention_days": 365
+        }
+      ]
+    }
+  },
+  
+  "security_best_practices": {
+    "principle_of_least_privilege": {
+      "description": "仅授予应用程序所需的最小权限",
+      "recommendations": [
+        "使用单独的密钥用于不同的用途（数据加密、日志加密等）",
+        "为不同环境使用不同的密钥（开发、测试、生产）",
+        "启用密钥自动轮换",
+        "使用加密上下文限制密钥使用范围",
+        "定期审计密钥使用情况"
+      ]
+    },
+    
+    "key_rotation": {
+      "description": "定期轮换加密密钥",
+      "rotation_schedule": {
+        "master_keys": "每年",
+        "data_encryption_keys": "每次使用后立即销毁（信封加密）",
+        "api_keys": "每90天"
+      }
+    },
+    
+    "monitoring_and_alerting": {
+      "description": "监控和告警配置",
+      "metrics_to_monitor": [
+        "KMS API调用次数",
+        "加密/解密失败率",
+        "未授权访问尝试",
+        "密钥使用异常（地理位置、时间、频率）"
+      ],
+      "alert_thresholds": {
+        "unauthorized_access": "立即告警",
+        "failed_operations_rate": ">5% in 5 minutes",
+        "unusual_usage_pattern": "ML异常检测"
+      }
+    },
+    
+    "compliance": {
+      "frameworks": [
+        "SOC 2 Type II",
+        "PCI DSS",
+        "HIPAA",
+        "GDPR",
+        "ISO 27001"
+      ],
+      "requirements": {
+        "key_backup": "异地加密备份，每日",
+        "access_audit": "所有KMS操作记录审计日志",
+        "incident_response": "密钥泄露应急响应计划",
+        "business_continuity": "RTO ≤4小时, RPO ≤15分钟"
+      }
+    }
+  },
+  
+  "deployment_checklist": [
+    "✓ 创建KMS主密钥（启用自动轮换）",
+    "✓ 配置IAM角色和策略",
+    "✓ 设置加密上下文约束",
+    "✓ 启用CloudTrail/Cloud Audit Logs审计",
+    "✓ 配置密钥备份和恢复",
+    "✓ 设置告警规则",
+    "✓ 测试加密/解密操作",
+    "✓ 测试密钥轮换流程",
+    "✓ 测试灾难恢复计划",
+    "✓ 文档化密钥管理流程",
+    "✓ 培训团队成员",
+    "✓ 执行安全审计"
+  ]
+}

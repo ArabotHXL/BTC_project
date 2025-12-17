@@ -1,0 +1,87 @@
+你是资深全栈安全工程师（Next.js/TypeScript/Node + PostgreSQL），同时熟悉密码学工程（AES-GCM、X25519 sealed box、AAD、防回滚、密钥轮换与吊销）。
+目标：在当前仓库实现“浏览器端加密 + 服务器只存密文 + 边缘采集器解封/解密”的矿机凭证管理闭环（Hosting + Miner Management 场景），并保证服务器端永远无法解密矿机凭证。
+
+SCOPE / 交付范围（必须全部完成）
+
+A. 端到端凭证加密方案（Device-key Envelope Encryption）
+	1.	**边缘采集器（Edge Collector）**首次启动生成 X25519 密钥对（device keypair）：
+	•	私钥仅本地保存（加密落盘或 OS keychain；最少也要用 passphrase 加密文件）
+	•	公钥注册到 HashInsight Server
+	2.	**浏览器端（矿场主）**新增/更新矿机时：
+	•	生成随机 DEK (32 bytes)
+	•	用 AES-256-GCM 加密矿机凭证 JSON（IP/port/user/pass/备注等）
+	•	将 tenant_id + device_id + miner_id + schema_version + key_version + counter 写入 AAD（GCM Additional Authenticated Data）
+	•	用 Edge 的 device public key 对 DEK 做 sealed box / public-key wrap（推荐 libsodium sealed box；或 X25519+HKDF+AEAD 自实现但优先用 libsodium）
+	•	将 encrypted_payload + wrapped_DEK + nonce/tag + aad + counter + version + kdf_params(if any) 发给服务器
+	3.	服务器端（HashInsight）：
+	•	仅存储密文与元数据（PostgreSQL）
+	•	不得保存任何可解密的 KEK/私钥/口令
+	•	提供 API 给 Edge 按 device_id 拉取密文记录
+	4.	Edge 端：
+	•	拉取密文记录
+	•	用本地 device private key unwrap DEK
+	•	用 DEK AES-GCM 解密得到矿机凭证（仅内存短驻留）
+	•	连接矿机采集数据，并上报（采集链路可先不强制加密矿机侧，但至少要说明 LAN 风险与隔离建议）
+
+B. 防回滚 / 防串用（必须）
+	•	为每个 miner 维护递增 counter（浏览器提交时 +1）
+	•	Edge 端记录 last_seen_counter（本地或服务器端状态表均可），拒绝处理更小 counter 的密文（防回滚）
+	•	AAD 必须包含 tenant_id/device_id/miner_id/schema_version/key_version/counter，确保密文被挪用到别的租户/设备/矿机将直接验不过
+
+C. 设备吊销 / 轮换（MVP 必须具备）
+	•	数据库 devices 表包含：status {ACTIVE, REVOKED}, key_version, created_at, revoked_at
+	•	服务器提供 admin API 将 device 标记为 REVOKED
+	•	Edge 每次拉取都检查设备状态；若 REVOKED 立即停止解密与采集
+	•	key_version 预留字段（本次可先实现单版本，但 schema 必须支持未来轮换）
+
+D. 前端投毒风险的最低限度加固（必须）
+	•	Next.js 增加 CSP 响应头（至少：禁止 unsafe-inline，限制 script-src/self，禁止任意外域；如需外部资源必须显式列白名单）
+	•	锁定依赖版本；避免运行时动态加载未固定脚本
+	•	对“输入矿机凭证”页面启用更严格 CSP（可单独 route header policy）
+
+E. 工程交付要求（必须）
+	•	增加 .env.example（绝不提交 secrets）
+	•	增加 DB migration（Prisma 或你项目既有迁移方式）
+	•	增加单元测试：
+	•	前端加密产物可被 Edge 解密（跨端兼容测试向量）
+	•	AAD 不一致必须解密失败
+	•	counter 回滚必须拒绝
+	•	增加事件审计日志：所有注册/新增矿机/更新凭证/拉取密文/吊销设备写入 events/YYYY-MM-DD/*.jsonl（包含 tenant_id/device_id/miner_id/action/result，不含明文凭证）
+
+推荐技术选型（除非仓库现状强冲突，否则照做）
+	•	前端：WebCrypto AES-GCM + libsodium-wrappers（sealed box）
+	•	后端：Node/TypeScript API（Next.js API routes 或 Express，按仓库结构）
+	•	Edge：Node/TypeScript（CLI + service loop），同样用 libsodium
+	•	存储：PostgreSQL
+	•	认证：现有登录体系沿用；Edge 注册后获取 device token（JWT 或 signed token），后续拉取接口用该 token
+
+数据模型（最低字段要求）
+	•	devices: id, tenant_id, name, public_key, key_version, status, created_at, revoked_at
+	•	miners: id, tenant_id, display_name, device_id, created_at, updated_at
+	•	miner_secrets: id, tenant_id, device_id, miner_id,
+encrypted_payload (base64),
+wrapped_dek (base64),
+nonce (base64),
+aad (json),
+counter (int),
+schema_version (int),
+key_version (int),
+created_at
+
+API（最低要求）
+	•	POST /api/devices/register   (Edge -> Server): {public_key, name} -> {device_id, device_token}
+	•	GET  /api/devices/:id/pubkey (Browser -> Server): -> {public_key, key_version, status}
+	•	POST /api/miners             (Browser -> Server): 创建矿机 + 绑定 device_id
+	•	POST /api/miners/:id/secret  (Browser -> Server): 上传密文包（不允许服务器解密）
+	•	GET  /api/edge/secrets       (Edge -> Server): 拉取属于该 device 的密文包列表（含 miner_id）
+	•	POST /api/devices/:id/revoke (Admin -> Server): 吊销
+
+验收标准（必须逐条满足）
+	•	服务器数据库与代码中找不到任何可用于解密矿机凭证的材料（无 KEK/无私钥/无口令/无明文缓存）
+	•	浏览器端创建的密文包可被 Edge 成功解密；AAD 任意字段变更会导致解密失败
+	•	counter 回滚被 Edge 拒绝
+	•	device REVOKED 后 Edge 立即停止解密/采集
+	•	CSP 已启用且默认禁止 inline script
+	•	测试通过，且提供 README：威胁模型 + 运行方式 + 轮换/吊销说明
+
+开始工作：先阅读仓库结构，识别现有 Hosting/Miner Management 页面与 API，尽量复用现有鉴权与数据层；然后按上述 scope 实现，提交清晰的变更与文档。

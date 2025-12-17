@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if current_lang == 'en' %}Reports - HashInsight{% else %}报告管理 - HashInsight{% endif %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #0d1421;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        .navbar-dark {
+            background-color: #1a2332 !important;
+            border-bottom: 1px solid #2d3748;
+        }
+        .gold-accent {
+            color: #f7931a;
+        }
+        .btn-gold {
+            background-color: #f7931a;
+            border-color: #f7931a;
+            color: #000;
+            font-weight: 600;
+        }
+        .btn-gold:hover {
+            background-color: #e8850f;
+            border-color: #e8850f;
+            color: #000;
+        }
+        .card {
+            background-color: #1a2332;
+            border: 1px solid #2d3748;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+            border-radius: 12px;
+        }
+        .card-header {
+            background-color: #2d3748;
+            border-bottom: 1px solid #4a5568;
+            font-weight: 600;
+            border-radius: 12px 12px 0 0 !important;
+        }
+        .report-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .report-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(247, 147, 26, 0.15);
+        }
+        .report-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .pdf-icon { color: #dc3545; }
+        .excel-icon { color: #198754; }
+        .ppt-icon { color: #fd7e14; }
+        .download-btn {
+            width: 100%;
+            padding: 12px 20px;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .download-btn:hover {
+            transform: scale(1.02);
+        }
+        .btn-pdf {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            border: none;
+            color: white;
+        }
+        .btn-excel {
+            background: linear-gradient(135deg, #198754 0%, #157347 100%);
+            border: none;
+            color: white;
+        }
+        .btn-ppt {
+            background: linear-gradient(135deg, #fd7e14 0%, #e96d0c 100%);
+            border: none;
+            color: white;
+        }
+        .section-title {
+            border-left: 4px solid #f7931a;
+            padding-left: 15px;
+            margin-bottom: 25px;
+        }
+        .report-description {
+            color: #a0aec0;
+            font-size: 0.9rem;
+        }
+        .loading-spinner {
+            display: none;
+        }
+        .loading .loading-spinner {
+            display: inline-block;
+        }
+        .loading .btn-text {
+            display: none;
+        }
+        .recent-reports-table {
+            background-color: #1a2332;
+        }
+        .recent-reports-table th {
+            background-color: #2d3748;
+            color: #f7931a;
+            border-color: #4a5568;
+        }
+        .recent-reports-table td {
+            border-color: #2d3748;
+            color: #e2e8f0;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .status-ready { background-color: #198754; color: white; }
+        .status-pending { background-color: #ffc107; color: #000; }
+        .status-error { background-color: #dc3545; color: white; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark navbar-expand-lg mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="bi bi-currency-bitcoin gold-accent"></i>
+                <span class="gold-accent">HashInsight</span>
+            </a>
+            <div class="d-flex align-items-center">
+                <button type="button" data-lang-switch="zh" data-lang="zh" 
+                        class="btn btn-sm btn-outline-light {{ 'active' if current_lang == 'zh' else '' }} lang-switch-btn me-1">
+                    中文
+                </button>
+                <button type="button" data-lang-switch="en" data-lang="en" 
+                        class="btn btn-sm btn-outline-light {{ 'active' if current_lang == 'en' else '' }} lang-switch-btn me-3">
+                    EN
+                </button>
+                <a href="{{ url_for('analytics_dashboard') }}" class="btn btn-outline-light btn-sm me-2">
+                    <i class="bi bi-arrow-left me-1"></i>
+                    {% if current_lang == 'en' %}Back to Dashboard{% else %}返回仪表盘{% endif %}
+                </a>
+                <a href="{{ url_for('index') }}" class="btn btn-outline-warning btn-sm">
+                    <i class="bi bi-house-door me-1"></i>
+                    {% if current_lang == 'en' %}Home{% else %}主页{% endif %}
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="section-title">
+                    <i class="bi bi-file-earmark-text gold-accent me-2"></i>
+                    {% if current_lang == 'en' %}Report Center{% else %}报告中心{% endif %}
+                </h2>
+                <p class="text-muted">
+                    {% if current_lang == 'en' %}
+                    Generate and download professional mining analysis reports in multiple formats.
+                    {% else %}
+                    生成并下载多种格式的专业挖矿分析报告。
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+        <div class="row mb-5">
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card report-card h-100">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-file-earmark-pdf report-icon pdf-icon"></i>
+                        <h4>{% if current_lang == 'en' %}PDF Report{% else %}PDF报告{% endif %}</h4>
+                        <p class="report-description">
+                            {% if current_lang == 'en' %}
+                            Comprehensive analysis report with charts, tables and detailed insights. Ideal for printing and sharing.
+                            {% else %}
+                            包含图表、表格和详细分析的综合报告。适合打印和分享。
+                            {% endif %}
+                        </p>
+                        <button class="btn btn-pdf download-btn" onclick="downloadReport('pdf')">
+                            <span class="btn-text">
+                                <i class="bi bi-download me-2"></i>
+                                {% if current_lang == 'en' %}Download PDF{% else %}下载 PDF{% endif %}
+                            </span>
+                            <span class="loading-spinner">
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                {% if current_lang == 'en' %}Generating...{% else %}生成中...{% endif %}
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card report-card h-100">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-file-earmark-excel report-icon excel-icon"></i>
+                        <h4>{% if current_lang == 'en' %}Excel Report{% else %}Excel报告{% endif %}</h4>
+                        <p class="report-description">
+                            {% if current_lang == 'en' %}
+                            Detailed spreadsheet with raw data, calculations and pivot tables. Perfect for data analysis.
+                            {% else %}
+                            包含原始数据、计算和数据透视表的详细电子表格。适合数据分析。
+                            {% endif %}
+                        </p>
+                        <button class="btn btn-excel download-btn" onclick="downloadReport('xlsx')">
+                            <span class="btn-text">
+                                <i class="bi bi-download me-2"></i>
+                                {% if current_lang == 'en' %}Download Excel{% else %}下载 Excel{% endif %}
+                            </span>
+                            <span class="loading-spinner">
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                {% if current_lang == 'en' %}Generating...{% else %}生成中...{% endif %}
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card report-card h-100">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-file-earmark-ppt report-icon ppt-icon"></i>
+                        <h4>{% if current_lang == 'en' %}PowerPoint Report{% else %}PowerPoint报告{% endif %}</h4>
+                        <p class="report-description">
+                            {% if current_lang == 'en' %}
+                            Professional presentation with key metrics and visualizations. Ready for meetings and investors.
+                            {% else %}
+                            包含关键指标和可视化的专业演示文稿。适合会议和投资者展示。
+                            {% endif %}
+                        </p>
+                        <button class="btn btn-ppt download-btn" onclick="downloadReport('pptx')">
+                            <span class="btn-text">
+                                <i class="bi bi-download me-2"></i>
+                                {% if current_lang == 'en' %}Download PPTX{% else %}下载 PPTX{% endif %}
+                            </span>
+                            <span class="loading-spinner">
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                {% if current_lang == 'en' %}Generating...{% else %}生成中...{% endif %}
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-clock-history gold-accent me-2"></i>
+                            {% if current_lang == 'en' %}Quick Reports{% else %}快速报告{% endif %}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <button class="btn btn-outline-light w-100 py-3" onclick="downloadReport('pdf', 'daily')">
+                                    <i class="bi bi-calendar-day d-block mb-2" style="font-size: 1.5rem;"></i>
+                                    {% if current_lang == 'en' %}Daily Summary{% else %}每日汇总{% endif %}
+                                </button>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <button class="btn btn-outline-light w-100 py-3" onclick="downloadReport('pdf', 'weekly')">
+                                    <i class="bi bi-calendar-week d-block mb-2" style="font-size: 1.5rem;"></i>
+                                    {% if current_lang == 'en' %}Weekly Report{% else %}周报{% endif %}
+                                </button>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <button class="btn btn-outline-light w-100 py-3" onclick="downloadReport('pdf', 'monthly')">
+                                    <i class="bi bi-calendar-month d-block mb-2" style="font-size: 1.5rem;"></i>
+                                    {% if current_lang == 'en' %}Monthly Report{% else %}月报{% endif %}
+                                </button>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <button class="btn btn-outline-warning w-100 py-3" onclick="downloadReport('pdf', 'custom')">
+                                    <i class="bi bi-sliders d-block mb-2" style="font-size: 1.5rem;"></i>
+                                    {% if current_lang == 'en' %}Custom Report{% else %}自定义报告{% endif %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-folder2-open gold-accent me-2"></i>
+                            {% if current_lang == 'en' %}Recent Reports{% else %}最近报告{% endif %}
+                        </h5>
+                        <button class="btn btn-sm btn-outline-warning" onclick="refreshReportHistory()">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-dark recent-reports-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>{% if current_lang == 'en' %}Report Name{% else %}报告名称{% endif %}</th>
+                                        <th>{% if current_lang == 'en' %}Type{% else %}类型{% endif %}</th>
+                                        <th>{% if current_lang == 'en' %}Generated{% else %}生成时间{% endif %}</th>
+                                        <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                                        <th>{% if current_lang == 'en' %}Action{% else %}操作{% endif %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reportHistoryBody">
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-4">
+                                            <i class="bi bi-hourglass-split me-2"></i>
+                                            {% if current_lang == 'en' %}Loading report history...{% else %}加载报告历史...{% endif %}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="downloadToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-dark">
+                <i class="bi bi-check-circle text-success me-2"></i>
+                <strong class="me-auto">{% if current_lang == 'en' %}Download{% else %}下载{% endif %}</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body bg-dark" id="toastMessage">
+                {% if current_lang == 'en' %}Report downloaded successfully!{% else %}报告下载成功！{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const currentLang = '{{ current_lang }}';
+        
+        function downloadReport(format, period = 'full') {
+            const btn = event.target.closest('.download-btn') || event.target.closest('.btn');
+            if (btn) {
+                btn.classList.add('loading');
+                btn.disabled = true;
+            }
+            
+            const url = `/api/download-report?format=${format}&period=${period}`;
+            
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Download failed');
+                    }
+                    return response.blob();
+                })
+                .then(blob => {
+                    const link = document.createElement('a');
+                    const timestamp = new Date().toISOString().slice(0, 10);
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `mining_report_${period}_${timestamp}.${format}`;
+                    link.click();
+                    URL.revokeObjectURL(link.href);
+                    showToast(currentLang === 'en' ? 'Report downloaded successfully!' : '报告下载成功！', 'success');
+                })
+                .catch(error => {
+                    console.error('Download error:', error);
+                    showToast(currentLang === 'en' ? 'Download failed. Please try again.' : '下载失败，请重试。', 'error');
+                })
+                .finally(() => {
+                    if (btn) {
+                        btn.classList.remove('loading');
+                        btn.disabled = false;
+                    }
+                });
+        }
+        
+        function showToast(message, type = 'success') {
+            const toastEl = document.getElementById('downloadToast');
+            const toastMessage = document.getElementById('toastMessage');
+            const toastIcon = toastEl.querySelector('.toast-header i');
+            
+            toastMessage.textContent = message;
+            toastIcon.className = type === 'success' 
+                ? 'bi bi-check-circle text-success me-2' 
+                : 'bi bi-exclamation-circle text-danger me-2';
+            
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+        }
+        
+        function refreshReportHistory() {
+            const tbody = document.getElementById('reportHistoryBody');
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">
+                <span class="spinner-border spinner-border-sm me-2"></span>
+                ${currentLang === 'en' ? 'Loading...' : '加载中...'}
+            </td></tr>`;
+            
+            fetch('/api/report-history')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.reports && data.reports.length > 0) {
+                        tbody.innerHTML = data.reports.map(report => `
+                            <tr>
+                                <td><i class="bi bi-file-earmark me-2"></i>${report.name}</td>
+                                <td><span class="badge bg-secondary">${report.format.toUpperCase()}</span></td>
+                                <td>${report.created_at}</td>
+                                <td><span class="status-badge status-${report.status}">${report.status}</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-warning" onclick="downloadReport('${report.format}')">
+                                        <i class="bi bi-download"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('');
+                    } else {
+                        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox me-2"></i>
+                            ${currentLang === 'en' ? 'No reports generated yet' : '暂无生成的报告'}
+                        </td></tr>`;
+                    }
+                })
+                .catch(error => {
+                    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">
+                        <i class="bi bi-inbox me-2"></i>
+                        ${currentLang === 'en' ? 'No reports available' : '暂无可用报告'}
+                    </td></tr>`;
+                });
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshReportHistory();
+        });
+    </script>
+    <script src="/static/js/i18n.js"></script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+/* 挖矿仪表盘动画效果 - 更微妙专业的版本 */
+
+/* 卡片悬停效果 - 更微妙的版本 */
+.card {
+    transition: box-shadow 0.25s ease, border-color 0.25s ease;
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    border-color: rgba(13, 110, 253, 0.4);
+}
+
+/* 结果卡片悬停效果 - 更微妙的版本 */
+.results-hover-card {
+    transition: box-shadow 0.25s ease, background-color 0.25s ease;
+}
+
+.results-hover-card:hover {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    z-index: 1;
+}
+
+/* 比特币挖矿产出卡片 - 更微妙的版本 */
+.btc-mined-card {
+    transition: background-color 0.25s ease, box-shadow 0.25s ease;
+    overflow: hidden;
+    position: relative;
+}
+
+.btc-mined-card:hover {
+    background-color: rgba(13, 110, 253, 0.03);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+}
+
+.btc-mined-card:hover::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--bs-primary);
+}
+
+/* 矿场主月度收益卡片 - 更微妙的版本 */
+.host-profit-card {
+    transition: background-color 0.25s ease, box-shadow 0.25s ease;
+    overflow: hidden;
+    position: relative;
+}
+
+.host-profit-card:hover {
+    background-color: rgba(33, 37, 41, 0.03);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+}
+
+.host-profit-card:hover::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--bs-dark);
+}
+
+/* 客户月度收益卡片 - 更微妙的版本 */
+.client-profit-card {
+    transition: background-color 0.25s ease, box-shadow 0.25s ease;
+    overflow: hidden;
+    position: relative;
+}
+
+.client-profit-card:hover {
+    background-color: rgba(13, 202, 240, 0.03);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+}
+
+.client-profit-card:hover::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--bs-info);
+}
+
+/* 表单控件动画 - 更微妙的版本 */
+.form-control, .form-select {
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: rgba(13, 110, 253, 0.5);
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+}
+
+/* 按钮悬停动画 - 更微妙的版本 */
+.btn {
+    transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    position: relative;
+}
+
+.btn-primary:hover {
+    box-shadow: 0 2px 5px rgba(13, 110, 253, 0.2);
+}
+
+/* 图表生成按钮特效 - 更微妙的版本 */
+#generate-chart-btn {
+    transition: background-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+#generate-chart-btn:hover {
+    box-shadow: 0 2px 5px rgba(13, 110, 253, 0.2);
+}
+
+#generate-chart-btn i {
+    transition: transform 0.25s ease;
+}
+
+#generate-chart-btn:hover i {
+    transform: rotate(5deg);
+}
+
+/* 表格行悬停动画 - 更微妙的版本 */
+.table tbody tr {
+    transition: background-color 0.25s ease;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.03);
+}
+
+/* 加载动画 */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.loading-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.spinner-border {
+    width: 2.5rem;
+    height: 2.5rem;
+}

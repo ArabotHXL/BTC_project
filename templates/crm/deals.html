@@ -1,0 +1,950 @@
+{% extends "crm/base.html" %}
+
+{% block title %}交易管理看板 | BTC Mining CRM{% endblock %}
+
+{% block page_title %}
+<div class="d-flex align-items-center">
+    <i class="bi bi-kanban text-warning me-3" style="font-size: 2rem;"></i>
+    交易管理看板
+</div>
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">交易看板</li>
+{% endblock %}
+
+{% block action_buttons %}
+<a href="{{ url_for('crm.customers') }}" class="btn btn-primary">
+    <i class="bi bi-plus-circle me-1"></i> 创建新交易
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- KPI Cards Section -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="kpi-card">
+            <div class="kpi-icon">
+                <i class="bi bi-cash-stack"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-label">总交易数量</div>
+                <div class="kpi-value" id="total-deals">-</div>
+                <div class="kpi-trend">
+                    <i class="bi bi-graph-up"></i> 全部交易项目
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="kpi-card">
+            <div class="kpi-icon">
+                <i class="bi bi-currency-dollar"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-label">总交易价值</div>
+                <div class="kpi-value"><span id="total-value">0</span></div>
+                <div class="kpi-trend">
+                    <i class="bi bi-cash"></i> 美元（USD）
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="kpi-card">
+            <div class="kpi-icon">
+                <i class="bi bi-clock-history"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-label">活跃项目数</div>
+                <div class="kpi-value" id="active-projects">-</div>
+                <div class="kpi-trend">
+                    <i class="bi bi-play-circle"></i> 进行中的交易
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="kpi-card">
+            <div class="kpi-icon">
+                <i class="bi bi-calendar-check"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-label">平均成交周期</div>
+                <div class="kpi-value"><span id="avg-cycle">-</span> 天</div>
+                <div class="kpi-trend">
+                    <i class="bi bi-speedometer"></i> 从创建到完成
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter Section -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-lg-4 col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-dark border-secondary">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control bg-dark border-secondary text-white" 
+                           id="search-input" placeholder="搜索交易名称或客户...">
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <select class="form-select bg-dark border-secondary text-white" id="status-filter">
+                    <option value="">全部状态</option>
+                    <option value="DRAFT">草稿</option>
+                    <option value="PENDING">待定</option>
+                    <option value="APPROVED">已批准</option>
+                    <option value="SIGNED">已签署</option>
+                    <option value="COMPLETED">已完成</option>
+                    <option value="CANCELED">已取消</option>
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-6">
+                <input type="date" class="form-control bg-dark border-secondary text-white" 
+                       id="date-from" placeholder="开始日期">
+            </div>
+            <div class="col-lg-2 col-md-6">
+                <input type="date" class="form-control bg-dark border-secondary text-white" 
+                       id="date-to" placeholder="结束日期">
+            </div>
+            <div class="col-lg-1 col-md-12">
+                <button class="btn btn-outline-warning w-100" onclick="applyFilters()">
+                    <i class="bi bi-funnel"></i> 筛选
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Kanban Board Section -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-kanban-fill me-2"></i>交易看板</h5>
+        <span class="badge bg-info">拖拽功能即将上线</span>
+    </div>
+    <div class="card-body p-3">
+        <div class="kanban-container" id="kanban-board">
+            <div class="text-center py-5">
+                <div class="spinner-border text-warning" role="status">
+                    <span class="visually-hidden">加载中...</span>
+                </div>
+                <p class="mt-3 text-muted">正在加载交易数据...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Revenue Trend and Status Distribution Charts -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>收入趋势分析</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="revenue-trend-chart" height="80"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-pie-chart me-2"></i>状态分布</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="status-distribution-chart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mining Project Tracking Section -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-hdd-stack me-2"></i>托管容量统计</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>总托管容量</span>
+                        <strong><span id="total-capacity">-</span> MW</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-success">已签约容量</span>
+                        <strong class="text-success"><span id="signed-capacity">-</span> MW</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="text-warning">待签约容量</span>
+                        <strong class="text-warning"><span id="pending-capacity">-</span> MW</strong>
+                    </div>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar bg-success" role="progressbar" 
+                             id="capacity-progress" style="width: 0%">
+                            <span id="capacity-percent">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-lightning-charge me-2"></i>电费价格分析</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>平均电费</span>
+                        <strong>$<span id="avg-electricity">-</span>/kWh</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-success">最低电费</span>
+                        <strong class="text-success">$<span id="min-electricity">-</span>/kWh</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="text-danger">最高电费</span>
+                        <strong class="text-danger">$<span id="max-electricity">-</span>/kWh</strong>
+                    </div>
+                </div>
+                <canvas id="electricity-chart" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-trophy me-2"></i>客户投资排行</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="investment-chart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Empty State (hidden by default, shown if no data) -->
+<div class="card d-none" id="empty-state">
+    <div class="card-body text-center py-5">
+        <i class="bi bi-inbox" style="font-size: 4rem; color: #6c757d;"></i>
+        <h4 class="mt-4 text-muted">暂无交易数据</h4>
+        <p class="text-muted">开始创建您的第一个交易项目</p>
+        <a href="{{ url_for('crm.customers') }}" class="btn btn-primary mt-3">
+            <i class="bi bi-plus-circle me-2"></i>创建交易
+        </a>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* KPI Cards Styling */
+    .kpi-card {
+        background: linear-gradient(135deg, #252837 0%, #2d3348 100%);
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        border: 1px solid #3d4458;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+
+    .kpi-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--btc-gold);
+        box-shadow: 0 10px 30px rgba(247, 147, 26, 0.2);
+    }
+
+    .kpi-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, var(--btc-gold), var(--btc-orange));
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        color: #1a1d2e;
+        flex-shrink: 0;
+    }
+
+    .kpi-content {
+        flex: 1;
+    }
+
+    .kpi-label {
+        font-size: 0.85rem;
+        color: #9ca3af;
+        margin-bottom: 0.25rem;
+    }
+
+    .kpi-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 0.25rem;
+    }
+
+    .kpi-trend {
+        font-size: 0.75rem;
+        color: #6c757d;
+    }
+
+    .kpi-trend i {
+        color: var(--btc-gold);
+    }
+
+    /* Kanban Board Styling */
+    .kanban-container {
+        display: flex;
+        gap: 1rem;
+        overflow-x: auto;
+        padding: 0.5rem 0;
+        min-height: 400px;
+    }
+
+    .kanban-column {
+        flex: 0 0 300px;
+        background: #1a1d2e;
+        border-radius: 12px;
+        padding: 1rem;
+        border: 1px solid #3d4458;
+    }
+
+    .kanban-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        background: #252837;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+
+    .kanban-title {
+        font-weight: 600;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .kanban-count {
+        font-size: 0.85rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+    }
+
+    .kanban-stats {
+        font-size: 0.75rem;
+        color: #9ca3af;
+        margin-top: 0.25rem;
+    }
+
+    .kanban-cards {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        max-height: 600px;
+        overflow-y: auto;
+    }
+
+    .deal-card {
+        background: #252837;
+        border: 1px solid #3d4458;
+        border-radius: 8px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .deal-card:hover {
+        transform: translateY(-3px);
+        border-color: var(--btc-gold);
+        box-shadow: 0 5px 15px rgba(247, 147, 26, 0.2);
+    }
+
+    .deal-title {
+        font-weight: 600;
+        color: #fff;
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+    }
+
+    .deal-customer {
+        font-size: 0.85rem;
+        color: #9ca3af;
+        margin-bottom: 0.75rem;
+    }
+
+    .deal-customer i {
+        color: var(--btc-gold);
+    }
+
+    .deal-amount {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--btc-gold);
+        margin-bottom: 0.5rem;
+    }
+
+    .deal-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid #3d4458;
+    }
+
+    .deal-capacity {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .deal-date {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    /* Status Badge Colors */
+    .status-draft { background-color: #6c757d; }
+    .status-pending { background-color: #0dcaf0; }
+    .status-approved { background-color: #0d6efd; }
+    .status-signed { background-color: #ffc107; color: #000; }
+    .status-completed { background-color: #198754; }
+    .status-canceled { background-color: #dc3545; }
+
+    /* Responsive Kanban */
+    @media (max-width: 992px) {
+        .kanban-container {
+            flex-direction: column;
+        }
+        .kanban-column {
+            flex: 1 0 auto;
+            width: 100%;
+        }
+    }
+
+    /* Charts Container */
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+
+    /* Progress Bar Animation */
+    @keyframes progressAnimation {
+        from { width: 0%; }
+    }
+
+    #capacity-progress {
+        animation: progressAnimation 1.5s ease-out;
+    }
+
+    /* Custom Scrollbar for Kanban */
+    .kanban-container::-webkit-scrollbar,
+    .kanban-cards::-webkit-scrollbar {
+        height: 8px;
+        width: 8px;
+    }
+
+    .kanban-container::-webkit-scrollbar-track,
+    .kanban-cards::-webkit-scrollbar-track {
+        background: #1a1d2e;
+    }
+
+    .kanban-container::-webkit-scrollbar-thumb,
+    .kanban-cards::-webkit-scrollbar-thumb {
+        background: #3d4458;
+        border-radius: 4px;
+    }
+
+    .kanban-container::-webkit-scrollbar-thumb:hover,
+    .kanban-cards::-webkit-scrollbar-thumb:hover {
+        background: var(--btc-gold);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadKPIData();
+    loadKanbanData();
+    loadRevenueTrend();
+    loadMiningStats();
+    loadTopInvestments();
+});
+
+async function loadKPIData() {
+    try {
+        const response = await fetch('/crm/api/deals/kpi');
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+            const data = result.data;
+            
+            const totalDeals = parseFloat(data.total_deals) || 0;
+            const totalValue = parseFloat(data.total_value) || 0;
+            const activeProjects = parseFloat(data.active_projects) || 0;
+            const avgCycle = parseFloat(data.avg_close_cycle) || 0;
+            
+            console.log('DEBUG KPI数据:', { totalDeals, totalValue, activeProjects, avgCycle });
+            
+            // 使用正确的initCountUp API（elementId, endValue, options）
+            if (!isNaN(totalDeals) && totalDeals >= 0) {
+                initCountUp('total-deals', totalDeals, { duration: 1.5 });
+            }
+            
+            if (!isNaN(totalValue) && totalValue >= 0) {
+                initCountUp('total-value', totalValue, { duration: 1.5, prefix: '$', separator: ',' });
+            }
+            
+            if (!isNaN(activeProjects) && activeProjects >= 0) {
+                initCountUp('active-projects', activeProjects, { duration: 1.5 });
+            }
+            
+            if (!isNaN(avgCycle) && avgCycle >= 0) {
+                initCountUp('avg-cycle', avgCycle, { duration: 1.5, decimalPlaces: 0 });
+            }
+        }
+    } catch (error) {
+        console.error('加载KPI数据失败:', error);
+    }
+}
+
+async function loadKanbanData() {
+    try {
+        const response = await fetch('/crm/api/deals/kanban');
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+            renderKanban(result.data);
+        }
+    } catch (error) {
+        console.error('加载Kanban数据失败:', error);
+        document.getElementById('kanban-board').innerHTML = `
+            <div class="text-center py-5 w-100">
+                <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                <p class="mt-3 text-muted">加载数据失败，请刷新页面重试</p>
+            </div>
+        `;
+    }
+}
+
+function renderKanban(data) {
+    const kanbanBoard = document.getElementById('kanban-board');
+    const statuses = ['DRAFT', 'PENDING', 'APPROVED', 'SIGNED', 'COMPLETED', 'CANCELED'];
+    const statusLabels = {
+        'DRAFT': '草稿',
+        'PENDING': '待定',
+        'APPROVED': '已批准',
+        'SIGNED': '已签署',
+        'COMPLETED': '已完成',
+        'CANCELED': '已取消'
+    };
+    const statusColors = {
+        'DRAFT': 'secondary',
+        'PENDING': 'info',
+        'APPROVED': 'primary',
+        'SIGNED': 'warning',
+        'COMPLETED': 'success',
+        'CANCELED': 'danger'
+    };
+    
+    let html = '';
+    
+    statuses.forEach(status => {
+        const columnData = data[status] || { count: 0, total_value: 0, deals: [] };
+        const count = columnData.count || 0;
+        const totalValue = parseFloat(columnData.total_value) || 0;
+        const deals = columnData.deals || [];
+        
+        html += `
+            <div class="kanban-column">
+                <div class="kanban-header">
+                    <div>
+                        <div class="kanban-title">
+                            ${statusLabels[status]}
+                            <span class="badge bg-${statusColors[status]} kanban-count">${count}</span>
+                        </div>
+                        <div class="kanban-stats">总额: $${totalValue.toLocaleString()}</div>
+                    </div>
+                </div>
+                <div class="kanban-cards">
+        `;
+        
+        if (deals.length === 0) {
+            html += `
+                <div class="text-center py-4">
+                    <i class="bi bi-inbox" style="font-size: 2rem; color: #6c757d;"></i>
+                    <p class="text-muted mt-2 mb-0" style="font-size: 0.85rem;">暂无交易</p>
+                </div>
+            `;
+        } else {
+            deals.forEach(deal => {
+                const dealValue = parseFloat(deal.value) || 0;
+                const dealCapacity = parseFloat(deal.mining_capacity) || 0;
+                
+                html += `
+                    <div class="deal-card" onclick="window.location.href='/crm/deal/${deal.id}'">
+                        <div class="deal-title">${deal.title || '未命名交易'}</div>
+                        <div class="deal-customer">
+                            <i class="bi bi-person-circle"></i> ${deal.customer_name || '未知客户'}
+                        </div>
+                        <div class="deal-amount">$${dealValue.toLocaleString()}</div>
+                        <div class="deal-meta">
+                            <div class="deal-capacity">
+                                <i class="bi bi-hdd-stack"></i>
+                                ${dealCapacity > 0 ? dealCapacity + ' MW' : '-'}
+                            </div>
+                            <div class="deal-date">
+                                <i class="bi bi-calendar-event"></i>
+                                ${deal.expected_close_date || '-'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        
+        html += `
+                </div>
+            </div>
+        `;
+    });
+    
+    kanbanBoard.innerHTML = html;
+}
+
+async function loadRevenueTrend() {
+    try {
+        const response = await fetch('/crm/api/deals/revenue-trend');
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+            renderRevenueTrendChart(result.data);
+            renderStatusDistributionChart();
+        }
+    } catch (error) {
+        console.error('加载收入趋势失败:', error);
+    }
+}
+
+function renderRevenueTrendChart(data) {
+    const labels = data.map(item => item.month_label || item.month);
+    const totalRevenue = data.map(item => parseFloat(item.total_revenue) || 0);
+    const completedRevenue = data.map(item => parseFloat(item.completed_revenue) || 0);
+    
+    initChart('revenue-trend-chart', {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: '总交易额',
+                    data: totalRevenue,
+                    borderColor: '#ffa500',
+                    backgroundColor: 'rgba(255, 165, 0, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: '已完成交易',
+                    data: completedRevenue,
+                    borderColor: '#f7931a',
+                    backgroundColor: 'rgba(247, 147, 26, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        color: '#e0e6ed',
+                        font: { size: 12 }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': $' + context.parsed.y.toLocaleString();
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: '#9ca3af',
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    },
+                    grid: {
+                        color: '#3d4458'
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: '#9ca3af'
+                    },
+                    grid: {
+                        color: '#3d4458'
+                    }
+                }
+            }
+        }
+    });
+}
+
+async function renderStatusDistributionChart() {
+    try {
+        const response = await fetch('/crm/api/deals/kanban');
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+            const data = result.data;
+            
+            const statusLabels = ['草稿', '待定', '已批准', '已签署', '已完成', '已取消'];
+            const statusKeys = ['DRAFT', 'PENDING', 'APPROVED', 'SIGNED', 'COMPLETED', 'CANCELED'];
+            const counts = statusKeys.map(key => data[key]?.count || 0);
+            
+            initChart('status-distribution-chart', {
+                type: 'doughnut',
+                data: {
+                    labels: statusLabels,
+                    datasets: [{
+                        data: counts,
+                        backgroundColor: [
+                            '#6c757d',
+                            '#0dcaf0',
+                            '#0d6efd',
+                            '#ffc107',
+                            '#198754',
+                            '#dc3545'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#1a1d2e'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#e0e6ed',
+                                font: { size: 11 },
+                                padding: 10
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    } catch (error) {
+        console.error('加载状态分布图失败:', error);
+    }
+}
+
+async function loadMiningStats() {
+    try {
+        const response = await fetch('/crm/api/deals/mining-stats');
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+            const data = result.data;
+            
+            const totalCapacity = parseFloat(data.total_capacity) || 0;
+            const signedCapacity = parseFloat(data.signed_capacity) || 0;
+            const pendingCapacity = parseFloat(data.pending_capacity) || 0;
+            
+            document.getElementById('total-capacity').textContent = totalCapacity.toFixed(1);
+            document.getElementById('signed-capacity').textContent = signedCapacity.toFixed(1);
+            document.getElementById('pending-capacity').textContent = pendingCapacity.toFixed(1);
+            
+            const percentage = totalCapacity > 0 ? (signedCapacity / totalCapacity * 100) : 0;
+            document.getElementById('capacity-progress').style.width = percentage + '%';
+            document.getElementById('capacity-percent').textContent = percentage.toFixed(0) + '%';
+            
+            document.getElementById('avg-electricity').textContent = 
+                (parseFloat(data.avg_electricity_cost) || 0).toFixed(4);
+            document.getElementById('min-electricity').textContent = 
+                (parseFloat(data.min_electricity_cost) || 0).toFixed(4);
+            document.getElementById('max-electricity').textContent = 
+                (parseFloat(data.max_electricity_cost) || 0).toFixed(4);
+            
+            if (data.electricity_distribution && data.electricity_distribution.length > 0) {
+                renderElectricityChart(data.electricity_distribution);
+            }
+        }
+    } catch (error) {
+        console.error('加载矿场统计失败:', error);
+    }
+}
+
+function renderElectricityChart(data) {
+    const labels = data.map(item => item.deal_title.substring(0, 15) + '...');
+    const costs = data.map(item => parseFloat(item.electricity_cost) || 0);
+    
+    initChart('electricity-chart', {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '电费 ($/kWh)',
+                data: costs,
+                backgroundColor: '#f7931a',
+                borderColor: '#ffa500',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: '#9ca3af',
+                        callback: function(value) {
+                            return '$' + value.toFixed(4);
+                        }
+                    },
+                    grid: {
+                        color: '#3d4458'
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: '#9ca3af',
+                        font: { size: 9 }
+                    },
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+}
+
+async function loadTopInvestments() {
+    try {
+        const response = await fetch('/crm/api/deals/top-investments');
+        const result = await response.json();
+        
+        if (result.success && result.data && result.data.length > 0) {
+            renderInvestmentChart(result.data);
+        }
+    } catch (error) {
+        console.error('加载投资排行失败:', error);
+    }
+}
+
+function renderInvestmentChart(data) {
+    const labels = data.map(item => item.customer_name);
+    const investments = data.map(item => parseFloat(item.total_investment) || 0);
+    
+    initChart('investment-chart', {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '投资额 (USD)',
+                data: investments,
+                backgroundColor: '#f7931a',
+                borderColor: '#ffa500',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const profit = data[context.dataIndex].monthly_profit || 0;
+                            return [
+                                '投资额: $' + context.parsed.x.toLocaleString(),
+                                '月利润: $' + profit.toLocaleString()
+                            ];
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: '#9ca3af',
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    },
+                    grid: {
+                        color: '#3d4458'
+                    }
+                },
+                y: {
+                    ticks: {
+                        color: '#9ca3af'
+                    },
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+}
+
+function applyFilters() {
+    const searchText = document.getElementById('search-input').value.toLowerCase();
+    const statusFilter = document.getElementById('status-filter').value;
+    const dateFrom = document.getElementById('date-from').value;
+    const dateTo = document.getElementById('date-to').value;
+    
+    console.log('Filters:', { searchText, statusFilter, dateFrom, dateTo });
+    alert('筛选功能即将上线！');
+}
+</script>
+{% endblock %}

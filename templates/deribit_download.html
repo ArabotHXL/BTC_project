@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deribit Analysis Package Download</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        .container {
+            padding: 50px 20px;
+        }
+        .download-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 40px;
+            margin: 20px 0;
+        }
+        .download-btn {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #000;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.1em;
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+            text-decoration: none;
+            display: inline-block;
+        }
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+            color: #000;
+        }
+        .feature-card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .feature-list li:before {
+            content: "✅ ";
+            margin-right: 10px;
+        }
+        .highlight {
+            color: #ffd700;
+            font-weight: bold;
+        }
+        .back-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="text-center mb-4 d-flex justify-content-between align-items-center">
+                    <a href="/deribit-analysis" class="back-btn">
+                        <i class="bi bi-arrow-left"></i> <span data-i18n="common.back">返回分析页面</span>
+                    </a>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-globe2"></i> {{ 'EN' if current_lang == 'en' else '中文' }}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><button class="dropdown-item" type="button" data-lang-switch="zh">中文</button></li>
+                            <li><button class="dropdown-item" type="button" data-lang-switch="en">English</button></li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="download-card">
+                    <div class="text-center">
+                        <h1 class="mb-4">
+                            <i class="bi bi-download text-warning"></i>
+                            Deribit Analysis Package
+                        </h1>
+                        
+                        <div class="feature-card">
+                            <h4><i class="bi bi-info-circle text-info"></i> 包信息</h4>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>文件大小:</strong> 106KB<br>
+                                    <strong>版本:</strong> 2.0 (多交易所集成版)<br>
+                                    <strong>更新日期:</strong> 2025-08-15
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>包含文件:</strong> 9个核心文件<br>
+                                    <strong>支持系统:</strong> Linux/Windows/macOS<br>
+                                    <strong>Python版本:</strong> 3.8+
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="my-4">
+                            <a href="/download/deribit-package" class="download-btn">
+                                <i class="bi bi-download"></i>
+                                立即下载 deribit_analysis_package.tar.gz
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="feature-card">
+                            <h5><i class="bi bi-gear text-warning"></i> 核心功能</h5>
+                            <ul class="feature-list">
+                                <li>多交易所数据集成 (Deribit + OKX + Binance)</li>
+                                <li>实时BTC期权价格分析</li>
+                                <li>交易方向分布可视化</li>
+                                <li>价格区间智能分桶</li>
+                                <li>API状态实时监控</li>
+                                <li>历史数据持久化存储</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="feature-card">
+                            <h5><i class="bi bi-file-text text-success"></i> 包含文件</h5>
+                            <ul class="feature-list">
+                                <li>deribit_web_routes.py (Flask路由)</li>
+                                <li>multi_exchange_collector.py (数据聚合)</li>
+                                <li>deribit_options_poc.py (数据采集)</li>
+                                <li>deribit_analysis.html (Web界面)</li>
+                                <li>deribit_trades.db (历史数据)</li>
+                                <li>README.md (详细文档)</li>
+                                <li>INSTALL.md (安装指南)</li>
+                                <li>requirements.txt (依赖列表)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <h5><i class="bi bi-lightning text-danger"></i> 快速开始</h5>
+                    <div class="row">
+                        <div class="col-12">
+                            <pre style="background: rgba(0,0,0,0.5); padding: 15px; border-radius: 5px; color: #00ff00; overflow-x: auto;"><code># 1. 解压文件
+tar -xzf deribit_analysis_package.tar.gz
+
+# 2. 安装依赖
+pip install -r requirements.txt
+
+# 3. 集成到Flask应用
+from deribit_web_routes import deribit_bp
+app.register_blueprint(deribit_bp)
+
+# 4. 访问页面
+http://localhost:5000/deribit-analysis</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <p class="text-muted">
+                        <small>
+                            <strong>注意:</strong> 此包包含完整的多交易所期权交易数据分析系统，
+                            支持 Deribit、OKX、Binance 三个交易所的实时数据集成和分析。
+                        </small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/i18n.js"></script>
+</body>
+</html>

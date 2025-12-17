@@ -1,0 +1,1458 @@
+{% extends "hosting/hosting_base.html" %}
+
+{% block page_title %}{% if current_lang == 'en' %}Site Settings{% else %}站点设置{% endif %} - {{ site.name }}{% endblock %}
+{% block page_subtitle %}{% if current_lang == 'en' %}Thermal protection configuration{% else %}热保护配置{% endif %}{% endblock %}
+
+{% block header_actions %}
+{{ super() }}
+<div class="d-flex align-items-center gap-3 ms-3">
+    <a href="/hosting/site/{{ site.id }}" class="btn btn-hosting-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i><span data-i18n="common.back">返回</span>
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex align-items-center gap-3">
+            <label class="text-muted mb-0" data-i18n="hosting.select_site">
+                {% if current_lang == 'en' %}Select Site:{% else %}选择站点:{% endif %}
+            </label>
+            <select id="siteSelector" class="form-select" 
+                    style="max-width: 280px; background: rgba(255,255,255,0.1); border-color: var(--hosting-primary); color: #fff;"
+                    onchange="switchSite(this.value)">
+                {% for s in all_sites %}
+                <option value="{{ s.id }}" {{ 'selected' if s.id == site.id else '' }} style="background: #1a1d2e; color: #fff;">
+                    {{ s.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+</div>
+<script>
+function switchSite(siteId) {
+    if (siteId) {
+        window.location.href = '/hosting/site/' + siteId + '/settings';
+    }
+}
+</script>
+
+<div>
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="hosting-card">
+                    <div class="hosting-card-header d-flex justify-content-between align-items-center">
+                        <h5 class="hosting-card-title mb-0">
+                            <i class="bi bi-thermometer-high me-2"></i><span data-i18n="hosting.thermal.config">热保护配置</span>
+                        </h5>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="thermalEnabled" 
+                                   {{ 'checked' if thermal_config.is_enabled else '' }}>
+                            <label class="form-check-label" for="thermalEnabled" data-i18n="common.enabled">启用</label>
+                        </div>
+                    </div>
+                    <div class="hosting-card-body">
+                        <form id="thermalConfigForm">
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <h6 class="text-warning mb-3" data-i18n="hosting.thermal.thresholds">温度阈值 (°C)</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label" data-i18n="hosting.thermal.warning_temp">预警温度</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="warningTemp" 
+                                                   value="{{ thermal_config.warning_temp }}" min="40" max="100" step="0.5">
+                                            <span class="input-group-text">°C</span>
+                                        </div>
+                                        <small class="text-muted" data-i18n="hosting.thermal.warning_temp_help">达到此温度时发送预警通知</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label" data-i18n="hosting.thermal.throttle_temp">降频温度</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="throttleTemp" 
+                                                   value="{{ thermal_config.throttle_temp }}" min="50" max="100" step="0.5">
+                                            <span class="input-group-text">°C</span>
+                                        </div>
+                                        <small class="text-muted" data-i18n="hosting.thermal.throttle_temp_help">达到此温度时自动降低频率</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label" data-i18n="hosting.thermal.critical_temp">临界温度</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="criticalTemp" 
+                                                   value="{{ thermal_config.critical_temp }}" min="60" max="110" step="0.5">
+                                            <span class="input-group-text">°C</span>
+                                        </div>
+                                        <small class="text-muted" data-i18n="hosting.thermal.critical_temp_help">达到此温度时强制关机保护</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label" data-i18n="hosting.thermal.recovery_temp">恢复温度</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="recoveryTemp" 
+                                                   value="{{ thermal_config.recovery_temp }}" min="30" max="80" step="0.5">
+                                            <span class="input-group-text">°C</span>
+                                        </div>
+                                        <small class="text-muted" data-i18n="hosting.thermal.recovery_temp_help">降至此温度时恢复正常频率</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-warning mb-3" data-i18n="hosting.thermal.frequency_control">频率控制</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label" data-i18n="hosting.thermal.throttle_percent">降频比例</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="throttlePercent" 
+                                                   value="{{ thermal_config.throttle_frequency_percent }}" min="30" max="100">
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                        <small class="text-muted" data-i18n="hosting.thermal.throttle_percent_help">降频后的目标频率百分比</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label" data-i18n="hosting.thermal.min_percent">最低频率</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="minPercent" 
+                                                   value="{{ thermal_config.min_frequency_percent }}" min="20" max="80">
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                        <small class="text-muted" data-i18n="hosting.thermal.min_percent_help">频率降低的下限</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label" data-i18n="hosting.thermal.cooldown_minutes">冷却等待时间</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="cooldownMinutes" 
+                                                   value="{{ thermal_config.cooldown_minutes }}" min="1" max="60">
+                                            <span class="input-group-text" data-i18n="common.minutes">分钟</span>
+                                        </div>
+                                        <small class="text-muted" data-i18n="hosting.thermal.cooldown_help">恢复频率前的等待时间</small>
+                                    </div>
+                                    
+                                    <h6 class="text-warning mb-3 mt-4" data-i18n="hosting.thermal.notifications">通知设置</h6>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="notifyWarning" 
+                                               {{ 'checked' if thermal_config.notify_on_warning else '' }}>
+                                        <label class="form-check-label" for="notifyWarning" data-i18n="hosting.thermal.notify_warning">预警时通知</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="notifyThrottle" 
+                                               {{ 'checked' if thermal_config.notify_on_throttle else '' }}>
+                                        <label class="form-check-label" for="notifyThrottle" data-i18n="hosting.thermal.notify_throttle">降频时通知</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="notifyCritical" 
+                                               {{ 'checked' if thermal_config.notify_on_critical else '' }}>
+                                        <label class="form-check-label" for="notifyCritical" data-i18n="hosting.thermal.notify_critical">临界时通知</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4 d-flex gap-2">
+                                <button type="submit" class="btn btn-hosting-primary">
+                                    <i class="bi bi-check-circle me-2"></i><span data-i18n="common.save">保存配置</span>
+                                </button>
+                                <button type="button" class="btn btn-outline-warning" id="runThermalCheck">
+                                    <i class="bi bi-play-circle me-2"></i><span data-i18n="hosting.thermal.run_check">立即检查</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="hosting-card mb-4">
+                    <div class="hosting-card-header">
+                        <h5 class="hosting-card-title mb-0">
+                            <i class="bi bi-activity me-2"></i><span data-i18n="hosting.thermal.today_stats">今日统计</span>
+                        </h5>
+                    </div>
+                    <div class="hosting-card-body">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="text-center p-3 bg-warning bg-opacity-10 rounded">
+                                    <div class="h3 text-warning mb-1">{{ thermal_stats.today_warnings }}</div>
+                                    <small class="text-muted" data-i18n="hosting.thermal.warnings">预警</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center p-3 bg-info bg-opacity-10 rounded">
+                                    <div class="h3 text-info mb-1">{{ thermal_stats.today_throttles }}</div>
+                                    <small class="text-muted" data-i18n="hosting.thermal.throttles">降频</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center p-3 bg-danger bg-opacity-10 rounded">
+                                    <div class="h3 text-danger mb-1">{{ thermal_stats.today_criticals }}</div>
+                                    <small class="text-muted" data-i18n="hosting.thermal.criticals">临界</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center p-3 bg-success bg-opacity-10 rounded">
+                                    <div class="h3 text-success mb-1">{{ thermal_stats.today_recoveries }}</div>
+                                    <small class="text-muted" data-i18n="hosting.thermal.recoveries">恢复</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-muted" data-i18n="hosting.thermal.currently_throttled">当前降频中</span>
+                                <span class="badge bg-info">{{ thermal_stats.currently_throttled }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted" data-i18n="hosting.thermal.high_temp_miners">高温矿机</span>
+                                <span class="badge bg-warning">{{ thermal_stats.high_temp_miners }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="hosting-card">
+                    <div class="hosting-card-header">
+                        <h5 class="hosting-card-title mb-0">
+                            <i class="bi bi-thermometer me-2"></i><span data-i18n="hosting.thermal.temp_guide">温度指南</span>
+                        </h5>
+                    </div>
+                    <div class="hosting-card-body">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="badge bg-success me-2" style="width: 60px;">< 65°C</div>
+                            <small data-i18n="hosting.thermal.temp_normal">正常运行</small>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="badge bg-warning me-2" style="width: 60px;">65-80°C</div>
+                            <small data-i18n="hosting.thermal.temp_caution">需注意</small>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="badge bg-danger me-2" style="width: 60px;">80-90°C</div>
+                            <small data-i18n="hosting.thermal.temp_warning">自动降频</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="badge bg-dark me-2" style="width: 60px;">> 90°C</div>
+                            <small data-i18n="hosting.thermal.temp_critical">强制保护</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edge Device Management Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="hosting-card">
+                <div class="hosting-card-header d-flex justify-content-between align-items-center">
+                    <h5 class="hosting-card-title mb-0">
+                        <i class="bi bi-hdd-network me-2"></i>
+                        <span data-i18n="hosting.devices.title">设备管理</span>
+                    </h5>
+                    <button class="btn btn-hosting-primary btn-sm" data-bs-toggle="modal" data-bs-target="#registerDeviceModal">
+                        <i class="bi bi-plus-circle me-1"></i>
+                        <span data-i18n="hosting.devices.register_new">注册新设备</span>
+                    </button>
+                </div>
+                <div class="hosting-card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="hosting.devices.name">设备名称</th>
+                                    <th data-i18n="hosting.devices.status">状态</th>
+                                    <th data-i18n="hosting.devices.key_version">密钥版本</th>
+                                    <th data-i18n="hosting.devices.last_seen">最后在线</th>
+                                    <th data-i18n="common.actions">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="devicesTableBody">
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">
+                                        <i class="bi bi-hourglass-split me-2"></i>
+                                        <span data-i18n="common.loading">加载中...</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Capability Level Configuration Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="hosting-card">
+                <div class="hosting-card-header">
+                    <h5 class="hosting-card-title mb-0">
+                        <i class="bi bi-shield-lock me-2"></i>
+                        <span data-i18n="hosting.capability.title">能力分级</span>
+                    </h5>
+                </div>
+                <div class="hosting-card-body">
+                    <div class="alert alert-info mb-3" style="background: rgba(13, 202, 240, 0.1); border-color: var(--hosting-primary);">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <span data-i18n="hosting.capability.help">仅显示已配置加密凭证的矿机。能力级别：DISCOVERY (1) - 发现, TELEMETRY (2) - 遥测, CONTROL (3) - 控制</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="hosting.capability.miner">矿机</th>
+                                    <th>IP</th>
+                                    <th data-i18n="hosting.capability.level">能力级别</th>
+                                    <th data-i18n="hosting.capability.bound_device">绑定设备</th>
+                                    <th data-i18n="common.actions">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="capabilityTableBody">
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">
+                                        <i class="bi bi-hourglass-split me-2"></i>
+                                        <span data-i18n="common.loading">加载中...</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- IP Encryption Mode Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="hosting-card">
+                <div class="hosting-card-header">
+                    <h5 class="hosting-card-title mb-0">
+                        <i class="bi bi-lock-fill me-2"></i>
+                        <span data-i18n="hosting.ip_encryption.title">IP隐藏策略</span>
+                    </h5>
+                </div>
+                <div class="hosting-card-body">
+                    <div class="alert alert-info mb-3" style="background: rgba(13, 202, 240, 0.1); border-color: var(--hosting-primary);">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <span data-i18n="hosting.ip_encryption.help">选择矿机IP地址的保护级别。策略1为UI脱敏，策略2为服务器加密，策略3为端到端加密（最高安全）。</span>
+                    </div>
+                    
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <div class="card bg-dark border-secondary h-100" id="ipModeCard1">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-eye-slash fs-2 text-info mb-2"></i>
+                                    <h6 class="card-title" data-i18n="hosting.ip_encryption.mode1_title">策略1: UI脱敏</h6>
+                                    <p class="card-text small text-muted" data-i18n="hosting.ip_encryption.mode1_desc">IP明文存储，UI显示脱敏格式（192.168.1.xxx）。RBAC控制访问权限。</p>
+                                    <span class="badge bg-info">RBAC</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-dark border-secondary h-100" id="ipModeCard2">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-shield-lock fs-2 text-warning mb-2"></i>
+                                    <h6 class="card-title" data-i18n="hosting.ip_encryption.mode2_title">策略2: 服务器加密</h6>
+                                    <p class="card-text small text-muted" data-i18n="hosting.ip_encryption.mode2_desc">IP使用Fernet加密存储。有权限用户可解密查看，审计日志记录。</p>
+                                    <span class="badge bg-warning">Fernet</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-dark border-secondary h-100" id="ipModeCard3">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-shield-shaded fs-2 text-success mb-2"></i>
+                                    <h6 class="card-title" data-i18n="hosting.ip_encryption.mode3_title">策略3: E2EE加密</h6>
+                                    <p class="card-text small text-muted" data-i18n="hosting.ip_encryption.mode3_desc">IP端到端加密，服务器永不见明文。只有边缘采集器可解密。</p>
+                                    <span class="badge bg-success">E2EE</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <label class="form-label text-muted mb-0" data-i18n="hosting.ip_encryption.default_mode">默认IP加密模式</label>
+                            <p class="small text-muted mb-0" data-i18n="hosting.ip_encryption.apply_to_new">应用于新添加的矿机</p>
+                        </div>
+                        <select id="defaultIpEncryptionMode" class="form-select form-select-sm" style="width: 200px; background-color: var(--hosting-card-bg);">
+                            <option value="1" data-i18n="hosting.ip_encryption.mode1_short">策略1 - UI脱敏</option>
+                            <option value="2" data-i18n="hosting.ip_encryption.mode2_short">策略2 - 服务器加密</option>
+                            <option value="3" data-i18n="hosting.ip_encryption.mode3_short">策略3 - E2EE</option>
+                        </select>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-warning btn-sm" onclick="batchUpdateIpMode()" data-i18n="hosting.ip_encryption.batch_update">批量更新所有矿机</button>
+                        <button class="btn btn-outline-info btn-sm" onclick="refreshIpModeStats()" data-i18n="hosting.ip_encryption.refresh_stats">刷新统计</button>
+                    </div>
+                    
+                    <div id="ipModeStats" class="mt-3 d-none">
+                        <div class="row g-2">
+                            <div class="col-4">
+                                <div class="text-center p-2 bg-info bg-opacity-10 rounded">
+                                    <div class="h5 text-info mb-0" id="ipModeCount1">0</div>
+                                    <small class="text-muted">UI脱敏</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-center p-2 bg-warning bg-opacity-10 rounded">
+                                    <div class="h5 text-warning mb-0" id="ipModeCount2">0</div>
+                                    <small class="text-muted">服务器加密</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-center p-2 bg-success bg-opacity-10 rounded">
+                                    <div class="h5 text-success mb-0" id="ipModeCount3">0</div>
+                                    <small class="text-muted">E2EE</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audit Log Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="hosting-card">
+                <div class="hosting-card-header d-flex justify-content-between align-items-center">
+                    <h5 class="hosting-card-title mb-0">
+                        <i class="bi bi-journal-text me-2"></i>
+                        <span data-i18n="hosting.audit.title">安全审计</span>
+                    </h5>
+                    <button class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#auditLogModal">
+                        <i class="bi bi-list-ul me-1"></i>
+                        <span data-i18n="hosting.audit.view_all">查看全部</span>
+                    </button>
+                </div>
+                <div class="hosting-card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="hosting.audit.event_type">事件类型</th>
+                                    <th data-i18n="hosting.audit.timestamp">时间</th>
+                                    <th data-i18n="hosting.audit.result">结果</th>
+                                </tr>
+                            </thead>
+                            <tbody id="auditTableBody">
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted">
+                                        <i class="bi bi-hourglass-split me-2"></i>
+                                        <span data-i18n="common.loading">加载中...</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- Register Device Modal -->
+<div class="modal fade" id="registerDeviceModal" tabindex="-1" aria-labelledby="registerDeviceModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title" id="registerDeviceModalLabel">
+                    <i class="bi bi-hdd-network me-2"></i>
+                    <span data-i18n="hosting.devices.register_title">注册边缘设备</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="registerDeviceStep1">
+                    <div class="mb-3">
+                        <label class="form-label" data-i18n="hosting.devices.device_name">设备名称</label>
+                        <input type="text" class="form-control" id="newDeviceName" placeholder="Site-A-Collector-1" required>
+                        <small class="text-muted" data-i18n="hosting.devices.name_help">为此边缘采集器设置一个唯一的名称</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" data-i18n="hosting.devices.public_key">公钥 (X25519)</label>
+                        <textarea class="form-control" id="devicePublicKey" rows="2" readonly placeholder="点击下方按钮生成密钥对..."></textarea>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-warning" id="generateKeypairBtn" onclick="handleGenerateKeypair(event)">
+                            <i class="bi bi-key me-1"></i>
+                            <span data-i18n="hosting.devices.generate_keypair">生成密钥对</span>
+                        </button>
+                    </div>
+                    <div id="privateKeyWarning" class="alert alert-warning mt-3" style="display: none;">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong data-i18n="hosting.devices.private_key_warning">重要：请保存以下私钥！</strong>
+                        <p class="mb-1 mt-2" data-i18n="hosting.devices.private_key_help">此私钥仅显示一次，请将其配置到边缘采集器中：</p>
+                        <div class="input-group">
+                            <input type="text" class="form-control font-monospace" id="generatedPrivateKey" readonly>
+                            <button class="btn btn-outline-warning" type="button" onclick="copyToClipboard('generatedPrivateKey')">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="registerDeviceStep2" style="display: none;">
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle me-2"></i>
+                        <strong data-i18n="hosting.devices.register_success">设备注册成功！</strong>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" data-i18n="hosting.devices.device_token">设备令牌</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control font-monospace" id="deviceTokenDisplay" readonly>
+                            <button class="btn btn-outline-success" type="button" onclick="copyToClipboard('deviceTokenDisplay')">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </div>
+                        <small class="text-warning" data-i18n="hosting.devices.token_warning">⚠️ 此令牌仅显示一次，请立即复制并安全存储！</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="common.close">关闭</button>
+                <button type="button" class="btn btn-hosting-primary" id="registerDeviceBtn" disabled onclick="handleRegisterDevice(event)">
+                    <i class="bi bi-save me-1"></i>
+                    <span data-i18n="hosting.devices.register">注册设备</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Audit Log Full Modal -->
+<div class="modal fade" id="auditLogModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">
+                    <i class="bi bi-journal-text me-2"></i>
+                    <span data-i18n="hosting.audit.full_log">完整审计日志</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <select class="form-select" id="auditFilterType">
+                            <option value="" data-i18n="hosting.audit.all_types">所有类型</option>
+                            <option value="DEVICE_REGISTERED">DEVICE_REGISTERED</option>
+                            <option value="DEVICE_REVOKED">DEVICE_REVOKED</option>
+                            <option value="SECRET_CREATED">SECRET_CREATED</option>
+                            <option value="SECRET_UPDATED">SECRET_UPDATED</option>
+                            <option value="CAPABILITY_UPDATED">CAPABILITY_UPDATED</option>
+                            <option value="SECRETS_PULLED">SECRETS_PULLED</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="auditFilterResult">
+                            <option value="" data-i18n="hosting.audit.all_results">所有结果</option>
+                            <option value="success" data-i18n="hosting.audit.success">成功</option>
+                            <option value="error" data-i18n="hosting.audit.error">错误</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-hosting-primary w-100" onclick="loadFullAuditLog()">
+                            <i class="bi bi-search me-1"></i>
+                            <span data-i18n="common.filter">筛选</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th data-i18n="hosting.audit.event_type">事件类型</th>
+                                <th data-i18n="hosting.audit.device">设备</th>
+                                <th data-i18n="hosting.audit.miner">矿机</th>
+                                <th>IP</th>
+                                <th data-i18n="hosting.audit.timestamp">时间</th>
+                                <th data-i18n="hosting.audit.result">结果</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fullAuditTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="common.close">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/nacl.min.js"></script>
+<script src="/static/js/nacl-util.min.js"></script>
+<script src="/static/js/crypto_device_envelope.js"></script>
+<script>
+// Self-test: verify TweetNaCl and DeviceEnvelope are loaded
+(function selfTest() {
+    console.log('[SelfTest] Running...');
+    console.log('[SelfTest] window.nacl:', typeof window.nacl);
+    console.log('[SelfTest] nacl.box:', typeof window.nacl?.box);
+    console.log('[SelfTest] nacl.box.keyPair:', typeof window.nacl?.box?.keyPair);
+    console.log('[SelfTest] DeviceEnvelope:', typeof window.DeviceEnvelope);
+    console.log('[SelfTest] DeviceEnvelope.generateKeypair:', typeof window.DeviceEnvelope?.generateKeypair);
+    
+    // Test DOM elements
+    console.log('[SelfTest] devicePublicKey element:', document.getElementById('devicePublicKey'));
+    console.log('[SelfTest] generateKeypairBtn element:', document.getElementById('generateKeypairBtn'));
+    
+    // Quick keypair test
+    if (window.nacl && window.nacl.box) {
+        try {
+            const kp = window.nacl.box.keyPair();
+            console.log('[SelfTest] Direct nacl.box.keyPair() works! publicKey length:', kp.publicKey.length);
+        } catch (e) {
+            console.error('[SelfTest] Direct keypair failed:', e);
+        }
+    }
+})();
+
+const siteId = {{ site.id }};
+const configId = {{ thermal_config.id }};
+
+document.getElementById('thermalConfigForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const data = {
+        is_enabled: document.getElementById('thermalEnabled').checked,
+        warning_temp: parseFloat(document.getElementById('warningTemp').value),
+        throttle_temp: parseFloat(document.getElementById('throttleTemp').value),
+        critical_temp: parseFloat(document.getElementById('criticalTemp').value),
+        recovery_temp: parseFloat(document.getElementById('recoveryTemp').value),
+        throttle_frequency_percent: parseInt(document.getElementById('throttlePercent').value),
+        min_frequency_percent: parseInt(document.getElementById('minPercent').value),
+        cooldown_minutes: parseInt(document.getElementById('cooldownMinutes').value),
+        notify_on_warning: document.getElementById('notifyWarning').checked,
+        notify_on_throttle: document.getElementById('notifyThrottle').checked,
+        notify_on_critical: document.getElementById('notifyCritical').checked
+    };
+    
+    try {
+        const response = await fetch(`/hosting/api/thermal/config/${configId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            showToast('success', I18n.t('common.save_success') || '保存成功');
+        } else {
+            showToast('error', result.message || I18n.t('common.save_failed') || '保存失败');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('error', I18n.t('common.save_failed') || '保存失败');
+    }
+});
+
+document.getElementById('runThermalCheck').addEventListener('click', async function() {
+    try {
+        const response = await fetch(`/hosting/api/thermal/check/${siteId}`, {
+            method: 'POST'
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            const lang = document.documentElement.lang === 'en' ? 'en' : 'zh';
+            const msg = lang === 'en' ? result.message_en : result.message_zh;
+            showToast('success', msg);
+        } else {
+            showToast('error', result.message_zh || result.message_en || '检查失败');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('error', '检查失败');
+    }
+});
+
+document.getElementById('brandingForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const data = {
+        is_enabled: document.getElementById('brandingEnabled').checked,
+        company_name: document.getElementById('companyName').value,
+        company_slogan: document.getElementById('companySlogan').value,
+        website_url: document.getElementById('websiteUrl').value,
+        support_email: document.getElementById('supportEmail').value,
+        support_phone: document.getElementById('supportPhone').value,
+        primary_color: document.getElementById('primaryColor').value,
+        secondary_color: document.getElementById('secondaryColor').value,
+        accent_color: document.getElementById('accentColor').value,
+        twitter_url: document.getElementById('twitterUrl').value,
+        telegram_url: document.getElementById('telegramUrl').value,
+        discord_url: document.getElementById('discordUrl').value,
+        footer_text: document.getElementById('footerText').value
+    };
+    
+    try {
+        const response = await fetch(`/hosting/api/branding/${siteId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            showToast('success', I18n.t('common.save_success') || '保存成功');
+        } else {
+            showToast('error', result.message || I18n.t('common.save_failed') || '保存失败');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('error', I18n.t('common.save_failed') || '保存失败');
+    }
+});
+
+document.getElementById('logoFile').addEventListener('change', async function(e) {
+    if (e.target.files.length > 0) {
+        const formData = new FormData();
+        formData.append('logo', e.target.files[0]);
+        formData.append('logo_type', 'main');
+        
+        try {
+            const response = await fetch(`/hosting/api/branding/${siteId}/logo`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                showToast('success', 'Logo ' + (I18n.t('common.upload_success') || '上传成功'));
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast('error', result.message_zh || result.message_en || 'Upload failed');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('error', '上传失败');
+        }
+    }
+});
+
+document.getElementById('faviconFile').addEventListener('change', async function(e) {
+    if (e.target.files.length > 0) {
+        const formData = new FormData();
+        formData.append('logo', e.target.files[0]);
+        formData.append('logo_type', 'favicon');
+        
+        try {
+            const response = await fetch(`/hosting/api/branding/${siteId}/logo`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                showToast('success', 'Favicon ' + (I18n.t('common.upload_success') || '上传成功'));
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast('error', result.message_zh || result.message_en || 'Upload failed');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('error', '上传失败');
+        }
+    }
+});
+
+['primaryColor', 'secondaryColor', 'accentColor'].forEach(id => {
+    const colorPicker = document.getElementById(id);
+    const textInput = document.getElementById(id + 'Text');
+    
+    colorPicker.addEventListener('change', function() {
+        textInput.value = this.value;
+        updatePreviewColors();
+    });
+    
+    textInput.addEventListener('change', function() {
+        if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) {
+            colorPicker.value = this.value;
+            updatePreviewColors();
+        }
+    });
+});
+
+function updatePreviewColors() {
+    document.getElementById('previewPrimary').style.backgroundColor = document.getElementById('primaryColor').value;
+    document.getElementById('previewSecondary').style.backgroundColor = document.getElementById('secondaryColor').value;
+    document.getElementById('previewAccent').style.backgroundColor = document.getElementById('accentColor').value;
+}
+
+document.getElementById('companyName').addEventListener('input', function() {
+    document.getElementById('previewCompanyName').textContent = this.value || '{{ site.operator_name }}';
+});
+
+document.getElementById('companySlogan').addEventListener('input', function() {
+    document.getElementById('previewSlogan').textContent = this.value;
+});
+
+function showToast(type, message) {
+    const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+    const toastEl = document.createElement('div');
+    toastEl.className = `toast align-items-center text-bg-${type === 'success' ? 'success' : 'danger'} border-0`;
+    toastEl.setAttribute('role', 'alert');
+    toastEl.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    toastContainer.appendChild(toastEl);
+    const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+    toast.show();
+    toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+}
+
+function createToastContainer() {
+    const container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.className = 'toast-container position-fixed top-0 end-0 p-3';
+    container.style.zIndex = '9999';
+    document.body.appendChild(container);
+    return container;
+}
+
+updatePreviewColors();
+
+// ==================== Device Envelope Encryption UI ====================
+
+// Use var to avoid temporal dead zone issues with onclick handlers
+var generatedPrivateKey = null;
+var devicesList = [];
+
+// Initialize DeviceEnvelope when page loads
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        await DeviceEnvelope.init();
+        console.log('[DeviceEnvelope] Ready');
+    } catch (e) {
+        console.error('[DeviceEnvelope] Init failed:', e);
+    }
+    
+    // Load initial data
+    loadDevices();
+    loadCapabilityMiners();
+    loadAuditEvents();
+});
+
+// Copy to clipboard helper
+function copyToClipboard(elementId) {
+    const input = document.getElementById(elementId);
+    input.select();
+    document.execCommand('copy');
+    showToast('success', (typeof I18n !== 'undefined' && I18n.t('common.copied')) || '已复制到剪贴板');
+}
+
+// Format timestamp
+function formatTimestamp(isoString) {
+    if (!isoString) return '-';
+    const date = new Date(isoString);
+    return date.toLocaleString();
+}
+
+// Get status badge HTML
+function getStatusBadge(status) {
+    const colors = {
+        'ACTIVE': 'bg-success',
+        'REVOKED': 'bg-danger',
+        'PENDING': 'bg-warning',
+        'success': 'bg-success',
+        'error': 'bg-danger',
+        'denied': 'bg-warning'
+    };
+    return `<span class="badge ${colors[status] || 'bg-secondary'}">${status}</span>`;
+}
+
+// Get capability level badge HTML
+function getCapabilityBadge(level) {
+    const levels = {
+        1: { name: 'DISCOVERY', color: 'bg-info' },
+        2: { name: 'TELEMETRY', color: 'bg-warning' },
+        3: { name: 'CONTROL', color: 'bg-success' }
+    };
+    const info = levels[level] || { name: 'UNKNOWN', color: 'bg-secondary' };
+    return `<span class="badge ${info.color}">${info.name} (${level})</span>`;
+}
+
+// ==================== Device Management ====================
+
+async function loadDevices() {
+    const tbody = document.getElementById('devicesTableBody');
+    
+    try {
+        const response = await fetch(`/api/devices?site_id=${siteId}`);
+        const data = await response.json();
+        
+        if (data.devices && data.devices.length > 0) {
+            devicesList = data.devices;
+            tbody.innerHTML = data.devices.map(device => `
+                <tr>
+                    <td>
+                        <i class="bi bi-hdd-network me-2 text-primary"></i>
+                        <strong>${device.device_name}</strong>
+                    </td>
+                    <td>${getStatusBadge(device.status)}</td>
+                    <td><span class="badge bg-secondary">v${device.key_version}</span></td>
+                    <td><small>${formatTimestamp(device.last_seen_at)}</small></td>
+                    <td>
+                        ${device.status === 'ACTIVE' ? `
+                            <button class="btn btn-outline-danger btn-sm" onclick="revokeDevice(${device.id}, '${device.device_name}')">
+                                <i class="bi bi-x-circle me-1"></i>
+                                <span data-i18n="hosting.devices.revoke">撤销</span>
+                            </button>
+                        ` : '<span class="text-muted">-</span>'}
+                    </td>
+                </tr>
+            `).join('');
+        } else {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center text-muted">
+                        <i class="bi bi-inbox me-2"></i>
+                        <span data-i18n="hosting.devices.no_devices">暂无注册设备</span>
+                    </td>
+                </tr>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading devices:', error);
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center text-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <span data-i18n="common.load_error">加载失败</span>
+                </td>
+            </tr>
+        `;
+    }
+}
+
+// Generate keypair for device registration - using global function for onclick handler
+async function handleGenerateKeypair(e) {
+    console.log('[UI] handleGenerateKeypair called', e);
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    try {
+        // Use DeviceEnvelope's generateKeypair method which has access to TweetNaCl
+        const keypair = await DeviceEnvelope.generateKeypair();
+        console.log('[UI] Keypair generated, publicKey length:', keypair?.publicKey?.length);
+        console.log('[UI] Keypair publicKey:', keypair?.publicKey);
+        
+        const pubKeyField = document.getElementById('devicePublicKey');
+        const privKeyField = document.getElementById('generatedPrivateKey');
+        const privKeyWarning = document.getElementById('privateKeyWarning');
+        const registerBtn = document.getElementById('registerDeviceBtn');
+        
+        console.log('[UI] Found elements:', {
+            pubKeyField: !!pubKeyField,
+            privKeyField: !!privKeyField,
+            privKeyWarning: !!privKeyWarning,
+            registerBtn: !!registerBtn
+        });
+        
+        if (pubKeyField && keypair && keypair.publicKey) {
+            pubKeyField.value = keypair.publicKey;
+            console.log('[UI] Set publicKey to field, new value:', pubKeyField.value);
+        } else {
+            console.error('[UI] Missing element or keypair data');
+        }
+        
+        generatedPrivateKey = keypair.privateKey;
+        
+        // Show private key warning
+        if (privKeyWarning) privKeyWarning.style.display = 'block';
+        if (privKeyField && keypair.privateKey) privKeyField.value = keypair.privateKey;
+        
+        // Enable register button
+        if (registerBtn) registerBtn.disabled = false;
+        
+        showToast('success', (typeof I18n !== 'undefined' && I18n.t('hosting.devices.keypair_generated')) || '密钥对已生成');
+    } catch (error) {
+        console.error('Keypair generation failed:', error);
+        showToast('error', (typeof I18n !== 'undefined' && I18n.t('hosting.devices.keypair_error')) || '密钥生成失败: ' + error.message);
+    }
+}
+
+// Also keep addEventListener as backup
+const generateBtn = document.getElementById('generateKeypairBtn');
+console.log('[EventBinding] generateKeypairBtn found:', generateBtn);
+if (generateBtn) {
+    generateBtn.addEventListener('click', handleGenerateKeypair);
+} else {
+    console.error('[EventBinding] generateKeypairBtn NOT found!');
+}
+
+// Register device - use global function for onclick handler
+async function handleRegisterDevice(e) {
+    console.log('[Register] handleRegisterDevice called');
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    const btn = document.getElementById('registerDeviceBtn');
+    const deviceName = document.getElementById('newDeviceName').value.trim();
+    const publicKey = document.getElementById('devicePublicKey').value.trim();
+    
+    console.log('[Register] deviceName:', deviceName);
+    console.log('[Register] publicKey:', publicKey);
+    console.log('[Register] siteId:', siteId);
+    
+    if (!deviceName) {
+        showToast('error', (typeof I18n !== 'undefined' && I18n.t('hosting.devices.name_required')) || '请输入设备名称');
+        return;
+    }
+    
+    if (!publicKey) {
+        showToast('error', (typeof I18n !== 'undefined' && I18n.t('hosting.devices.key_required')) || '请先生成密钥对');
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> 注册中...';
+    
+    try {
+        console.log('[Register] Sending POST to /api/devices/register');
+        const response = await fetch('/api/devices/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                device_name: deviceName,
+                public_key: publicKey,
+                site_id: siteId
+            })
+        });
+        
+        console.log('[Register] Response status:', response.status);
+        const result = await response.json();
+        console.log('[Register] Response data:', result);
+        
+        if (result.success) {
+            console.log('[Register] Registration successful, device_token:', result.device.device_token);
+            // Show step 2 with device token
+            document.getElementById('registerDeviceStep1').style.display = 'none';
+            document.getElementById('registerDeviceStep2').style.display = 'block';
+            document.getElementById('deviceTokenDisplay').value = result.device.device_token;
+            
+            // Hide register button, change close button
+            btn.style.display = 'none';
+            
+            showToast('success', (typeof I18n !== 'undefined' && I18n.t('hosting.devices.register_success')) || '设备注册成功！');
+            
+            // Reload devices list
+            loadDevices();
+            loadAuditEvents();
+        } else {
+            console.error('[Register] Registration failed:', result.error);
+            showToast('error', result.error || '注册失败');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-save me-1"></i> 注册设备';
+        }
+    } catch (error) {
+        console.error('[Register] Device registration failed:', error);
+        showToast('error', '注册请求失败: ' + error.message);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-save me-1"></i> 注册设备';
+    }
+}
+
+// Bind event using addEventListener as backup
+const registerBtn = document.getElementById('registerDeviceBtn');
+console.log('[EventBinding] registerDeviceBtn found:', registerBtn);
+if (registerBtn) {
+    registerBtn.addEventListener('click', handleRegisterDevice);
+} else {
+    console.error('[EventBinding] registerDeviceBtn NOT found!');
+}
+
+// Reset modal when closed
+document.getElementById('registerDeviceModal').addEventListener('hidden.bs.modal', function() {
+    document.getElementById('registerDeviceStep1').style.display = 'block';
+    document.getElementById('registerDeviceStep2').style.display = 'none';
+    document.getElementById('newDeviceName').value = '';
+    document.getElementById('devicePublicKey').value = '';
+    document.getElementById('privateKeyWarning').style.display = 'none';
+    document.getElementById('generatedPrivateKey').value = '';
+    document.getElementById('deviceTokenDisplay').value = '';
+    document.getElementById('registerDeviceBtn').disabled = true;
+    document.getElementById('registerDeviceBtn').style.display = 'inline-block';
+    document.getElementById('registerDeviceBtn').innerHTML = '<i class="bi bi-save me-1"></i> 注册设备';
+    generatedPrivateKey = null;
+});
+
+// Revoke device
+async function revokeDevice(deviceId, deviceName) {
+    const lang = document.documentElement.lang === 'en' ? 'en' : 'zh';
+    const confirmMsg = lang === 'en' 
+        ? `Are you sure you want to revoke device "${deviceName}"? This action cannot be undone.`
+        : `确定要撤销设备 "${deviceName}" 吗？此操作不可撤销。`;
+    
+    if (!confirm(confirmMsg)) return;
+    
+    try {
+        const response = await fetch(`/api/devices/${deviceId}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast('success', (typeof I18n !== 'undefined' && I18n.t('hosting.devices.revoke_success')) || '设备已撤销');
+            loadDevices();
+            loadAuditEvents();
+        } else {
+            showToast('error', result.error || '撤销失败');
+        }
+    } catch (error) {
+        console.error('Device revoke failed:', error);
+        showToast('error', '撤销请求失败');
+    }
+}
+
+// ==================== Capability Level Configuration ====================
+
+async function loadCapabilityMiners() {
+    const tbody = document.getElementById('capabilityTableBody');
+    
+    try {
+        // Fetch miners for the site that might have encrypted secrets
+        const response = await fetch(`/hosting/api/site/${siteId}/miners`);
+        const data = await response.json();
+        
+        if (data.miners && data.miners.length > 0) {
+            // Filter miners that have capability_level set or bound_device_id
+            const minersWithSecrets = data.miners.filter(m => m.capability_level > 0 || m.bound_device_id);
+            
+            if (minersWithSecrets.length > 0) {
+                tbody.innerHTML = minersWithSecrets.map(miner => `
+                    <tr>
+                        <td>
+                            <i class="bi bi-cpu me-2 text-warning"></i>
+                            <strong>${miner.name || miner.serial_number || 'Miner #' + miner.id}</strong>
+                        </td>
+                        <td><code>${miner.ip_address || '-'}</code></td>
+                        <td id="cap-badge-${miner.id}">${getCapabilityBadge(miner.capability_level || 1)}</td>
+                        <td>
+                            <select class="form-select form-select-sm" style="max-width: 140px;" 
+                                    onchange="updateCapability(${miner.id}, this.value)"
+                                    id="cap-select-${miner.id}">
+                                <option value="" selected>绑定设备...</option>
+                                ${devicesList.filter(d => d.status === 'ACTIVE').map(d => 
+                                    `<option value="${d.id}" ${miner.bound_device_id === d.id ? 'selected' : ''}>${d.device_name}</option>`
+                                ).join('')}
+                            </select>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-info" onclick="setCapabilityLevel(${miner.id}, 1)" title="DISCOVERY">
+                                    1
+                                </button>
+                                <button class="btn btn-outline-warning" onclick="setCapabilityLevel(${miner.id}, 2)" title="TELEMETRY">
+                                    2
+                                </button>
+                                <button class="btn btn-outline-success" onclick="setCapabilityLevel(${miner.id}, 3)" title="CONTROL">
+                                    3
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                showEmptyCapabilityTable();
+            }
+        } else {
+            showEmptyCapabilityTable();
+        }
+    } catch (error) {
+        console.error('Error loading capability miners:', error);
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center text-muted">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <span data-i18n="hosting.capability.no_miners">暂无配置加密凭证的矿机</span>
+                </td>
+            </tr>
+        `;
+    }
+}
+
+function showEmptyCapabilityTable() {
+    document.getElementById('capabilityTableBody').innerHTML = `
+        <tr>
+            <td colspan="5" class="text-center text-muted">
+                <i class="bi bi-info-circle me-2"></i>
+                <span data-i18n="hosting.capability.no_miners">暂无配置加密凭证的矿机</span>
+            </td>
+        </tr>
+    `;
+}
+
+async function setCapabilityLevel(minerId, level) {
+    try {
+        const response = await fetch(`/api/miners/${minerId}/capability`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ capability_level: level })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            document.getElementById(`cap-badge-${minerId}`).innerHTML = getCapabilityBadge(level);
+            showToast('success', '能力级别已更新');
+            loadAuditEvents();
+        } else {
+            showToast('error', result.error || '更新失败');
+        }
+    } catch (error) {
+        console.error('Capability update failed:', error);
+        showToast('error', '更新请求失败');
+    }
+}
+
+async function updateCapability(minerId, deviceId) {
+    if (!deviceId) return;
+    
+    try {
+        const response = await fetch(`/api/miners/${minerId}/capability`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ bound_device_id: parseInt(deviceId) })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast('success', '绑定设备已更新');
+            loadAuditEvents();
+        } else {
+            showToast('error', result.error || '更新失败');
+        }
+    } catch (error) {
+        console.error('Capability update failed:', error);
+        showToast('error', '更新请求失败');
+    }
+}
+
+// ==================== Audit Log ====================
+
+async function loadAuditEvents() {
+    const tbody = document.getElementById('auditTableBody');
+    
+    try {
+        const response = await fetch('/api/audit/events?limit=10');
+        const data = await response.json();
+        
+        if (data.events && data.events.length > 0) {
+            tbody.innerHTML = data.events.map(event => `
+                <tr>
+                    <td>
+                        <i class="bi bi-journal-text me-2 text-info"></i>
+                        <code>${event.event_type}</code>
+                    </td>
+                    <td><small>${formatTimestamp(event.created_at)}</small></td>
+                    <td>${getStatusBadge(event.result)}</td>
+                </tr>
+            `).join('');
+        } else {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="3" class="text-center text-muted">
+                        <i class="bi bi-inbox me-2"></i>
+                        <span data-i18n="hosting.audit.no_events">暂无审计事件</span>
+                    </td>
+                </tr>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading audit events:', error);
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="3" class="text-center text-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <span data-i18n="common.load_error">加载失败</span>
+                </td>
+            </tr>
+        `;
+    }
+}
+
+// Load full audit log with filters
+async function loadFullAuditLog() {
+    const tbody = document.getElementById('fullAuditTableBody');
+    const eventType = document.getElementById('auditFilterType').value;
+    const result = document.getElementById('auditFilterResult').value;
+    
+    let url = '/api/audit/events?limit=100';
+    if (eventType) url += `&event_type=${eventType}`;
+    if (result) url += `&result=${result}`;
+    
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="6" class="text-center text-muted">
+                <i class="bi bi-hourglass-split me-2"></i>
+                <span data-i18n="common.loading">加载中...</span>
+            </td>
+        </tr>
+    `;
+    
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.events && data.events.length > 0) {
+            tbody.innerHTML = data.events.map(event => `
+                <tr>
+                    <td><code>${event.event_type}</code></td>
+                    <td>${event.device_id || '-'}</td>
+                    <td>${event.miner_id || '-'}</td>
+                    <td><small>${event.ip_address || '-'}</small></td>
+                    <td><small>${formatTimestamp(event.created_at)}</small></td>
+                    <td>${getStatusBadge(event.result)}</td>
+                </tr>
+            `).join('');
+        } else {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center text-muted">
+                        <i class="bi bi-inbox me-2"></i>
+                        <span data-i18n="hosting.audit.no_events">暂无审计事件</span>
+                    </td>
+                </tr>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading full audit log:', error);
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center text-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <span data-i18n="common.load_error">加载失败</span>
+                </td>
+            </tr>
+        `;
+    }
+}
+
+// Load full audit log when modal opens
+document.getElementById('auditLogModal').addEventListener('shown.bs.modal', function() {
+    loadFullAuditLog();
+});
+
+// ==================== IP Encryption Mode ====================
+
+async function refreshIpModeStats() {
+    try {
+        const response = await fetch('/api/sites/{{ site.id }}/miners');
+        const data = await response.json();
+        
+        if (data.miners) {
+            let count1 = 0, count2 = 0, count3 = 0;
+            
+            data.miners.forEach(miner => {
+                const mode = miner.ip_encryption_mode || 1;
+                if (mode === 1) count1++;
+                else if (mode === 2) count2++;
+                else if (mode === 3) count3++;
+            });
+            
+            document.getElementById('ipModeCount1').textContent = count1;
+            document.getElementById('ipModeCount2').textContent = count2;
+            document.getElementById('ipModeCount3').textContent = count3;
+            document.getElementById('ipModeStats').classList.remove('d-none');
+            
+            updateIpModeCardHighlight(1, count1);
+            updateIpModeCardHighlight(2, count2);
+            updateIpModeCardHighlight(3, count3);
+        }
+    } catch (error) {
+        console.error('Error refreshing IP mode stats:', error);
+        showToast('error', '获取IP加密统计失败');
+    }
+}
+
+function updateIpModeCardHighlight(mode, count) {
+    const card = document.getElementById(`ipModeCard${mode}`);
+    if (card) {
+        if (count > 0) {
+            card.classList.add('border-primary');
+        } else {
+            card.classList.remove('border-primary');
+        }
+    }
+}
+
+async function batchUpdateIpMode() {
+    const mode = parseInt(document.getElementById('defaultIpEncryptionMode').value);
+    const modeNames = {1: 'UI脱敏', 2: '服务器加密', 3: 'E2EE'};
+    
+    if (!confirm(`确定要将所有矿机的IP加密模式更新为 "${modeNames[mode]}" 吗？\n\nThis will update all miners to ${modeNames[mode]} mode.`)) {
+        return;
+    }
+    
+    try {
+        const minersResponse = await fetch('/api/sites/{{ site.id }}/miners');
+        const minersData = await minersResponse.json();
+        
+        if (!minersData.miners || minersData.miners.length === 0) {
+            showToast('warning', '暂无矿机');
+            return;
+        }
+        
+        const minerIds = minersData.miners.map(m => m.id);
+        
+        const response = await fetch('/api/ip-encryption/batch-update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                miner_ids: minerIds,
+                mode: mode,
+                encrypt_existing: true
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast('success', `已更新 ${result.updated}/${result.total} 台矿机`);
+            refreshIpModeStats();
+            loadAuditEvents();
+        } else {
+            showToast('error', result.error || '批量更新失败');
+        }
+    } catch (error) {
+        console.error('Batch IP mode update failed:', error);
+        showToast('error', '批量更新请求失败');
+    }
+}
+
+async function revealMinerIp(minerId) {
+    try {
+        const response = await fetch(`/api/ip-encryption/miner/${minerId}/reveal`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const result = await response.json();
+        
+        if (result.revealed) {
+            showToast('success', `IP: ${result.ip_address}`);
+            return result.ip_address;
+        } else {
+            showToast('error', result.error || '无法查看IP');
+            return null;
+        }
+    } catch (error) {
+        console.error('IP reveal failed:', error);
+        showToast('error', 'IP查看请求失败');
+        return null;
+    }
+}
+
+refreshIpModeStats();
+</script>
+{% endblock %}

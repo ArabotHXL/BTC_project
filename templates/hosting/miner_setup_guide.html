@@ -1,0 +1,1751 @@
+{% extends "hosting/hosting_base.html" %}
+
+{% block page_title %}{% if current_lang == 'en' %}Miner Connection Setup Guide{% else %}矿机连接设置指南{% endif %}{% endblock %}
+{% block page_subtitle %}{% if current_lang == 'en' %}Complete guide for mining farm administrators{% else %}矿场管理员完整操作手册{% endif %}{% endblock %}
+
+{% block header_actions %}
+{{ super() }}
+<div class="btn-group ms-3" role="group">
+    <a href="{{ url_for('hosting_service_bp.miner_setup_guide_pdf') }}" class="btn btn-hosting-primary btn-sm" target="_blank">
+        <i class="bi bi-file-pdf me-1"></i>{% if current_lang == 'en' %}Download PDF{% else %}下载PDF版本{% endif %}
+    </a>
+    <a href="{{ url_for('hosting_service_bp.host_view', view_type='devices') }}" class="btn btn-hosting-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>{% if current_lang == 'en' %}Back{% else %}返回{% endif %}
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<!-- 目录导航 -->
+<div class="hosting-card mb-4">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-list-ul me-2"></i>{% if current_lang == 'en' %}Table of Contents{% else %}目录{% endif %}
+        </h5>
+    </div>
+    <div class="hosting-card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <a href="#section-1" class="text-decoration-none">
+                            <i class="bi bi-1-circle-fill me-2" style="color: #f7931a;"></i>
+                            {% if current_lang == 'en' %}Preparation{% else %}准备工作{% endif %}
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="#section-2" class="text-decoration-none">
+                            <i class="bi bi-2-circle-fill me-2" style="color: #f7931a;"></i>
+                            {% if current_lang == 'en' %}Adding Miners{% else %}添加矿机{% endif %}
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="#section-3" class="text-decoration-none">
+                            <i class="bi bi-3-circle-fill me-2" style="color: #f7931a;"></i>
+                            {% if current_lang == 'en' %}Testing Connection{% else %}测试连接{% endif %}
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <a href="#section-4" class="text-decoration-none">
+                            <i class="bi bi-4-circle-fill me-2" style="color: #f7931a;"></i>
+                            {% if current_lang == 'en' %}Viewing Real-time Data{% else %}查看实时数据{% endif %}
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="#section-5" class="text-decoration-none">
+                            <i class="bi bi-5-circle-fill me-2" style="color: #f7931a;"></i>
+                            {% if current_lang == 'en' %}Alert System{% else %}告警系统{% endif %}
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="#section-6" class="text-decoration-none">
+                            <i class="bi bi-6-circle-fill me-2" style="color: #f7931a;"></i>
+                            {% if current_lang == 'en' %}Troubleshooting{% else %}故障排查{% endif %}
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="#section-7" class="text-decoration-none">
+                            <i class="bi bi-7-circle-fill me-2" style="color: #f7931a;"></i>
+                            {% if current_lang == 'en' %}Local Deployment{% else %}本地部署{% endif %}
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 章节1: 准备工作 -->
+<div class="hosting-card mb-4" id="section-1">
+    <div class="hosting-card-header">
+        <h4 class="hosting-card-title">
+            <i class="bi bi-1-circle-fill me-2" style="color: #f7931a;"></i>
+            {% if current_lang == 'en' %}Preparation{% else %}准备工作{% endif %}
+        </h4>
+    </div>
+    <div class="hosting-card-body">
+        {% if current_lang == 'en' %}
+        <h5 class="mb-3">Enable CGMiner API</h5>
+        <p>Before connecting miners to the management system, you need to enable the CGMiner API on each device:</p>
+        
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>Important:</strong> CGMiner API must be enabled for real-time monitoring to work.
+        </div>
+        
+        <ol class="mb-4">
+            <li class="mb-3">
+                <strong>Access Miner Web Interface</strong>
+                <p>Navigate to your miner's IP address in a web browser (e.g., http://192.168.1.100)</p>
+            </li>
+            <li class="mb-3">
+                <strong>Login to Admin Panel</strong>
+                <p>Use default credentials (usually root/root or admin/admin) or your custom credentials</p>
+            </li>
+            <li class="mb-3">
+                <strong>Enable API Access</strong>
+                <p>Go to <code>Miner Configuration</code> → <code>API Settings</code></p>
+                <ul>
+                    <li>Enable API: <strong>Yes</strong></li>
+                    <li>API Port: <strong>4028</strong> (default)</li>
+                    <li>API Allow: <strong>0/0</strong> (allow all IPs) or specify your management system IP</li>
+                </ul>
+            </li>
+            <li class="mb-3">
+                <strong>Save & Reboot</strong>
+                <p>Save the configuration and reboot the miner for changes to take effect</p>
+            </li>
+        </ol>
+        
+        <h5 class="mb-3 mt-4">Network Configuration</h5>
+        <p>Ensure proper network connectivity between miners and the management system:</p>
+        
+        <div class="text-center mb-3">
+            <img src="{{ url_for('static', filename='images/guide/network_topology.svg') }}" 
+                 alt="Network Topology" 
+                 class="img-fluid rounded border border-warning"
+                 style="max-width: 600px;"
+                 onerror="this.style.display='none'">
+        </div>
+        
+        <ul class="mb-4">
+            <li><strong>Network Requirements:</strong>
+                <ul>
+                    <li>Miners and management system must be on the same network or have routing configured</li>
+                    <li>Port 4028 (TCP) must be accessible from the management system to each miner</li>
+                    <li>Firewall rules should allow incoming connections on port 4028</li>
+                </ul>
+            </li>
+            <li><strong>IP Address Assignment:</strong>
+                <ul>
+                    <li>Use static IP addresses for miners (recommended)</li>
+                    <li>Or configure DHCP reservations based on MAC addresses</li>
+                    <li>Document the IP address of each miner's serial number</li>
+                </ul>
+            </li>
+        </ul>
+        
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle-fill me-2"></i>
+            <strong>Tip:</strong> Test connectivity using telnet or nc command: <code>telnet 192.168.1.100 4028</code>
+        </div>
+        
+        {% else %}
+        <h5 class="mb-3">启用CGMiner API</h5>
+        <p>在将矿机连接到管理系统之前，您需要在每台设备上启用CGMiner API：</p>
+        
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>重要：</strong>必须启用CGMiner API才能进行实时监控。
+        </div>
+        
+        <ol class="mb-4">
+            <li class="mb-3">
+                <strong>访问矿机Web界面</strong>
+                <p>在Web浏览器中导航到矿机的IP地址（例如：http://192.168.1.100）</p>
+            </li>
+            <li class="mb-3">
+                <strong>登录管理面板</strong>
+                <p>使用默认凭据（通常是root/root或admin/admin）或您的自定义凭据</p>
+            </li>
+            <li class="mb-3">
+                <strong>启用API访问</strong>
+                <p>前往<code>矿机配置</code> → <code>API设置</code></p>
+                <ul>
+                    <li>启用API：<strong>是</strong></li>
+                    <li>API端口：<strong>4028</strong>（默认）</li>
+                    <li>API允许：<strong>0/0</strong>（允许所有IP）或指定您的管理系统IP</li>
+                </ul>
+            </li>
+            <li class="mb-3">
+                <strong>保存并重启</strong>
+                <p>保存配置并重启矿机以使更改生效</p>
+            </li>
+        </ol>
+        
+        <h5 class="mb-3 mt-4">网络配置</h5>
+        <p>确保矿机与管理系统之间具有正确的网络连接：</p>
+        
+        <div class="text-center mb-3">
+            <img src="{{ url_for('static', filename='images/guide/network_topology.svg') }}" 
+                 alt="网络拓扑图" 
+                 class="img-fluid rounded border border-warning"
+                 style="max-width: 600px;"
+                 onerror="this.style.display='none'">
+        </div>
+        
+        <ul class="mb-4">
+            <li><strong>网络要求：</strong>
+                <ul>
+                    <li>矿机和管理系统必须在同一网络上或已配置路由</li>
+                    <li>从管理系统到每台矿机的4028端口（TCP）必须可访问</li>
+                    <li>防火墙规则应允许4028端口的传入连接</li>
+                </ul>
+            </li>
+            <li><strong>IP地址分配：</strong>
+                <ul>
+                    <li>为矿机使用静态IP地址（推荐）</li>
+                    <li>或基于MAC地址配置DHCP保留</li>
+                    <li>记录每台矿机序列号对应的IP地址</li>
+                </ul>
+            </li>
+        </ul>
+        
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle-fill me-2"></i>
+            <strong>提示：</strong>使用telnet或nc命令测试连接性：<code>telnet 192.168.1.100 4028</code>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 章节2: 添加矿机 -->
+<div class="hosting-card mb-4" id="section-2">
+    <div class="hosting-card-header">
+        <h4 class="hosting-card-title">
+            <i class="bi bi-2-circle-fill me-2" style="color: #f7931a;"></i>
+            {% if current_lang == 'en' %}Adding Miners to the System{% else %}添加矿机到系统{% endif %}
+        </h4>
+    </div>
+    <div class="hosting-card-body">
+        {% if current_lang == 'en' %}
+        <h5 class="mb-3">Step-by-Step Guide</h5>
+        
+        <ol class="mb-4">
+            <li class="mb-3">
+                <strong>Navigate to Miner Management</strong>
+                <p>Go to <code>Hosting</code> → <code>Miner Management</code> in the main menu</p>
+            </li>
+            <li class="mb-3">
+                <strong>Click "Add Miner" Button</strong>
+                <p>Located in the top-right corner of the page</p>
+                <div class="text-center my-3">
+                    <img src="{{ url_for('static', filename='images/guide/add_miner_button.svg') }}" 
+                         alt="Add Miner Button" 
+                         class="img-fluid rounded border border-warning"
+                         style="max-width: 500px;"
+                         onerror="this.style.display='none'">
+                </div>
+            </li>
+            <li class="mb-3">
+                <strong>Fill in Required Fields</strong>
+                <table class="table table-bordered table-dark">
+                    <thead>
+                        <tr>
+                            <th>Field</th>
+                            <th>Description</th>
+                            <th>Example</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Serial Number *</strong></td>
+                            <td>Unique identifier of the miner (found on device label)</td>
+                            <td>S19PRO-123456789</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Miner Model *</strong></td>
+                            <td>Select from dropdown list</td>
+                            <td>Antminer S19 Pro</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Site *</strong></td>
+                            <td>Mining facility location</td>
+                            <td>Texas DataCenter A</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Customer *</strong></td>
+                            <td>Miner owner (for hosted miners)</td>
+                            <td>John Smith</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Actual Hashrate *</strong></td>
+                            <td>Expected hashrate in TH/s</td>
+                            <td>110</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Actual Power *</strong></td>
+                            <td>Power consumption in Watts</td>
+                            <td>3250</td>
+                        </tr>
+                        <tr>
+                            <td><strong>IP Address</strong></td>
+                            <td>Network IP address of the miner (for CGMiner API connection)</td>
+                            <td>192.168.1.100</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Rack Position</strong></td>
+                            <td>Physical location in the facility</td>
+                            <td>Row 3, Rack 12, Shelf 5</td>
+                        </tr>
+                        <tr>
+                            <td><strong>MAC Address</strong></td>
+                            <td>Network MAC address for device identification</td>
+                            <td>AA:BB:CC:DD:EE:FF</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Notes</strong></td>
+                            <td>Additional information</td>
+                            <td>Firmware v2.1, custom cooling</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p><small class="text-muted">* Required fields</small></p>
+            </li>
+            <li class="mb-3">
+                <strong>Submit the Form</strong>
+                <p>Click the <span class="badge bg-warning text-dark">Save Miner</span> button</p>
+                <p>For site owners/admins: The miner is automatically <span class="badge bg-success">Approved</span></p>
+                <p>For clients: The miner will be added with <span class="badge bg-info">Pending Approval</span> status</p>
+            </li>
+            <li class="mb-3">
+                <strong>Approval Process (for client-submitted miners)</strong>
+                <ul>
+                    <li>Client submits miner request via the Add Miner form</li>
+                    <li>Admin reviews and approves/rejects the request</li>
+                    <li>Approved miners become <span class="badge bg-success">Approved</span> and operational</li>
+                </ul>
+            </li>
+        </ol>
+        
+        <div class="alert alert-success">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <strong>Best Practice:</strong> Double-check serial number and miner specifications before submitting to avoid errors.
+        </div>
+        
+        {% else %}
+        <h5 class="mb-3">分步指南</h5>
+        
+        <ol class="mb-4">
+            <li class="mb-3">
+                <strong>导航到矿机管理</strong>
+                <p>在主菜单中选择<code>托管服务</code> → <code>矿机管理</code></p>
+            </li>
+            <li class="mb-3">
+                <strong>点击"添加矿机"按钮</strong>
+                <p>位于页面右上角</p>
+                <div class="text-center my-3">
+                    <img src="{{ url_for('static', filename='images/guide/add_miner_button.svg') }}" 
+                         alt="添加矿机按钮" 
+                         class="img-fluid rounded border border-warning"
+                         style="max-width: 500px;"
+                         onerror="this.style.display='none'">
+                </div>
+            </li>
+            <li class="mb-3">
+                <strong>填写必填字段</strong>
+                <table class="table table-bordered table-dark">
+                    <thead>
+                        <tr>
+                            <th>字段</th>
+                            <th>说明</th>
+                            <th>示例</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>序列号 *</strong></td>
+                            <td>矿机的唯一标识符（在设备标签上）</td>
+                            <td>S19PRO-123456789</td>
+                        </tr>
+                        <tr>
+                            <td><strong>矿机型号 *</strong></td>
+                            <td>从下拉列表中选择</td>
+                            <td>Antminer S19 Pro</td>
+                        </tr>
+                        <tr>
+                            <td><strong>站点 *</strong></td>
+                            <td>矿场位置</td>
+                            <td>德州数据中心A</td>
+                        </tr>
+                        <tr>
+                            <td><strong>客户 *</strong></td>
+                            <td>矿机所有者（托管矿机）</td>
+                            <td>张三</td>
+                        </tr>
+                        <tr>
+                            <td><strong>实际算力 *</strong></td>
+                            <td>预期算力（TH/s）</td>
+                            <td>110</td>
+                        </tr>
+                        <tr>
+                            <td><strong>实际功耗 *</strong></td>
+                            <td>功耗（瓦）</td>
+                            <td>3250</td>
+                        </tr>
+                        <tr>
+                            <td><strong>IP地址</strong></td>
+                            <td>矿机的网络IP地址（用于CGMiner API连接）</td>
+                            <td>192.168.1.100</td>
+                        </tr>
+                        <tr>
+                            <td><strong>机架位置</strong></td>
+                            <td>矿场内物理位置</td>
+                            <td>第3排，第12机架，第5层</td>
+                        </tr>
+                        <tr>
+                            <td><strong>MAC地址</strong></td>
+                            <td>网络MAC地址用于设备识别</td>
+                            <td>AA:BB:CC:DD:EE:FF</td>
+                        </tr>
+                        <tr>
+                            <td><strong>备注</strong></td>
+                            <td>附加信息</td>
+                            <td>固件版本v2.1，定制散热</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p><small class="text-muted">* 必填字段</small></p>
+            </li>
+            <li class="mb-3">
+                <strong>提交表单</strong>
+                <p>点击<span class="badge bg-warning text-dark">保存矿机</span>按钮</p>
+                <p>矿场管理员：矿机自动<span class="badge bg-success">已批准</span></p>
+                <p>客户：矿机将以<span class="badge bg-info">待审核</span>状态添加</p>
+            </li>
+            <li class="mb-3">
+                <strong>审批流程（客户提交的矿机）</strong>
+                <ul>
+                    <li>客户通过添加矿机表单提交申请</li>
+                    <li>管理员审核并批准/拒绝请求</li>
+                    <li>已批准的矿机变为<span class="badge bg-success">已批准</span>状态并开始运营</li>
+                </ul>
+            </li>
+        </ol>
+        
+        <div class="alert alert-success">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <strong>最佳实践：</strong>提交前仔细检查序列号和矿机规格，避免错误。
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 章节3: 测试连接 -->
+<div class="hosting-card mb-4" id="section-3">
+    <div class="hosting-card-header">
+        <h4 class="hosting-card-title">
+            <i class="bi bi-3-circle-fill me-2" style="color: #f7931a;"></i>
+            {% if current_lang == 'en' %}Testing CGMiner Connection{% else %}测试CGMiner连接{% endif %}
+        </h4>
+    </div>
+    <div class="hosting-card-body">
+        {% if current_lang == 'en' %}
+        <h5 class="mb-3">Using the Test Connection Button</h5>
+        <p>After adding a miner, you should test the CGMiner API connection to ensure proper communication:</p>
+        
+        <ol class="mb-4">
+            <li class="mb-3">
+                <strong>Locate the Test Button</strong>
+                <p>In the miner list, find the <button class="btn btn-sm btn-info" disabled><i class="bi bi-plug"></i> Test</button> button in the Actions column</p>
+                <div class="text-center my-3">
+                    <img src="{{ url_for('static', filename='images/guide/test_button_location.svg') }}" 
+                         alt="Test Button Location" 
+                         class="img-fluid rounded border border-warning"
+                         style="max-width: 600px;"
+                         onerror="this.style.display='none'">
+                </div>
+            </li>
+            <li class="mb-3">
+                <strong>Click Test Connection</strong>
+                <p>The system will attempt to connect to the miner's CGMiner API (port 4028)</p>
+                <p>Testing typically takes 3-5 seconds</p>
+            </li>
+            <li class="mb-3">
+                <strong>Interpret Results</strong>
+                
+                <h6 class="mt-3 mb-2">✅ Success Response:</h6>
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    <strong>Connection Successful</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>CGMiner API is accessible</li>
+                        <li>Real-time data collection will work</li>
+                        <li>Temperature, hashrate, and fan speeds are displayed</li>
+                    </ul>
+                </div>
+                
+                <h6 class="mt-3 mb-2">❌ Failure Response:</h6>
+                <div class="alert alert-danger">
+                    <i class="bi bi-x-circle-fill me-2"></i>
+                    <strong>Connection Failed</strong>
+                    <p class="mb-2">Common error messages:</p>
+                    <ul class="mb-0">
+                        <li><code>Connection timeout</code> - Network unreachable or firewall blocking</li>
+                        <li><code>Connection refused</code> - CGMiner API not enabled</li>
+                        <li><code>Invalid response</code> - Wrong port or incompatible API version</li>
+                    </ul>
+                </div>
+            </li>
+        </ol>
+        
+        <h5 class="mb-3 mt-4">Refresh Real-time Data</h5>
+        <p>Once connection is verified, use the <button class="btn btn-sm btn-success" disabled><i class="bi bi-arrow-clockwise"></i> Refresh</button> button to manually fetch latest telemetry data:</p>
+        
+        <ul class="mb-4">
+            <li>Updates temperature, fan speed, hashrate immediately</li>
+            <li>Useful for spot-checking miner status</li>
+            <li>Complements the automatic 60-second background collection</li>
+        </ul>
+        
+        <div class="alert alert-info">
+            <i class="bi bi-lightbulb-fill me-2"></i>
+            <strong>Tip:</strong> Test connection immediately after adding a new miner to catch configuration errors early.
+        </div>
+        
+        {% else %}
+        <h5 class="mb-3">使用测试连接按钮</h5>
+        <p>添加矿机后，您应该测试CGMiner API连接以确保正常通信：</p>
+        
+        <ol class="mb-4">
+            <li class="mb-3">
+                <strong>找到测试按钮</strong>
+                <p>在矿机列表中，在操作列找到<button class="btn btn-sm btn-info" disabled><i class="bi bi-plug"></i> 测试</button>按钮</p>
+                <div class="text-center my-3">
+                    <img src="{{ url_for('static', filename='images/guide/test_button_location.svg') }}" 
+                         alt="测试按钮位置" 
+                         class="img-fluid rounded border border-warning"
+                         style="max-width: 600px;"
+                         onerror="this.style.display='none'">
+                </div>
+            </li>
+            <li class="mb-3">
+                <strong>点击测试连接</strong>
+                <p>系统将尝试连接到矿机的CGMiner API（4028端口）</p>
+                <p>测试通常需要3-5秒</p>
+            </li>
+            <li class="mb-3">
+                <strong>解读结果</strong>
+                
+                <h6 class="mt-3 mb-2">✅ 成功响应：</h6>
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    <strong>连接成功</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>CGMiner API可访问</li>
+                        <li>实时数据采集将正常工作</li>
+                        <li>显示温度、算力和风扇速度</li>
+                    </ul>
+                </div>
+                
+                <h6 class="mt-3 mb-2">❌ 失败响应：</h6>
+                <div class="alert alert-danger">
+                    <i class="bi bi-x-circle-fill me-2"></i>
+                    <strong>连接失败</strong>
+                    <p class="mb-2">常见错误消息：</p>
+                    <ul class="mb-0">
+                        <li><code>连接超时</code> - 网络不可达或防火墙阻止</li>
+                        <li><code>连接被拒绝</code> - CGMiner API未启用</li>
+                        <li><code>无效响应</code> - 端口错误或API版本不兼容</li>
+                    </ul>
+                </div>
+            </li>
+        </ol>
+        
+        <h5 class="mb-3 mt-4">刷新实时数据</h5>
+        <p>连接验证后，使用<button class="btn btn-sm btn-success" disabled><i class="bi bi-arrow-clockwise"></i> 刷新</button>按钮手动获取最新遥测数据：</p>
+        
+        <ul class="mb-4">
+            <li>立即更新温度、风扇速度、算力</li>
+            <li>用于现场检查矿机状态</li>
+            <li>补充自动60秒后台采集</li>
+        </ul>
+        
+        <div class="alert alert-info">
+            <i class="bi bi-lightbulb-fill me-2"></i>
+            <strong>提示：</strong>添加新矿机后立即测试连接，以便尽早发现配置错误。
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 章节4: 查看实时数据 -->
+<div class="hosting-card mb-4" id="section-4">
+    <div class="hosting-card-header">
+        <h4 class="hosting-card-title">
+            <i class="bi bi-4-circle-fill me-2" style="color: #f7931a;"></i>
+            {% if current_lang == 'en' %}Viewing Real-time Monitoring Data{% else %}查看实时监控数据{% endif %}
+        </h4>
+    </div>
+    <div class="hosting-card-body">
+        {% if current_lang == 'en' %}
+        <h5 class="mb-3">14 Real-time Telemetry Fields</h5>
+        <p>The system automatically collects comprehensive telemetry data every 60 seconds:</p>
+        
+        <table class="table table-bordered table-dark">
+            <thead>
+                <tr>
+                    <th>Field</th>
+                    <th>Description</th>
+                    <th>Example</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Temperature Avg</strong></td>
+                    <td>Average chip temperature (°C)</td>
+                    <td>78.5°C</td>
+                </tr>
+                <tr>
+                    <td><strong>Temperature Max</strong></td>
+                    <td>Highest chip temperature (°C)</td>
+                    <td>82.0°C</td>
+                </tr>
+                <tr>
+                    <td><strong>Fan Speeds</strong></td>
+                    <td>Array of all fan RPM values</td>
+                    <td>[3600, 3650, 3580]</td>
+                </tr>
+                <tr>
+                    <td><strong>Fan Avg</strong></td>
+                    <td>Average fan speed (RPM)</td>
+                    <td>3610 RPM</td>
+                </tr>
+                <tr>
+                    <td><strong>Reject Rate</strong></td>
+                    <td>Percentage of rejected shares (%)</td>
+                    <td>0.5%</td>
+                </tr>
+                <tr>
+                    <td><strong>Hardware Errors</strong></td>
+                    <td>Count of hardware errors</td>
+                    <td>0</td>
+                </tr>
+                <tr>
+                    <td><strong>CGMiner Online</strong></td>
+                    <td>Connection status (boolean)</td>
+                    <td>✅ Online</td>
+                </tr>
+                <tr>
+                    <td><strong>Pool URL</strong></td>
+                    <td>Mining pool address</td>
+                    <td>stratum+tcp://pool.example.com:3333</td>
+                </tr>
+                <tr>
+                    <td><strong>Pool Worker</strong></td>
+                    <td>Worker name/username</td>
+                    <td>worker123</td>
+                </tr>
+                <tr>
+                    <td><strong>Uptime (seconds)</strong></td>
+                    <td>Continuous running time</td>
+                    <td>86400 (1 day)</td>
+                </tr>
+                <tr>
+                    <td><strong>Hashrate 5s</strong></td>
+                    <td>5-second average hashrate (TH/s)</td>
+                    <td>110.5 TH/s</td>
+                </tr>
+                <tr>
+                    <td><strong>Accepted Shares</strong></td>
+                    <td>Total accepted shares</td>
+                    <td>15,234</td>
+                </tr>
+                <tr>
+                    <td><strong>Rejected Shares</strong></td>
+                    <td>Total rejected shares</td>
+                    <td>78</td>
+                </tr>
+                <tr>
+                    <td><strong>Last Seen</strong></td>
+                    <td>UTC timestamp of last update</td>
+                    <td>2024-11-14 14:30:00 UTC</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h5 class="mb-3 mt-4">Miner Detail Page - 24-Hour Trends</h5>
+        <p>Click on any miner's serial number to view detailed analytics:</p>
+        
+        <ul class="mb-4">
+            <li><strong>Dual-axis Chart (Chart.js v4.4.0):</strong>
+                <ul>
+                    <li>Left axis: Hashrate (TH/s) in blue</li>
+                    <li>Right axis: Temperature (°C) in orange</li>
+                    <li>24-hour historical trend</li>
+                </ul>
+            </li>
+            <li><strong>Performance Metrics:</strong>
+                <ul>
+                    <li>Average/Min/Max values</li>
+                    <li>Efficiency indicators</li>
+                    <li>Abnormal event markers</li>
+                </ul>
+            </li>
+        </ul>
+        
+        <div class="text-center mb-3">
+            <img src="{{ url_for('static', filename='images/guide/miner_detail_chart.svg') }}" 
+                 alt="24-hour Trend Chart" 
+                 class="img-fluid rounded border border-warning"
+                 style="max-width: 700px;"
+                 onerror="this.style.display='none'">
+        </div>
+        
+        <div class="alert alert-info">
+            <i class="bi bi-graph-up me-2"></i>
+            <strong>Auto Refresh:</strong> Background scheduler updates all miners every 60 seconds automatically. No manual intervention required.
+        </div>
+        
+        {% else %}
+        <h5 class="mb-3">14个实时遥测字段</h5>
+        <p>系统每60秒自动收集全面的遥测数据：</p>
+        
+        <table class="table table-bordered table-dark">
+            <thead>
+                <tr>
+                    <th>字段</th>
+                    <th>说明</th>
+                    <th>示例</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>平均温度</strong></td>
+                    <td>平均芯片温度（°C）</td>
+                    <td>78.5°C</td>
+                </tr>
+                <tr>
+                    <td><strong>最高温度</strong></td>
+                    <td>最高芯片温度（°C）</td>
+                    <td>82.0°C</td>
+                </tr>
+                <tr>
+                    <td><strong>风扇速度</strong></td>
+                    <td>所有风扇转速值数组</td>
+                    <td>[3600, 3650, 3580]</td>
+                </tr>
+                <tr>
+                    <td><strong>平均风扇</strong></td>
+                    <td>平均风扇速度（RPM）</td>
+                    <td>3610 RPM</td>
+                </tr>
+                <tr>
+                    <td><strong>拒绝率</strong></td>
+                    <td>被拒绝份额的百分比（%）</td>
+                    <td>0.5%</td>
+                </tr>
+                <tr>
+                    <td><strong>硬件错误</strong></td>
+                    <td>硬件错误计数</td>
+                    <td>0</td>
+                </tr>
+                <tr>
+                    <td><strong>CGMiner在线</strong></td>
+                    <td>连接状态（布尔值）</td>
+                    <td>✅ 在线</td>
+                </tr>
+                <tr>
+                    <td><strong>矿池URL</strong></td>
+                    <td>矿池地址</td>
+                    <td>stratum+tcp://pool.example.com:3333</td>
+                </tr>
+                <tr>
+                    <td><strong>矿池工人</strong></td>
+                    <td>工人名称/用户名</td>
+                    <td>worker123</td>
+                </tr>
+                <tr>
+                    <td><strong>运行时间（秒）</strong></td>
+                    <td>连续运行时间</td>
+                    <td>86400（1天）</td>
+                </tr>
+                <tr>
+                    <td><strong>算力5秒</strong></td>
+                    <td>5秒平均算力（TH/s）</td>
+                    <td>110.5 TH/s</td>
+                </tr>
+                <tr>
+                    <td><strong>接受份额</strong></td>
+                    <td>总接受份额</td>
+                    <td>15,234</td>
+                </tr>
+                <tr>
+                    <td><strong>拒绝份额</strong></td>
+                    <td>总拒绝份额</td>
+                    <td>78</td>
+                </tr>
+                <tr>
+                    <td><strong>最后通信</strong></td>
+                    <td>最后更新的UTC时间戳</td>
+                    <td>2024-11-14 14:30:00 UTC</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h5 class="mb-3 mt-4">矿机详情页 - 24小时趋势</h5>
+        <p>点击任何矿机的序列号查看详细分析：</p>
+        
+        <ul class="mb-4">
+            <li><strong>双轴图表（Chart.js v4.4.0）：</strong>
+                <ul>
+                    <li>左轴：算力（TH/s）蓝色</li>
+                    <li>右轴：温度（°C）橙色</li>
+                    <li>24小时历史趋势</li>
+                </ul>
+            </li>
+            <li><strong>性能指标：</strong>
+                <ul>
+                    <li>平均/最小/最大值</li>
+                    <li>效率指标</li>
+                    <li>异常事件标记</li>
+                </ul>
+            </li>
+        </ul>
+        
+        <div class="text-center mb-3">
+            <img src="{{ url_for('static', filename='images/guide/miner_detail_chart.svg') }}" 
+                 alt="24小时趋势图" 
+                 class="img-fluid rounded border border-warning"
+                 style="max-width: 700px;"
+                 onerror="this.style.display='none'">
+        </div>
+        
+        <div class="alert alert-info">
+            <i class="bi bi-graph-up me-2"></i>
+            <strong>自动刷新：</strong>后台调度程序每60秒自动更新所有矿机。无需手动干预。
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 章节5: 告警系统 -->
+<div class="hosting-card mb-4" id="section-5">
+    <div class="hosting-card-header">
+        <h4 class="hosting-card-title">
+            <i class="bi bi-5-circle-fill me-2" style="color: #f7931a;"></i>
+            {% if current_lang == 'en' %}Smart Alert System{% else %}智能告警系统{% endif %}
+        </h4>
+    </div>
+    <div class="hosting-card-body">
+        {% if current_lang == 'en' %}
+        <h5 class="mb-3">Alert Thresholds and Badge Colors</h5>
+        <p>The system automatically detects critical issues and displays color-coded badges:</p>
+        
+        <table class="table table-bordered table-dark">
+            <thead>
+                <tr>
+                    <th>Alert Type</th>
+                    <th>Threshold</th>
+                    <th>Severity</th>
+                    <th>Badge</th>
+                    <th>Recommended Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>High Temperature (Critical)</strong></td>
+                    <td>&gt; 90°C</td>
+                    <td><span class="badge bg-danger">Critical</span></td>
+                    <td><span class="badge bg-danger">🔥 90.5°C</span></td>
+                    <td>
+                        <ul class="mb-0">
+                            <li>Check cooling system immediately</li>
+                            <li>Verify fan operation</li>
+                            <li>Consider reducing power or shutdown</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>High Temperature (Warning)</strong></td>
+                    <td>&gt; 85°C</td>
+                    <td><span class="badge bg-warning text-dark">Warning</span></td>
+                    <td><span class="badge bg-warning text-dark">⚠️ 87.2°C</span></td>
+                    <td>
+                        <ul class="mb-0">
+                            <li>Monitor closely</li>
+                            <li>Improve ventilation</li>
+                            <li>Clean dust filters</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Hashrate Drop</strong></td>
+                    <td>&gt; 20% below expected</td>
+                    <td><span class="badge bg-warning text-dark">Warning</span></td>
+                    <td><span class="badge bg-warning text-dark">📉 -25%</span></td>
+                    <td>
+                        <ul class="mb-0">
+                            <li>Check for hardware errors</li>
+                            <li>Verify pool connection</li>
+                            <li>Inspect hashboards</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Offline (Extended)</strong></td>
+                    <td>&gt; 5 minutes</td>
+                    <td><span class="badge bg-danger">Critical</span></td>
+                    <td><span class="badge bg-danger">🔌 Offline 12m</span></td>
+                    <td>
+                        <ul class="mb-0">
+                            <li>Check power supply</li>
+                            <li>Verify network connectivity</li>
+                            <li>Physical inspection required</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Never Online</strong></td>
+                    <td>No last_seen timestamp</td>
+                    <td><span class="badge bg-danger">Critical</span></td>
+                    <td><span class="badge bg-danger">❌ Never Online</span></td>
+                    <td>
+                        <ul class="mb-0">
+                            <li>Verify IP address configuration</li>
+                            <li>Check CGMiner API enabled</li>
+                            <li>Test network connectivity</li>
+                        </ul>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h5 class="mb-3 mt-4">Alert Badge Display</h5>
+        <div class="text-center mb-3">
+            <img src="{{ url_for('static', filename='images/guide/alert_badges.svg') }}" 
+                 alt="Alert Badge Examples" 
+                 class="img-fluid rounded border border-warning"
+                 style="max-width: 600px;"
+                 onerror="this.style.display='none'">
+        </div>
+        
+        <p>Badges appear in the miner list with hover tooltips showing all active alerts:</p>
+        <ul class="mb-4">
+            <li><strong>Red badges:</strong> Require immediate attention</li>
+            <li><strong>Yellow badges:</strong> Monitor and plan maintenance</li>
+            <li><strong>Count indicator:</strong> Shows total number of alerts</li>
+            <li><strong>Hover tooltip:</strong> Lists all alert details</li>
+        </ul>
+        
+        <div class="alert alert-warning">
+            <i class="bi bi-bell-fill me-2"></i>
+            <strong>Important:</strong> Address critical (red) alerts within 1 hour to prevent equipment damage or extended downtime.
+        </div>
+        
+        {% else %}
+        <h5 class="mb-3">告警阈值和徽章颜色</h5>
+        <p>系统自动检测关键问题并显示颜色编码的徽章：</p>
+        
+        <table class="table table-bordered table-dark">
+            <thead>
+                <tr>
+                    <th>告警类型</th>
+                    <th>阈值</th>
+                    <th>严重性</th>
+                    <th>徽章</th>
+                    <th>建议操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>高温（严重）</strong></td>
+                    <td>&gt; 90°C</td>
+                    <td><span class="badge bg-danger">严重</span></td>
+                    <td><span class="badge bg-danger">🔥 90.5°C</span></td>
+                    <td>
+                        <ul class="mb-0">
+                            <li>立即检查冷却系统</li>
+                            <li>验证风扇运行</li>
+                            <li>考虑降低功耗或关机</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>高温（警告）</strong></td>
+                    <td>&gt; 85°C</td>
+                    <td><span class="badge bg-warning text-dark">警告</span></td>
+                    <td><span class="badge bg-warning text-dark">⚠️ 87.2°C</span></td>
+                    <td>
+                        <ul class="mb-0">
+                            <li>密切监控</li>
+                            <li>改善通风</li>
+                            <li>清洁防尘过滤器</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>算力下降</strong></td>
+                    <td>&gt; 低于预期20%</td>
+                    <td><span class="badge bg-warning text-dark">警告</span></td>
+                    <td><span class="badge bg-warning text-dark">📉 -25%</span></td>
+                    <td>
+                        <ul class="mb-0">
+                            <li>检查硬件错误</li>
+                            <li>验证矿池连接</li>
+                            <li>检查算力板</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>离线（延长）</strong></td>
+                    <td>&gt; 5分钟</td>
+                    <td><span class="badge bg-danger">严重</span></td>
+                    <td><span class="badge bg-danger">🔌 离线12分钟</span></td>
+                    <td>
+                        <ul class="mb-0">
+                            <li>检查电源</li>
+                            <li>验证网络连接</li>
+                            <li>需要物理检查</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>从未在线</strong></td>
+                    <td>无last_seen时间戳</td>
+                    <td><span class="badge bg-danger">严重</span></td>
+                    <td><span class="badge bg-danger">❌ 从未在线</span></td>
+                    <td>
+                        <ul class="mb-0">
+                            <li>验证IP地址配置</li>
+                            <li>检查CGMiner API已启用</li>
+                            <li>测试网络连接</li>
+                        </ul>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h5 class="mb-3 mt-4">告警徽章显示</h5>
+        <div class="text-center mb-3">
+            <img src="{{ url_for('static', filename='images/guide/alert_badges.svg') }}" 
+                 alt="告警徽章示例" 
+                 class="img-fluid rounded border border-warning"
+                 style="max-width: 600px;"
+                 onerror="this.style.display='none'">
+        </div>
+        
+        <p>徽章显示在矿机列表中，悬停时显示所有活动告警的工具提示：</p>
+        <ul class="mb-4">
+            <li><strong>红色徽章：</strong>需要立即关注</li>
+            <li><strong>黄色徽章：</strong>监控并计划维护</li>
+            <li><strong>计数指示器：</strong>显示告警总数</li>
+            <li><strong>悬停提示：</strong>列出所有告警详情</li>
+        </ul>
+        
+        <div class="alert alert-warning">
+            <i class="bi bi-bell-fill me-2"></i>
+            <strong>重要：</strong>在1小时内处理严重（红色）告警，以防止设备损坏或延长停机时间。
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 章节6: 故障排查 -->
+<div class="hosting-card mb-4" id="section-6">
+    <div class="hosting-card-header">
+        <h4 class="hosting-card-title">
+            <i class="bi bi-6-circle-fill me-2" style="color: #f7931a;"></i>
+            {% if current_lang == 'en' %}Troubleshooting Guide{% else %}故障排查指南{% endif %}
+        </h4>
+    </div>
+    <div class="hosting-card-body">
+        {% if current_lang == 'en' %}
+        <h5 class="mb-3">Common Issues and Solutions</h5>
+        
+        <div class="accordion" id="troubleshootingAccordion">
+            <div class="accordion-item bg-dark">
+                <h2 class="accordion-header" id="heading1">
+                    <button class="accordion-button bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1">
+                        <i class="bi bi-x-circle text-danger me-2"></i>
+                        <strong>Connection Timeout / Failed to Connect</strong>
+                    </button>
+                </h2>
+                <div id="collapse1" class="accordion-collapse collapse show" data-bs-parent="#troubleshootingAccordion">
+                    <div class="accordion-body">
+                        <p><strong>Symptoms:</strong> Test connection fails with timeout error</p>
+                        <p><strong>Possible Causes & Solutions:</strong></p>
+                        <ol>
+                            <li class="mb-2">
+                                <strong>Network Connectivity</strong>
+                                <ul>
+                                    <li>Ping the miner IP: <code>ping 192.168.1.100</code></li>
+                                    <li>Check physical network cable connection</li>
+                                    <li>Verify switch/router configuration</li>
+                                </ul>
+                            </li>
+                            <li class="mb-2">
+                                <strong>Firewall Blocking</strong>
+                                <ul>
+                                    <li>Check firewall rules on both miner and management system</li>
+                                    <li>Temporarily disable firewall to test: <code>ufw disable</code> (Ubuntu)</li>
+                                    <li>Allow port 4028: <code>ufw allow 4028/tcp</code></li>
+                                </ul>
+                            </li>
+                            <li class="mb-2">
+                                <strong>Incorrect IP Address</strong>
+                                <ul>
+                                    <li>Verify IP address in miner web interface</li>
+                                    <li>Check for IP conflicts: <code>arp -a</code></li>
+                                    <li>Update IP in system if changed</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="accordion-item bg-dark">
+                <h2 class="accordion-header" id="heading2">
+                    <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2">
+                        <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                        <strong>CGMiner API Not Responding</strong>
+                    </button>
+                </h2>
+                <div id="collapse2" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                    <div class="accordion-body">
+                        <p><strong>Symptoms:</strong> Connection refused or invalid response</p>
+                        <p><strong>Solutions:</strong></p>
+                        <ol>
+                            <li class="mb-2">
+                                <strong>Verify API is Enabled</strong>
+                                <ul>
+                                    <li>Login to miner web interface</li>
+                                    <li>Check <code>Miner Configuration</code> → <code>API Settings</code></li>
+                                    <li>Ensure API is enabled and port is 4028</li>
+                                </ul>
+                            </li>
+                            <li class="mb-2">
+                                <strong>Restart CGMiner Service</strong>
+                                <ul>
+                                    <li>Reboot the miner from web interface</li>
+                                    <li>Or SSH and restart: <code>systemctl restart cgminer</code></li>
+                                </ul>
+                            </li>
+                            <li class="mb-2">
+                                <strong>Test Manually</strong>
+                                <ul>
+                                    <li>Use telnet: <code>telnet 192.168.1.100 4028</code></li>
+                                    <li>Send command: <code>{"command":"summary"}</code></li>
+                                    <li>Should receive JSON response</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="accordion-item bg-dark">
+                <h2 class="accordion-header" id="heading3">
+                    <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3">
+                        <i class="bi bi-arrow-clockwise text-info me-2"></i>
+                        <strong>Real-time Data Not Updating</strong>
+                    </button>
+                </h2>
+                <div id="collapse3" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                    <div class="accordion-body">
+                        <p><strong>Symptoms:</strong> Last seen timestamp is old, data appears stale</p>
+                        <p><strong>Solutions:</strong></p>
+                        <ol>
+                            <li class="mb-2">
+                                <strong>Check Background Scheduler</strong>
+                                <ul>
+                                    <li>Verify scheduler is running in application logs</li>
+                                    <li>Look for: <code>CGMiner调度器启动成功</code></li>
+                                    <li>Restart application if scheduler stopped</li>
+                                </ul>
+                            </li>
+                            <li class="mb-2">
+                                <strong>Manual Refresh</strong>
+                                <ul>
+                                    <li>Click the <button class="btn btn-sm btn-success" disabled><i class="bi bi-arrow-clockwise"></i> Refresh</button> button</li>
+                                    <li>Verifies if real-time collection works</li>
+                                </ul>
+                            </li>
+                            <li class="mb-2">
+                                <strong>Check Database Connection</strong>
+                                <ul>
+                                    <li>Verify PostgreSQL is running</li>
+                                    <li>Check connection pool status</li>
+                                    <li>Review database logs for errors</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="accordion-item bg-dark">
+                <h2 class="accordion-header" id="heading4">
+                    <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapse4">
+                        <i class="bi bi-shield-lock text-warning me-2"></i>
+                        <strong>Permission Denied / Access Restricted</strong>
+                    </button>
+                </h2>
+                <div id="collapse4" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                    <div class="accordion-body">
+                        <p><strong>Symptoms:</strong> Cannot view certain miners or access features</p>
+                        <p><strong>Solutions:</strong></p>
+                        <ol>
+                            <li class="mb-2">
+                                <strong>Check User Role</strong>
+                                <ul>
+                                    <li><strong>customer</strong> - Can only view own miners</li>
+                                    <li><strong>mining_site</strong> - Can view all miners at their sites</li>
+                                    <li><strong>admin/owner</strong> - Full access to all miners</li>
+                                </ul>
+                            </li>
+                            <li class="mb-2">
+                                <strong>Verify Customer Assignment</strong>
+                                <ul>
+                                    <li>Ensure miner.customer_id matches logged-in user</li>
+                                    <li>Contact admin to update assignments if needed</li>
+                                </ul>
+                            </li>
+                            <li class="mb-2">
+                                <strong>Session Issues</strong>
+                                <ul>
+                                    <li>Logout and login again</li>
+                                    <li>Clear browser cookies</li>
+                                    <li>Check session timeout settings</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="accordion-item bg-dark">
+                <h2 class="accordion-header" id="heading5">
+                    <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapse5">
+                        <i class="bi bi-thermometer-high text-danger me-2"></i>
+                        <strong>False Temperature Alerts</strong>
+                    </button>
+                </h2>
+                <div id="collapse5" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                    <div class="accordion-body">
+                        <p><strong>Symptoms:</strong> Temperature alerts showing when miner is cool</p>
+                        <p><strong>Solutions:</strong></p>
+                        <ol>
+                            <li class="mb-2">
+                                <strong>Verify Sensor Readings</strong>
+                                <ul>
+                                    <li>Check miner web interface for actual temperature</li>
+                                    <li>Compare with CGMiner API response</li>
+                                    <li>Sensor malfunction may require RMA</li>
+                                </ul>
+                            </li>
+                            <li class="mb-2">
+                                <strong>Update Firmware</strong>
+                                <ul>
+                                    <li>Check manufacturer for firmware updates</li>
+                                    <li>Newer firmware may fix sensor bugs</li>
+                                </ul>
+                            </li>
+                            <li class="mb-2">
+                                <strong>Adjust Alert Thresholds</strong>
+                                <ul>
+                                    <li>Contact system administrator</li>
+                                    <li>Request threshold adjustment if necessary</li>
+                                    <li>Document legitimate false positives</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <h5 class="mb-3 mt-5">Getting Additional Help</h5>
+        <div class="alert alert-info">
+            <i class="bi bi-question-circle-fill me-2"></i>
+            <strong>Still having issues?</strong>
+            <ul class="mb-0 mt-2">
+                <li>Contact technical support with specific error messages</li>
+                <li>Include miner serial number and IP address</li>
+                <li>Attach screenshots if possible</li>
+                <li>Describe steps already attempted</li>
+            </ul>
+        </div>
+        
+        {% else %}
+        <h5 class="mb-3">常见问题和解决方案</h5>
+        
+        <div class="accordion" id="troubleshootingAccordion">
+            <div class="accordion-item bg-dark">
+                <h2 class="accordion-header" id="heading1">
+                    <button class="accordion-button bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1">
+                        <i class="bi bi-x-circle text-danger me-2"></i>
+                        <strong>连接超时 / 无法连接</strong>
+                    </button>
+                </h2>
+                <div id="collapse1" class="accordion-collapse collapse show" data-bs-parent="#troubleshootingAccordion">
+                    <div class="accordion-body">
+                        <p><strong>症状：</strong>测试连接失败，显示超时错误</p>
+                        <p><strong>可能原因和解决方案：</strong></p>
+                        <ol>
+                            <li class="mb-2">
+                                <strong>网络连接性</strong>
+                                <ul>
+                                    <li>Ping矿机IP：<code>ping 192.168.1.100</code></li>
+                                    <li>检查物理网络电缆连接</li>
+                                    <li>验证交换机/路由器配置</li>
+                                </ul>
+                            </li>
+                            <li class="mb-2">
+                                <strong>防火墙阻止</strong>
+                                <ul>
+                                    <li>检查矿机和管理系统上的防火墙规则</li>
+                                    <li>临时禁用防火墙测试：<code>ufw disable</code>（Ubuntu）</li>
+                                    <li>允许4028端口：<code>ufw allow 4028/tcp</code></li>
+                                </ul>
+                            </li>
+                            <li class="mb-2">
+                                <strong>IP地址错误</strong>
+                                <ul>
+                                    <li>在矿机Web界面中验证IP地址</li>
+                                    <li>检查IP冲突：<code>arp -a</code></li>
+                                    <li>如已更改，在系统中更新IP</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="accordion-item bg-dark">
+                <h2 class="accordion-header" id="heading2">
+                    <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2">
+                        <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                        <strong>CGMiner API无响应</strong>
+                    </button>
+                </h2>
+                <div id="collapse2" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                    <div class="accordion-body">
+                        <p><strong>症状：</strong>连接被拒绝或无效响应</p>
+                        <p><strong>解决方案：</strong></p>
+                        <ol>
+                            <li class="mb-2">
+                                <strong>验证API已启用</strong>
+                                <ul>
+                                    <li>登录矿机Web界面</li>
+                                    <li>检查<code>矿机配置</code> → <code>API设置</code></li>
+                                    <li>确保API已启用且端口为4028</li>
+                                </ul>
+                            </li>
+                            <li class="mb-2">
+                                <strong>重启CGMiner服务</strong>
+                                <ul>
+                                    <li>从Web界面重启矿机</li>
+                                    <li>或SSH并重启：<code>systemctl restart cgminer</code></li>
+                                </ul>
+                            </li>
+                            <li class="mb-2">
+                                <strong>手动测试</strong>
+                                <ul>
+                                    <li>使用telnet：<code>telnet 192.168.1.100 4028</code></li>
+                                    <li>发送命令：<code>{"command":"summary"}</code></li>
+                                    <li>应接收JSON响应</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="accordion-item bg-dark">
+                <h2 class="accordion-header" id="heading3">
+                    <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3">
+                        <i class="bi bi-arrow-clockwise text-info me-2"></i>
+                        <strong>实时数据未更新</strong>
+                    </button>
+                </h2>
+                <div id="collapse3" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                    <div class="accordion-body">
+                        <p><strong>症状：</strong>最后通信时间戳较旧，数据看起来陈旧</p>
+                        <p><strong>解决方案：</strong></p>
+                        <ol>
+                            <li class="mb-2">
+                                <strong>检查后台调度器</strong>
+                                <ul>
+                                    <li>在应用程序日志中验证调度器正在运行</li>
+                                    <li>查找：<code>CGMiner调度器启动成功</code></li>
+                                    <li>如调度器停止则重启应用程序</li>
+                                </ul>
+                            </li>
+                            <li class="mb-2">
+                                <strong>手动刷新</strong>
+                                <ul>
+                                    <li>点击<button class="btn btn-sm btn-success" disabled><i class="bi bi-arrow-clockwise"></i> 刷新</button>按钮</li>
+                                    <li>验证实时采集是否工作</li>
+                                </ul>
+                            </li>
+                            <li class="mb-2">
+                                <strong>检查数据库连接</strong>
+                                <ul>
+                                    <li>验证PostgreSQL正在运行</li>
+                                    <li>检查连接池状态</li>
+                                    <li>查看数据库日志中的错误</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="accordion-item bg-dark">
+                <h2 class="accordion-header" id="heading4">
+                    <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapse4">
+                        <i class="bi bi-shield-lock text-warning me-2"></i>
+                        <strong>权限被拒绝 / 访问受限</strong>
+                    </button>
+                </h2>
+                <div id="collapse4" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                    <div class="accordion-body">
+                        <p><strong>症状：</strong>无法查看某些矿机或访问功能</p>
+                        <p><strong>解决方案：</strong></p>
+                        <ol>
+                            <li class="mb-2">
+                                <strong>检查用户角色</strong>
+                                <ul>
+                                    <li><strong>customer</strong> - 只能查看自己的矿机</li>
+                                    <li><strong>mining_site</strong> - 可以查看其站点的所有矿机</li>
+                                    <li><strong>admin/owner</strong> - 对所有矿机的完全访问权限</li>
+                                </ul>
+                            </li>
+                            <li class="mb-2">
+                                <strong>验证客户分配</strong>
+                                <ul>
+                                    <li>确保miner.customer_id与登录用户匹配</li>
+                                    <li>如需更新分配，请联系管理员</li>
+                                </ul>
+                            </li>
+                            <li class="mb-2">
+                                <strong>会话问题</strong>
+                                <ul>
+                                    <li>注销并重新登录</li>
+                                    <li>清除浏览器Cookie</li>
+                                    <li>检查会话超时设置</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="accordion-item bg-dark">
+                <h2 class="accordion-header" id="heading5">
+                    <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapse5">
+                        <i class="bi bi-thermometer-high text-danger me-2"></i>
+                        <strong>温度误报</strong>
+                    </button>
+                </h2>
+                <div id="collapse5" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                    <div class="accordion-body">
+                        <p><strong>症状：</strong>矿机冷却时显示温度告警</p>
+                        <p><strong>解决方案：</strong></p>
+                        <ol>
+                            <li class="mb-2">
+                                <strong>验证传感器读数</strong>
+                                <ul>
+                                    <li>检查矿机Web界面的实际温度</li>
+                                    <li>与CGMiner API响应比较</li>
+                                    <li>传感器故障可能需要RMA</li>
+                                </ul>
+                            </li>
+                            <li class="mb-2">
+                                <strong>更新固件</strong>
+                                <ul>
+                                    <li>检查制造商的固件更新</li>
+                                    <li>新固件可能修复传感器错误</li>
+                                </ul>
+                            </li>
+                            <li class="mb-2">
+                                <strong>调整告警阈值</strong>
+                                <ul>
+                                    <li>联系系统管理员</li>
+                                    <li>如有必要，请求调整阈值</li>
+                                    <li>记录合法的误报</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <h5 class="mb-3 mt-5">获取额外帮助</h5>
+        <div class="alert alert-info">
+            <i class="bi bi-question-circle-fill me-2"></i>
+            <strong>仍然有问题？</strong>
+            <ul class="mb-0 mt-2">
+                <li>联系技术支持并提供具体错误消息</li>
+                <li>包括矿机序列号和IP地址</li>
+                <li>如果可能，附上截图</li>
+                <li>描述已尝试的步骤</li>
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 章节7: 本地部署 -->
+<div class="hosting-card mb-4" id="section-7">
+    <div class="hosting-card-header">
+        <h4 class="hosting-card-title">
+            <i class="bi bi-7-circle-fill me-2" style="color: #f7931a;"></i>
+            {% if current_lang == 'en' %}Local Deployment - Direct Miner Connection{% else %}本地部署 - 直接连接矿机{% endif %}
+        </h4>
+    </div>
+    <div class="hosting-card-body">
+        {% if current_lang == 'en' %}
+        <div class="alert alert-success mb-4">
+            <i class="bi bi-check-circle me-2"></i>
+            <strong>Advantage:</strong> No Edge Collector needed, simpler architecture, better real-time data
+        </div>
+        
+        <h5 class="mb-3"><i class="bi bi-diagram-3 me-2"></i>Architecture Overview</h5>
+        <pre class="bg-dark p-3 rounded text-success small mb-4" style="font-family: monospace;">
+Mining Farm LAN (Same Network)
+┌───────────────────────────────────────────────────┐
+│                                                   │
+│  ┌─────────────────────┐      ┌────┐ ┌────┐      │
+│  │  HashInsight System │      │ASIC│ │ASIC│ ...  │
+│  │  (Local Server)     │      │    │ │    │      │
+│  │                     │      └──┬─┘ └──┬─┘      │
+│  │  - Data Collection  │         │      │        │
+│  │  - Monitoring       │◄────────┴──────┘        │
+│  │  - Analytics        │   CGMiner API           │
+│  │                     │   Port 4028             │
+│  └─────────────────────┘                         │
+│                                                   │
+└───────────────────────────────────────────────────┘</pre>
+        
+        <h5 class="mb-3"><i class="bi bi-hdd-network me-2"></i>Network Requirements</h5>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="p-3 border border-secondary rounded h-100">
+                    <h6 class="text-info"><i class="bi bi-geo-alt me-2"></i>Server Location</h6>
+                    <ul class="mb-0 small text-muted">
+                        <li>On the <strong class="text-warning">same LAN</strong> as miners</li>
+                        <li>Can directly ping miner IPs</li>
+                        <li>Recommended: Server or IPC in data center</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="p-3 border border-secondary rounded h-100">
+                    <h6 class="text-info"><i class="bi bi-shield-check me-2"></i>Port Requirements</h6>
+                    <ul class="mb-0 small text-muted">
+                        <li>Miner port <code class="text-warning">4028</code> (CGMiner API)</li>
+                        <li>Ensure firewall allows access</li>
+                        <li>Some firmware may use different ports</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <h5 class="mb-3"><i class="bi bi-terminal me-2"></i>Test Connection Commands</h5>
+        <pre class="bg-dark p-3 rounded text-success small mb-3"><code># 1. Test ping connectivity
+ping 192.168.1.100
+
+# 2. Test CGMiner API port
+nc -zv 192.168.1.100 4028
+
+# 3. Send CGMiner command test (note trailing newline required)
+echo -e '{"command":"summary"}\n' | nc 192.168.1.100 4028
+
+# Or use Python test (more reliable)
+python3 -c "import socket; s=socket.socket(); s.connect(('192.168.1.100',4028)); s.sendall(b'{\"command\":\"summary\"}\\n'); print(s.recv(4096).decode()); s.close()"</code></pre>
+        
+        <div class="alert alert-warning mb-4">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>Note:</strong> The <code>nc</code> (netcat) command varies across systems. If <code>nc -zv</code> doesn't work, try <code>ncat</code> or the Python command above.
+        </div>
+        
+        <h5 class="mb-3"><i class="bi bi-code-slash me-2"></i>CGMiner API Commands</h5>
+        <table class="table table-bordered table-dark">
+            <thead>
+                <tr>
+                    <th>Command</th>
+                    <th>Description</th>
+                    <th>Example Usage</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>summary</code></td>
+                    <td>Get summary statistics (hashrate, uptime, accepted shares)</td>
+                    <td><code>echo -e '{"command":"summary"}\n' | nc IP 4028</code></td>
+                </tr>
+                <tr>
+                    <td><code>stats</code></td>
+                    <td>Get detailed hardware statistics</td>
+                    <td><code>echo -e '{"command":"stats"}\n' | nc IP 4028</code></td>
+                </tr>
+                <tr>
+                    <td><code>devs</code></td>
+                    <td>Get device information (hashboards, temperatures)</td>
+                    <td><code>echo -e '{"command":"devs"}\n' | nc IP 4028</code></td>
+                </tr>
+                <tr>
+                    <td><code>pools</code></td>
+                    <td>Get pool configuration and status</td>
+                    <td><code>echo -e '{"command":"pools"}\n' | nc IP 4028</code></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="alert alert-info mt-4">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>Tip:</strong> If connection fails, check: 1) Miner API enabled 2) Firewall settings 3) Correct IP address
+        </div>
+        
+        {% else %}
+        <div class="alert alert-success mb-4">
+            <i class="bi bi-check-circle me-2"></i>
+            <strong>优势:</strong> 无需 Edge Collector，架构更简单，数据实时性更好
+        </div>
+        
+        <h5 class="mb-3"><i class="bi bi-diagram-3 me-2"></i>架构说明</h5>
+        <pre class="bg-dark p-3 rounded text-success small mb-4" style="font-family: monospace;">
+矿场内网 (同一局域网)
+┌───────────────────────────────────────────────────┐
+│                                                   │
+│  ┌─────────────────────┐      ┌────┐ ┌────┐      │
+│  │  HashInsight 系统    │      │矿机│ │矿机│ ...  │
+│  │  (本地服务器)        │      │    │ │    │      │
+│  │                     │      └──┬─┘ └──┬─┘      │
+│  │  - 数据采集         │         │      │        │
+│  │  - 监控告警         │◄────────┴──────┘        │
+│  │  - 分析报表         │   CGMiner API           │
+│  │                     │   端口 4028             │
+│  └─────────────────────┘                         │
+│                                                   │
+└───────────────────────────────────────────────────┘</pre>
+        
+        <h5 class="mb-3"><i class="bi bi-hdd-network me-2"></i>网络要求</h5>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="p-3 border border-secondary rounded h-100">
+                    <h6 class="text-info"><i class="bi bi-geo-alt me-2"></i>服务器位置</h6>
+                    <ul class="mb-0 small text-muted">
+                        <li>与矿机在<strong class="text-warning">同一局域网</strong></li>
+                        <li>能直接 ping 通矿机 IP</li>
+                        <li>推荐：机房内服务器或工控机</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="p-3 border border-secondary rounded h-100">
+                    <h6 class="text-info"><i class="bi bi-shield-check me-2"></i>端口要求</h6>
+                    <ul class="mb-0 small text-muted">
+                        <li>矿机端口 <code class="text-warning">4028</code> (CGMiner API)</li>
+                        <li>确保防火墙允许访问</li>
+                        <li>部分固件可能使用其他端口</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <h5 class="mb-3"><i class="bi bi-terminal me-2"></i>测试连接命令</h5>
+        <pre class="bg-dark p-3 rounded text-success small mb-3"><code># 1. 测试 ping 连通
+ping 192.168.1.100
+
+# 2. 测试 CGMiner API 端口
+nc -zv 192.168.1.100 4028
+
+# 3. 发送 CGMiner 命令测试（注意末尾换行符）
+echo -e '{"command":"summary"}\n' | nc 192.168.1.100 4028
+
+# 或使用 Python 测试（更可靠）
+python3 -c "import socket; s=socket.socket(); s.connect(('192.168.1.100',4028)); s.sendall(b'{\"command\":\"summary\"}\\n'); print(s.recv(4096).decode()); s.close()"</code></pre>
+        
+        <div class="alert alert-warning mb-4">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>注意:</strong> 不同系统的 <code>nc</code> (netcat) 命令可能有差异。如果 <code>nc -zv</code> 不工作，请尝试 <code>ncat</code> 或上面的 Python 命令。
+        </div>
+        
+        <h5 class="mb-3"><i class="bi bi-code-slash me-2"></i>CGMiner API 命令</h5>
+        <table class="table table-bordered table-dark">
+            <thead>
+                <tr>
+                    <th>命令</th>
+                    <th>说明</th>
+                    <th>使用示例</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>summary</code></td>
+                    <td>获取汇总统计信息（算力、运行时间、接受的份额）</td>
+                    <td><code>echo -e '{"command":"summary"}\n' | nc IP 4028</code></td>
+                </tr>
+                <tr>
+                    <td><code>stats</code></td>
+                    <td>获取详细硬件统计信息</td>
+                    <td><code>echo -e '{"command":"stats"}\n' | nc IP 4028</code></td>
+                </tr>
+                <tr>
+                    <td><code>devs</code></td>
+                    <td>获取设备信息（算力板、温度）</td>
+                    <td><code>echo -e '{"command":"devs"}\n' | nc IP 4028</code></td>
+                </tr>
+                <tr>
+                    <td><code>pools</code></td>
+                    <td>获取矿池配置和状态</td>
+                    <td><code>echo -e '{"command":"pools"}\n' | nc IP 4028</code></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="alert alert-info mt-4">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>提示:</strong> 如果连接失败，请检查：1) 矿机是否开启 API 2) 防火墙设置 3) IP 地址是否正确
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 返回顶部按钮 -->
+<div class="text-center mt-4">
+    <a href="#" class="btn btn-hosting-primary">
+        <i class="bi bi-arrow-up me-1"></i>{% if current_lang == 'en' %}Back to Top{% else %}返回顶部{% endif %}
+    </a>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+// 平滑滚动到章节
+document.querySelectorAll('a[href^="#section-"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+            target.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

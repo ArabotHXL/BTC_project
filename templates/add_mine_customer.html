@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if current_lang == 'en' %}Add Mining Site Customer{% else %}添加矿场客户{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>
+                {% if current_lang == 'en' %}Add New Customer{% else %}添加新客户{% endif %}
+                <a href="{{ url_for('mine_customer_management') }}" class="btn btn-outline-secondary float-end">
+                    <i class="bi bi-arrow-left"></i> 
+                    {% if current_lang == 'en' %}Back to Customer List{% else %}返回客户列表{% endif %}
+                </a>
+            </h1>
+            <p class="text-muted">
+                {% if current_lang == 'en' %}
+                Add a new customer and grant them access to the mining calculator. This will also create a customer record in the CRM system.
+                {% else %}
+                添加新客户并授权他们使用挖矿计算器。这将同时在CRM系统中创建客户记录。
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+
+    <div class="row">
+        <div class="col-md-8 col-lg-6 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    {% if current_lang == 'en' %}Customer Information{% else %}客户信息{% endif %}
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('add_mine_customer') }}">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">
+                                {% if current_lang == 'en' %}Full Name{% else %}姓名{% endif %} *
+                            </label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">
+                                {% if current_lang == 'en' %}Email Address{% else %}邮箱地址{% endif %} *
+                            </label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                            <div class="form-text">
+                                {% if current_lang == 'en' %}
+                                Customer will use this email to log in to the calculator.
+                                {% else %}
+                                客户将使用此邮箱登录计算器。
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="company" class="form-label">
+                                {% if current_lang == 'en' %}Company{% else %}公司{% endif %}
+                            </label>
+                            <input type="text" class="form-control" id="company" name="company">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="position" class="form-label">
+                                {% if current_lang == 'en' %}Position{% else %}职位{% endif %}
+                            </label>
+                            <input type="text" class="form-control" id="position" name="position">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="grant_calculator_access" name="grant_calculator_access" value="yes" checked>
+                                <label class="form-check-label" for="grant_calculator_access">
+                                    {% if current_lang == 'en' %}Grant Calculator Access{% else %}提供计算器访问权限{% endif %}
+                                </label>
+                            </div>
+                            <div class="form-text mb-2">
+                                {% if current_lang == 'en' %}
+                                If checked, customer will be able to log in and use the calculator.
+                                {% else %}
+                                如勾选，客户将能够登录并使用计算器。
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3 calculator-access-option">
+                            <label for="access_days" class="form-label">
+                                {% if current_lang == 'en' %}Access Duration (Days){% else %}访问期限（天）{% endif %} *
+                            </label>
+                            <input type="number" class="form-control" id="access_days" name="access_days" value="30" min="1" max="365" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="mining_capacity" class="form-label">
+                                {% if current_lang == 'en' %}Mining Capacity (MW){% else %}挖矿容量 (MW){% endif %}
+                            </label>
+                            <input type="number" class="form-control" id="mining_capacity" name="mining_capacity" step="0.01" min="0">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">
+                                {% if current_lang == 'en' %}Notes{% else %}备注{% endif %}
+                            </label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-person-plus"></i> 
+                                {% if current_lang == 'en' %}Add Customer{% else %}添加客户{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 获取计算器访问权限切换开关和相关字段
+        const accessSwitch = document.getElementById('grant_calculator_access');
+        const accessOptions = document.querySelectorAll('.calculator-access-option');
+        const accessDaysInput = document.getElementById('access_days');
+        
+        // 切换显示/隐藏访问选项
+        function toggleAccessOptions() {
+            if (accessSwitch.checked) {
+                accessOptions.forEach(option => option.style.display = 'block');
+                accessDaysInput.required = true;
+            } else {
+                accessOptions.forEach(option => option.style.display = 'none');
+                accessDaysInput.required = false;
+            }
+        }
+        
+        // 初始化时运行一次
+        toggleAccessOptions();
+        
+        // 添加切换事件监听器
+        accessSwitch.addEventListener('change', toggleAccessOptions);
+    });
+</script>
+{% endblock %}

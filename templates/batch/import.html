@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batch Import - HashInsight Enterprise</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        .upload-zone {
+            border: 3px dashed #6c757d;
+            border-radius: 12px;
+            padding: 60px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        .upload-zone:hover, .upload-zone.drag-over {
+            border-color: #0d6efd;
+            background: rgba(13, 110, 253, 0.1);
+        }
+        
+        .upload-zone i {
+            font-size: 48px;
+            color: #6c757d;
+            margin-bottom: 20px;
+        }
+        
+        .progress {
+            height: 30px;
+            font-size: 14px;
+        }
+        
+        .result-card {
+            border-left: 4px solid #28a745;
+        }
+        
+        .error-card {
+            border-left: 4px solid #dc3545;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-box {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        .error-table {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-lightning-charge-fill me-2"></i>HashInsight Enterprise
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/"><i class="bi bi-arrow-left me-1"></i>Back to Dashboard</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2><i class="bi bi-cloud-upload me-2"></i>Batch Import Miners</h2>
+                <p class="text-muted">Import up to 5,000 miners from CSV with auto-detection</p>
+            </div>
+        </div>
+
+        <!-- 模板下载区 -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-file-earmark-arrow-down me-2"></i>Download Template</h5>
+                        <p class="card-text">Get started with our CSV template</p>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-primary" onclick="downloadTemplate('en')">
+                                <i class="bi bi-download me-1"></i>English Template
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" onclick="downloadTemplate('zh')">
+                                <i class="bi bi-download me-1"></i>中文模板
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="downloadBulkTemplate()">
+                                <i class="bi bi-database me-1"></i>Bulk Test (5000 rows)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 必填字段说明 / Required Fields Documentation -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-info">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-info-circle-fill text-info me-2"></i>
+                            Required Hosting Fields / 必填托管字段
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-info mb-3">English Format</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="bi bi-check-circle text-success me-2"></i><strong>Site Name</strong> - Hosting site (e.g., "Texas DC-01")</li>
+                                    <li><i class="bi bi-check-circle text-success me-2"></i><strong>Client Email</strong> - Customer email address</li>
+                                    <li><i class="bi bi-check-circle text-success me-2"></i><strong>Serial Number</strong> - Unique miner identifier</li>
+                                    <li><i class="bi bi-check-circle text-success me-2"></i><strong>Miner Model</strong> - ASIC model name</li>
+                                    <li><i class="bi bi-check-circle text-success me-2"></i><strong>Hashrate (TH/s)</strong> - Actual hashrate</li>
+                                    <li><i class="bi bi-check-circle text-success me-2"></i><strong>Power (W)</strong> - Actual power consumption</li>
+                                    <li class="mt-2"><i class="bi bi-dash-circle text-warning me-2"></i><strong>Hosting Fee ($/month)</strong> - Optional, defaults to 0</li>
+                                    <li><i class="bi bi-dash-circle text-warning me-2"></i><strong>Rack Position</strong> - Optional (e.g., "A1-R1-U12")</li>
+                                    <li><i class="bi bi-dash-circle text-warning me-2"></i><strong>IP Address</strong> - Optional miner IP</li>
+                                    <li><i class="bi bi-dash-circle text-warning me-2"></i><strong>Notes</strong> - Optional remarks</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-info mb-3">中文格式</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="bi bi-check-circle text-success me-2"></i><strong>站点名称</strong> - 托管站点（如"Texas DC-01"）</li>
+                                    <li><i class="bi bi-check-circle text-success me-2"></i><strong>客户邮箱</strong> - 客户电子邮件地址</li>
+                                    <li><i class="bi bi-check-circle text-success me-2"></i><strong>序列号</strong> - 矿机唯一标识符</li>
+                                    <li><i class="bi bi-check-circle text-success me-2"></i><strong>矿机型号</strong> - ASIC矿机型号</li>
+                                    <li><i class="bi bi-check-circle text-success me-2"></i><strong>算力 (TH/s)</strong> - 实际算力</li>
+                                    <li><i class="bi bi-check-circle text-success me-2"></i><strong>功耗 (W)</strong> - 实际功耗</li>
+                                    <li class="mt-2"><i class="bi bi-dash-circle text-warning me-2"></i><strong>托管费 ($/月)</strong> - 可选，默认为0</li>
+                                    <li><i class="bi bi-dash-circle text-warning me-2"></i><strong>机架位置</strong> - 可选（如"A1-R1-U12"）</li>
+                                    <li><i class="bi bi-dash-circle text-warning me-2"></i><strong>IP地址</strong> - 可选矿机IP</li>
+                                    <li><i class="bi bi-dash-circle text-warning me-2"></i><strong>备注</strong> - 可选说明</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="alert alert-warning mt-3 mb-0">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            <strong>Important:</strong> Site Name and Client Email must match existing records in the system. 
+                            Email matching is case-insensitive.
+                            <br>
+                            <strong>重要提示：</strong>站点名称和客户邮箱必须与系统中的现有记录匹配。邮箱匹配不区分大小写。
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 上传区 -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="upload-zone" id="uploadZone">
+                            <i class="bi bi-cloud-arrow-up-fill"></i>
+                            <h4>Drag & Drop CSV File Here</h4>
+                            <p class="text-muted mb-3">or click to browse</p>
+                            <button type="button" class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                                <i class="bi bi-folder2-open me-1"></i>Choose File
+                            </button>
+                            <input type="file" id="fileInput" accept=".csv" style="display: none;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 进度条 -->
+        <div class="row mb-4" id="progressSection" style="display: none;">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 id="progressMessage">Processing...</h5>
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 id="progressBar" role="progressbar" style="width: 0%">0%</div>
+                        </div>
+                        <p class="text-muted mt-2 mb-0" id="progressDetails"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 结果区 -->
+        <div class="row" id="resultSection" style="display: none;">
+            <div class="col-12">
+                <div class="card result-card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>Import Complete
+                        </h5>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-box">
+                                <div class="stat-value text-success" id="successCount">0</div>
+                                <div class="stat-label">Successful</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-value text-danger" id="errorCount">0</div>
+                                <div class="stat-label">Errors</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-value text-info" id="totalRows">0</div>
+                                <div class="stat-label">Total Rows</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-value text-warning" id="elapsedTime">0s</div>
+                                <div class="stat-label">Time Elapsed</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 错误列表 -->
+        <div class="row mt-4" id="errorSection" style="display: none;">
+            <div class="col-12">
+                <div class="card error-card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Import Errors
+                        </h5>
+                        <div class="error-table">
+                            <table class="table table-sm table-dark">
+                                <thead>
+                                    <tr>
+                                        <th>Row</th>
+                                        <th>Error Type</th>
+                                        <th>Message</th>
+                                        <th>Suggestion</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="errorList"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/batch_import.js"></script>
+</body>
+</html>

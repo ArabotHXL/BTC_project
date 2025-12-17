@@ -1,0 +1,2243 @@
+<!DOCTYPE html>
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="user-role" content="{{ session.role }}">
+    <meta name="language" content="{{ current_lang }}">
+    <title>{% if current_lang == 'en' %}Bitcoin Mining Calculator{% else %}比特币挖矿计算器{% endif %}</title>
+    <!-- Bootstrap CSS from Replit CDN -->
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Chart.js 3.x 版本，用于热力图 -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Chart.js Annotation Plugin -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+<!-- 缓存优化模块 - 暂时禁用以调试main_new.js -->
+<!-- <script src="/static/js/cache-optimization.js"></script> -->
+<!-- 优化的页面加载器 - 暂时禁用以调试main_new.js -->
+<!-- <script src="/static/js/optimized-loader.js"></script> -->
+    <!-- 子菜单支持 -->
+    <style>
+        .dropdown-submenu {
+            position: relative;
+        }
+        .dropdown-submenu .dropdown-menu {
+            top: 0;
+            left: 100%;
+            margin-top: -1px;
+        }
+        /* 在悬停时显示子菜单 */
+        .dropdown-submenu:hover > .dropdown-menu {
+            display: block;
+        }
+        /* 选中的菜单项高亮 */
+        .dropdown-item:active, .dropdown-item:focus, .dropdown-item:hover {
+            background-color: rgba(var(--bs-primary-rgb), 0.2);
+        }
+        
+        /* 头部布局优化 */
+        header .container {
+            max-width: 100%;
+        }
+        
+        header .d-flex.gap-2 {
+            width: 100%;
+            justify-content: space-between;
+        }
+        
+        #network-stats-container {
+            flex: 1;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .stats-item {
+            white-space: nowrap;
+            margin: 0 0.5rem;
+        }
+        
+        .dropdown.ms-auto {
+            flex-shrink: 0;
+        }
+        
+        /* 移动端响应式样式增强 */
+        @media (max-width: 768px) {
+            .container-fluid {
+                padding: 0 10px;
+            }
+            header .container {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            header h1 {
+                font-size: 1.2rem;
+                text-align: center;
+                margin-bottom: 0.5rem;
+            }
+            .d-flex.gap-2 {
+                flex-direction: column;
+                gap: 0.5rem !important;
+            }
+            
+            /* 移动端时邮箱下拉菜单居中显示 */
+            .dropdown.ms-auto {
+                margin: 0 auto !important;
+                align-self: center;
+            }
+            
+            #network-stats-container {
+                justify-content: center;
+                order: -1; /* 移动端时网络统计在上面 */
+                flex-wrap: wrap;
+                gap: 0.5rem !important;
+            }
+            
+            .stats-item {
+                font-size: 0.875rem;
+                margin: 0 0.25rem;
+            }
+            
+            .stats-item .badge {
+                font-size: 0.7rem;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+                width: 100%;
+            }
+            .btn-group .btn {
+                border-radius: 0.375rem !important;
+                margin-bottom: 0.25rem;
+            }
+            .card {
+                margin-bottom: 1rem;
+            }
+            .row .col-md-6, .row .col-lg-4 {
+                margin-bottom: 1rem;
+            }
+            .form-floating label {
+                font-size: 0.875rem;
+            }
+            .btn {
+                min-height: 44px;
+                padding: 0.75rem 1rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            header h1 {
+                font-size: 1.1rem;
+            }
+            .btn-sm {
+                font-size: 0.75rem;
+                padding: 0.5rem 0.75rem;
+            }
+            .card-body {
+                padding: 1rem;
+            }
+            .form-control, .form-select {
+                font-size: 16px; /* 防止iOS自动缩放 */
+            }
+        }
+
+        /* 新导航栏样式增强 */
+        .navbar .btn-light:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            background: rgba(255,255,255,1) !important;
+        }
+
+        .navbar .dropdown-toggle:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        .navbar .dropdown-menu {
+            animation: fadeInUp 0.3s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-item:hover {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+            color: white !important;
+            transform: translateX(5px);
+            transition: all 0.2s ease;
+        }
+
+        .dropdown-item.active {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+        }
+
+        /* 响应式导航优化 */
+        @media (max-width: 991px) {
+            .navbar .container-fluid {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .navbar-brand, .navbar-nav {
+                justify-content: center;
+            }
+            
+            .navbar h4 {
+                font-size: 1.2rem;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- 新版本导航栏 -->
+        <nav class="navbar navbar-expand-lg mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; padding: 1rem 1.5rem;">
+            <div class="container-fluid">
+                <!-- 左侧：返回主页按钮 -->
+                <div class="navbar-brand mb-0">
+                    <a href="/main" class="btn btn-light btn-lg shadow-sm d-flex align-items-center text-decoration-none" 
+                       style="border-radius: 12px; padding: 0.75rem 1.5rem; transition: all 0.3s ease; background: rgba(255,255,255,0.95);">
+                        <i class="bi bi-house-door-fill me-2 text-primary" style="font-size: 1.2rem;"></i>
+                        <span class="fw-bold text-dark" data-i18n="home">{{ t('home') }}</span>
+                    </a>
+                </div>
+                
+                <!-- 中间：页面标题和快速导航 -->
+                <div class="navbar-nav mx-auto d-flex flex-row gap-3">
+                    <div class="d-flex align-items-center">
+                        <h4 class="mb-0 text-white fw-bold d-flex align-items-center me-4">
+                            <i class="bi bi-cpu me-2"></i>
+                            <span data-i18n="mining_calculator">{% if current_lang == 'en' %}Mining Calculator{% else %}挖矿计算器{% endif %}</span>
+                        </h4>
+                    </div>
+                </div>
+                
+                <!-- 右侧：语言切换系统 -->
+                <div class="navbar-nav">
+                    <div class="btn-group shadow-sm" role="group">
+                        <button type="button" class="btn btn-light dropdown-toggle d-flex align-items-center" 
+                                data-bs-toggle="dropdown" aria-expanded="false"
+                                style="border-radius: 12px; padding: 0.75rem 1.25rem; background: rgba(255,255,255,0.95); border: none;">
+                            <i class="bi bi-globe me-2 text-primary"></i>
+                            <span class="fw-semibold text-dark" data-i18n="language">{{ t('language') }}</span>
+                            <span class="ms-2 badge bg-primary">{{ 'CN' if current_lang == 'zh' else 'EN' }}</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg" style="border-radius: 12px; border: none; min-width: 180px;">
+                            <li>
+                                <button type="button" data-lang-switch="zh" data-lang="zh"
+                                        class="dropdown-item d-flex align-items-center py-2 {{ 'active bg-primary text-white' if current_lang == 'zh' else '' }}"
+                                        style="border-radius: 8px; margin: 4px; border: none; background: transparent; width: calc(100% - 8px); text-align: left;">
+                                    <i class="bi bi-translate me-3"></i>
+                                    <span class="fw-semibold">中文 (简体)</span>
+                                    {% if current_lang == 'zh' %}<i class="bi bi-check-lg ms-auto"></i>{% endif %}
+                                </button>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <button type="button" data-lang-switch="en" data-lang="en"
+                                        class="dropdown-item d-flex align-items-center py-2 {{ 'active bg-primary text-white' if current_lang == 'en' else '' }}"
+                                        style="border-radius: 8px; margin: 4px; border: none; background: transparent; width: calc(100% - 8px); text-align: left;">
+                                    <i class="bi bi-globe-americas me-3"></i>
+                                    <span class="fw-semibold">English</span>
+                                    {% if current_lang == 'en' %}<i class="bi bi-check-lg ms-auto"></i>{% endif %}
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 网络状态信息栏 -->
+        <div class="container-fluid mb-4">
+            <div class="alert alert-info border-0 shadow-sm" style="background: linear-gradient(135deg, rgba(13, 110, 253, 0.1) 0%, rgba(13, 202, 240, 0.1) 100%); border-radius: 12px;">
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="alert-heading mb-2 text-info fw-bold d-flex align-items-center">
+                            <i class="bi bi-globe2 me-2"></i>
+                            <span data-i18n="real_time_network_status">{% if current_lang == 'en' %}Real-time Network Status{% else %}实时网络状态{% endif %}</span>
+                        </h6>
+                        <div id="network-stats-container" class="d-flex gap-3 text-center flex-wrap justify-content-center">
+                            <div class="stats-item d-flex align-items-center">
+                                <span class="badge bg-warning text-dark me-2" data-i18n="btc_price">{% if current_lang == 'en' %}BTC Price{% else %}BTC价格{% endif %}</span>
+                                <strong id="btc-price" class="text-warning fs-6">$112,834</strong>
+                            </div>
+                            <div class="stats-item d-flex align-items-center">
+                                <span class="badge bg-info text-dark me-2" data-i18n="difficulty">{% if current_lang == 'en' %}Difficulty{% else %}难度{% endif %}</span>
+                                <strong id="network-difficulty" class="text-info fs-6">129.44T</strong>
+                            </div>
+                            <div class="stats-item d-flex align-items-center">
+                                <span class="badge bg-danger text-white me-2" data-i18n="network_hashrate">{% if current_lang == 'en' %}Network Hashrate{% else %}网络算力{% endif %}</span>
+                                <strong id="network-hashrate" class="text-danger fs-6">868.63 EH/s</strong>
+                            </div>
+                            <div class="stats-item d-flex align-items-center">
+                                <span class="badge bg-success text-white me-2" data-i18n="block_reward">{% if current_lang == 'en' %}Block Reward{% else %}区块奖励{% endif %}</span>
+                                <strong id="block-reward" class="text-success fs-6">3.15445019 BTC</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="container-fluid">
+            <div class="d-flex gap-2 gap-md-3 align-items-center flex-wrap justify-content-between w-100">
+                    
+                    <!-- User Account Info removed per user request -->
+                </div>
+            </div>
+        </header>
+
+        <!-- Analytics Quick Access Widget (Owner Only) -->
+        {% if session.role == 'owner' %}
+        <div class="container mb-4">
+            <div class="card bg-dark border-primary">
+                <div class="card-header bg-primary bg-opacity-20">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            <i class="bi bi-graph-up-arrow me-2"></i>
+                            <span data-i18n="analytics_dashboard">{% if current_lang == 'en' %}Analytics Dashboard{% else %}数据分析仪表盘{% endif %}</span>
+                        </h6>
+                        <div class="btn-group btn-group-sm">
+                            <a href="/analytics" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-fullscreen"></i> 
+                                <span data-i18n="full_dashboard">{% if current_lang == 'en' %}Full Dashboard{% else %}完整仪表盘{% endif %}</span>
+                            </a>
+                            <button class="btn btn-outline-light btn-sm" onclick="refreshAnalyticsWidget()">
+                                <i class="bi bi-arrow-clockwise"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-3">
+                    <div class="row g-3">
+                        <!-- Live BTC Price -->
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h5 mb-1" id="widget-btc-price">--</div>
+                                <small class="text-muted" data-i18n="btc_price">{% if current_lang == 'en' %}BTC Price{% else %}BTC价格{% endif %}</small>
+                                <div class="small" id="widget-price-change">--</div>
+                            </div>
+                        </div>
+                        <!-- Network Hashrate -->
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h5 mb-1" id="widget-hashrate">--</div>
+                                <small class="text-muted" data-i18n="network_hashrate">{% if current_lang == 'en' %}Network Hashrate{% else %}网络算力{% endif %}</small>
+                                <div class="small text-success">EH/s</div>
+                            </div>
+                        </div>
+                        <!-- Fear & Greed Index -->
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h5 mb-1" id="widget-fear-greed">--</div>
+                                <small class="text-muted" data-i18n="fear_greed_index">{% if current_lang == 'en' %}Fear & Greed{% else %}恐惧贪婪指数{% endif %}</small>
+                                <div class="small" id="widget-sentiment">--</div>
+                            </div>
+                        </div>
+                        <!-- Quick Actions -->
+                        <div class="col-md-3">
+                            <div class="d-grid gap-1">
+                                <button class="btn btn-sm btn-outline-info" onclick="showLatestReport()">
+                                    <i class="bi bi-file-text"></i> 
+                                    <span data-i18n="latest_report">{% if current_lang == 'en' %}Latest Report{% else %}最新报告{% endif %}</span>
+                                </button>
+                                <button class="btn btn-sm btn-outline-warning" onclick="showTechnicalIndicators()">
+                                    <i class="bi bi-bar-chart"></i> 
+                                    <span data-i18n="indicators">{% if current_lang == 'en' %}Indicators{% else %}技术指标{% endif %}</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Insights Panel -->
+                    <div class="mt-3 pt-3 border-top">
+                        <div id="widget-insights" class="small text-muted" data-i18n="loading_market_insights">
+                            {% if current_lang == 'en' %}Loading market insights...{% else %}正在加载市场洞察...{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Modal for Quick View -->
+        <div class="modal fade" id="analyticsModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content bg-dark">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="analyticsModalLabel">Analytics Data</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body" id="analyticsModalBody">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="/analytics" class="btn btn-primary">
+                            {% if current_lang == 'en' %}Open Full Dashboard{% else %}打开完整仪表盘{% endif %}
+                        </a>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <main class="container mb-5">
+
+            
+            <!-- 消息提示条 -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endwith %}
+            
+            <div class="row g-4">
+                <!-- Left side: Input form -->
+                <div class="col-lg-5">
+                    <div class="card shadow">
+                        <div class="card-header bg-primary bg-opacity-10">
+                            <h5 class="mb-0"><i class="bi bi-gear me-1"></i><span data-i18n="miner_settings">{% if current_lang == 'en' %}Miner Settings{% else %}矿机设置{% endif %}</span></h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="mining-calculator-form">
+                                <!-- Mining hardware selection -->
+                                <div class="mb-3">
+                                    <label for="miner-model" class="form-label" data-i18n="miner_model">{% if current_lang == 'en' %}Miner Model{% else %}矿机型号{% endif %}</label>
+                                    <select class="form-select" id="miner-model" name="miner_model">
+                                        <option value="" data-i18n="select_miner">{% if current_lang == 'en' %}Select Miner{% else %}选择矿机{% endif %}</option>
+                                        <!-- Miner options will be loaded dynamically -->
+                                    </select>
+                                </div>
+
+                                <!-- Site Power Consumption (MW) -->
+                                <div class="mb-3">
+                                    <label for="site-power-mw" class="form-label" data-i18n="site_power_mw">{% if current_lang == 'en' %}Site Power (MW){% else %}矿场功率 (MW){% endif %}</label>
+                                    <input type="number" class="form-control" id="site-power-mw" name="site_power_mw" value="1" min="0" step="0.001">
+                                    <div class="form-text">{% if current_lang == 'en' %}Total site power capacity in megawatts (MW). Adjusting this will recalculate the number of miners.{% else %}矿场总功率，单位为兆瓦特(MW)。调整此值会重新计算矿机数量。{% endif %}</div>
+                                </div>
+                                
+                                <!-- Miner count (can be manually adjusted) -->
+                                <div class="mb-3">
+                                    <label for="miner-count" class="form-label" data-i18n="miner_count">{% if current_lang == 'en' %}Miner Count{% else %}矿机数量{% endif %}</label>
+                                    <input type="number" class="form-control" id="miner-count" name="miner_count" value="1" min="1" oninput="updateSitePowerDirectly()">
+                                    <div class="form-text">{% if current_lang == 'en' %}Number of miners. Adjusting this will recalculate the site power.{% else %}矿机数量。调整此值会重新计算矿场功率。{% endif %}</div>
+                                    <script>
+                                    function updateSitePowerDirectly() {
+                                        try {
+                                            var minerCount = parseInt(document.getElementById('miner-count').value) || 0;
+                                            var powerWatt = parseFloat(document.getElementById('power-consumption').value) || 0;
+                                            
+                                            if (minerCount > 0 && powerWatt > 0) {
+                                                var requiredPowerMw = (minerCount * powerWatt) / 1000000;
+                                                document.getElementById('site-power-mw').value = requiredPowerMw.toFixed(3);
+                                                console.log("{% if current_lang == 'en' %}[Direct Update] Miner count: " + minerCount + ", Single miner power: " + powerWatt + ", Calculated site power: " + requiredPowerMw.toFixed(3) + "MW"{% else %}[直接更新] 矿机数量: " + minerCount + ", 单机功率: " + powerWatt + ", 计算得到矿场功率: " + requiredPowerMw.toFixed(3) + "MW"{% endif %});
+                                            }
+                                        } catch (error) {
+                                            console.error("{% if current_lang == 'en' %}Error updating site power: {% else %}直接更新矿场功率时出错: {% endif %}", error);
+                                        }
+                                    }
+                                    </script>
+                                </div>
+
+                                <!-- {% if current_lang == 'en' %}Single miner hashrate and power consumption fields (hidden){% else %}单矿机算力和功耗字段（隐藏）{% endif %} -->
+                                <input type="hidden" class="form-control" id="hashrate" name="hashrate" value="100">
+                                <input type="hidden" class="form-select" id="hashrate-unit" name="hashrate_unit" value="TH/s">
+                                <input type="hidden" class="form-control" id="power-consumption" name="power_consumption" value="3000">
+
+                                <!-- {% if current_lang == 'en' %}Total Hashrate - hidden but still sent to backend{% else %}Total Hashrate - 隐藏但仍然发送到后端{% endif %} -->
+                                <input type="hidden" id="total-hashrate" name="total_hashrate" value="0">
+                                <!-- {% if current_lang == 'en' %}Total hashrate display only{% else %}仅用于显示的总算力{% endif %} -->
+                                <div class="mb-3">
+                                    <label for="total-hashrate-display" class="form-label" data-i18n="total_hashrate">{% if current_lang == 'en' %}Total Hashrate (TH/s){% else %}总算力 (TH/s){% endif %}</label>
+                                    <input type="number" class="form-control" id="total-hashrate-display" readonly>
+                                    <div class="form-text">{% if current_lang == 'en' %}Total hashrate = Single miner hashrate × Miner count{% else %}总算力 = 单台算力 × 矿机数量{% endif %}</div>
+                                </div>
+                                
+                                <!-- {% if current_lang == 'en' %}Total Power Consumption - hidden but still sent to backend{% else %}Total Power Consumption - 隐藏但仍然发送到后端{% endif %} -->
+                                <input type="hidden" id="total-power" name="total_power" value="0">
+                                <!-- {% if current_lang == 'en' %}Total power consumption display only{% else %}仅用于显示的总功耗{% endif %} -->
+                                <div class="mb-3">
+                                    <label for="total-power-display" class="form-label" data-i18n="total_power">{% if current_lang == 'en' %}Total Power (W){% else %}总功耗 (W){% endif %}</label>
+                                    <input type="number" class="form-control" id="total-power-display" readonly>
+                                    <div class="form-text">{% if current_lang == 'en' %}Total power = Single miner power × Miner count{% else %}总功耗 = 单台功耗 × 矿机数量{% endif %}</div>
+                                </div>
+
+                                <!-- Electricity cost -->
+                                {% if session.role in ['owner', 'admin', 'mining_site'] %}
+                                <div class="mb-3">
+                                    <label for="electricity-cost" class="form-label">{{ t('electricity_cost') }} ($/kWh)</label>
+                                    <input type="number" class="form-control" id="electricity-cost" name="electricity_cost" value="0.05" min="0" step="0.001">
+                                    <div class="form-text">{% if current_lang == 'en' %}Actual electricity cost for the mining site{% else %}矿场实际电费成本{% endif %}</div>
+                                </div>
+                                {% else %}
+                                <!-- {% if current_lang == 'en' %}Hide field for regular users but provide default value{% else %}为普通用户隐藏字段，但提供默认值{% endif %} -->
+                                <input type="hidden" id="electricity-cost" name="electricity_cost" value="0.05">
+                                {% endif %}
+
+                                <!-- Customer Electricity Cost -->
+                                <div class="mb-3">
+                                    <label for="client-electricity-cost" class="form-label">{% if session.role in ['owner', 'admin', 'mining_site'] %}{% if current_lang == 'en' %}Customer Electricity Cost ($/kWh){% else %}客户电费 ($/kWh){% endif %}{% else %}{% if current_lang == 'en' %}Electricity Cost ($/kWh){% else %}电费成本 ($/kWh){% endif %}{% endif %}</label>
+                                    <input type="number" class="form-control" id="client-electricity-cost" name="client_electricity_cost" value="0.06" min="0" step="0.001">
+                                    <div class="form-text">{% if session.role in ['owner', 'admin', 'mining_site'] %}{% if current_lang == 'en' %}Electricity cost charged to customers{% else %}收取客户的电费{% endif %}{% else %}{% if current_lang == 'en' %}Electricity cost you are paying{% else %}您支付的电费{% endif %}{% endif %}</div>
+                                </div>
+                                
+                                <!-- {% if current_lang == 'en' %}Maintenance Fee - only shown to mining site administrators{% else %}Maintenance Fee - 仅对矿场管理员显示{% endif %} -->
+                                {% if session.role in ['owner', 'admin', 'mining_site'] %}
+                                <div class="mb-3">
+                                    <label for="maintenance-fee" class="form-label" data-i18n="maintenance_fee">{% if current_lang == 'en' %}Maintenance Fee{% else %}矿场维护费{% endif %}</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="maintenance-fee" name="maintenance_fee" value="5000" step="1" min="0">
+                                        <span class="input-group-text">$</span>
+                                    </div>
+                                    <div class="form-text">{% if current_lang == 'en' %}Monthly maintenance cost for the mining facility{% else %}每月矿场维护费用{% endif %}</div>
+                                </div>
+                                
+                                <!-- {% if current_lang == 'en' %}Power curtailment function removed to simplify user experience{% else %}电力削减功能已移除，简化用户体验{% endif %} -->
+                                
+                                <!-- Host Investment Amount -->
+                                <div class="mb-3">
+                                    <label for="host-investment" class="form-label" data-i18n="host_investment">{% if current_lang == 'en' %}Host Investment{% else %}矿场主投资金额{% endif %}</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="host-investment" name="host_investment" value="0" step="1" min="0">
+                                        <span class="input-group-text">$</span>
+                                    </div>
+                                    <div class="form-text">{% if current_lang == 'en' %}Total investment by mining site owner, for ROI calculation{% else %}矿场主的总投资金额，用于计算ROI{% endif %}</div>
+                                </div>
+                                {% else %}
+                                <!-- {% if current_lang == 'en' %}Hide fields for regular users but provide default values{% else %}为普通用户隐藏字段，但提供默认值{% endif %} -->
+                                <input type="hidden" id="maintenance-fee" name="maintenance_fee" value="5">
+                                <input type="hidden" id="host-investment" name="host_investment" value="800000">
+                                <!-- {% if current_lang == 'en' %}Power curtailment parameters removed{% else %}电力削减参数已移除{% endif %} -->
+                                {% endif %}
+                                
+                                <!-- Client Investment Amount -->
+                                <div class="mb-3">
+                                    <label for="client-investment" class="form-label">{% if session.role in ['owner', 'admin', 'mining_site'] %}{% if current_lang == 'en' %}Client Investment{% else %}客户投资金额{% endif %}{% else %}{% if current_lang == 'en' %}Investment Amount{% else %}投资金额{% endif %}{% endif %}</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="client-investment" name="client_investment" value="0" step="1" min="0">
+                                        <span class="input-group-text">$</span>
+                                    </div>
+                                    <div class="form-text">{% if session.role in ['owner', 'admin', 'mining_site'] %}{% if current_lang == 'en' %}Total investment by client, for ROI calculation{% else %}客户的总投资金额，用于计算ROI{% endif %}{% else %}{% if current_lang == 'en' %}Your total investment amount for ROI calculation{% else %}您的总投资金额，用于计算投资回报率{% endif %}{% endif %}</div>
+                                </div>
+
+                                <!-- BTC price -->
+                                <div class="mb-3">
+                                    <label for="btc-price-input" class="form-label">{{ t('btc_price') }} (USD)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="btc-price-input" name="btc_price" value="80000" min="0">
+                                    </div>
+                                </div>
+
+                                <!-- Network Hashrate Source Selection -->
+                                <div class="mb-3">
+                                    <label class="form-label" data-i18n="network_hashrate_source">{% if current_lang == 'en' %}Network Hashrate Source{% else %}全网算力来源{% endif %}</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="hashrate_source" id="hashrate-api" value="api" checked onchange="toggleHashrateInput()">
+                                        <label class="form-check-label" for="hashrate-api" data-i18n="use_api_data">
+                                            {% if current_lang == 'en' %}Use API Data{% else %}使用API获取{% endif %}
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="hashrate_source" id="hashrate-manual" value="manual" onchange="toggleHashrateInput()">
+                                        <label class="form-check-label" for="hashrate-manual" data-i18n="manual_input">
+                                            {% if current_lang == 'en' %}Manual Input{% else %}手动输入{% endif %}
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Manual Network Hashrate Input -->
+                                <div class="mb-3" id="manual-hashrate-container" style="display: none;">
+                                    <label for="manual-hashrate" class="form-label" data-i18n="network_hashrate">{% if current_lang == 'en' %}Network Hashrate{% else %}全网算力{% endif %}</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="manual-hashrate" name="manual_hashrate" value="997.31" step="0.1">
+                                        <span class="input-group-text">EH/s</span>
+                                    </div>
+                                    <div class="form-text">{% if current_lang == 'en' %}Manually enter network hashrate in EH/s (Current: ~997 EH/s){% else %}手动输入全网算力，单位：EH/s (当前约997 EH/s){% endif %}</div>
+                                </div>
+
+                                <!-- Network Difficulty Source Selection -->
+                                <div class="mb-3">
+                                    <label class="form-label" data-i18n="network_difficulty_source">{% if current_lang == 'en' %}Network Difficulty Source{% else %}网络难度来源{% endif %}</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="difficulty_source" id="difficulty-api" value="api" checked onchange="toggleDifficultyInput()">
+                                        <label class="form-check-label" for="difficulty-api" data-i18n="use_api_data">
+                                            {% if current_lang == 'en' %}Use API Data{% else %}使用API获取{% endif %}
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="difficulty_source" id="difficulty-manual" value="manual" onchange="toggleDifficultyInput()">
+                                        <label class="form-check-label" for="difficulty-manual" data-i18n="manual_input">
+                                            {% if current_lang == 'en' %}Manual Input{% else %}手动输入{% endif %}
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Manual Network Difficulty Input -->
+                                <div class="mb-3" id="manual-difficulty-container" style="display: none;">
+                                    <label for="manual-difficulty" class="form-label" data-i18n="network_difficulty">{% if current_lang == 'en' %}Network Difficulty{% else %}网络难度{% endif %}</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="manual-difficulty" name="manual_difficulty" value="129435235580344" step="1">
+                                        <span class="input-group-text">T</span>
+                                    </div>
+                                    <div class="form-text">{% if current_lang == 'en' %}Manually enter network difficulty (Current: ~129.4T){% else %}手动输入网络难度（当前约129.4万亿）{% endif %}</div>
+                                </div>
+
+                                <!-- ENHANCED: Pool fee configuration per expert recommendations -->
+                                <div class="mb-3">
+                                    <label for="pool-fee" class="form-label" data-i18n="pool_fee">{% if current_lang == 'en' %}Pool Fee{% else %}矿池费率{% endif %}</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="pool-fee" name="pool_fee" value="2.5" step="0.1" min="0" max="10">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <div class="form-text">{% if current_lang == 'en' %}Mining pool fee percentage (e.g., 2.5% for most pools). Leave empty to use system default.{% else %}矿池费率百分比（例如大多数矿池为2.5%）。留空则使用系统默认值。{% endif %}</div>
+                                </div>
+
+                                <!-- Real-time data option -->
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="use-real-time" name="use_real_time" checked>
+                                    <label class="form-check-label" for="use-real-time" data-i18n="use_real_time_data">{% if current_lang == 'en' %}Use Real Time Data{% else %}使用实时数据{% endif %}</label>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-calculator me-1"></i><span data-i18n="calculate">{{ t('calculate') }}</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right side: Results and visualization -->
+                <div class="col-lg-7">
+                    <!-- Results summary -->
+                    <div class="card shadow mb-4" id="results-card" style="display: none;">
+                        <div class="card-header bg-success bg-opacity-10 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-currency-bitcoin me-1"></i><span data-i18n="results">{{ t('results') }}</span></h5>
+                            <span id="results-timestamp" class="text-muted small"></span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-4 text-center">
+                                <!-- BTC mined -->
+                                <div class="col-md-4">
+                                    <div class="p-3 rounded bg-primary bg-opacity-10 btc-mined-card results-hover-card">
+                                        <h6>{{ t('btc_mined') }} ({{ t('daily') }})</h6>
+                                        <div class="mt-1 mb-1">
+                                            <div>
+                                                <div class="d-inline-block badge bg-secondary mb-1" style="font-size: 0.7rem;">{% if current_lang == 'en' %}Algorithm 1{% else %}算法1{% endif %}</div>
+                                                <div id="btc-method1-daily-card" style="font-size: 1.2rem; font-weight: bold; margin-top: 0.1rem;">0.00000000</div>
+                                            </div>
+                                            <div class="mt-1">
+                                                <div class="d-inline-block badge bg-primary mb-1" style="font-size: 0.7rem;">{% if current_lang == 'en' %}Algorithm 2{% else %}算法2{% endif %}</div>
+                                                <div id="btc-method2-daily-card" class="text-info" style="font-size: 1.2rem; font-weight: bold; margin-top: 0.1rem;">0.00000000</div>
+                                            </div>
+                                            <!-- Algorithm Difference Indicator -->
+                                            <div class="mt-2">
+                                                <small class="text-muted">{% if current_lang == 'en' %}Comparison:{% else %}算法对比:{% endif %}</small>
+                                                <div id="algorithm-difference" class="text-success small" style="font-weight: 500;">
+                                                    {% if current_lang == 'en' %}Calculating...{% else %}计算中...{% endif %}
+                                                </div>
+                                                {% if session.role in ['owner', 'admin'] %}
+                                                <div class="mt-1">
+                                                    <a href="/algorithm_test" class="btn btn-outline-secondary btn-sm" style="font-size: 0.7rem;">
+                                                        <i class="bi bi-gear"></i> {% if current_lang == 'en' %}Test Tool{% else %}测试工具{% endif %}
+                                                    </a>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Host profit - 只对特定角色显示 -->
+                                {% if session.role in ['owner', 'admin', 'mining_site'] %}
+                                <div class="col-md-4">
+                                    <div class="p-3 rounded bg-dark bg-opacity-10 host-profit-card results-hover-card">
+                                        <h6>{% if current_lang == 'en' %}Host Monthly Profit{% else %}矿场主月度收益{% endif %}</h6>
+                                        <h3 id="host-profit-card">$0.00</h3>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                <!-- Customer profit -->
+                                <div class="col-md-4">
+                                    <div class="p-3 rounded bg-info bg-opacity-10 client-profit-card results-hover-card">
+                                        <h6>{% if session.role in ['owner', 'admin', 'mining_site'] %}{% if current_lang == 'en' %}Client Monthly Profit{% else %}客户月度收益{% endif %}{% else %}{% if current_lang == 'en' %}Monthly Profit{% else %}月度收益{% endif %}{% endif %}</h6>
+                                        <h3 id="client-profit-card">$0.00</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            
+                            <!-- 矿场主信息 (Mining Site/Host Information) - 只对特定角色显示 -->
+                            {% if session.role in ['owner', 'admin', 'mining_site'] %}
+                            <h6 class="mb-3 mt-4 bg-dark bg-opacity-10 p-2 rounded">{% if current_lang == 'en' %}Mining Site Information{% else %}矿场主信息{% endif %}</h6>
+                            <div class="row">
+                                <!-- 矿场主收入列 -->
+                                <div class="col-md-6">
+                                    <h6 class="text-success mb-2">{% if current_lang == 'en' %}Host Income{% else %}矿场主收入{% endif %}</h6>
+                                    <table class="table table-sm table-bordered border-success border-opacity-25">
+                                        <tbody>
+                                            <tr>
+                                                <td>{% if current_lang == 'en' %}Host Electric Profit{% else %}矿场主电费差收益{% endif %}</td>
+                                                <td id="host-monthly-profit" class="text-end">$0.00</td>
+                                            </tr>
+                                            <tr>
+                                                <td>{% if current_lang == 'en' %}Host Operation Profit{% else %}矿场主运营收益{% endif %}</td>
+                                                <td id="host-self-profit" class="text-end">$0.00</td>
+                                            </tr>
+                                            <tr>
+                                                <td>{% if current_lang == 'en' %}Total Site Revenue{% else %}矿场总收入{% endif %}</td>
+                                                <td id="site-total-revenue" class="text-end">$0.00</td>
+                                            </tr>
+                                            <tr class="table-success bg-opacity-25">
+                                                <td><strong>{% if current_lang == 'en' %}Total Income{% else %}总收入{% endif %}</strong></td>
+                                                <td id="host-total-income" class="text-end fw-bold">$0.00</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <!-- 矿场主支出列 -->
+                                <div class="col-md-6">
+                                    <h6 class="text-danger mb-2">{% if current_lang == 'en' %}Host Expenses{% else %}矿场主支出{% endif %}</h6>
+                                    <table class="table table-sm table-bordered border-danger border-opacity-25">
+                                        <tbody>
+                                            <tr>
+                                                <td>{% if current_lang == 'en' %}Monthly Electricity Cost{% else %}月度电费{% endif %}</td>
+                                                <td id="monthly-electricity" class="text-end">$0.00</td>
+                                            </tr>
+                                            <tr>
+                                                <td>{% if current_lang == 'en' %}Operation Cost{% else %}运维费用{% endif %}</td>
+                                                <td id="operation-cost" class="text-end">$0.00</td>
+                                            </tr>
+                                            <tr class="table-danger bg-opacity-25">
+                                                <td><strong>{% if current_lang == 'en' %}Total Expenses{% else %}总支出{% endif %}</strong></td>
+                                                <td id="host-total-expenses" class="text-end fw-bold">$0.00</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <!-- 矿场主收益汇总 -->
+                            <div class="row mt-3">
+                                <div class="col-md-12">
+                                    <table class="table table-sm table-bordered">
+                                        <tbody>
+                                            <tr class="bg-dark bg-opacity-10">
+                                                <td>{% if current_lang == 'en' %}Host Monthly Net Profit{% else %}矿场主月度净收益{% endif %}</td>
+                                                <td id="host-monthly-profit-display" class="text-end">$0.00</td>
+                                                <td>{% if current_lang == 'en' %}Host Yearly Net Profit{% else %}矿场主年度净收益{% endif %}</td>
+                                                <td id="host-yearly-profit" class="text-end">$0.00</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            
+                            <!-- 矿场主其他信息 -->
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <table class="table table-sm">
+                                        <tbody>
+                                            <tr>
+                                                <td>{% if current_lang == 'en' %}Miner Count{% else %}矿机数量{% endif %}</td>
+                                                <td id="miner-count-result" class="text-end">0</td>
+                                            </tr>
+                                            <!-- 关机矿机显示已移除 -->
+                                            <tr>
+                                                <td>{% if current_lang == 'en' %}Break-even Electricity{% else %}盈亏平衡电价{% endif %}</td>
+                                                <td id="break-even-electricity" class="text-end">$0.00/kWh</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <table class="table table-sm">
+                                        <tbody>
+                                            <tr>
+                                                <td>{% if current_lang == 'en' %}Break-even BTC Price{% else %}盈亏平衡BTC价格{% endif %}</td>
+                                                <td id="break-even-btc" class="text-end">$0.00</td>
+                                            </tr>
+
+                                        </tbody>
+                                    </table>
+                                    
+
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+
+                            <!-- 客户信息 (Customer Information) -->
+                            <h6 class="mb-3 mt-4 bg-info bg-opacity-10 p-2 rounded">{% if session.role in ['owner', 'admin', 'mining_site'] %}{% if current_lang == 'en' %}Customer Information{% else %}客户信息{% endif %}{% else %}{% if current_lang == 'en' %}Your Profit Information{% else %}您的收益信息{% endif %}{% endif %}</h6>
+                            <div class="row">
+                                <!-- 客户收入列 -->
+                                <div class="col-md-6">
+                                    <h6 class="text-success mb-2">{% if session.role in ['owner', 'admin', 'mining_site'] %}{% if current_lang == 'en' %}Customer Income{% else %}客户收入{% endif %}{% else %}{% if current_lang == 'en' %}Income{% else %}收入{% endif %}{% endif %}</h6>
+                                    <table class="table table-sm table-bordered border-success border-opacity-25">
+                                        <tbody>
+                                            <tr>
+                                                <td>{% if current_lang == 'en' %}Monthly BTC Output{% else %}月度BTC产出{% endif %}</td>
+                                                <td id="monthly-btc" class="text-end">0.00000000</td>
+                                            </tr>
+                                            <tr>
+                                                <td>{% if current_lang == 'en' %}Monthly BTC Revenue{% else %}月度BTC收入{% endif %}</td>
+                                                <td id="monthly-revenue" class="text-end">$0.00</td>
+                                            </tr>
+                                            <tr class="table-success bg-opacity-25">
+                                                <td><strong>{% if current_lang == 'en' %}Total Income{% else %}总收入{% endif %}</strong></td>
+                                                <td id="client-total-income" class="text-end fw-bold">$0.00</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <!-- 客户支出列 -->
+                                <div class="col-md-6">
+                                    <h6 class="text-danger mb-2">{% if session.role in ['owner', 'admin', 'mining_site'] %}{% if current_lang == 'en' %}Customer Expenses{% else %}客户支出{% endif %}{% else %}{% if current_lang == 'en' %}Expenses{% else %}支出{% endif %}{% endif %}</h6>
+                                    <table class="table table-sm table-bordered border-danger border-opacity-25">
+                                        <tbody>
+                                            <tr>
+                                                <td>{% if session.role in ['owner', 'admin', 'mining_site'] %}{% if current_lang == 'en' %}Customer Monthly Electricity{% else %}客户月度电费{% endif %}{% else %}{% if current_lang == 'en' %}Monthly Electricity{% else %}月度电费{% endif %}{% endif %}</td>
+                                                <td id="client-monthly-electricity" class="text-end">$0.00</td>
+                                            </tr>
+                                            <tr>
+                                                <td>{% if current_lang == 'en' %}Pool Fee (2.5%){% else %}矿池费用 (2.5%){% endif %}</td>
+                                                <td id="client-pool-fee" class="text-end">$0.00</td>
+                                            </tr>
+                                            <tr class="table-danger bg-opacity-25">
+                                                <td><strong>{% if current_lang == 'en' %}Total Expenses{% else %}总支出{% endif %}</strong></td>
+                                                <td id="client-total-expenses" class="text-end fw-bold">$0.00</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <!-- 客户收益汇总 -->
+                            <div class="row mt-3">
+                                <div class="col-md-12">
+                                    <table class="table table-sm table-bordered">
+                                        <tbody>
+                                            <tr class="bg-info bg-opacity-10">
+                                                <td>{% if session.role in ['owner', 'admin', 'mining_site'] %}{% if current_lang == 'en' %}Customer Monthly Profit{% else %}客户月度收益{% endif %}{% else %}{% if current_lang == 'en' %}Monthly Profit{% else %}月度收益{% endif %}{% endif %}</td>
+                                                <td id="client-monthly-profit" class="text-end">$0.00</td>
+                                                <td>{% if session.role in ['owner', 'admin', 'mining_site'] %}{% if current_lang == 'en' %}Customer Yearly Profit{% else %}客户年度收益{% endif %}{% else %}{% if current_lang == 'en' %}Yearly Profit{% else %}年度收益{% endif %}{% endif %}</td>
+                                                <td id="client-yearly-profit" class="text-end">$0.00</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <!-- 客户ROI信息 -->
+                            <div class="row mt-4">
+                                <div class="col-md-12">
+                                    <h6 class="mb-3 bg-info bg-opacity-10 p-2 rounded">{% if session.role in ['owner', 'admin', 'mining_site'] %}{% if current_lang == 'en' %}Client ROI Analysis{% else %}客户投资回报{% endif %}{% else %}{% if current_lang == 'en' %}ROI Analysis{% else %}投资回报分析{% endif %}{% endif %}</h6>
+                                    
+                                    <!-- 基础ROI信息 -->
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <table class="table table-sm table-bordered">
+                                                <tbody>
+                                                    <tr>
+                                                        <td>{% if current_lang == 'en' %}Investment Amount{% else %}投资金额{% endif %}</td>
+                                                        <td id="client-investment-amount" class="text-end">$0.00</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>{% if current_lang == 'en' %}Annual ROI{% else %}年化投资回报率{% endif %}</td>
+                                                        <td id="client-annual-roi" class="text-end">0.00%</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>{% if current_lang == 'en' %}Monthly ROI{% else %}月度回报率{% endif %}</td>
+                                                        <td id="client-monthly-roi" class="text-end">0.00%</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <table class="table table-sm table-bordered">
+                                                <tbody>
+                                                    <tr>
+                                                        <td>
+                                                            {% if current_lang == 'en' %}Payback Period{% else %}投资回收期{% endif %}
+                                                            <small class="text-warning d-block">{% if current_lang == 'en' %}(Simple Method){% else %}（简单方法）{% endif %}</small>
+                                                        </td>
+                                                        <td id="client-payback-months" class="text-end">0 months</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            {% if current_lang == 'en' %}Years{% else %}年份{% endif %}
+                                                            <small class="text-warning d-block">{% if current_lang == 'en' %}(Static Calculation){% else %}（静态计算）{% endif %}</small>
+                                                        </td>
+                                                        <td id="client-payback-years" class="text-end">0.00 years</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            {% if current_lang == 'en' %}Break-even Month{% else %}盈亏平衡月份{% endif %}
+                                                            <small class="text-primary d-block">{% if current_lang == 'en' %}(Dynamic Method){% else %}（动态方法）{% endif %}</small>
+                                                        </td>
+                                                        <td id="client-breakeven-month" class="text-end">Month 0</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 详细财务分析 -->
+                                    <div class="row mt-3">
+                                        <div class="col-md-12">
+                                            <h6 class="text-info mb-3">{% if current_lang == 'en' %}Financial Projections{% else %}财务预测{% endif %}</h6>
+                                            
+                                            <!-- 第一行：6个月和12个月 -->
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <div class="card bg-success bg-opacity-10 border-success border-opacity-25">
+                                                        <div class="card-body p-3">
+                                                            <h6 class="card-title text-success mb-2">{% if current_lang == 'en' %}6 Month Performance{% else %}6个月表现{% endif %}</h6>
+                                                            <div class="row">
+                                                                <div class="col-6">
+                                                                    <small class="text-muted">{% if current_lang == 'en' %}Cumulative Profit{% else %}累计利润{% endif %}</small>
+                                                                    <div id="client-6month-profit" class="h5 text-success mb-0">$0.00</div>
+                                                                </div>
+                                                                <div class="col-6">
+                                                                    <small class="text-muted">{% if current_lang == 'en' %}ROI Percentage{% else %}投资回报率{% endif %}</small>
+                                                                    <div id="client-6month-roi" class="h5 text-success mb-0">0.00%</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="card bg-warning bg-opacity-10 border-warning border-opacity-25">
+                                                        <div class="card-body p-3">
+                                                            <h6 class="card-title text-warning mb-2">{% if current_lang == 'en' %}12 Month Performance{% else %}12个月表现{% endif %}</h6>
+                                                            <div class="row">
+                                                                <div class="col-6">
+                                                                    <small class="text-muted">{% if current_lang == 'en' %}Cumulative Profit{% else %}累计利润{% endif %}</small>
+                                                                    <div id="client-12month-profit" class="h5 text-warning mb-0">$0.00</div>
+                                                                </div>
+                                                                <div class="col-6">
+                                                                    <small class="text-muted">{% if current_lang == 'en' %}ROI Percentage{% else %}投资回报率{% endif %}</small>
+                                                                    <div id="client-12month-roi" class="h5 text-warning mb-0">0.00%</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- 第二行：24个月和36个月 -->
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="card bg-info bg-opacity-10 border-info border-opacity-25">
+                                                        <div class="card-body p-3">
+                                                            <h6 class="card-title text-info mb-2">{% if current_lang == 'en' %}24 Month Performance{% else %}24个月表现{% endif %}</h6>
+                                                            <div class="row">
+                                                                <div class="col-6">
+                                                                    <small class="text-muted">{% if current_lang == 'en' %}Cumulative Profit{% else %}累计利润{% endif %}</small>
+                                                                    <div id="client-24month-profit" class="h5 text-info mb-0">$0.00</div>
+                                                                </div>
+                                                                <div class="col-6">
+                                                                    <small class="text-muted">{% if current_lang == 'en' %}ROI Percentage{% else %}投资回报率{% endif %}</small>
+                                                                    <div id="client-24month-roi" class="h5 text-info mb-0">0.00%</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="card bg-primary bg-opacity-10 border-primary border-opacity-25">
+                                                        <div class="card-body p-3">
+                                                            <h6 class="card-title text-primary mb-2">{% if current_lang == 'en' %}36 Month Performance{% else %}36个月表现{% endif %}</h6>
+                                                            <div class="row">
+                                                                <div class="col-6">
+                                                                    <small class="text-muted">{% if current_lang == 'en' %}Cumulative Profit{% else %}累计利润{% endif %}</small>
+                                                                    <div id="client-36month-profit" class="h5 text-primary mb-0">$0.00</div>
+                                                                </div>
+                                                                <div class="col-6">
+                                                                    <small class="text-muted">{% if current_lang == 'en' %}ROI Percentage{% else %}投资回报率{% endif %}</small>
+                                                                    <div id="client-36month-roi" class="h5 text-primary mb-0">0.00%</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- 风险分析指标 -->
+                                            <div class="row mt-4">
+                                                <div class="col-md-12">
+                                                    <h6 class="text-secondary mb-3">{% if current_lang == 'en' %}Risk Analysis & Scenarios{% else %}风险分析与情景预测{% endif %}</h6>
+                                                    <div class="row g-4">
+                                                        <div class="col-md-4">
+                                                            <div class="card border-warning border-opacity-50 shadow-sm h-100 risk-card">
+                                                                <div class="card-body p-4 text-center">
+                                                                    <div class="mb-3">
+                                                                        <i class="bi bi-lightning-fill text-warning fs-3"></i>
+                                                                    </div>
+                                                                    <h6 class="card-title text-warning mb-3 fw-bold">{% if current_lang == 'en' %}Electricity Sensitivity{% else %}电价敏感性{% endif %}</h6>
+                                                                    <small class="text-muted d-block mb-2">{% if current_lang == 'en' %}+10% Electricity Cost{% else %}电价上涨10%{% endif %}</small>
+                                                                    <div id="electricity-impact-profit" class="h4 text-warning fw-bold mb-2">$0.00</div>
+                                                                    <small class="text-muted">{% if current_lang == 'en' %}Annual Impact{% else %}年度影响{% endif %}</small>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <div class="card border-danger border-opacity-50 shadow-sm h-100 risk-card">
+                                                                <div class="card-body p-4 text-center">
+                                                                    <div class="mb-3">
+                                                                        <i class="bi bi-graph-down-arrow text-danger fs-3"></i>
+                                                                    </div>
+                                                                    <h6 class="card-title text-danger mb-3 fw-bold">{% if current_lang == 'en' %}BTC Price Sensitivity{% else %}BTC价格敏感性{% endif %}</h6>
+                                                                    <small class="text-muted d-block mb-2">{% if current_lang == 'en' %}-20% BTC Price{% else %}BTC价格下跌20%{% endif %}</small>
+                                                                    <div id="btc-impact-profit" class="h4 text-danger fw-bold mb-2">$0.00</div>
+                                                                    <small class="text-muted d-block mb-2">{% if current_lang == 'en' %}Annual Impact{% else %}年度影响{% endif %}</small>
+                                                                    <div class="mt-2">
+                                                                        <small class="text-info" style="font-size: 0.75rem;">
+                                                                            {% if current_lang == 'en' %}Formula: Price Drop × Annual BTC Output{% else %}公式: 价格跌幅 × 年度BTC产出{% endif %}
+                                                                        </small>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <div class="card border-success border-opacity-50 shadow-sm h-100 risk-card">
+                                                                <div class="card-body p-4 text-center">
+                                                                    <div class="mb-3">
+                                                                        <i class="bi bi-shield-check text-success fs-3"></i>
+                                                                    </div>
+                                                                    <h6 class="card-title text-success mb-3 fw-bold">{% if current_lang == 'en' %}Safety Margin{% else %}安全边际{% endif %}</h6>
+                                                                    <small class="text-muted d-block mb-2">{% if current_lang == 'en' %}Current vs Break-even{% else %}当前 vs 盈亏平衡{% endif %}</small>
+                                                                    <div id="safety-margin" class="h4 text-success fw-bold mb-2">0.00%</div>
+                                                                    <small class="text-muted">{% if current_lang == 'en' %}Profit Margin{% else %}利润边际{% endif %}</small>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- 计算方法说明 -->
+                                            <div class="row mt-4">
+                                                <div class="col-md-12">
+                                                    <h6 class="text-secondary mb-3">{% if current_lang == 'en' %}Risk Analysis Calculation Methods{% else %}风险分析计算方法{% endif %}</h6>
+                                                    <div class="accordion" id="calculationAccordion">
+                                                        <!-- Electricity Sensitivity -->
+                                                        <div class="accordion-item bg-dark border-secondary">
+                                                            <h2 class="accordion-header" id="electricityHeading">
+                                                                <button class="accordion-button collapsed bg-dark text-light border-0" type="button" data-bs-toggle="collapse" data-bs-target="#electricityCollapse">
+                                                                    {% if current_lang == 'en' %}Electricity Sensitivity Calculation{% else %}电价敏感性计算方法{% endif %}
+                                                                </button>
+                                                            </h2>
+                                                            <div id="electricityCollapse" class="accordion-collapse collapse" data-bs-parent="#calculationAccordion">
+                                                                <div class="accordion-body bg-dark text-light">
+                                                                    <strong>{% if current_lang == 'en' %}Formula{% else %}计算公式{% endif %}:</strong><br>
+                                                                    {% if current_lang == 'en' %}
+                                                                    Annual Impact = (New Electricity Cost - Current Cost) × Annual Power Consumption<br><br>
+                                                                    <strong>Steps:</strong><br>
+                                                                    1. Current Electricity Cost: $0.045/kWh<br>
+                                                                    2. Increase by 10%: $0.045 × 1.1 = $0.0495/kWh<br>
+                                                                    3. Cost Increase: $0.0495 - $0.045 = $0.0045/kWh<br>
+                                                                    4. Annual Power: 3,997,500W ÷ 1000 × 24h × 365d = 35,017,770 kWh<br>
+                                                                    5. Annual Impact: $0.0045 × 35,017,770 = $157,580
+                                                                    {% else %}
+                                                                    年度影响 = (新电价 - 当前电价) × 年度用电量<br><br>
+                                                                    <strong>计算步骤:</strong><br>
+                                                                    1. 当前电价: $0.045/kWh<br>
+                                                                    2. 上涨10%: $0.045 × 1.1 = $0.0495/kWh<br>
+                                                                    3. 电价增幅: $0.0495 - $0.045 = $0.0045/kWh<br>
+                                                                    4. 年度用电: 3,997,500W ÷ 1000 × 24h × 365d = 35,017,770 kWh<br>
+                                                                    5. 年度影响: $0.0045 × 35,017,770 = $157,580
+                                                                    {% endif %}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <!-- BTC Price Sensitivity -->
+                                                        <div class="accordion-item bg-dark border-secondary">
+                                                            <h2 class="accordion-header" id="btcHeading">
+                                                                <button class="accordion-button collapsed bg-dark text-light border-0" type="button" data-bs-toggle="collapse" data-bs-target="#btcCollapse">
+                                                                    {% if current_lang == 'en' %}BTC Price Sensitivity Calculation{% else %}BTC价格敏感性计算方法{% endif %}
+                                                                </button>
+                                                            </h2>
+                                                            <div id="btcCollapse" class="accordion-collapse collapse" data-bs-parent="#calculationAccordion">
+                                                                <div class="accordion-body bg-dark text-light">
+                                                                    <strong>{% if current_lang == 'en' %}Formula{% else %}计算公式{% endif %}:</strong><br>
+                                                                    {% if current_lang == 'en' %}
+                                                                    Annual Impact = (Current BTC Price - New Price) × Annual BTC Output<br><br>
+                                                                    <strong>Steps:</strong><br>
+                                                                    1. Current BTC Price: $115,333<br>
+                                                                    2. Decrease by 20%: $115,333 × 0.8 = $92,266<br>
+                                                                    3. Price Decrease: $115,333 - $92,266 = $23,067<br>
+                                                                    4. Annual BTC Output: 24.017 BTC<br>
+                                                                    5. Annual Impact: $23,067 × 24.017 = $553,988
+                                                                    {% else %}
+                                                                    年度影响 = (当前BTC价格 - 新价格) × 年度BTC产出<br><br>
+                                                                    <strong>计算步骤:</strong><br>
+                                                                    1. 当前BTC价格: $115,333<br>
+                                                                    2. 下跌20%: $115,333 × 0.8 = $92,266<br>
+                                                                    3. 价格跌幅: $115,333 - $92,266 = $23,067<br>
+                                                                    4. 年度BTC产出: 24.017 BTC<br>
+                                                                    5. 年度影响: $23,067 × 24.017 = $553,988
+                                                                    {% endif %}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <!-- Safety Margin -->
+                                                        <div class="accordion-item bg-dark border-secondary">
+                                                            <h2 class="accordion-header" id="safetyHeading">
+                                                                <button class="accordion-button collapsed bg-dark text-light border-0" type="button" data-bs-toggle="collapse" data-bs-target="#safetyCollapse">
+                                                                    {% if current_lang == 'en' %}Safety Margin Calculation{% else %}安全边际计算方法{% endif %}
+                                                                </button>
+                                                            </h2>
+                                                            <div id="safetyCollapse" class="accordion-collapse collapse" data-bs-parent="#calculationAccordion">
+                                                                <div class="accordion-body bg-dark text-light">
+                                                                    <strong>{% if current_lang == 'en' %}Formula{% else %}计算公式{% endif %}:</strong><br>
+                                                                    {% if current_lang == 'en' %}
+                                                                    Safety Margin = ((Break-even Electricity Cost - Current Cost) ÷ Current Cost) × 100%<br><br>
+                                                                    <strong>Steps:</strong><br>
+                                                                    1. Current Electricity Cost: $0.045/kWh<br>
+                                                                    2. Break-even Electricity Cost: $0.0786/kWh<br>
+                                                                    3. Margin: ($0.0786 - $0.045) ÷ $0.045 = 74.7%<br><br>
+                                                                    <strong>Interpretation:</strong> Electricity cost can increase by 74.7% before reaching break-even point.
+                                                                    {% else %}
+                                                                    安全边际 = ((盈亏平衡电价 - 当前电价) ÷ 当前电价) × 100%<br><br>
+                                                                    <strong>计算步骤:</strong><br>
+                                                                    1. 当前电价: $0.045/kWh<br>
+                                                                    2. 盈亏平衡电价: $0.0786/kWh<br>
+                                                                    3. 边际: ($0.0786 - $0.045) ÷ $0.045 = 74.7%<br><br>
+                                                                    <strong>含义:</strong> 电价可上涨74.7%才会达到盈亏平衡点。
+                                                                    {% endif %}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 计算假设说明 (Calculation Assumptions) -->
+                                    <div class="mt-4 mb-4">
+                                        <div class="card bg-info bg-opacity-15 border-info border-opacity-30 shadow-sm">
+                                            <div class="card-header bg-info bg-opacity-25 border-0">
+                                                <h6 class="text-white mb-0 fw-bold">
+                                                    <i class="bi bi-info-circle me-2"></i>
+                                                    {% if current_lang == 'en' %}Calculation Assumptions & Methodology{% else %}计算假设与方法说明{% endif %}
+                                                </h6>
+                                            </div>
+                                            <div class="card-body p-3">
+                                                <div class="row g-3">
+                                                    <div class="col-md-6">
+                                                        <div class="d-flex align-items-start">
+                                                            <div class="badge bg-warning text-dark me-2 mt-1">
+                                                                {% if current_lang == 'en' %}Static{% else %}静态{% endif %}
+                                                            </div>
+                                                            <div>
+                                                                <h6 class="text-white mb-2">{% if current_lang == 'en' %}Static Assumptions{% else %}静态假设{% endif %}</h6>
+                                                                <ul class="list-unstyled mb-0 text-white-75 small">
+                                                                    <li>• {% if current_lang == 'en' %}BTC Price: Fixed at current market rate{% else %}BTC价格: 固定为当前市场价格{% endif %}</li>
+                                                                    <li>• {% if current_lang == 'en' %}Electricity Cost: No inflation{% else %}电费成本: 无通胀影响{% endif %}</li>
+                                                                    <li>• {% if current_lang == 'en' %}Maintenance Fee: Fixed monthly{% else %}维护费用: 固定月费{% endif %}</li>
+                                                                    <li>• {% if current_lang == 'en' %}Pool Fee: 2.5% fixed{% else %}矿池费用: 固定2.5%{% endif %}</li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="d-flex align-items-start">
+                                                            <div class="badge bg-primary me-2 mt-1">
+                                                                {% if current_lang == 'en' %}Dynamic{% else %}动态{% endif %}
+                                                            </div>
+                                                            <div>
+                                                                <h6 class="text-white mb-2">{% if current_lang == 'en' %}Dynamic Adjustments{% else %}动态调整{% endif %}</h6>
+                                                                <ul class="list-unstyled mb-0 text-white-75 small">
+                                                                    <li>• {% if current_lang == 'en' %}Difficulty: 6% monthly increase{% else %}挖矿难度: 每月增长6%{% endif %}</li>
+                                                                    <li>• {% if current_lang == 'en' %}Hashrate Decay: 5% quarterly{% else %}算力衰减: 每季度5%{% endif %}</li>
+                                                                    <li>• {% if current_lang == 'en' %}Halving: 50% reward reduction (4-year cycle){% else %}减半效应: 奖励减半（4年周期）{% endif %}</li>
+                                                                    <li>• {% if current_lang == 'en' %}Downtime: 0% assumed (optimal conditions){% else %}停机率: 假设0%（理想条件）{% endif %}</li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- 回本计算方法说明 -->
+                                                <hr class="border-info border-opacity-30 my-3">
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <h6 class="text-white mb-2">
+                                                            <i class="bi bi-calculator me-2"></i>
+                                                            {% if current_lang == 'en' %}Payback Period Calculation Method{% else %}回本周期计算方法{% endif %}
+                                                        </h6>
+                                                        <div class="bg-dark bg-opacity-30 p-3 rounded">
+                                                            <div class="row g-3">
+                                                                <div class="col-md-6">
+                                                                    <div class="text-warning fw-bold small mb-1">
+                                                                        {% if current_lang == 'en' %}Simple Method (Static){% else %}简单方法（静态）{% endif %}
+                                                                    </div>
+                                                                    <div class="text-white-75 small">
+                                                                        {% if current_lang == 'en' %}
+                                                                        Formula: Investment ÷ Monthly Profit<br>
+                                                                        Usage: Quick estimation, assumes constant profit
+                                                                        {% else %}
+                                                                        公式: 投资金额 ÷ 月度利润<br>
+                                                                        用途: 快速估算，假设利润恒定
+                                                                        {% endif %}
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <div class="text-primary fw-bold small mb-1">
+                                                                        {% if current_lang == 'en' %}Dynamic Method (ROI Chart){% else %}动态方法（ROI图表）{% endif %}
+                                                                    </div>
+                                                                    <div class="text-white-75 small">
+                                                                        {% if current_lang == 'en' %}
+                                                                        Formula: Cumulative Profit ≥ Initial Investment<br>
+                                                                        Usage: Precise calculation with difficulty adjustments
+                                                                        {% else %}
+                                                                        公式: 累计收益 ≥ 初始投资<br>
+                                                                        用途: 考虑难度调整的精确计算
+                                                                        {% endif %}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 客户ROI图表容器 -->
+                                    <div class="mt-4 mb-4">
+                                        <div class="card bg-dark bg-opacity-50 border-success border-opacity-25 shadow">
+                                            <div class="card-body p-4">
+                                                <div id="client-roi-chart" class="chart-container" style="height: 350px; position: relative;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Break Even Point信息 -->
+                                    <div class="row mt-4 mb-4">
+                                        <div class="col-md-12">
+                                            <div class="card bg-dark bg-opacity-80 border-secondary border-opacity-50 shadow-lg">
+                                                <div class="card-header bg-dark bg-opacity-90 border-0">
+                                                    <h6 class="card-title text-white mb-0 fw-bold">
+                                                        <i class="bi bi-bullseye me-2"></i>
+                                                        {% if current_lang == 'en' %}Break Even Analysis{% else %}盈亏平衡分析{% endif %}
+                                                    </h6>
+                                                </div>
+                                                <div class="card-body p-4">
+                                                    <div class="row g-4">
+                                                        <div class="col-md-3">
+                                                            <div class="text-center p-3 rounded bg-dark border border-secondary border-opacity-50 shadow-sm">
+                                                                <small class="text-white d-block mb-2">{% if current_lang == 'en' %}Break-even Month{% else %}盈亏平衡月份{% endif %}</small>
+                                                                <div id="breakeven-month-display" class="h5 text-warning mb-0 fw-bold">Month 0</div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <div class="text-center p-3 rounded bg-dark border border-secondary border-opacity-50 shadow-sm">
+                                                                <small class="text-white d-block mb-2">{% if current_lang == 'en' %}Investment Recovery{% else %}投资回收金额{% endif %}</small>
+                                                                <div id="breakeven-recovery-amount" class="h5 text-warning mb-0 fw-bold">$0.00</div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <div class="text-center p-3 rounded bg-dark border border-secondary border-opacity-50 shadow-sm">
+                                                                <small class="text-white d-block mb-2">{% if current_lang == 'en' %}Break-even ROI%{% else %}盈亏平衡时ROI%{% endif %}</small>
+                                                                <div id="breakeven-roi-percent" class="h5 text-warning mb-0 fw-bold">0.00%</div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <div class="text-center p-3 rounded bg-dark border border-secondary border-opacity-50 shadow-sm">
+                                                                <small class="text-white d-block mb-2">{% if current_lang == 'en' %}Time to Break-even{% else %}盈亏平衡时间{% endif %}</small>
+                                                                <div id="breakeven-time-display" class="h5 text-warning mb-0 fw-bold">0.0 years</div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 客户其他信息 -->
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <table class="table table-sm">
+                                        <tbody>
+                                            <tr>
+                                                <td>{% if session.role in ['owner', 'admin', 'mining_site'] %}{% if current_lang == 'en' %}Miner Count{% else %}矿机数量{% endif %}{% else %}{% if current_lang == 'en' %}Miner Count{% else %}矿机数量{% endif %}{% endif %}</td>
+                                                <td id="client-miner-count" class="text-end">0</td>
+                                            </tr>
+                                            <tr>
+                                                <td>{% if session.role in ['owner', 'admin', 'mining_site'] %}{% if current_lang == 'en' %}Running Miners{% else %}运行中矿机{% endif %}{% else %}{% if current_lang == 'en' %}Running Miners{% else %}运行中矿机{% endif %}{% endif %}</td>
+                                                <td id="client-running-miners" class="text-end">0</td>
+                                            </tr>
+                                            <tr>
+                                                <td>{% if session.role in ['owner', 'admin', 'mining_site'] %}{% if current_lang == 'en' %}Shutdown Miners{% else %}停机矿机{% endif %}{% else %}{% if current_lang == 'en' %}Shutdown Miners{% else %}停机矿机{% endif %}{% endif %}</td>
+                                                <td id="client-shutdown-miners" class="text-end">0</td>
+                                            </tr>
+                                            <tr>
+                                                <td>{% if session.role in ['owner', 'admin', 'mining_site'] %}{% if current_lang == 'en' %}Customer Break-even Electricity{% else %}客户盈亏平衡电价{% endif %}{% else %}{% if current_lang == 'en' %}Break-even Electricity{% else %}盈亏平衡电价{% endif %}{% endif %}</td>
+                                                <td id="client-break-even-electricity" class="text-end">$0.00/kWh</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <table class="table table-sm">
+                                        <tbody>
+                                            <tr>
+                                                <td>{% if session.role in ['owner', 'admin', 'mining_site'] %}{% if current_lang == 'en' %}Customer Break-even BTC Price{% else %}客户盈亏平衡BTC价格{% endif %}{% else %}{% if current_lang == 'en' %}Break-even BTC Price{% else %}盈亏平衡BTC价格{% endif %}{% endif %}</td>
+                                                <td id="client-break-even-btc" class="text-end">$0.00</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            
+                            <!-- 隐藏原来复杂的三个卡片区域 -->
+                            <div class="row g-3 mt-4 mb-4" style="display: none;">
+                                <!-- 比特币网络信息 -->
+                                <div class="col-lg-4 col-md-6">
+                                    <div class="card bg-primary bg-opacity-15 border-primary border-opacity-30 h-100 shadow-sm">
+                                        <div class="card-header bg-primary bg-opacity-25 border-0 text-center py-3">
+                                            <h6 class="text-white mb-0 fw-bold">
+                                                <i class="bi bi-diagram-3 me-2 fs-5"></i>
+                                                {% if current_lang == 'en' %}Bitcoin Network{% else %}比特币网络{% endif %}
+                                            </h6>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-primary border-opacity-20">
+                                                <span class="text-white fw-medium">{% if current_lang == 'en' %}Difficulty{% else %}难度{% endif %}</span>
+                                                <span class="text-white fw-bold">0.0 T</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-primary border-opacity-20">
+                                                <span class="text-white fw-medium">{% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}</span>
+                                                <span class="text-white fw-bold">0 EH/s</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-primary border-opacity-20">
+                                                <span class="text-white fw-medium">{% if current_lang == 'en' %}BTC Price{% else %}BTC价格{% endif %}</span>
+                                                <span class="text-warning fw-bold">$0</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center py-2">
+                                                <span class="text-white fw-medium">{% if current_lang == 'en' %}Block Reward{% else %}区块奖励{% endif %}</span>
+                                                <span class="text-success fw-bold">0 BTC</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 挖矿场信息 -->
+                                <div class="col-lg-4 col-md-6">
+                                    <div class="card bg-warning bg-opacity-15 border-warning border-opacity-30 h-100 shadow-sm">
+                                        <div class="card-header bg-warning bg-opacity-25 border-0 text-center py-3">
+                                            <h6 class="text-dark mb-0 fw-bold">
+                                                <i class="bi bi-building me-2 fs-5"></i>
+                                                {% if current_lang == 'en' %}Mining Site{% else %}挖矿场{% endif %}
+                                            </h6>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-warning border-opacity-30">
+                                                <span class="text-dark fw-medium">{% if current_lang == 'en' %}Total{% else %}总算力{% endif %}</span>
+                                                <span id="total-hashrate-result" class="text-dark fw-bold">0</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-warning border-opacity-30">
+                                                <span class="text-dark fw-medium">{% if current_lang == 'en' %}Hashrate TH/s{% else %}算力 TH/s{% endif %}</span>
+                                                <span class="text-dark fw-bold">TH/s</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-warning border-opacity-30">
+                                                <span class="text-dark fw-medium">{% if current_lang == 'en' %}BTC/TH{% else %}BTC/TH{% endif %}</span>
+                                                <span id="btc-per-th-daily" class="text-dark fw-bold">0.00000000</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-warning border-opacity-30">
+                                                <span class="text-dark fw-medium">{% if current_lang == 'en' %}Daily{% else %}每日{% endif %}</span>
+                                                <span class="text-dark fw-bold">0.00000000</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center py-2">
+                                                <span class="text-dark fw-medium">{% if current_lang == 'en' %}Optimal{% else %}最优电费{% endif %}</span>
+                                                <span id="optimal-electricity-rate" class="text-danger fw-bold">$0.00/kWh</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- BTC产出算法 -->
+                                <div class="col-lg-4 col-md-12">
+                                    <div class="card bg-success bg-opacity-15 border-success border-opacity-30 h-100 shadow-sm">
+                                        <div class="card-header bg-success bg-opacity-25 border-0 text-center py-3">
+                                            <h6 class="text-white mb-0 fw-bold">
+                                                <i class="bi bi-calculator me-2 fs-5"></i>
+                                                {% if current_lang == 'en' %}BTC Output{% else %}BTC产出{% endif %}
+                                            </h6>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="text-center p-3 bg-success bg-opacity-20 rounded mb-3">
+                                                <small class="text-white d-block mb-1">{% if current_lang == 'en' %}Daily Total{% else %}日产总量{% endif %}</small>
+                                                <div id="daily-btc-value" class="h5 text-white mb-0 fw-bold">0.00000000</div>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-success border-opacity-20">
+                                                <span>
+                                                    <span class="badge bg-secondary me-1">{% if current_lang == 'en' %}Alg 1{% else %}算法1{% endif %}</span>
+                                                    <small class="text-white">{% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}</small>
+                                                </span>
+                                                <span id="btc-method1-daily" class="text-white fw-bold">0.00000000</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center py-2">
+                                                <span>
+                                                    <span class="badge bg-primary me-1">{% if current_lang == 'en' %}Alg 2{% else %}算法2{% endif %}</span>
+                                                    <small class="text-white">{% if current_lang == 'en' %}Difficulty{% else %}难度{% endif %}</small>
+                                                </span>
+                                                <span id="btc-method2-daily" class="text-white fw-bold">0.00000000</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profit chart -->
+                    <div class="card shadow" id="chart-card">
+                        <div class="card-header bg-info bg-opacity-10">
+                            <h5 class="mb-0"><i class="bi bi-grid-3x3 me-1"></i>{{ t('profitability_heatmap') }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Auto-generating heatmap - button hidden -->
+                            <button id="generate-chart-btn" class="btn btn-primary mb-3" style="display: none;">
+                                <i class="bi bi-graph-up"></i> {% if current_lang == 'en' %}Generate Chart{% else %}生成热力图{% endif %}
+                            </button>
+                            <div id="chart-container" style="height: 600px; position: relative;">
+                                <div class="text-center text-muted p-5">
+                                    {% if current_lang == 'en' %}Heatmap will auto-generate after calculation{% else %}热力图将在计算完成后自动生成{% endif %}
+                                </div>
+                            </div>
+                            <div class="mt-3 small text-muted">
+                                {% if current_lang == 'en' %}
+                                This chart shows how monthly profits change with different BTC prices and electricity costs.
+                                The optimal electricity rate at current BTC price is marked on the chart.
+                                {% else %}
+                                此图表显示不同比特币价格和电力成本下的月度收益变化。
+                                图表上标记了当前比特币价格下的最佳电力成本。
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- 电力削减详情部分已移除，简化界面 -->
+                    </div>
+
+                    <!-- 区块链数据验证部分 -->
+                    <div class="card shadow mt-4" id="blockchain-verification-card" style="display: none;">
+                        <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <h5 class="mb-0 text-white d-flex align-items-center">
+                                <i class="bi bi-shield-check me-2"></i>
+                                {% if current_lang == 'en' %}Data Verification & Transparency{% else %}数据验证与透明度{% endif %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <!-- 验证状态显示 -->
+                                <div class="col-md-6">
+                                    <div class="card bg-dark bg-opacity-10 border-0">
+                                        <div class="card-body p-3">
+                                            <h6 class="text-white mb-3">
+                                                <i class="bi bi-check-circle me-2"></i>
+                                                {% if current_lang == 'en' %}Verification Status{% else %}验证状态{% endif %}
+                                            </h6>
+                                            <div id="blockchain-status" class="mb-3">
+                                                <div class="d-flex justify-content-between align-items-center py-2">
+                                                    <span class="text-white-50">{% if current_lang == 'en' %}Blockchain Record{% else %}区块链记录{% endif %}</span>
+                                                    <span id="blockchain-record-status" class="badge bg-secondary">
+                                                        {% if current_lang == 'en' %}Not Recorded{% else %}未记录{% endif %}
+                                                    </span>
+                                                </div>
+                                                <div class="d-flex justify-content-between align-items-center py-2">
+                                                    <span class="text-white-50">{% if current_lang == 'en' %}IPFS Storage{% else %}IPFS存储{% endif %}</span>
+                                                    <span id="ipfs-storage-status" class="badge bg-secondary">
+                                                        {% if current_lang == 'en' %}Not Stored{% else %}未存储{% endif %}
+                                                    </span>
+                                                </div>
+                                                <div class="d-flex justify-content-between align-items-center py-2">
+                                                    <span class="text-white-50">{% if current_lang == 'en' %}Data Integrity{% else %}数据完整性{% endif %}</span>
+                                                    <span id="data-integrity-status" class="badge bg-secondary">
+                                                        {% if current_lang == 'en' %}Pending{% else %}待验证{% endif %}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- 验证信息 -->
+                                            <div id="verification-info" style="display: none;">
+                                                <div class="bg-success bg-opacity-20 rounded p-3 mb-3">
+                                                    <small class="text-white d-block">
+                                                        {% if current_lang == 'en' %}Data Hash{% else %}数据哈希{% endif %}
+                                                    </small>
+                                                    <code id="data-hash" class="text-success small d-block mt-1"></code>
+                                                </div>
+                                                <div class="bg-info bg-opacity-20 rounded p-3 mb-3">
+                                                    <small class="text-white d-block">
+                                                        {% if current_lang == 'en' %}Transaction Hash{% else %}交易哈希{% endif %}
+                                                    </small>
+                                                    <code id="transaction-hash" class="text-info small d-block mt-1"></code>
+                                                </div>
+                                                <div class="bg-warning bg-opacity-20 rounded p-3">
+                                                    <small class="text-white d-block">
+                                                        {% if current_lang == 'en' %}IPFS CID{% else %}IPFS标识符{% endif %}
+                                                    </small>
+                                                    <code id="ipfs-cid" class="text-warning small d-block mt-1"></code>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 验证操作 -->
+                                <div class="col-md-6">
+                                    <div class="card bg-dark bg-opacity-10 border-0">
+                                        <div class="card-body p-3">
+                                            <h6 class="text-white mb-3">
+                                                <i class="bi bi-tools me-2"></i>
+                                                {% if current_lang == 'en' %}Verification Actions{% else %}验证操作{% endif %}
+                                            </h6>
+                                            
+                                            <!-- 一键验证按钮 -->
+                                            <div class="d-grid mb-3">
+                                                <button id="one-click-verify-btn" class="btn btn-success btn-lg" disabled>
+                                                    <i class="bi bi-shield-check me-2"></i>
+                                                    {% if current_lang == 'en' %}One-Click Verification{% else %}一键验证{% endif %}
+                                                </button>
+                                            </div>
+                                            
+                                            <!-- 其他操作按钮 -->
+                                            <div class="row g-2">
+                                                <div class="col-6">
+                                                    <button id="download-audit-data-btn" class="btn btn-outline-primary btn-sm w-100" disabled>
+                                                        <i class="bi bi-download me-1"></i>
+                                                        {% if current_lang == 'en' %}Download{% else %}下载数据{% endif %}
+                                                    </button>
+                                                </div>
+                                                <div class="col-6">
+                                                    <button id="view-on-blockchain-btn" class="btn btn-outline-info btn-sm w-100" disabled>
+                                                        <i class="bi bi-box-arrow-up-right me-1"></i>
+                                                        {% if current_lang == 'en' %}View On-Chain{% else %}查看链上{% endif %}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- 记录到区块链按钮 -->
+                                            <div class="d-grid mt-3">
+                                                <button id="record-to-blockchain-btn" class="btn btn-outline-warning btn-sm">
+                                                    <i class="bi bi-plus-circle me-2"></i>
+                                                    {% if current_lang == 'en' %}Record to Blockchain{% else %}记录到区块链{% endif %}
+                                                </button>
+                                            </div>
+                                            
+                                            <!-- 网络信息 -->
+                                            <div class="mt-3 pt-3 border-top border-secondary border-opacity-20">
+                                                <small class="text-white-50 d-block">
+                                                    {% if current_lang == 'en' %}Network{% else %}网络{% endif %}: Base L2
+                                                </small>
+                                                <small class="text-white-50 d-block">
+                                                    {% if current_lang == 'en' %}Storage{% else %}存储{% endif %}: IPFS (Pinata)
+                                                </small>
+                                                <small class="text-white-50 d-block">
+                                                    {% if current_lang == 'en' %}Encryption{% else %}加密{% endif %}: AES-256
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 验证进度条 -->
+                            <div id="verification-progress" class="mt-4" style="display: none;">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-white">{% if current_lang == 'en' %}Verification Progress{% else %}验证进度{% endif %}</span>
+                                    <span id="verification-progress-text" class="text-white-50 small">0%</span>
+                                </div>
+                                <div class="progress bg-dark bg-opacity-20" style="height: 8px;">
+                                    <div id="verification-progress-bar" class="progress-bar bg-gradient" role="progressbar" 
+                                         style="width: 0%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);" 
+                                         aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- 验证日志 -->
+                            <div id="verification-log" class="mt-4" style="display: none;">
+                                <h6 class="text-white mb-3">
+                                    <i class="bi bi-list-ul me-2"></i>
+                                    {% if current_lang == 'en' %}Verification Log{% else %}验证日志{% endif %}
+                                </h6>
+                                <div class="bg-dark bg-opacity-30 rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                                    <div id="verification-log-content" class="small text-white-50 font-monospace">
+                                        <!-- 验证日志将在这里显示 -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+
+    </div>
+
+    <!-- Enhanced CSS -->
+    <link rel="stylesheet" href="/static/css/mining-calculator-enhanced.css">
+
+    <!-- JavaScript -->
+
+    
+    <script>
+        // Global language variable for JavaScript use
+        var currentLang = '{{ current_lang }}';
+        
+        // 初始化时禁用隐藏的输入字段
+        document.addEventListener('DOMContentLoaded', function() {
+            var manualHashrateInput = document.getElementById('manual-hashrate');
+            var manualDifficultyInput = document.getElementById('manual-difficulty');
+            
+            // 默认禁用手动输入字段（因为默认选择API）
+            if (manualHashrateInput) {
+                manualHashrateInput.disabled = true;
+            }
+            if (manualDifficultyInput) {
+                manualDifficultyInput.disabled = true;
+            }
+        });
+        
+        // 电力削减相关JavaScript已移除
+
+        // 全网算力输入切换功能
+        function toggleHashrateInput() {
+            var hashrateApiRadio = document.getElementById('hashrate-api');
+            var hashrateManualRadio = document.getElementById('hashrate-manual');
+            var manualHashrateContainer = document.getElementById('manual-hashrate-container');
+            var manualHashrateInput = document.getElementById('manual-hashrate');
+            
+            // 检查元素是否存在
+            if (hashrateManualRadio && manualHashrateContainer && manualHashrateInput) {
+                if (hashrateManualRadio.checked) {
+                    manualHashrateContainer.style.display = 'block';
+                    manualHashrateInput.disabled = false;  // 启用输入
+                } else {
+                    manualHashrateContainer.style.display = 'none';
+                    manualHashrateInput.disabled = true;   // 禁用输入，避免验证错误
+                }
+            }
+        }
+        
+        // 网络难度输入切换功能
+        function toggleDifficultyInput() {
+            var difficultyApiRadio = document.getElementById('difficulty-api');
+            var difficultyManualRadio = document.getElementById('difficulty-manual');
+            var manualDifficultyContainer = document.getElementById('manual-difficulty-container');
+            var manualDifficultyInput = document.getElementById('manual-difficulty');
+            
+            // 检查元素是否存在
+            if (difficultyManualRadio && manualDifficultyContainer && manualDifficultyInput) {
+                if (difficultyManualRadio.checked) {
+                    manualDifficultyContainer.style.display = 'block';
+                    manualDifficultyInput.disabled = false;  // 启用输入
+                } else {
+                    manualDifficultyContainer.style.display = 'none';
+                    manualDifficultyInput.disabled = true;   // 禁用输入，避免验证错误
+                }
+            }
+        }
+
+        // Analytics Widget Functions (Owner Only)
+        // Check if user is owner and initialize analytics
+        if ('{{ session.role }}' === 'owner') {
+            // Load analytics data on page load
+            document.addEventListener('DOMContentLoaded', function() {
+                loadAnalyticsWidget();
+                // Auto-refresh analytics every 5 minutes
+                setInterval(loadAnalyticsWidget, 300000);
+            });
+
+        function loadAnalyticsWidget() {
+            fetch('/api/analytics/market-data', {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            }).then(function(marketData) {
+                if (marketData.ok) {
+                    return marketData.json();
+                } else if (marketData.status === 403) {
+                    document.getElementById('widget-insights').textContent = 
+                        currentLang === 'en' ? 'Analytics access restricted' : '分析系统访问受限';
+                    throw new Error('Access restricted');
+                } else {
+                    console.log('Analytics API response not OK:', marketData.status);
+                    throw new Error('API not OK');
+                }
+            }).then(function(data) {
+                console.log('Analytics data received:', data);
+                if (data.success && data.data) {
+                    updateAnalyticsWidget(data.data);
+                } else {
+                    console.log('Using fallback analytics data');
+                    updateAnalyticsWidgetFallback();
+                }
+            }).catch(function(error) {
+                console.error('Analytics connection error:', error);
+                updateAnalyticsWidgetFallback();
+            });
+        }
+        
+        function updateAnalyticsWidgetFallback() {
+            // Try to get real analytics data from database first
+            fetch('/api/analytics/market-data', {
+                method: 'GET',
+                credentials: 'same-origin'
+            }).then(function(response) {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Analytics API unavailable');
+            }).then(function(data) {
+                if (data.success && data.data) {
+                    updateAnalyticsWidget(data.data);
+                    document.getElementById('widget-insights').textContent = 
+                        (currentLang === 'en' ? 'Real-time analytics data' : '实时分析数据');
+                } else {
+                    throw new Error('No analytics data');
+                }
+            }).catch(function() {
+                // Only use fallback if analytics truly unavailable
+                var currentPrice = window.currentPriceCache || 80000;
+                var fallbackData = {
+                    btc_price: currentPrice,
+                    network_hashrate: 904.9,
+                    fear_greed_index: null,
+                    price_change_24h: null
+                };
+                updateAnalyticsWidget(fallbackData);
+                document.getElementById('widget-insights').textContent = 
+                    (currentLang === 'en' ? 'Analytics temporarily unavailable' : '分析系统暂时不可用');
+            });
+        }
+
+        function updateAnalyticsWidget(data) {
+            console.log('Updating analytics widget with data:', data);
+            
+            // Update BTC Price
+            var btcPriceEl = document.getElementById('widget-btc-price');
+            if (btcPriceEl) {
+                btcPriceEl.textContent = data.btc_price ? '$' + data.btc_price.toLocaleString() : '--';
+            }
+            
+            // Update price change (only if we have real data)
+            var priceChangeEl = document.getElementById('widget-price-change');
+            if (priceChangeEl && data.price_change_24h !== null && data.price_change_24h !== undefined) {
+                var change = data.price_change_24h;
+                priceChangeEl.textContent = (change >= 0 ? '+' : '') + change.toFixed(3) + '%';
+                priceChangeEl.className = 'small ' + (change >= 0 ? 'text-success' : 'text-danger');
+            } else if (priceChangeEl) {
+                priceChangeEl.textContent = '--';
+                priceChangeEl.className = 'small text-muted';
+            }
+
+            // Update Network Hashrate
+            var hashrateEl = document.getElementById('widget-hashrate');
+            if (hashrateEl) {
+                hashrateEl.textContent = data.network_hashrate ? data.network_hashrate.toFixed(3) : '--';
+            }
+
+            // Update Fear & Greed Index
+            var fearGreedEl = document.getElementById('widget-fear-greed');
+            if (fearGreedEl) {
+                fearGreedEl.textContent = data.fear_greed_index || '--';
+            }
+            
+            // Update sentiment label
+            var sentimentEl = document.getElementById('widget-sentiment');
+            if (sentimentEl) {
+                var sentiment = getFearGreedLabel(data.fear_greed_index);
+                sentimentEl.textContent = sentiment;
+            }
+
+            // Update insights
+            var insightsEl = document.getElementById('widget-insights');
+            if (insightsEl) {
+                var insights = generateInsights(data);
+                insightsEl.innerHTML = insights;
+            }
+        }
+
+        function getFearGreedLabel(index) {
+            if (!index) return '--';
+            var lang = '{{ current_lang }}';
+            if (index <= 25) return lang === 'en' ? 'Extreme Fear' : '极度恐惧';
+            if (index <= 45) return lang === 'en' ? 'Fear' : '恐惧';
+            if (index <= 55) return lang === 'en' ? 'Neutral' : '中性';
+            if (index <= 75) return lang === 'en' ? 'Greed' : '贪婪';
+            return lang === 'en' ? 'Extreme Greed' : '极度贪婪';
+        }
+
+        function generateInsights(data) {
+            var insights = [];
+            var lang = '{{ current_lang }}';
+            
+            if (data.price_change_24h > 5) {
+                insights.push(lang === 'en' ? 'Strong bullish momentum detected' : '检测到强劲上涨动能');
+            } else if (data.price_change_24h < -5) {
+                insights.push(lang === 'en' ? 'Significant price decline observed' : '观察到显著价格下跌');
+            }
+
+            if (data.network_hashrate > 900) {
+                insights.push(lang === 'en' ? 'Network security extremely high' : '网络安全性极高');
+            }
+
+            if (data.fear_greed_index <= 25) {
+                insights.push(lang === 'en' ? 'Potential buying opportunity' : '潜在买入机会');
+            } else if (data.fear_greed_index >= 75) {
+                insights.push(lang === 'en' ? 'Market overheating warning' : '市场过热警告');
+            }
+
+            return insights.length > 0 ? insights.join(' | ') : 
+                (lang === 'en' ? 'Market conditions stable' : '市场状况稳定');
+        }
+
+        } // End of owner check
+
+        function refreshAnalyticsWidget() {
+            if ('{{ session.role }}' === 'owner') {
+                loadAnalyticsWidget();
+            }
+        }
+
+        function showLatestReport() {
+            var modal = new bootstrap.Modal(document.getElementById('analyticsModal'));
+            document.getElementById('analyticsModalLabel').textContent = 
+                currentLang === 'en' ? 'Latest Analysis Report' : '最新分析报告';
+            
+            fetch('/api/analytics/latest-report').then(function(response) {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error('API not OK');
+                }
+            }).then(function(responseData) {
+                console.log('Latest report API response:', responseData);
+                
+                // Extract report data from wrapped response
+                var report = responseData.success && responseData.data ? responseData.data : responseData;
+                
+                // Handle nested report structure
+                if (report && report.latest_report) {
+                    report = report.latest_report;
+                }
+                
+                console.log('Latest report data:', report);
+                
+                if (report && (report.title || report.summary || report.generated_at)) {
+                    displayReport(report);
+                } else {
+                    document.getElementById('analyticsModalBody').innerHTML = 
+                        '<div class="alert alert-warning">' + (currentLang === 'en' ? 'No report data available' : '暂无报告数据') + '</div>';
+                }
+            }).catch(function(error) {
+                console.error('Error loading latest report:', error);
+                document.getElementById('analyticsModalBody').innerHTML = 
+                    '<div class="alert alert-danger">' + (currentLang === 'en' ? 'Unable to load report' : '无法加载报告') + '</div>';
+            });
+            
+            modal.show();
+        }
+
+        function showTechnicalIndicators() {
+            var modal = new bootstrap.Modal(document.getElementById('analyticsModal'));
+            document.getElementById('analyticsModalLabel').textContent = 
+                currentLang === 'en' ? 'Technical Indicators' : '技术指标';
+            
+            fetch('/api/analytics/technical-indicators').then(function(response) {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error('API not OK');
+                }
+            }).then(function(responseData) {
+                console.log('Technical indicators API response:', responseData);
+                
+                // Extract indicators data from wrapped response
+                var indicators = responseData.success && responseData.data ? responseData.data : responseData;
+                
+                // Handle different response formats
+                if (indicators && indicators.latest_indicators) {
+                    // Use latest_indicators if available
+                    indicators = indicators.latest_indicators;
+                } else if (indicators && indicators.indicators && indicators.indicators.length > 0) {
+                    // Use first indicator from array
+                    indicators = indicators.indicators[0];
+                }
+                
+                console.log('Technical indicators data:', indicators);
+                
+                if (indicators && Object.keys(indicators).length > 0) {
+                    displayTechnicalIndicators(indicators);
+                } else {
+                    document.getElementById('analyticsModalBody').innerHTML = 
+                        '<div class="alert alert-warning">' + (currentLang === 'en' ? 'No indicators data available' : '暂无技术指标数据') + '</div>';
+                }
+            }).catch(function(error) {
+                console.error('Error loading technical indicators:', error);
+                document.getElementById('analyticsModalBody').innerHTML = 
+                    '<div class="alert alert-danger">' + (currentLang === 'en' ? 'Unable to load indicators' : '无法加载技术指标') + '</div>';
+            });
+            
+            modal.show();
+        }
+
+        function displayReport(report) {
+            console.log('Formatting report for display:', report);
+            
+            // Safe access to nested properties
+            var keyFindings = report.key_findings || {};
+            var riskAssessment = report.risk_assessment || {};
+            
+            var titleText = report.title || (currentLang === 'en' ? 'Analysis Report' : '分析报告');
+            var generatedText = currentLang === 'en' ? 'Generated: ' : '生成时间: ';
+            var confidenceText = currentLang === 'en' ? 'Confidence: ' : '置信度: ';
+            var confidenceScore = report.confidence_score ? ' | ' + confidenceText + (report.confidence_score * 100).toFixed(0) + '%' : '';
+            
+            var html = 
+                '<div class="mb-3">' +
+                    '<h6>' + titleText + '</h6>' +
+                    '<p class="text-muted small">' +
+                        generatedText +
+                        (report.generated_at ? new Date(report.generated_at).toLocaleString() : '--') +
+                        confidenceScore +
+                    '</p>' +
+                '</div>' +
+                
+                (report.summary ? 
+                '<div class="mb-3">' +
+                    '<strong>' + (currentLang === 'en' ? 'Market Summary:' : '市场摘要:') + '</strong>' +
+                    '<p class="mt-1">' + report.summary + '</p>' +
+                '</div>' : '') +
+                
+                (Object.keys(keyFindings).length > 0 ? 
+                '<div class="mb-3">' +
+                    '<strong>' + (currentLang === 'en' ? 'Key Findings:' : '关键发现:') + '</strong>' +
+                    '<div class="row mt-2">' +
+                        (keyFindings.price_range ? 
+                        '<div class="col-6">' +
+                            '<small class="text-muted">' + (currentLang === 'en' ? 'Price Range' : '价格区间') + '</small><br>' +
+                            '<strong>' + keyFindings.price_range + '</strong>' +
+                        '</div>' : '') +
+                        (keyFindings.avg_price ? 
+                        '<div class="col-6">' +
+                            '<small class="text-muted">' + (currentLang === 'en' ? 'Avg Price' : '平均价格') + '</small><br>' +
+                            '<strong>' + keyFindings.avg_price + '</strong>' +
+                        '</div>' : '') +
+                        (keyFindings.avg_hashrate ? 
+                        '<div class="col-6 mt-2">' +
+                            '<small class="text-muted">' + (currentLang === 'en' ? 'Network Hashrate' : '网络算力') + '</small><br>' +
+                            '<strong>' + keyFindings.avg_hashrate + '</strong>' +
+                        '</div>' : '') +
+                        (keyFindings.market_sentiment ? 
+                        '<div class="col-6 mt-2">' +
+                            '<small class="text-muted">' + (currentLang === 'en' ? 'Market Sentiment' : '市场情绪') + '</small><br>' +
+                            '<strong>' + keyFindings.market_sentiment + '</strong>' +
+                        '</div>' : '') +
+                    '</div>' +
+                    (keyFindings.rsi_signal ? 
+                    '<div class="mt-2">' +
+                        '<small class="text-muted">RSI ' + (currentLang === 'en' ? 'Signal' : '信号') + '</small><br>' +
+                        '<span class="badge bg-info">' + keyFindings.rsi_signal + '</span>' +
+                    '</div>' : '') +
+                '</div>' : '') +
+                
+                (report.recommendations && report.recommendations.length > 0 ? 
+                '<div class="mb-3">' +
+                    '<strong>' + (currentLang === 'en' ? 'Investment Recommendations:' : '投资建议:') + '</strong>' +
+                    '<ul class="list-unstyled mt-2">' +
+                        (function() {
+                            var items = [];
+                            if (report.recommendations) {
+                                for (var i = 0; i < report.recommendations.length; i++) {
+                                    items.push('<li class="mb-1"><i class="bi bi-check-circle text-success me-2"></i>' + report.recommendations[i] + '</li>');
+                                }
+                            }
+                            return items.join('');
+                        })() +
+                    '</ul>' +
+                '</div>' : '') +
+                
+                (Object.keys(riskAssessment).length > 0 ? 
+                '<div class="mb-3">' +
+                    '<strong>' + (currentLang === 'en' ? 'Risk Assessment:' : '风险评估:') + '</strong>' +
+                    '<div class="mt-2">' +
+                        (riskAssessment.risk_level ? 
+                        '<span class="badge ' + getRiskColor(riskAssessment.risk_level) + '">' +
+                            riskAssessment.risk_level + ' ' + (currentLang === 'en' ? 'Risk' : '风险') +
+                        '</span>' : '') +
+                        (riskAssessment.risk_score ? ' <span class="ms-2">' + riskAssessment.risk_score + '/100</span>' : '') +
+                    '</div>' +
+                '</div>' : '');
+            document.getElementById('analyticsModalBody').innerHTML = html;
+        }
+
+        function displayTechnicalIndicators(indicators) {
+            console.log('Displaying indicators:', indicators);
+            
+            // Safe formatting functions that handle null/undefined values
+            function safeFormatPrice(value) {
+                return value !== null && value !== undefined ? formatPrice(value) : '--';
+            }
+            
+            function safeFormatNumber(value, decimals) {
+                if (typeof decimals === 'undefined') {
+                    decimals = 3;  // 更新默认为3位小数
+                }
+                return value !== null && value !== undefined ? formatNumber(value, decimals) : '--';
+            }
+            
+            function safeFormatPercent(value) {
+                return value !== null && value !== undefined ? formatPercent(value) : '--';
+            }
+            
+            var html = 
+                '<div class="row">' +
+                    '<div class="col-md-6">' +
+                        '<h6>' + (currentLang === 'en' ? 'Moving Averages' : '移动平均线') + '</h6>' +
+                        '<table class="table table-sm">' +
+                            '<tr><td>SMA 20</td><td>' + safeFormatPrice(indicators.sma_20) + '</td></tr>' +
+                            '<tr><td>SMA 50</td><td>' + safeFormatPrice(indicators.sma_50) + '</td></tr>' +
+                            '<tr><td>EMA 12</td><td>' + safeFormatPrice(indicators.ema_12) + '</td></tr>' +
+                            '<tr><td>EMA 26</td><td>' + safeFormatPrice(indicators.ema_26) + '</td></tr>' +
+                        '</table>' +
+                    '</div>' +
+                    '<div class="col-md-6">' +
+                        '<h6>' + (currentLang === 'en' ? 'Momentum' : '动量指标') + '</h6>' +
+                        '<table class="table table-sm">' +
+                            '<tr><td>RSI (14)</td><td>' + safeFormatNumber(indicators.rsi_14, 3) + '</td></tr>' +
+                            '<tr><td>MACD</td><td>' + safeFormatNumber(indicators.macd, 3) + '</td></tr>' +
+                            '<tr><td>' + (currentLang === 'en' ? '30D Volatility' : '30日波动率') + '</td><td>' + safeFormatPercent(indicators.volatility_30d) + '</td></tr>' +
+                        '</table>' +
+                    '</div>' +
+                '</div>' +
+                (indicators.bollinger_upper && indicators.bollinger_lower ? 
+                '<div class="mt-3">' +
+                    '<h6>' + (currentLang === 'en' ? 'Bollinger Bands' : '布林带') + '</h6>' +
+                    '<div class="row">' +
+                        '<div class="col-4 text-center">' +
+                            '<small>' + (currentLang === 'en' ? 'Upper' : '上轨') + '</small><br>' +
+                            '<strong>' + formatPrice(indicators.bollinger_upper) + '</strong>' +
+                        '</div>' +
+                        '<div class="col-4 text-center">' +
+                            '<small>' + (currentLang === 'en' ? 'Middle' : '中轨') + '</small><br>' +
+                            '<strong>' + formatPrice(indicators.sma_20) + '</strong>' +
+                        '</div>' +
+                        '<div class="col-4 text-center">' +
+                            '<small>' + (currentLang === 'en' ? 'Lower' : '下轨') + '</small><br>' +
+                            '<strong>' + formatPrice(indicators.bollinger_lower) + '</strong>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' : '');
+            document.getElementById('analyticsModalBody').innerHTML = html;
+        }
+
+        function getRiskColor(level) {
+            if (!level) return 'bg-secondary';
+            var lowerLevel = level.toLowerCase();
+            switch(lowerLevel) {
+                case '低': 
+                case 'low': 
+                    return 'bg-success';
+                case '中': 
+                case 'medium': 
+                    return 'bg-warning';
+                case '高': 
+                case 'high': 
+                    return 'bg-danger';
+                default: 
+                    return 'bg-secondary';
+            }
+        }
+
+        function formatPrice(price) {
+            return price ? '$' + price.toLocaleString() : '--';
+        }
+
+        function formatNumber(num, decimals) {
+            if (typeof decimals === 'undefined') {
+                decimals = 3;  // 更新默认为3位小数
+            }
+            return num ? num.toFixed(decimals) : '--';
+        }
+
+        function formatPercent(percent) {
+            return percent ? (percent >= 0 ? '+' : '') + percent.toFixed(3) + '%' : '--';  // 更新为3位小数
+        }
+    </script>
+
+    <!-- Registration Call-to-Action Section -->
+    {% if not session.authenticated %}
+    <div class="bg-gradient" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); margin-top: 3rem;">
+        <div class="container py-5">
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="text-center text-white">
+                        <div class="mb-4">
+                            <i class="bi bi-gem display-4 text-warning mb-3"></i>
+                            <h2 class="fw-bold mb-3">
+                                {% if current_lang == 'zh' %}
+                                    注册解锁专业挖矿工具
+                                {% else %}
+                                    Register to Unlock Professional Mining Tools
+                                {% endif %}
+                            </h2>
+                            <p class="lead text-light mb-4">
+                                {% if current_lang == 'zh' %}
+                                    免费注册，获取更强大的挖矿计算和分析功能
+                                {% else %}
+                                    Sign up for free to access advanced mining calculations and analytics
+                                {% endif %}
+                            </p>
+                        </div>
+                        
+                        <div class="d-flex justify-content-center gap-4 mb-4 flex-wrap">
+                            <div style="max-width: 280px;">
+                                <div class="p-3 rounded bg-white bg-opacity-10">
+                                    <i class="bi bi-calculator display-6 text-warning mb-2"></i>
+                                    <h5 class="text-warning" data-i18n="batch_calculator">
+                                        {% if current_lang == 'zh' %}批量计算器{% else %}Batch Calculator{% endif %}
+                                    </h5>
+                                    <p class="small text-light">
+                                        {% if current_lang == 'zh' %}
+                                            一次计算数千台矿机的收益
+                                        {% else %}
+                                            Calculate multiple miners at once
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                            <!-- Technical Analysis - Temporarily hidden
+                            <div class="col-md-4">
+                                <div class="p-3 rounded bg-white bg-opacity-10">
+                                    <i class="bi bi-graph-up display-6 text-info mb-2"></i>
+                                    <h5 class="text-info">
+                                        {% if current_lang == 'zh' %}技术分析{% else %}Technical Analysis{% endif %}
+                                    </h5>
+                                    <p class="small text-light">
+                                        {% if current_lang == 'zh' %}
+                                            RSI, MACD, 布林带等专业指标
+                                        {% else %}
+                                            RSI, MACD, Bollinger Bands & more
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                            -->
+                            <div style="max-width: 280px;">
+                                <div class="p-3 rounded bg-white bg-opacity-10">
+                                    <i class="bi bi-file-earmark-pdf display-6 text-success mb-2"></i>
+                                    <h5 class="text-success" data-i18n="professional_reports">
+                                        {% if current_lang == 'zh' %}专业报告{% else %}Professional Reports{% endif %}
+                                    </h5>
+                                    <p class="small text-light">
+                                        {% if current_lang == 'zh' %}
+                                            导出详细的PDF分析报告
+                                        {% else %}
+                                            Export detailed PDF analysis reports
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                            <a href="{{ url_for('auth.register') }}" class="btn btn-warning btn-lg px-5 me-md-2">
+                                <i class="bi bi-person-plus-fill me-2"></i>
+                                {% if current_lang == 'zh' %}免费注册{% else %}Sign Up Free{% endif %}
+                            </a>
+                            <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light btn-lg px-5">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>
+                                {% if current_lang == 'zh' %}已有账户？登录{% else %}Have Account? Login{% endif %}
+                            </a>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <small class="text-light opacity-75">
+                                {% if current_lang == 'zh' %}
+                                    <i class="bi bi-shield-check me-1"></i>
+                                    100% 免费 • 无需信用卡 • 立即访问高级功能
+                                {% else %}
+                                    <i class="bi bi-shield-check me-1"></i>
+                                    100% Free • No Credit Card • Instant Access to Premium Features
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Footer with Legal Link -->
+    <footer class="bg-dark text-center py-4 mt-5">
+        <div class="container">
+            <div class="text-muted">
+                <a href="{{ url_for('legal_terms') }}" class="text-warning text-decoration-none me-3" style="font-weight: 500;">
+                    <i class="bi bi-shield-check me-1"></i>
+                    <span data-i18n="terms_privacy">{% if current_lang == 'zh' %}服务条款和隐私政策{% else %}Terms of Use & Privacy Notice{% endif %}</span>
+                </a>
+                <span class="mx-2">|</span>
+                <a href="mailto:cryptocalculator123@gmail.com" class="text-info text-decoration-none me-3">
+                    <i class="bi bi-envelope me-1"></i>
+                    <span data-i18n="contact_us">{% if current_lang == 'zh' %}联系我们{% else %}Contact Us{% endif %}</span>
+                </a>
+                <div class="mt-2">
+                    <small>© 2025 HashInsight Mining Intelligence. {% if current_lang == 'zh' %}最后更新{% else %}Last Updated{% endif %}: 22 August 2025</small>
+                </div>
+            </div>
+        </div>
+    </footer>
+    </div>
+
+    <!-- 引入计算器JS -->
+    <!-- 引入增强热力图JS -->
+    <script src="{{ url_for('static', filename='js/enhanced_heatmap.js') }}?v={{ range(100000, 999999) | random }}"></script>
+    <script src="{{ url_for('static', filename='js/calculator_clean.js') }}?v={{ range(100000, 999999) | random }}"></script>
+    <!-- 引入图表JS - 热力图和ROI可视化 -->
+    <script src="{{ url_for('static', filename='js/chart.js') }}?v={{ range(100000, 999999) | random }}"></script>
+    <script src="/static/js/i18n.js"></script>
+</body>
+</html>

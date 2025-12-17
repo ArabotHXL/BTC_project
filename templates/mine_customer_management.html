@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if current_lang == 'en' %}Mining Site Customer Management{% else %}矿场客户管理{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>
+                {% if current_lang == 'en' %}Mining Site Customer Management{% else %}矿场客户管理{% endif %}
+                <a href="{{ url_for('add_mine_customer') }}" class="btn btn-primary float-end">
+                    <i class="bi bi-plus-circle"></i> 
+                    {% if current_lang == 'en' %}Add New Customer{% else %}添加新客户{% endif %}
+                </a>
+            </h1>
+            <p class="text-muted">
+                {% if current_lang == 'en' %}
+                Manage your customers and grant them access to the mining calculator.
+                {% else %}
+                管理您的客户并授权他们使用挖矿计算器。
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    {% if current_lang == 'en' %}Customers with Access{% else %}已授权客户{% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{% if current_lang == 'en' %}Name{% else %}姓名{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Email{% else %}邮箱{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Company{% else %}公司{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Access Status{% else %}访问状态{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Days Remaining{% else %}剩余天数{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>{{ user.name }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{{ user.company }}</td>
+                                    <td>
+                                        {% if user.has_access %}
+                                            <span class="badge bg-success">
+                                                {% if current_lang == 'en' %}Active{% else %}有效{% endif %}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-danger">
+                                                {% if current_lang == 'en' %}Expired{% else %}已过期{% endif %}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ user.days_remaining }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('admin.extend_user_access', user_id=user.id, days=30) }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-plus-circle"></i> 
+                                                {% if current_lang == 'en' %}Extend 30 Days{% else %}延长30天{% endif %}
+                                            </a>
+                                            <a href="{{ url_for('view_customer_crm', user_id=user.id) }}" class="btn btn-sm btn-outline-success">
+                                                <i class="bi bi-people"></i> 
+                                                {% if current_lang == 'en' %}View in CRM{% else %}在CRM中查看{% endif %}
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center">
+                                        {% if current_lang == 'en' %}
+                                        You have not added any customers yet.
+                                        {% else %}
+                                        您还没有添加任何客户。
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

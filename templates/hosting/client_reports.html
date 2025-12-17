@@ -1,0 +1,594 @@
+{% extends "hosting/hosting_base.html" %}
+
+{% block page_title %}{% if current_lang == 'en' %}Reports{% else %}收益报告{% endif %}{% endblock %}
+{% block page_subtitle %}{% if current_lang == 'en' %}Detailed mining performance and revenue reports{% else %}详细的挖矿性能和收益报告{% endif %}{% endblock %}
+
+{% block content %}
+
+<!-- 报告概览统计 -->
+<div class="hosting-stats-grid">
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="monthly-uptime">99.5%</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Monthly Uptime{% else %}月度可用率{% endif %}</div>
+        <i class="bi bi-check-circle hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="average-hashrate">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Avg Hashrate{% else %}平均算力{% endif %}</div>
+        <i class="bi bi-lightning hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="total-revenue">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Total Revenue{% else %}总收益{% endif %}</div>
+        <i class="bi bi-currency-bitcoin hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="efficiency-ratio">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Efficiency{% else %}效率比{% endif %}</div>
+        <i class="bi bi-graph-up hosting-stat-icon"></i>
+    </div>
+</div>
+
+<!-- 报告生成工具 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-file-earmark-bar-graph me-2"></i>{% if current_lang == 'en' %}Generate Report{% else %}生成报告{% endif %}
+        </h5>
+    </div>
+    <div class="hosting-card-body">
+        <form class="row g-3" id="report-form">
+            <div class="col-md-3">
+                <label for="report-type" class="form-label">
+                    {% if current_lang == 'en' %}Report Type{% else %}报告类型{% endif %}
+                </label>
+                <select class="form-select" id="report-type" name="report_type" required>
+                    <option value="">{% if current_lang == 'en' %}Select Type{% else %}选择类型{% endif %}</option>
+                    <option value="daily">{% if current_lang == 'en' %}Daily Summary{% else %}日报{% endif %}</option>
+                    <option value="weekly">{% if current_lang == 'en' %}Weekly Report{% else %}周报{% endif %}</option>
+                    <option value="monthly">{% if current_lang == 'en' %}Monthly Report{% else %}月报{% endif %}</option>
+                    <option value="custom">{% if current_lang == 'en' %}Custom Period{% else %}自定义期间{% endif %}</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="start-date" class="form-label">
+                    {% if current_lang == 'en' %}Start Date{% else %}开始日期{% endif %}
+                </label>
+                <input type="date" class="form-control" id="start-date" name="start_date">
+            </div>
+            <div class="col-md-3">
+                <label for="end-date" class="form-label">
+                    {% if current_lang == 'en' %}End Date{% else %}结束日期{% endif %}
+                </label>
+                <input type="date" class="form-control" id="end-date" name="end_date">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-hosting-primary">
+                        <i class="bi bi-download me-1"></i>{% if current_lang == 'en' %}Generate{% else %}生成报告{% endif %}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 性能图表 -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="hosting-card">
+            <div class="hosting-card-header">
+                <h5 class="hosting-card-title">
+                    <i class="bi bi-graph-up me-2"></i>{% if current_lang == 'en' %}Performance Trend{% else %}性能趋势{% endif %}
+                </h5>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-hosting-outline btn-sm active" onclick="switchChartPeriod('7d')">7{% if current_lang == 'en' %}D{% else %}天{% endif %}</button>
+                    <button class="btn btn-hosting-outline btn-sm" onclick="switchChartPeriod('30d')">30{% if current_lang == 'en' %}D{% else %}天{% endif %}</button>
+                    <button class="btn btn-hosting-outline btn-sm" onclick="switchChartPeriod('90d')">90{% if current_lang == 'en' %}D{% else %}天{% endif %}</button>
+                </div>
+            </div>
+            <div class="hosting-card-body">
+                <canvas id="performanceChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="hosting-card">
+            <div class="hosting-card-header">
+                <h5 class="hosting-card-title">
+                    <i class="bi bi-pie-chart me-2"></i>{% if current_lang == 'en' %}Revenue Breakdown{% else %}收益构成{% endif %}
+                </h5>
+            </div>
+            <div class="hosting-card-body text-center">
+                <canvas id="revenueBreakdownChart" height="250"></canvas>
+                <div class="mt-3">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <small class="text-muted">{% if current_lang == 'en' %}Mining{% else %}挖矿收益{% endif %}</small>
+                            <div class="fw-bold text-warning" id="mining-revenue">$0.00</div>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">{% if current_lang == 'en' %}Pool Fees{% else %}矿池费用{% endif %}</small>
+                            <div class="fw-bold text-info" id="pool-fees">$0.00</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 历史报告 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-archive me-2"></i>{% if current_lang == 'en' %}Report Archive{% else %}历史报告{% endif %}
+        </h5>
+        <button class="btn btn-hosting-secondary btn-sm" onclick="refreshReports()">
+            <i class="bi bi-arrow-clockwise me-1"></i>{% if current_lang == 'en' %}Refresh{% else %}刷新{% endif %}
+        </button>
+    </div>
+    <div class="hosting-card-body">
+        <div class="hosting-table">
+            <table class="table table-hover" id="reports-table">
+                <thead>
+                    <tr>
+                        <th>{% if current_lang == 'en' %}Report Type{% else %}报告类型{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Period{% else %}期间{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Generated{% else %}生成时间{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Revenue{% else %}收益{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Uptime{% else %}可用率{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge bg-info">{% if current_lang == 'en' %}Monthly{% else %}月报{% endif %}</span></td>
+                        <td>2024-12</td>
+                        <td>2025-01-01</td>
+                        <td>$298.50</td>
+                        <td>99.8%</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-hosting-outline" onclick="viewReport('2024-12-monthly')">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button class="btn btn-hosting-outline" onclick="downloadReport('2024-12-monthly')">
+                                    <i class="bi bi-download"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge bg-warning text-dark">{% if current_lang == 'en' %}Weekly{% else %}周报{% endif %}</span></td>
+                        <td>2024-12-23 to 2024-12-29</td>
+                        <td>2024-12-30</td>
+                        <td>$68.75</td>
+                        <td>99.5%</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-hosting-outline" onclick="viewReport('2024-w52')">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button class="btn btn-hosting-outline" onclick="downloadReport('2024-w52')">
+                                    <i class="bi bi-download"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 报告查看模态框 -->
+<div class="modal fade" id="reportViewModal" tabindex="-1" aria-labelledby="reportViewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content bg-dark">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
+                <h5 class="modal-title" id="reportViewModalLabel">
+                    <i class="bi bi-file-earmark-bar-graph me-2"></i>
+                    {% if current_lang == 'en' %}Report Details{% else %}报告详情{% endif %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="report-content">
+                <!-- 报告内容将在这里加载 -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-hosting-secondary" data-bs-dismiss="modal">
+                    {% if current_lang == 'en' %}Close{% else %}关闭{% endif %}
+                </button>
+                <button type="button" class="btn btn-hosting-primary" onclick="downloadCurrentReport()">
+                    <i class="bi bi-download me-1"></i>{% if current_lang == 'en' %}Download PDF{% else %}下载PDF{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadReportsData();
+    initCharts();
+    setupReportForm();
+});
+
+let currentReportId = null;
+
+function loadReportsData() {
+    fetch('/hosting/api/client/reports')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateReportsSummary(data.stats);
+                updateReportsHistory(data.reports || []);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading reports data:', error);
+        });
+}
+
+function updateReportsSummary(stats) {
+    if (!stats) return;
+    document.getElementById('monthly-uptime').textContent = `${stats.monthly_uptime || 0}%`;
+    const hashrate = parseFloat(stats.average_hashrate || 0).toLocaleString(undefined, {maximumFractionDigits: 1});
+    document.getElementById('average-hashrate').textContent = `${hashrate} TH/s`;
+    const revenue = parseFloat(stats.total_revenue || 0).toLocaleString(undefined, {maximumFractionDigits: 0});
+    document.getElementById('total-revenue').textContent = `$${revenue}`;
+    document.getElementById('efficiency-ratio').textContent = `${stats.efficiency || 0} TH/kW`;
+}
+
+function updateReportsHistory(history) {
+    const tbody = document.querySelector('#reports-table tbody');
+    tbody.innerHTML = '';
+    
+    history.forEach(report => {
+        const row = `
+            <tr>
+                <td><span class="badge bg-${getReportTypeColor(report.type)}">${getReportTypeText(report.type)}</span></td>
+                <td>${report.period}</td>
+                <td>${report.generated_date}</td>
+                <td>$${report.revenue.toFixed(2)}</td>
+                <td>${report.uptime}%</td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-hosting-outline" onclick="viewReport('${report.id}')">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <button class="btn btn-hosting-outline" onclick="downloadReport('${report.id}')">
+                            <i class="bi bi-download"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        tbody.insertAdjacentHTML('beforeend', row);
+    });
+}
+
+function setupReportForm() {
+    const form = document.getElementById('report-form');
+    const reportType = document.getElementById('report-type');
+    const startDate = document.getElementById('start-date');
+    const endDate = document.getElementById('end-date');
+    
+    reportType.addEventListener('change', function() {
+        if (this.value === 'custom') {
+            startDate.required = true;
+            endDate.required = true;
+            startDate.disabled = false;
+            endDate.disabled = false;
+        } else {
+            startDate.required = false;
+            endDate.required = false;
+            startDate.disabled = true;
+            endDate.disabled = true;
+        }
+    });
+    
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        generateReport();
+    });
+}
+
+function generateReport() {
+    const form = document.getElementById('report-form');
+    const formData = new FormData(form);
+    
+    const reportData = {};
+    for (let [key, value] of formData.entries()) {
+        if (value) {
+            reportData[key] = value;
+        }
+    }
+    
+    fetch('/hosting/api/client/reports/generate', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(reportData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(getLanguage() === 'en' ? 'Report generated successfully' : '报告生成成功', 'success');
+            // 自动下载报告
+            window.open(data.download_url, '_blank');
+            loadReportsData();
+        } else {
+            showToast(data.message || (getLanguage() === 'en' ? 'Report generation failed' : '报告生成失败'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error generating report:', error);
+        showToast(getLanguage() === 'en' ? 'Report generation failed' : '报告生成失败', 'error');
+    });
+}
+
+function viewReport(reportId) {
+    currentReportId = reportId;
+    
+    fetch(`/hosting/api/client/reports/${reportId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayReportContent(data.report);
+                new bootstrap.Modal(document.getElementById('reportViewModal')).show();
+            }
+        })
+        .catch(error => {
+            console.error('Error loading report:', error);
+        });
+}
+
+function displayReportContent(report) {
+    const content = document.getElementById('report-content');
+    content.innerHTML = `
+        <div class="row g-4">
+            <div class="col-md-6">
+                <h6 class="text-warning mb-3">${getLanguage() === 'en' ? 'Report Summary' : '报告摘要'}</h6>
+                <table class="table table-borderless">
+                    <tr>
+                        <td class="text-muted">${getLanguage() === 'en' ? 'Period' : '期间'}:</td>
+                        <td><strong>${report.period}</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">${getLanguage() === 'en' ? 'Total Revenue' : '总收益'}:</td>
+                        <td><strong>$${report.total_revenue.toFixed(2)}</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">${getLanguage() === 'en' ? 'Average Hashrate' : '平均算力'}:</td>
+                        <td>${report.avg_hashrate} TH/s</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">${getLanguage() === 'en' ? 'Uptime' : '可用率'}:</td>
+                        <td>${report.uptime}%</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-warning mb-3">${getLanguage() === 'en' ? 'Performance Metrics' : '性能指标'}</h6>
+                <table class="table table-borderless">
+                    <tr>
+                        <td class="text-muted">${getLanguage() === 'en' ? 'Efficiency' : '效率'}:</td>
+                        <td>${report.efficiency}%</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">${getLanguage() === 'en' ? 'Power Consumption' : '功耗'}:</td>
+                        <td>${report.power_consumption} kWh</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">${getLanguage() === 'en' ? 'Downtime Events' : '故障次数'}:</td>
+                        <td>${report.downtime_events}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">${getLanguage() === 'en' ? 'Pool Fees' : '矿池费用'}:</td>
+                        <td>$${report.pool_fees.toFixed(2)}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-12">
+                <h6 class="text-warning mb-3">${getLanguage() === 'en' ? 'Daily Breakdown' : '每日明细'}</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>${getLanguage() === 'en' ? 'Date' : '日期'}</th>
+                                <th>${getLanguage() === 'en' ? 'Hashrate' : '算力'}</th>
+                                <th>${getLanguage() === 'en' ? 'Revenue' : '收益'}</th>
+                                <th>${getLanguage() === 'en' ? 'Uptime' : '在线率'}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${report.daily_data.map(day => `
+                                <tr>
+                                    <td>${day.date}</td>
+                                    <td>${day.hashrate} TH/s</td>
+                                    <td>$${day.revenue.toFixed(2)}</td>
+                                    <td>${day.uptime}%</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function downloadReport(reportId) {
+    window.open(`/hosting/api/client/reports/${reportId}/download`, '_blank');
+}
+
+function downloadCurrentReport() {
+    if (currentReportId) {
+        downloadReport(currentReportId);
+    }
+}
+
+function initCharts() {
+    // 性能趋势图表
+    const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+    window.performanceChart = new Chart(performanceCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: getLanguage() === 'en' ? 'Hashrate (TH/s)' : '算力 (TH/s)',
+                data: [],
+                borderColor: '#f7931e',
+                backgroundColor: 'rgba(247, 147, 30, 0.1)',
+                tension: 0.4,
+                fill: true
+            }, {
+                label: getLanguage() === 'en' ? 'Revenue ($)' : '收益 ($)',
+                data: [],
+                borderColor: '#ffc107',
+                backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                tension: 0.4,
+                yAxisID: 'y1'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: { color: '#ffffff' }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: '#adb5bd' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    ticks: { color: '#adb5bd' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    ticks: { color: '#adb5bd' },
+                    grid: { drawOnChartArea: false }
+                }
+            }
+        }
+    });
+    
+    // 收益构成图表
+    const revenueCtx = document.getElementById('revenueBreakdownChart').getContext('2d');
+    window.revenueBreakdownChart = new Chart(revenueCtx, {
+        type: 'doughnut',
+        data: {
+            labels: [
+                getLanguage() === 'en' ? 'Mining Revenue' : '挖矿收益',
+                getLanguage() === 'en' ? 'Pool Fees' : '矿池费用'
+            ],
+            datasets: [{
+                data: [85, 15],
+                backgroundColor: [
+                    'rgba(247, 147, 30, 0.8)',
+                    'rgba(255, 193, 7, 0.8)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: { color: '#ffffff' }
+                }
+            }
+        }
+    });
+    
+    // 加载图表数据
+    loadPerformanceChart('7d');
+}
+
+function switchChartPeriod(period) {
+    document.querySelectorAll('.btn-hosting-outline').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    loadPerformanceChart(period);
+}
+
+function loadPerformanceChart(period) {
+    fetch(`/hosting/api/client/reports/chart?period=${period}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.performanceChart.data.labels = data.labels;
+                window.performanceChart.data.datasets[0].data = data.hashrate;
+                window.performanceChart.data.datasets[1].data = data.revenue;
+                window.performanceChart.update();
+                
+                // 更新收益构成图表
+                if (data.breakdown) {
+                    window.revenueBreakdownChart.data.datasets[0].data = [
+                        data.breakdown.mining_revenue,
+                        data.breakdown.pool_fees
+                    ];
+                    window.revenueBreakdownChart.update();
+                    
+                    // 更新文字显示
+                    document.getElementById('mining-revenue').textContent = '$' + data.breakdown.mining_revenue.toLocaleString();
+                    document.getElementById('pool-fees').textContent = '$' + data.breakdown.pool_fees.toLocaleString();
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error loading performance chart:', error);
+        });
+}
+
+function refreshReports() {
+    loadReportsData();
+}
+
+function getReportTypeColor(type) {
+    const colorMap = {
+        'daily': 'success',
+        'weekly': 'warning',
+        'monthly': 'info',
+        'custom': 'secondary'
+    };
+    return colorMap[type] || 'secondary';
+}
+
+function getReportTypeText(type) {
+    const language = getLanguage();
+    const typeMap = {
+        'daily': language === 'en' ? 'Daily' : '日报',
+        'weekly': language === 'en' ? 'Weekly' : '周报',
+        'monthly': language === 'en' ? 'Monthly' : '月报',
+        'custom': language === 'en' ? 'Custom' : '自定义'
+    };
+    return typeMap[type] || type;
+}
+
+function getLanguage() {
+    return document.querySelector('meta[name="language"]').content;
+}
+
+function showToast(message, type) {
+    console.log(`[${type.toUpperCase()}] ${message}`);
+}
+</script>
+{% endblock %}

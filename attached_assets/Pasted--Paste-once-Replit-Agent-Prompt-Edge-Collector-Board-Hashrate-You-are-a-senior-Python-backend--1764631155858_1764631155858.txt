@@ -1,0 +1,315 @@
+🔧 Paste-once Replit Agent Prompt（Edge Collector / Board Hashrate）
+
+You are a senior Python backend engineer.
+Goal: Implement a CGMiner edge collector that connects to an Antminer-like miner via TCP port 4028, sends stats and devs commands, and parses per-board hashrate / temperature / chip health into a clean JSON structure, with no hard limit on board count.
+
+1. Files & Structure
+
+Create (or update) a small standalone module:
+
+edge_collector/
+
+__init__.py
+
+cgminer_client.py – low-level TCP client
+
+parsers.py – STATS/DEVS parsing logic
+
+models.py – dataclasses / types
+
+main.py – simple CLI / test harness
+
+The code should be pure Python 3 (no external dependencies except dataclasses if needed).
+
+2. CGMiner client (cgminer_client.py)
+
+Implement a simple client that talks to CGMiner JSON API over TCP 4028.
+
+Requirements:
+
+Expose a class:
+
+class CGMinerClient:
+    def __init__(self, host: str, port: int = 4028, timeout: float = 3.0): ...
+    def send_command(self, command: str) -> dict: ...
+
+
+send_command("stats") should:
+
+Open a TCP connection to (host, port) with timeout.
+
+Send the command string as bytes, e.g. b'{"command":"stats"}' or b'stats' depending on miner behavior.
+👉 Implement it so that the serialization is easy to adjust: use a helper function build_payload(command: str) -> bytes.
+
+Read until socket closes or timeout, then decode and json.loads into a Python dict.
+
+Handle exceptions:
+
+Retry up to 3 times with exponential backoff (0.5s, 1s, 2s).
+
+If still failing, raise a custom exception CGMinerError.
+
+Also add convenience methods:
+
+def get_stats(self) -> dict:
+    return self.send_command("stats")
+
+def get_devs(self) -> dict:
+    return self.send_command("devs")
+
+3. Data models (models.py)
+
+Define lightweight dataclasses / TypedDicts for clarity:
+
+from dataclasses import dataclass
+from typing import List, Optional
+
+
+@dataclass
+class BoardStatus:
+    id: int
+    hashrate_ghs: float
+    temp_chip: Optional[float]
+    temp_pcb: Optional[float]
+    chips_ok: int
+    chips_total: int
+    status: str  # "healthy" | "warning" | "critical"
+
+
+@dataclass
+class MinerSnapshot:
+    boards: List[BoardStatus]
+    boards_healthy: int
+    boards_total: int
+    total_hashrate_ghs_boards: float
+    total_hashrate_ghs_devs: float
+    temperature_overall: Optional[float]
+    error_rate: Optional[float]
+
+4. Parsing logic (parsers.py)
+
+You must support dynamic board count – do NOT assume 3 or 4 boards.
+
+We already know example CGMiner responses:
+
+Example stats response:
+{
+  "STATS": [{
+    "chain_acn1": 63,
+    "chain_acn2": 63,
+    "chain_acn3": 63,
+    "chain_acs1": "oooooooo...",
+    "chain_acs2": "oooooooo...",
+    "chain_acs3": "oooooooo...",
+    "temp_chip1": 72,
+    "temp_chip2": 74,
+    "temp_chip3": 71,
+    "temp_pcb1": 68,
+    "temp_pcb2": 70,
+    "temp_pcb3": 67,
+    "chain_rate1": "48523.45",
+    "chain_rate2": "49012.33",
+    "chain_rate3": "47890.12"
+  }]
+}
+
+Example devs response:
+{
+  "DEVS": [{
+    "ASC": 0,
+    "Enabled": "Y",
+    "Status": "Alive",
+    "Temperature": 73.5,
+    "MHS 5s": 145425.9,
+    "Hardware Errors": 12,
+    "Rejected": 5
+  }]
+}
+
+4.1 Pick the correct STATS entry
+
+Implement:
+
+def pick_stats_entry(stats_response: dict) -> dict:
+    """Choose the STATS entry that actually contains per-board fields."""
+
+
+Logic:
+
+Iterate over stats_response.get("STATS", []).
+
+Return the first entry that has any key starting with chain_acn, chain_acs, or chain_rate.
+
+If none found, return {}.
+
+4.2 Dynamic board index extraction (no hard limit)
+
+Implement:
+
+import re
+
+def extract_board_indices(stats: dict) -> list[int]:
+    """
+    Scan all keys and collect board indices from patterns like:
+    chain_acn1, chain_acs3, chain_rate5, temp_chip2, temp_pcb4.
+    """
+
+
+Logic:
+
+Iterate over stats.keys().
+
+Use regex like: r'(?:chain_(?:acn|acs|rate)|temp_chip|temp_pcb)(\d+)'
+
+Collect all integer indices into a set, then return sorted(list(indices)).
+
+This guarantees support for any number of boards (3, 4, 5, 6…).
+
+4.3 Board health rules
+
+We already have a concept:
+
+def determine_board_status(board: dict) -> str:
+    # input keys: chips_ok, chips_total, temp_chip
+
+
+Rules:
+
+Chip health:
+
+If chips_ok == chips_total → "healthy".
+
+Else if chips_ok / chips_total > 0.95 → "warning".
+
+Else → "critical".
+
+Temperature overlay:
+
+If temp_chip > 90 → "critical".
+
+Else if temp_chip > 80 and status is "healthy" → upgrade to "warning".
+
+Implement this function once and reuse it.
+
+4.4 Parse per-board data
+
+Implement:
+
+from .models import BoardStatus, MinerSnapshot
+
+def parse_board_health(stats_response: dict, devs_response: dict | None = None) -> MinerSnapshot:
+    ...
+
+
+Algorithm:
+
+Call pick_stats_entry(stats_response) → stats.
+
+Get board indices via extract_board_indices(stats).
+
+For each idx in board indices, construct a BoardStatus:
+
+id = idx
+
+hashrate_ghs = float(stats.get(f"chain_rate{idx}", 0.0))
+
+temp_chip = stats.get(f"temp_chip{idx}")
+
+temp_pcb = stats.get(f"temp_pcb{idx}")
+
+chip_status_str = stats.get(f"chain_acs{idx}", "") or ""
+
+chips_ok = chip_status_str.count("o")
+
+chips_total = int(stats.get(f"chain_acn{idx}", len(chip_status_str.replace(" ", "")) or 1))
+
+Call determine_board_status(...) to get status.
+
+Aggregate:
+
+boards_healthy = count of boards where status == "healthy"
+
+boards_total = len(boards)
+
+total_hashrate_ghs_boards = sum(board.hashrate_ghs for board in boards)
+
+If devs_response is provided:
+
+Take first entry: dev = devs_response.get("DEVS", [{}])[0]
+
+total_hashrate_ghs_devs = float(dev.get("MHS 5s", 0.0)) / 1000.0
+
+temperature_overall = dev.get("Temperature")
+
+Optionally compute error rate:
+
+Use Hardware Errors and Rejected if available and safe; if not obvious, set error_rate = None.
+
+Return a MinerSnapshot instance.
+
+5. CLI / Test (main.py)
+
+Implement a very simple CLI:
+
+Usage:
+
+python -m edge_collector.main --host 192.168.1.100 --port 4028
+
+
+Behavior:
+
+Connect to CGMiner.
+
+Fetch stats and devs.
+
+Parse with parse_board_health.
+
+Print a JSON dump like:
+
+{
+  "boards": [
+    {
+      "id": 1,
+      "hashrate_ghs": 48523.45,
+      "temp_chip": 72,
+      "temp_pcb": 68,
+      "chips_ok": 63,
+      "chips_total": 63,
+      "status": "healthy"
+    },
+    { "...": "..." }
+  ],
+  "boards_healthy": 3,
+  "boards_total": 3,
+  "total_hashrate_ghs_boards": 145426.9,
+  "total_hashrate_ghs_devs": 145425.9,
+  "temperature_overall": 73.5,
+  "error_rate": null
+}
+
+
+Use argparse and json.dumps(..., indent=2).
+
+6. Quality & Robustness
+
+Add type hints everywhere.
+
+Handle missing keys gracefully (don’t crash if a board is partially reported).
+
+Log or print a warning if:
+
+total_hashrate_ghs_boards and total_hashrate_ghs_devs differ by more than 5%.
+
+Add at least minimal unit tests for:
+
+extract_board_indices with mixed keys.
+
+determine_board_status with different chip/temperature combinations.
+
+parse_board_health using the example stats/devs payloads above.
+
+When you’ve finished, make sure:
+
+The module can run as python -m edge_collector.main ...
+
+The JSON output matches the expected structure and supports any number of boards without code changes.

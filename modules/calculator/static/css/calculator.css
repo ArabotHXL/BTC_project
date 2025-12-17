@@ -1,0 +1,115 @@
+/* 
+计算器模块专用样式
+独立的CSS文件，不影响其他模块
+*/
+
+/* 计算器页面特定样式 */
+.calculator-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.calculator-header {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    color: #1a1a1a;
+    padding: 30px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+}
+
+.calculator-form {
+    background: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 10px;
+    padding: 25px;
+}
+
+.calculator-input {
+    background: #1a1a1a;
+    border: 1px solid #3a3a3a;
+    color: #ffffff;
+    padding: 10px 15px;
+    border-radius: 5px;
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+.calculator-input:focus {
+    border-color: #FFD700;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+}
+
+.calculator-button {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #1a1a1a;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.calculator-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(255, 215, 0, 0.3);
+}
+
+/* 结果展示区域 */
+.calculator-results {
+    background: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 10px;
+    padding: 25px;
+    margin-top: 30px;
+}
+
+.result-card {
+    background: #1a1a1a;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+}
+
+.result-label {
+    color: #888;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.result-value {
+    color: #FFD700;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+/* 图表容器 */
+.calculator-chart {
+    background: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+    min-height: 400px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .calculator-container {
+        padding: 10px;
+    }
+    
+    .calculator-header {
+        padding: 20px;
+    }
+    
+    .calculator-form {
+        padding: 15px;
+    }
+    
+    .result-value {
+        font-size: 20px;
+    }
+}

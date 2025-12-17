@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+{% block title %}
+{{ site.name }} - {% if lang == 'zh' %}实时监控{% else %}Live Monitor{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('collector_routes.index') }}" class="text-warning">
+                    {% if lang == 'zh' %}采集器监控{% else %}Collector Monitor{% endif %}
+                </a>
+            </li>
+            <li class="breadcrumb-item active text-muted">{{ site.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="text-warning mb-0">
+                <i class="bi bi-speedometer2 me-2"></i>{{ site.name }}
+            </h2>
+            <p class="text-muted">{{ site.location }}</p>
+        </div>
+        <div class="col-auto">
+            <a href="{{ url_for('collector_routes.manage_keys', site_id=site.id) }}" class="btn btn-outline-warning">
+                <i class="bi bi-key me-2"></i>
+                {% if lang == 'zh' %}管理密钥{% else %}Manage Keys{% endif %}
+            </a>
+        </div>
+    </div>
+
+    {% if stats %}
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3 col-xl-2">
+            <div class="card bg-dark border-secondary text-center py-3">
+                <div class="text-muted small">{% if lang == 'zh' %}总矿机{% else %}Total{% endif %}</div>
+                <div class="h3 mb-0 text-white" id="stat-total">{{ stats.total or 0 }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 col-xl-2">
+            <div class="card bg-dark border-secondary text-center py-3">
+                <div class="text-muted small">{% if lang == 'zh' %}在线{% else %}Online{% endif %}</div>
+                <div class="h3 mb-0 text-success" id="stat-online">{{ stats.online|int if stats.online else 0 }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 col-xl-2">
+            <div class="card bg-dark border-secondary text-center py-3">
+                <div class="text-muted small">{% if lang == 'zh' %}离线{% else %}Offline{% endif %}</div>
+                <div class="h3 mb-0 text-danger" id="stat-offline">{{ (stats.total or 0) - (stats.online|int if stats.online else 0) }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 col-xl-2">
+            <div class="card bg-dark border-secondary text-center py-3">
+                <div class="text-muted small">{% if lang == 'zh' %}总算力{% else %}Hashrate{% endif %}</div>
+                <div class="h4 mb-0 text-info" id="stat-hashrate">{{ "%.2f"|format((stats.hashrate or 0) / 1000) }} TH/s</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 col-xl-2">
+            <div class="card bg-dark border-secondary text-center py-3">
+                <div class="text-muted small">{% if lang == 'zh' %}平均温度{% else %}Avg Temp{% endif %}</div>
+                <div class="h4 mb-0 {% if (stats.temp or 0) > 75 %}text-danger{% elif (stats.temp or 0) > 65 %}text-warning{% else %}text-success{% endif %}" id="stat-temp">
+                    {{ "%.1f"|format(stats.temp or 0) }}°C
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 col-xl-2">
+            <div class="card bg-dark border-secondary text-center py-3">
+                <div class="text-muted small">{% if lang == 'zh' %}在线率{% else %}Online Rate{% endif %}</div>
+                <div class="h4 mb-0 text-warning" id="stat-rate">
+                    {% set rate = ((stats.online|int if stats.online else 0) / (stats.total or 1) * 100) %}
+                    {{ "%.1f"|format(rate) }}%
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-lg-9">
+            <div class="card bg-dark border-secondary">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-cpu me-2"></i>
+                        {% if lang == 'zh' %}矿机列表{% else %}Miner List{% endif %}
+                    </h5>
+                    <form class="d-flex gap-2" method="get">
+                        <select name="online" class="form-select form-select-sm bg-black text-white border-secondary" style="width: auto;" onchange="this.form.submit()">
+                            <option value="all" {% if online_filter == 'all' %}selected{% endif %}>{% if lang == 'zh' %}全部{% else %}All{% endif %}</option>
+                            <option value="online" {% if online_filter == 'online' %}selected{% endif %}>{% if lang == 'zh' %}仅在线{% else %}Online Only{% endif %}</option>
+                            <option value="offline" {% if online_filter == 'offline' %}selected{% endif %}>{% if lang == 'zh' %}仅离线{% else %}Offline Only{% endif %}</option>
+                        </select>
+                        <div class="input-group input-group-sm" style="width: 200px;">
+                            <input type="text" name="search" class="form-control bg-black text-white border-secondary" 
+                                   placeholder="{% if lang == 'zh' %}搜索矿机ID{% else %}Search miner ID{% endif %}" value="{{ search }}">
+                            <button type="submit" class="btn btn-outline-secondary">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover mb-0">
+                            <thead>
+                                <tr class="text-muted">
+                                    <th>{% if lang == 'zh' %}矿机ID{% else %}Miner ID{% endif %}</th>
+                                    <th>IP</th>
+                                    <th>{% if lang == 'zh' %}状态{% else %}Status{% endif %}</th>
+                                    <th>{% if lang == 'zh' %}算力{% else %}Hashrate{% endif %}</th>
+                                    <th>{% if lang == 'zh' %}温度{% else %}Temp{% endif %}</th>
+                                    <th>{% if lang == 'zh' %}风扇{% else %}Fan{% endif %}</th>
+                                    <th>{% if lang == 'zh' %}运行时间{% else %}Uptime{% endif %}</th>
+                                    <th>{% if lang == 'zh' %}更新时间{% else %}Updated{% endif %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for m in miners %}
+                                <tr>
+                                    <td class="fw-bold text-warning">{{ m.miner_id }}</td>
+                                    <td class="text-muted">{{ m.ip_address or '-' }}</td>
+                                    <td>
+                                        {% if m.online %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle me-1"></i>
+                                            {% if lang == 'zh' %}在线{% else %}Online{% endif %}
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-x-circle me-1"></i>
+                                            {% if lang == 'zh' %}离线{% else %}Offline{% endif %}
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if m.hashrate_ghs %}
+                                        {{ "%.2f"|format(m.hashrate_ghs / 1000) }} TH/s
+                                        {% else %}-{% endif %}
+                                    </td>
+                                    <td>
+                                        {% if m.temperature_avg %}
+                                        <span class="{% if m.temperature_avg > 75 %}text-danger{% elif m.temperature_avg > 65 %}text-warning{% else %}text-success{% endif %}">
+                                            {{ "%.1f"|format(m.temperature_avg) }}°C
+                                        </span>
+                                        {% if m.temperature_max %}
+                                        <small class="text-muted">(max: {{ "%.0f"|format(m.temperature_max) }}°)</small>
+                                        {% endif %}
+                                        {% else %}-{% endif %}
+                                    </td>
+                                    <td>
+                                        {% if m.fan_speeds %}
+                                        {{ m.fan_speeds|join(', ') }} RPM
+                                        {% else %}-{% endif %}
+                                    </td>
+                                    <td>
+                                        {% if m.uptime_seconds %}
+                                        {{ "%.1f"|format(m.uptime_seconds / 3600) }}h
+                                        {% else %}-{% endif %}
+                                    </td>
+                                    <td class="text-muted small">
+                                        {% if m.updated_at %}
+                                        {{ m.updated_at.strftime('%H:%M:%S') }}
+                                        {% else %}-{% endif %}
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted py-5">
+                                        <i class="bi bi-inbox display-4 d-block mb-3"></i>
+                                        {% if lang == 'zh' %}暂无矿机数据，请确保采集器已正确配置并运行{% else %}No miner data yet. Please ensure the collector is configured and running.{% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% if pagination and pagination.pages > 1 %}
+                <div class="card-footer">
+                    <nav>
+                        <ul class="pagination pagination-sm justify-content-center mb-0">
+                            {% if pagination.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link bg-dark text-white border-secondary" href="?page={{ pagination.prev_num }}&online={{ online_filter }}&search={{ search }}">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                                {% if p %}
+                                <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                                    <a class="page-link bg-dark text-white border-secondary" href="?page={{ p }}&online={{ online_filter }}&search={{ search }}">{{ p }}</a>
+                                </li>
+                                {% else %}
+                                <li class="page-item disabled"><span class="page-link bg-dark text-white border-secondary">...</span></li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if pagination.has_next %}
+                            <li class="page-item">
+                                <a class="page-link bg-dark text-white border-secondary" href="?page={{ pagination.next_num }}&online={{ online_filter }}&search={{ search }}">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-lg-3">
+            <div class="card bg-dark border-secondary mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-clock-history me-2"></i>
+                        {% if lang == 'zh' %}最近上传{% else %}Recent Uploads{% endif %}
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        {% for log in recent_uploads %}
+                        <li class="list-group-item bg-dark border-secondary py-2">
+                            <div class="d-flex justify-content-between">
+                                <span class="text-success">{{ log.online_count }}</span>
+                                <span class="text-danger">{{ log.offline_count }}</span>
+                                <span class="text-muted small">{{ log.upload_time.strftime('%H:%M') }}</span>
+                            </div>
+                            <div class="progress mt-1" style="height: 3px;">
+                                {% set rate = (log.online_count / (log.miner_count or 1) * 100) %}
+                                <div class="progress-bar bg-success" style="width: {{ rate }}%"></div>
+                            </div>
+                        </li>
+                        {% else %}
+                        <li class="list-group-item bg-dark border-secondary text-muted text-center py-3">
+                            {% if lang == 'zh' %}暂无上传记录{% else %}No uploads yet{% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card bg-dark border-secondary">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-key me-2"></i>
+                        {% if lang == 'zh' %}采集器密钥{% else %}Collector Keys{% endif %}
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        {% for key in collector_keys %}
+                        <li class="list-group-item bg-dark border-secondary d-flex justify-content-between align-items-center">
+                            <span>
+                                {{ key.name }}
+                                {% if not key.is_active %}
+                                <span class="badge bg-secondary ms-1">{% if lang == 'zh' %}已禁用{% else %}Disabled{% endif %}</span>
+                                {% endif %}
+                            </span>
+                            <small class="text-muted">
+                                {% if key.last_used_at %}
+                                {{ key.last_used_at.strftime('%m-%d %H:%M') }}
+                                {% else %}
+                                {% if lang == 'zh' %}未使用{% else %}Never{% endif %}
+                                {% endif %}
+                            </small>
+                        </li>
+                        {% else %}
+                        <li class="list-group-item bg-dark border-secondary text-muted text-center py-3">
+                            <a href="{{ url_for('collector_routes.manage_keys', site_id=site.id) }}" class="btn btn-sm btn-outline-warning">
+                                <i class="bi bi-plus me-1"></i>
+                                {% if lang == 'zh' %}创建密钥{% else %}Create Key{% endif %}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function refreshData() {
+    fetch('{{ url_for("collector_routes.api_live_data", site_id=site.id) }}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const stats = data.data.stats;
+                document.getElementById('stat-total').textContent = stats.total;
+                document.getElementById('stat-online').textContent = stats.online;
+                document.getElementById('stat-offline').textContent = stats.offline;
+                document.getElementById('stat-hashrate').textContent = stats.hashrate_ths.toFixed(2) + ' TH/s';
+                document.getElementById('stat-temp').textContent = stats.avg_temp.toFixed(1) + '°C';
+                document.getElementById('stat-rate').textContent = stats.online_rate.toFixed(1) + '%';
+            }
+        })
+        .catch(error => console.error('Refresh error:', error));
+}
+
+setInterval(refreshData, 30000);
+</script>
+{% endblock %}

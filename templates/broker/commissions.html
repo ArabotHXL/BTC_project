@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}佣金管理 - Commission Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>佣金管理 / Commission Management</h2>
+                <a href="{{ url_for('broker.add_commission') }}" class="btn btn-primary">
+                    添加佣金记录 / Add Commission Record
+                </a>
+            </div>
+
+            <!-- 佣金统计概览 -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">本月佣金 / This Month</h5>
+                            <h3 class="mb-0">${{ "%.2f"|format(monthly_commission or 0) }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">已收款 / Paid</h5>
+                            <h3 class="mb-0">${{ "%.2f"|format(paid_commission or 0) }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">待收款 / Pending</h5>
+                            <h3 class="mb-0">${{ "%.2f"|format(pending_commission or 0) }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">总佣金 / Total</h5>
+                            <h3 class="mb-0">${{ "%.2f"|format(total_commission or 0) }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 佣金记录表格 -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">佣金记录 / Commission Records</h5>
+                </div>
+                <div class="card-body">
+                    {% if commission_records %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>记录月份 / Month</th>
+                                    <th>客户 / Customer</th>
+                                    <th>交易 / Deal</th>
+                                    <th>客户利润 / Client Profit</th>
+                                    <th>佣金类型 / Commission Type</th>
+                                    <th>佣金率 / Rate</th>
+                                    <th>佣金金额 / Amount</th>
+                                    <th>收款状态 / Payment Status</th>
+                                    <th>操作 / Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in commission_records %}
+                                <tr>
+                                    <td>{{ record.record_month }}</td>
+                                    <td>
+                                        {% if record.customer %}
+                                            <a href="{{ url_for('crm.customer_detail', customer_id=record.customer.id) }}">
+                                                {{ record.customer.company_name or record.customer.name }}
+                                            </a>
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if record.deal %}
+                                            <a href="{{ url_for('broker.deal_detail', deal_id=record.deal.id) }}">
+                                                {{ record.deal.title }}
+                                            </a>
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
+                                    <td>${{ "%.2f"|format(record.client_monthly_profit) }}</td>
+                                    <td>
+                                        {% if record.commission_type == 'percentage' %}
+                                            利润抽成 / Profit Share
+                                        {% else %}
+                                            固定费用 / Fixed Fee
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if record.commission_type == 'percentage' %}
+                                            {{ record.commission_rate }}%
+                                        {% else %}
+                                            固定 / Fixed
+                                        {% endif %}
+                                    </td>
+                                    <td class="fw-bold">${{ "%.2f"|format(record.commission_amount) }}</td>
+                                    <td>
+                                        {% if record.paid %}
+                                            <span class="badge bg-success">已收款 / Paid</span>
+                                            {% if record.paid_date %}
+                                                <br><small>{{ record.paid_date.strftime('%Y-%m-%d') }}</small>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-warning">待收款 / Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('broker.edit_commission', record_id=record.id) }}" 
+                                               class="btn btn-sm btn-outline-primary" title="编辑记录 / Edit Record">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
+                                            {% if not record.paid %}
+                                                <form method="POST" action="{{ url_for('broker.mark_commission_paid', record_id=record.id) }}" style="display: inline;">
+                                                    <button type="submit" class="btn btn-sm btn-success" 
+                                                            onclick="return confirm('确认标记为已收款？ / Mark as paid?')"
+                                                            title="标记已收款 / Mark Paid">
+                                                        <i class="bi bi-check-circle"></i>
+                                                    </button>
+                                                </form>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-5">
+                        <p>暂无佣金记录</p>
+                        <p>No commission records found</p>
+                        <a href="{{ url_for('broker.add_commission') }}" class="btn btn-primary">
+                            添加第一条记录 / Add First Record
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,637 @@
+{% extends "hosting/hosting_base.html" %}
+
+{% block page_title %}{% if current_lang == 'en' %}Event Monitoring{% else %}事件监控{% endif %}{% endblock %}
+{% block page_subtitle %}{% if current_lang == 'en' %}Real-time monitoring and incident management{% else %}实时监控和事件管理{% endif %}{% endblock %}
+
+{% block header_actions %}
+{{ super() }}
+<div class="btn-group ms-3" role="group">
+    <button class="btn btn-hosting-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createIncidentModal">
+        <i class="bi bi-plus-circle me-1"></i>{% if current_lang == 'en' %}New Incident{% else %}新建事件{% endif %}
+    </button>
+    <button class="btn btn-hosting-secondary btn-sm" onclick="refreshMonitoring()">
+        <i class="bi bi-arrow-clockwise me-1"></i>{% if current_lang == 'en' %}Refresh{% else %}刷新{% endif %}
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<!-- 监控概览统计 -->
+<div class="hosting-stats-grid">
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="active-alerts">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Active Alerts{% else %}活跃告警{% endif %}</div>
+        <i class="bi bi-exclamation-triangle hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="total-incidents">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Total Incidents{% else %}总事件数{% endif %}</div>
+        <i class="bi bi-shield-exclamation hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="response-time">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Avg Response{% else %}平均响应{% endif %}</div>
+        <i class="bi bi-clock hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="uptime-percentage">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}System Uptime{% else %}系统可用率{% endif %}</div>
+        <i class="bi bi-check-circle hosting-stat-icon"></i>
+    </div>
+</div>
+
+<!-- 实时告警 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-bell me-2"></i>{% if current_lang == 'en' %}Real-time Alerts{% else %}实时告警{% endif %}
+        </h5>
+        <div class="btn-group" role="group">
+            <button class="btn btn-hosting-outline btn-sm active" onclick="filterAlerts('all')">{% if current_lang == 'en' %}All{% else %}全部{% endif %}</button>
+            <button class="btn btn-hosting-outline btn-sm" onclick="filterAlerts('critical')">{% if current_lang == 'en' %}Critical{% else %}严重{% endif %}</button>
+            <button class="btn btn-hosting-outline btn-sm" onclick="filterAlerts('warning')">{% if current_lang == 'en' %}Warning{% else %}警告{% endif %}</button>
+        </div>
+    </div>
+    <div class="hosting-card-body">
+        <div class="row g-3" id="alerts-grid">
+            <!-- 告警卡片将通过JavaScript动态生成 -->
+        </div>
+    </div>
+</div>
+
+<!-- 事件管理 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-calendar-event me-2"></i>{% if current_lang == 'en' %}Incident Management{% else %}事件管理{% endif %}
+        </h5>
+        <div class="btn-group" role="group">
+            <button class="btn btn-hosting-secondary btn-sm" onclick="exportIncidents()">
+                <i class="bi bi-download me-1"></i>{% if current_lang == 'en' %}Export{% else %}导出{% endif %}
+            </button>
+        </div>
+    </div>
+    <div class="hosting-card-body">
+        <!-- 筛选选项 -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <select class="form-select" id="severity-filter" onchange="filterIncidents()">
+                    <option value="">{% if current_lang == 'en' %}All Severities{% else %}全部严重级别{% endif %}</option>
+                    <option value="critical">{% if current_lang == 'en' %}Critical{% else %}严重{% endif %}</option>
+                    <option value="high">{% if current_lang == 'en' %}High{% else %}高{% endif %}</option>
+                    <option value="medium">{% if current_lang == 'en' %}Medium{% else %}中等{% endif %}</option>
+                    <option value="low">{% if current_lang == 'en' %}Low{% else %}低{% endif %}</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="status-filter" onchange="filterIncidents()">
+                    <option value="">{% if current_lang == 'en' %}All Statuses{% else %}全部状态{% endif %}</option>
+                    <option value="open">{% if current_lang == 'en' %}Open{% else %}开放{% endif %}</option>
+                    <option value="investigating">{% if current_lang == 'en' %}Investigating{% else %}调查中{% endif %}</option>
+                    <option value="resolved">{% if current_lang == 'en' %}Resolved{% else %}已解决{% endif %}</option>
+                    <option value="closed">{% if current_lang == 'en' %}Closed{% else %}已关闭{% endif %}</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="site-filter" onchange="filterIncidents()">
+                    <option value="">{% if current_lang == 'en' %}All Sites{% else %}全部站点{% endif %}</option>
+                    <!-- 站点选项通过JavaScript动态加载 -->
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="text" class="form-control" id="search-incidents" placeholder="{% if current_lang == 'en' %}Search incidents...{% else %}搜索事件...{% endif %}" onkeyup="searchIncidents()">
+            </div>
+        </div>
+        
+        <!-- 事件列表 -->
+        <div class="hosting-table">
+            <table class="table table-hover" id="incidents-table">
+                <thead>
+                    <tr>
+                        <th>{% if current_lang == 'en' %}ID{% else %}编号{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Title{% else %}标题{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Severity{% else %}严重级别{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Site{% else %}站点{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Created{% else %}创建时间{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Duration{% else %}持续时间{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 事件数据通过JavaScript加载 -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 分页 -->
+        <nav aria-label="Incidents pagination" class="mt-3">
+            <ul class="pagination justify-content-center" id="incidents-pagination">
+                <!-- 分页按钮通过JavaScript生成 -->
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- 系统监控图表 -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="hosting-card">
+            <div class="hosting-card-header">
+                <h5 class="hosting-card-title">
+                    <i class="bi bi-activity me-2"></i>{% if current_lang == 'en' %}System Performance{% else %}系统性能{% endif %}
+                </h5>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-hosting-outline btn-sm active" onclick="switchTimeRange('1h')">1{% if current_lang == 'en' %}H{% else %}小时{% endif %}</button>
+                    <button class="btn btn-hosting-outline btn-sm" onclick="switchTimeRange('6h')">6{% if current_lang == 'en' %}H{% else %}小时{% endif %}</button>
+                    <button class="btn btn-hosting-outline btn-sm" onclick="switchTimeRange('24h')">24{% if current_lang == 'en' %}H{% else %}小时{% endif %}</button>
+                    <button class="btn btn-hosting-outline btn-sm" onclick="switchTimeRange('7d')">7{% if current_lang == 'en' %}D{% else %}天{% endif %}</button>
+                </div>
+            </div>
+            <div class="hosting-card-body">
+                <canvas id="performanceChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="hosting-card">
+            <div class="hosting-card-header">
+                <h5 class="hosting-card-title">
+                    <i class="bi bi-speedometer2 me-2"></i>{% if current_lang == 'en' %}Key Metrics{% else %}关键指标{% endif %}
+                </h5>
+            </div>
+            <div class="hosting-card-body">
+                <div class="metric-item mb-4">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">{% if current_lang == 'en' %}CPU Usage{% else %}CPU使用率{% endif %}</span>
+                        <span class="fw-bold" id="cpu-usage">--</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-warning" role="progressbar" id="cpu-progress" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <div class="metric-item mb-4">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">{% if current_lang == 'en' %}Memory Usage{% else %}内存使用率{% endif %}</span>
+                        <span class="fw-bold" id="memory-usage">--</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-info" role="progressbar" id="memory-progress" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <div class="metric-item mb-4">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">{% if current_lang == 'en' %}Network I/O{% else %}网络I/O{% endif %}</span>
+                        <span class="fw-bold" id="network-io">--</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-success" role="progressbar" id="network-progress" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <div class="metric-item">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">{% if current_lang == 'en' %}Error Rate{% else %}错误率{% endif %}</span>
+                        <span class="fw-bold" id="error-rate">--</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-danger" role="progressbar" id="error-progress" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 创建事件模态框 -->
+<div class="modal fade" id="createIncidentModal" tabindex="-1" aria-labelledby="createIncidentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
+                <h5 class="modal-title" id="createIncidentModalLabel">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    {% if current_lang == 'en' %}Create New Incident{% else %}创建新事件{% endif %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createIncidentForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="incident-title" class="form-label">
+                                {% if current_lang == 'en' %}Title{% else %}标题{% endif %} <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="incident-title" name="title" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="incident-severity" class="form-label">
+                                {% if current_lang == 'en' %}Severity{% else %}严重级别{% endif %} <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="incident-severity" name="severity" required>
+                                <option value="">{% if current_lang == 'en' %}Select Severity{% else %}选择级别{% endif %}</option>
+                                <option value="critical">{% if current_lang == 'en' %}Critical{% else %}严重{% endif %}</option>
+                                <option value="high">{% if current_lang == 'en' %}High{% else %}高{% endif %}</option>
+                                <option value="medium">{% if current_lang == 'en' %}Medium{% else %}中等{% endif %}</option>
+                                <option value="low">{% if current_lang == 'en' %}Low{% else %}低{% endif %}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="incident-site" class="form-label">
+                                {% if current_lang == 'en' %}Affected Site{% else %}受影响站点{% endif %}
+                            </label>
+                            <select class="form-select" id="incident-site" name="site_id">
+                                <option value="">{% if current_lang == 'en' %}Select Site{% else %}选择站点{% endif %}</option>
+                                <!-- 站点选项通过JavaScript动态加载 -->
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="incident-category" class="form-label">
+                                {% if current_lang == 'en' %}Category{% else %}类别{% endif %}
+                            </label>
+                            <select class="form-select" id="incident-category" name="category">
+                                <option value="">{% if current_lang == 'en' %}Select Category{% else %}选择类别{% endif %}</option>
+                                <option value="hardware">{% if current_lang == 'en' %}Hardware{% else %}硬件{% endif %}</option>
+                                <option value="network">{% if current_lang == 'en' %}Network{% else %}网络{% endif %}</option>
+                                <option value="power">{% if current_lang == 'en' %}Power{% else %}电力{% endif %}</option>
+                                <option value="cooling">{% if current_lang == 'en' %}Cooling{% else %}冷却{% endif %}</option>
+                                <option value="security">{% if current_lang == 'en' %}Security{% else %}安全{% endif %}</option>
+                                <option value="other">{% if current_lang == 'en' %}Other{% else %}其他{% endif %}</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label for="incident-description" class="form-label">
+                                {% if current_lang == 'en' %}Description{% else %}描述{% endif %} <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control" id="incident-description" name="description" rows="4" required></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-hosting-secondary" data-bs-dismiss="modal">
+                    {% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}
+                </button>
+                <button type="button" class="btn btn-hosting-primary" onclick="createIncident()">
+                    {% if current_lang == 'en' %}Create Incident{% else %}创建事件{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 事件详情模态框 -->
+<div class="modal fade" id="incidentDetailModal" tabindex="-1" aria-labelledby="incidentDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content bg-dark">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
+                <h5 class="modal-title" id="incidentDetailModalLabel">
+                    <i class="bi bi-info-circle me-2"></i>
+                    {% if current_lang == 'en' %}Incident Details{% else %}事件详情{% endif %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="incident-detail-content">
+                <!-- 事件详情内容将在这里加载 -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-hosting-secondary" data-bs-dismiss="modal">
+                    {% if current_lang == 'en' %}Close{% else %}关闭{% endif %}
+                </button>
+                <button type="button" class="btn btn-hosting-primary" onclick="updateIncidentStatus()">
+                    {% if current_lang == 'en' %}Update Status{% else %}更新状态{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadMonitoringData();
+    loadSiteOptions();
+    initPerformanceChart();
+    setupRealTimeUpdates();
+});
+
+let currentIncidentId = null;
+let performanceChart = null;
+
+function loadMonitoringData() {
+    // 加载监控概览数据
+    fetch('/hosting/api/monitoring/overview')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateMonitoringStats(data.stats);
+                updateAlertsGrid(data.alerts);
+                updateMetrics(data.metrics);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading monitoring data:', error);
+        });
+    
+    // 加载事件列表
+    loadIncidents();
+}
+
+function updateMonitoringStats(stats) {
+    document.getElementById('active-alerts').textContent = stats.active_alerts || 0;
+    document.getElementById('total-incidents').textContent = stats.total_incidents || 0;
+    document.getElementById('response-time').textContent = `${stats.avg_response_time || 0}min`;
+    document.getElementById('uptime-percentage').textContent = `${stats.uptime_percentage || 0}%`;
+}
+
+function updateAlertsGrid(alerts) {
+    const grid = document.getElementById('alerts-grid');
+    grid.innerHTML = '';
+    
+    if (alerts.length === 0) {
+        grid.innerHTML = `
+            <div class="col-12 text-center text-muted py-4">
+                <i class="bi bi-check-circle fs-1 mb-2 d-block text-success"></i>
+                ${getLanguage() === 'en' ? 'No active alerts' : '无活跃告警'}
+            </div>
+        `;
+        return;
+    }
+    
+    alerts.forEach(alert => {
+        const alertCard = `
+            <div class="col-md-4 alert-card" data-severity="${alert.severity}">
+                <div class="hosting-card border-start border-${getSeverityColor(alert.severity)} border-3">
+                    <div class="hosting-card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="badge bg-${getSeverityColor(alert.severity)}">${getSeverityText(alert.severity)}</span>
+                            <small class="text-muted">${alert.created_at}</small>
+                        </div>
+                        <h6 class="fw-bold mb-2">${alert.title}</h6>
+                        <p class="text-muted mb-2">${alert.description}</p>
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">${alert.site_name || 'Global'}</small>
+                            <button class="btn btn-hosting-outline btn-sm" onclick="acknowledgeAlert(${alert.id})">
+                                <i class="bi bi-check"></i> ${getLanguage() === 'en' ? 'Ack' : '确认'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        grid.insertAdjacentHTML('beforeend', alertCard);
+    });
+}
+
+function updateMetrics(metrics) {
+    document.getElementById('cpu-usage').textContent = `${metrics.cpu_usage}%`;
+    document.getElementById('cpu-progress').style.width = `${metrics.cpu_usage}%`;
+    
+    document.getElementById('memory-usage').textContent = `${metrics.memory_usage}%`;
+    document.getElementById('memory-progress').style.width = `${metrics.memory_usage}%`;
+    
+    document.getElementById('network-io').textContent = `${metrics.network_io} MB/s`;
+    document.getElementById('network-progress').style.width = `${Math.min(metrics.network_io * 10, 100)}%`;
+    
+    document.getElementById('error-rate').textContent = `${metrics.error_rate}%`;
+    document.getElementById('error-progress').style.width = `${metrics.error_rate}%`;
+}
+
+function loadIncidents() {
+    const filters = getIncidentFilters();
+    const queryParams = new URLSearchParams(filters);
+    
+    fetch(`/hosting/api/monitoring/incidents?${queryParams}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayIncidents(data.incidents);
+                updatePagination(data.pagination);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading incidents:', error);
+        });
+}
+
+function displayIncidents(incidents) {
+    const tbody = document.querySelector('#incidents-table tbody');
+    tbody.innerHTML = '';
+    
+    if (incidents.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center text-muted py-4">
+                    <i class="bi bi-shield-check fs-1 mb-2 d-block text-success"></i>
+                    ${getLanguage() === 'en' ? 'No incidents found' : '未找到事件'}
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    incidents.forEach(incident => {
+        const row = `
+            <tr>
+                <td><strong>#${incident.id}</strong></td>
+                <td>${incident.title}</td>
+                <td><span class="badge bg-${getSeverityColor(incident.severity)}">${getSeverityText(incident.severity)}</span></td>
+                <td><span class="badge bg-${getStatusColor(incident.status)}">${getStatusText(incident.status)}</span></td>
+                <td>${incident.site_name || 'Global'}</td>
+                <td>${incident.created_at}</td>
+                <td>${incident.duration || '--'}</td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-hosting-outline" onclick="viewIncident(${incident.id})">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <button class="btn btn-hosting-outline" onclick="editIncident(${incident.id})">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        tbody.insertAdjacentHTML('beforeend', row);
+    });
+}
+
+function loadSiteOptions() {
+    fetch('/hosting/api/sites')
+        .then(response => response.json())
+        .then(data => {
+            const siteSelects = ['site-filter', 'incident-site'];
+            siteSelects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                data.sites.forEach(site => {
+                    const option = `<option value="${site.id}">${site.name} - ${site.location}</option>`;
+                    select.insertAdjacentHTML('beforeend', option);
+                });
+            });
+        });
+}
+
+function initPerformanceChart() {
+    const ctx = document.getElementById('performanceChart').getContext('2d');
+    performanceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: getLanguage() === 'en' ? 'Response Time (ms)' : '响应时间 (ms)',
+                data: [],
+                borderColor: '#f7931e',
+                backgroundColor: 'rgba(247, 147, 30, 0.1)',
+                tension: 0.4,
+                fill: true
+            }, {
+                label: getLanguage() === 'en' ? 'Error Count' : '错误数量',
+                data: [],
+                borderColor: '#dc3545',
+                backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                tension: 0.4,
+                yAxisID: 'y1'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: { color: '#ffffff' }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: '#adb5bd' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    ticks: { color: '#adb5bd' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    ticks: { color: '#adb5bd' },
+                    grid: { drawOnChartArea: false }
+                }
+            }
+        }
+    });
+    
+    loadPerformanceData('1h');
+}
+
+function setupRealTimeUpdates() {
+    // 每30秒更新一次监控数据
+    setInterval(loadMonitoringData, 30000);
+    
+    // 每10秒更新一次性能图表
+    setInterval(() => loadPerformanceData('1h'), 10000);
+}
+
+function createIncident() {
+    const form = document.getElementById('createIncidentForm');
+    const formData = new FormData(form);
+    
+    fetch('/hosting/api/monitoring/incidents', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('createIncidentModal')).hide();
+            form.reset();
+            loadIncidents();
+            showToast(getLanguage() === 'en' ? 'Incident created successfully' : '事件创建成功', 'success');
+        } else {
+            showToast(data.message || (getLanguage() === 'en' ? 'Creation failed' : '创建失败'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error creating incident:', error);
+        showToast(getLanguage() === 'en' ? 'Creation failed' : '创建失败', 'error');
+    });
+}
+
+function refreshMonitoring() {
+    loadMonitoringData();
+    showToast(getLanguage() === 'en' ? 'Monitoring data refreshed' : '监控数据已刷新', 'success');
+}
+
+function getSeverityColor(severity) {
+    const colorMap = {
+        'critical': 'danger',
+        'high': 'warning',
+        'medium': 'info',
+        'low': 'secondary'
+    };
+    return colorMap[severity] || 'secondary';
+}
+
+function getSeverityText(severity) {
+    const language = getLanguage();
+    const severityMap = {
+        'critical': language === 'en' ? 'Critical' : '严重',
+        'high': language === 'en' ? 'High' : '高',
+        'medium': language === 'en' ? 'Medium' : '中等',
+        'low': language === 'en' ? 'Low' : '低'
+    };
+    return severityMap[severity] || severity;
+}
+
+function getStatusColor(status) {
+    const colorMap = {
+        'open': 'danger',
+        'investigating': 'warning',
+        'resolved': 'success',
+        'closed': 'secondary'
+    };
+    return colorMap[status] || 'secondary';
+}
+
+function getStatusText(status) {
+    const language = getLanguage();
+    const statusMap = {
+        'open': language === 'en' ? 'Open' : '开放',
+        'investigating': language === 'en' ? 'Investigating' : '调查中',
+        'resolved': language === 'en' ? 'Resolved' : '已解决',
+        'closed': language === 'en' ? 'Closed' : '已关闭'
+    };
+    return statusMap[status] || status;
+}
+
+function getLanguage() {
+    return document.querySelector('meta[name="language"]').content;
+}
+
+function showToast(message, type) {
+    console.log(`[${type.toUpperCase()}] ${message}`);
+}
+
+// 其他辅助函数
+function filterAlerts(filter) { /* 实现告警过滤 */ }
+function filterIncidents() { /* 实现事件过滤 */ }
+function searchIncidents() { /* 实现事件搜索 */ }
+function switchTimeRange(range) { /* 切换时间范围 */ }
+function viewIncident(id) { /* 查看事件详情 */ }
+function editIncident(id) { /* 编辑事件 */ }
+function acknowledgeAlert(id) { /* 确认告警 */ }
+function loadPerformanceData(range) { /* 加载性能数据 */ }
+function getIncidentFilters() { return {}; /* 获取事件过滤器 */ }
+function updatePagination(pagination) { /* 更新分页 */ }
+function exportIncidents() { /* 导出事件 */ }
+function updateIncidentStatus() { /* 更新事件状态 */ }
+</script>
+{% endblock %}

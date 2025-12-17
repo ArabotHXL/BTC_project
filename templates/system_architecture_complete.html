@@ -1,0 +1,726 @@
+
+{% extends "base.html" %}
+
+{% block title %}
+    Complete System Architecture / 完整系统架构 - HashInsight Platform
+{% endblock %}
+
+{% block header_title %}
+    System Architecture / 系统架构
+{% endblock %}
+
+{% block extra_css %}
+<style>
+body {
+    background: linear-gradient(135deg, #0a0f1c 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #0a0f1c 100%);
+    background-attachment: fixed;
+    color: #f8f9fa;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.architecture-container {
+    max-width: 1800px;
+    margin: 2rem auto;
+    padding: 2rem;
+}
+
+.arch-card {
+    background: rgba(26, 26, 46, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 193, 7, 0.2);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.arch-title {
+    color: #ffc107;
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    text-shadow: 0 0 10px rgba(255, 193, 7, 0.3);
+}
+
+.arch-subtitle {
+    color: #17a2b8;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+/* Layer Visualization */
+.layer-container {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    border-left: 4px solid;
+    transition: all 0.3s ease;
+}
+
+.layer-container:hover {
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateX(5px);
+}
+
+.layer-frontend { border-color: #17a2b8; }
+.layer-application { border-color: #ffc107; }
+.layer-data { border-color: #28a745; }
+.layer-integration { border-color: #e83e8c; }
+
+.components-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.component-box {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(108, 92, 231, 0.1));
+    border: 2px solid rgba(255, 193, 7, 0.3);
+    border-radius: 10px;
+    padding: 1.2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.component-box:hover {
+    transform: translateY(-5px);
+    border-color: #ffc107;
+    box-shadow: 0 8px 20px rgba(255, 193, 7, 0.3);
+}
+
+.component-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.component-name {
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 0.3rem;
+}
+
+.component-desc {
+    font-size: 0.85rem;
+    color: #adb5bd;
+}
+
+/* Blueprint Mapping */
+.blueprint-table {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.blueprint-table th {
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+    padding: 1rem;
+    font-weight: 600;
+    text-align: left;
+}
+
+.blueprint-table td {
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.blueprint-table tr:hover {
+    background: rgba(255, 193, 7, 0.1);
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.status-active {
+    background: rgba(40, 167, 69, 0.3);
+    color: #28a745;
+    border: 1px solid #28a745;
+}
+
+.status-disabled {
+    background: rgba(220, 53, 69, 0.3);
+    color: #dc3545;
+    border: 1px solid #dc3545;
+}
+
+.status-conditional {
+    background: rgba(255, 193, 7, 0.3);
+    color: #ffc107;
+    border: 1px solid #ffc107;
+}
+
+/* Data Flow */
+.flow-diagram {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    margin: 1rem 0;
+    flex-wrap: wrap;
+}
+
+.flow-node {
+    text-align: center;
+    padding: 1rem;
+    min-width: 120px;
+}
+
+.flow-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 0.8rem;
+    background: linear-gradient(135deg, #ffc107, #e67e22);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    box-shadow: 0 5px 15px rgba(255, 193, 7, 0.4);
+}
+
+.flow-arrow {
+    color: #ffc107;
+    font-size: 2rem;
+    margin: 0 1rem;
+}
+
+.tech-stack-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
+.tech-item {
+    background: rgba(255, 193, 7, 0.05);
+    border: 1px solid rgba(255, 193, 7, 0.2);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.tech-item:hover {
+    background: rgba(255, 193, 7, 0.1);
+    transform: scale(1.05);
+}
+
+.tech-name {
+    font-weight: 600;
+    color: #ffc107;
+    margin-bottom: 0.3rem;
+}
+
+.tech-version {
+    font-size: 0.85rem;
+    color: #adb5bd;
+}
+
+.lang-toggle {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.lang-btn {
+    background: linear-gradient(135deg, #ffc107, #e67e22);
+    border: none;
+    border-radius: 25px;
+    padding: 0.6rem 1.2rem;
+    color: #000;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
+    transition: all 0.3s ease;
+}
+
+.lang-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 193, 7, 0.6);
+}
+
+/* Database Schema */
+.schema-container {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+
+.table-list {
+    columns: 2;
+    column-gap: 2rem;
+}
+
+.table-item {
+    background: rgba(255, 193, 7, 0.1);
+    padding: 0.5rem 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 5px;
+    border-left: 3px solid #ffc107;
+    break-inside: avoid;
+}
+
+@media (max-width: 768px) {
+    .components-grid {
+        grid-template-columns: 1fr;
+    }
+    .table-list {
+        columns: 1;
+    }
+    .flow-diagram {
+        flex-direction: column;
+    }
+    .flow-arrow {
+        transform: rotate(90deg);
+        margin: 1rem 0;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="architecture-container">
+    <!-- Language Toggle -->
+    <div class="lang-toggle">
+        <button class="lang-btn" onclick="toggleLanguage()">
+            <span class="en-text">中文</span>
+            <span class="zh-text" style="display:none;">English</span>
+        </button>
+    </div>
+
+    <!-- Header -->
+    <div class="arch-card">
+        <h1 class="arch-title">
+            <span class="en-text">🏗️ Complete System Architecture</span>
+            <span class="zh-text" style="display:none;">🏗️ 完整系统架构</span>
+        </h1>
+        <p style="color: #adb5bd; font-size: 1.1rem;">
+            <span class="en-text">HashInsight BTC Mining Calculator - Enterprise-grade Multi-layer Architecture</span>
+            <span class="zh-text" style="display:none;">HashInsight BTC挖矿计算器 - 企业级多层架构</span>
+        </p>
+    </div>
+
+    <!-- Architecture Layers -->
+    <div class="arch-card">
+        <h2 class="arch-subtitle">
+            <span class="en-text">📊 System Layers Overview</span>
+            <span class="zh-text" style="display:none;">📊 系统层次概览</span>
+        </h2>
+
+        <!-- Frontend Layer -->
+        <div class="layer-container layer-frontend">
+            <h3 style="color: #17a2b8;">
+                <span class="en-text">🎨 Frontend Layer</span>
+                <span class="zh-text" style="display:none;">🎨 前端层</span>
+            </h3>
+            <div class="components-grid">
+                <div class="component-box">
+                    <div class="component-icon">🎨</div>
+                    <div class="component-name">
+                        <span class="en-text">UI/UX</span>
+                        <span class="zh-text" style="display:none;">用户界面</span>
+                    </div>
+                    <div class="component-desc">Bootstrap 5 + Jinja2</div>
+                </div>
+                <div class="component-box">
+                    <div class="component-icon">📊</div>
+                    <div class="component-name">
+                        <span class="en-text">Charts</span>
+                        <span class="zh-text" style="display:none;">图表可视化</span>
+                    </div>
+                    <div class="component-desc">Chart.js 4.5</div>
+                </div>
+                <div class="component-box">
+                    <div class="component-icon">🌐</div>
+                    <div class="component-name">i18n</div>
+                    <div class="component-desc">EN/ZH Bilingual</div>
+                </div>
+                <div class="component-box">
+                    <div class="component-icon">📱</div>
+                    <div class="component-name">
+                        <span class="en-text">Responsive</span>
+                        <span class="zh-text" style="display:none;">响应式设计</span>
+                    </div>
+                    <div class="component-desc">Mobile-First</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Application Layer -->
+        <div class="layer-container layer-application">
+            <h3 style="color: #ffc107;">
+                <span class="en-text">⚙️ Application Layer</span>
+                <span class="zh-text" style="display:none;">⚙️ 应用层</span>
+            </h3>
+            <div class="components-grid">
+                <div class="component-box">
+                    <div class="component-icon">🔐</div>
+                    <div class="component-name">
+                        <span class="en-text">Auth System</span>
+                        <span class="zh-text" style="display:none;">认证系统</span>
+                    </div>
+                    <div class="component-desc">RBAC + Email Verify</div>
+                </div>
+                <div class="component-box">
+                    <div class="component-icon">⛏️</div>
+                    <div class="component-name">
+                        <span class="en-text">Mining Calc</span>
+                        <span class="zh-text" style="display:none;">挖矿计算</span>
+                    </div>
+                    <div class="component-desc">Dual Algorithm</div>
+                </div>
+                <div class="component-box">
+                    <div class="component-icon">💼</div>
+                    <div class="component-name">
+                        <span class="en-text">Treasury</span>
+                        <span class="zh-text" style="display:none;">资金管理</span>
+                    </div>
+                    <div class="component-desc">10 Signal Modules</div>
+                </div>
+                <div class="component-box">
+                    <div class="component-icon">🤖</div>
+                    <div class="component-name">
+                        <span class="en-text">Intelligence</span>
+                        <span class="zh-text" style="display:none;">智能层</span>
+                    </div>
+                    <div class="component-desc">ARIMA + Optimizer</div>
+                </div>
+                <div class="component-box">
+                    <div class="component-icon">👥</div>
+                    <div class="component-name">CRM</div>
+                    <div class="component-desc">Customer Lifecycle</div>
+                </div>
+                <div class="component-box">
+                    <div class="component-icon">🏠</div>
+                    <div class="component-name">
+                        <span class="en-text">Hosting</span>
+                        <span class="zh-text" style="display:none;">托管服务</span>
+                    </div>
+                    <div class="component-desc">Site Management</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Layer -->
+        <div class="layer-container layer-data">
+            <h3 style="color: #28a745;">
+                <span class="en-text">💾 Data & Integration Layer</span>
+                <span class="zh-text" style="display:none;">💾 数据与集成层</span>
+            </h3>
+            <div class="components-grid">
+                <div class="component-box">
+                    <div class="component-icon">🗄️</div>
+                    <div class="component-name">PostgreSQL</div>
+                    <div class="component-desc">50+ Tables</div>
+                </div>
+                <div class="component-box">
+                    <div class="component-icon">⚡</div>
+                    <div class="component-name">Redis</div>
+                    <div class="component-desc">SWR Cache</div>
+                </div>
+                <div class="component-box">
+                    <div class="component-icon">🔄</div>
+                    <div class="component-name">
+                        <span class="en-text">External APIs</span>
+                        <span class="zh-text" style="display:none;">外部API</span>
+                    </div>
+                    <div class="component-desc">5+ Data Sources</div>
+                </div>
+                <div class="component-box">
+                    <div class="component-icon">📡</div>
+                    <div class="component-name">Kafka</div>
+                    <div class="component-desc">CDC Events</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CDC Platform -->
+        <div class="layer-container layer-integration">
+            <h3 style="color: #e83e8c;">
+                <span class="en-text">🔄 CDC Event Platform</span>
+                <span class="zh-text" style="display:none;">🔄 CDC事件平台</span>
+            </h3>
+            <div class="components-grid">
+                <div class="component-box">
+                    <div class="component-icon">📤</div>
+                    <div class="component-name">
+                        <span class="en-text">Outbox</span>
+                        <span class="zh-text" style="display:none;">发件箱</span>
+                    </div>
+                    <div class="component-desc">Transactional Events</div>
+                </div>
+                <div class="component-box">
+                    <div class="component-icon">🔍</div>
+                    <div class="component-name">Debezium</div>
+                    <div class="component-desc">WAL Capture</div>
+                </div>
+                <div class="component-box">
+                    <div class="component-icon">📥</div>
+                    <div class="component-name">
+                        <span class="en-text">Consumers</span>
+                        <span class="zh-text" style="display:none;">消费者</span>
+                    </div>
+                    <div class="component-desc">Portfolio + Intel</div>
+                </div>
+                <div class="component-box">
+                    <div class="component-icon">🔁</div>
+                    <div class="component-name">DLQ</div>
+                    <div class="component-desc">Dead Letter Queue</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Blueprint Mapping -->
+    <div class="arch-card">
+        <h2 class="arch-subtitle">
+            <span class="en-text">🗺️ Flask Blueprints (20 Active Modules)</span>
+            <span class="zh-text" style="display:none;">🗺️ Flask蓝图（20个活跃模块）</span>
+        </h2>
+        <table class="blueprint-table">
+            <thead>
+                <tr>
+                    <th>Module</th>
+                    <th>URL Prefix</th>
+                    <th>Status</th>
+                    <th>Function</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>CRM</td>
+                    <td>/crm</td>
+                    <td><span class="status-badge status-active">Active</span></td>
+                    <td>Customer Management</td>
+                </tr>
+                <tr>
+                    <td>Hosting</td>
+                    <td>/hosting</td>
+                    <td><span class="status-badge status-active">Active</span></td>
+                    <td>Site Management</td>
+                </tr>
+                <tr>
+                    <td>Analytics</td>
+                    <td>/api/analytics</td>
+                    <td><span class="status-badge status-active">Active</span></td>
+                    <td>Technical Analysis</td>
+                </tr>
+                <tr>
+                    <td>Intelligence Layer</td>
+                    <td>/api/intelligence/*</td>
+                    <td><span class="status-badge status-active">Active</span></td>
+                    <td>Forecast + Optimize</td>
+                </tr>
+                <tr>
+                    <td>Billing</td>
+                    <td>/billing</td>
+                    <td><span class="status-badge status-conditional">Conditional</span></td>
+                    <td>Crypto Payments</td>
+                </tr>
+                <tr>
+                    <td>Deribit</td>
+                    <td>/deribit</td>
+                    <td><span class="status-badge status-active">Active</span></td>
+                    <td>Derivatives Data</td>
+                </tr>
+                <tr>
+                    <td>Broker</td>
+                    <td>/broker</td>
+                    <td><span class="status-badge status-disabled">Disabled</span></td>
+                    <td>Gold Flow (Deprecated)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Data Flow -->
+    <div class="arch-card">
+        <h2 class="arch-subtitle">
+            <span class="en-text">🔄 Data Flow Process</span>
+            <span class="zh-text" style="display:none;">🔄 数据流程</span>
+        </h2>
+        <div class="flow-diagram">
+            <div class="flow-node">
+                <div class="flow-icon">🌐</div>
+                <div class="component-name">External APIs</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node">
+                <div class="flow-icon">🔄</div>
+                <div class="component-name">Data Collector</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node">
+                <div class="flow-icon">✅</div>
+                <div class="component-name">Validation</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node">
+                <div class="flow-icon">💾</div>
+                <div class="component-name">PostgreSQL</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node">
+                <div class="flow-icon">📊</div>
+                <div class="component-name">Analytics</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node">
+                <div class="flow-icon">👤</div>
+                <div class="component-name">User</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Database Schema -->
+    <div class="arch-card">
+        <h2 class="arch-subtitle">
+            <span class="en-text">🗄️ Database Schema (50+ Tables)</span>
+            <span class="zh-text" style="display:none;">🗄️ 数据库架构（50+表）</span>
+        </h2>
+        <div class="schema-container">
+            <h4 style="color: #ffc107; margin-bottom: 1rem;">Core Tables:</h4>
+            <div class="table-list">
+                <div class="table-item">user_access</div>
+                <div class="table-item">miner_models (42 miners)</div>
+                <div class="table-item">user_miners</div>
+                <div class="table-item">network_snapshots</div>
+                <div class="table-item">market_analytics</div>
+                <div class="table-item">crm_customers</div>
+                <div class="table-item">crm_leads</div>
+                <div class="table-item">crm_deals</div>
+                <div class="table-item">hosting_sites</div>
+                <div class="table-item">hosting_miners</div>
+                <div class="table-item">treasury_positions</div>
+                <div class="table-item">forecast_daily</div>
+                <div class="table-item">event_outbox (CDC)</div>
+                <div class="table-item">event_inbox (CDC)</div>
+                <div class="table-item">event_dlq (CDC)</div>
+                <div class="table-item">subscription_plans</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Technology Stack -->
+    <div class="arch-card">
+        <h2 class="arch-subtitle">
+            <span class="en-text">🛠️ Technology Stack</span>
+            <span class="zh-text" style="display:none;">🛠️ 技术栈</span>
+        </h2>
+        <div class="tech-stack-grid">
+            <div class="tech-item">
+                <div class="tech-name">Python</div>
+                <div class="tech-version">3.9+</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-name">Flask</div>
+                <div class="tech-version">2.3.x</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-name">PostgreSQL</div>
+                <div class="tech-version">15.x (Neon)</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-name">Redis</div>
+                <div class="tech-version">7.x</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-name">Kafka</div>
+                <div class="tech-version">3.6.x</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-name">Bootstrap</div>
+                <div class="tech-version">5.3.0</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-name">Chart.js</div>
+                <div class="tech-version">4.5.0</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-name">Debezium</div>
+                <div class="tech-version">2.5+</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-name">NumPy</div>
+                <div class="tech-version">Latest</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-name">Web3.py</div>
+                <div class="tech-version">6.x</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Metrics -->
+    <div class="arch-card">
+        <h2 class="arch-subtitle">
+            <span class="en-text">⚡ Performance Metrics (Design Targets)</span>
+            <span class="zh-text" style="display:none;">⚡ 性能指标（设计目标）</span>
+        </h2>
+        <div class="components-grid">
+            <div class="component-box">
+                <div class="component-icon">🎯</div>
+                <div class="component-name">Write-to-Visible</div>
+                <div class="component-desc">P95 < 3s</div>
+            </div>
+            <div class="component-box">
+                <div class="component-icon">📊</div>
+                <div class="component-name">API Response</div>
+                <div class="component-desc">P95 < 250ms</div>
+            </div>
+            <div class="component-box">
+                <div class="component-icon">💾</div>
+                <div class="component-name">Cache Hit Rate</div>
+                <div class="component-desc">> 90%</div>
+            </div>
+            <div class="component-box">
+                <div class="component-icon">🔄</div>
+                <div class="component-name">Consumer Lag</div>
+                <div class="component-desc">< 2s</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleLanguage() {
+    const enElements = document.querySelectorAll('.en-text');
+    const zhElements = document.querySelectorAll('.zh-text');
+    
+    enElements.forEach(el => {
+        el.style.display = el.style.display === 'none' ? 'inline' : 'none';
+    });
+    
+    zhElements.forEach(el => {
+        el.style.display = el.style.display === 'none' ? 'inline' : 'none';
+    });
+}
+
+// Add smooth animations
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.arch-card');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}
