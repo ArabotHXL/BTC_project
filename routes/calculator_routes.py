@@ -270,7 +270,7 @@ def _parse_additional_inputs(data, parsed_data, input_errors):
 
 def _filter_result_by_role(result, user_role):
     """Filter calculation results based on user role"""
-    if user_role not in ['owner', 'admin', 'mining_site']:
+    if user_role not in ['owner', 'admin', 'mining_site_owner']:
         logger.info("用户没有矿场主权限，过滤敏感数据")
         
         filtered_result = {

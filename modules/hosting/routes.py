@@ -260,7 +260,7 @@ def get_hosting_overview():
                 HostingTicket.status.in_(['open', 'assigned', 'in_progress'])
             ).count()
             
-        elif user_role == 'mining_site':
+        elif user_role == 'mining_site_owner':
             # 矿场运营方：只看管理站点
             site_stats = db.session.query(
                 db.func.count(HostingSite.id).label('total'),
@@ -367,7 +367,7 @@ def get_sites():
                 HostingMiner, HostingMiner.site_id == HostingSite.id
             ).group_by(HostingSite.id).all()
             
-        elif user_role == 'mining_site':
+        elif user_role == 'mining_site_owner':
             # 矿场运营方：只看管理站点
             results = db.session.query(
                 HostingSite,
@@ -428,7 +428,7 @@ def get_customers():
         user_id = session.get('user_id')
         
         # 查询有矿机的客户（去重）
-        if user_role in ['admin', 'mining_site']:
+        if user_role in ['admin', 'mining_site_owner']:
             # 管理员和矿场运营方可以看到所有客户
             customers = db.session.query(
                 UserAccess.id,
@@ -512,7 +512,7 @@ def create_site():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/sites/<int:site_id>', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def get_site_detail(site_id):
     """获取站点详情"""
     try:
@@ -558,7 +558,7 @@ def get_site_detail(site_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/tickets', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def get_tickets():
     """获取工单列表"""
     try:
@@ -701,7 +701,7 @@ def get_client_miners():
         if user_role == 'admin':
             # 管理员可以查看所有矿机
             miners = HostingMiner.query.all()
-        elif user_role == 'mining_site':
+        elif user_role == 'mining_site_owner':
             # 矿场运营方只能查看自己管理站点的矿机
             managed_sites = HostingSite.query.filter_by(contact_email=user_email).all()
             managed_site_ids = [s.id for s in managed_sites]
@@ -751,7 +751,7 @@ def get_client_dashboard():
         if user_role == 'admin':
             # 管理员可以查看所有矿机
             stats = base_query.first()
-        elif user_role == 'mining_site':
+        elif user_role == 'mining_site_owner':
             # 矿场运营方只能查看自己管理站点的矿机
             managed_sites = HostingSite.query.filter_by(contact_email=user_email).all()
             managed_site_ids = [s.id for s in managed_sites]
@@ -785,7 +785,7 @@ def get_client_dashboard():
         # 获取最近矿机列表
         if user_role == 'admin':
             recent_miners_query = HostingMiner.query.order_by(HostingMiner.id.desc()).limit(10).all()
-        elif user_role == 'mining_site':
+        elif user_role == 'mining_site_owner':
             managed_sites = HostingSite.query.filter_by(contact_email=user_email).all()
             managed_site_ids = [s.id for s in managed_sites]
             if managed_site_ids:
@@ -890,7 +890,7 @@ def get_client_miner_distribution():
             # 管理员可以查看所有矿机分布
             distribution = base_query.group_by(HostingSite.id, HostingSite.name).all()
             unknown_count = HostingMiner.query.filter(HostingMiner.site_id == None).count()
-        elif user_role == 'mining_site':
+        elif user_role == 'mining_site_owner':
             # 矿场运营方只能查看自己管理站点的矿机
             managed_sites = HostingSite.query.filter_by(contact_email=user_email).all()
             managed_site_ids = [s.id for s in managed_sites]
@@ -1144,7 +1144,7 @@ def get_client_reports():
         # 根据角色过滤矿机
         if user_role == 'admin':
             miners = HostingMiner.query.all()
-        elif user_role == 'mining_site':
+        elif user_role == 'mining_site_owner':
             managed_sites = HostingSite.query.filter_by(contact_email=user_email).all()
             managed_site_ids = [s.id for s in managed_sites]
             if managed_site_ids:
@@ -1206,7 +1206,7 @@ def get_client_reports_chart():
         # 根据角色过滤矿机
         if user_role == 'admin':
             miners = HostingMiner.query.filter_by(status='active').all()
-        elif user_role == 'mining_site':
+        elif user_role == 'mining_site_owner':
             managed_sites = HostingSite.query.filter_by(contact_email=user_email).all()
             managed_site_ids = [s.id for s in managed_sites]
             if managed_site_ids:
@@ -1358,7 +1358,7 @@ def get_miners():
         if user_role == 'admin':
             # 管理员可以查看所有矿机
             pass
-        elif user_role == 'mining_site':
+        elif user_role == 'mining_site_owner':
             # 矿场运营方只能查看自己管理站点的矿机
             user_email = session.get('email', '')
             managed_sites = HostingSite.query.filter_by(contact_email=user_email).all()
@@ -1379,7 +1379,7 @@ def get_miners():
             query = query.filter_by(approval_status=approval_status)
         if site_id:
             query = query.filter_by(site_id=site_id)
-        if customer_id and user_role in ['admin', 'mining_site']:
+        if customer_id and user_role in ['admin', 'mining_site_owner']:
             # 管理员和矿场运营方可以按客户ID筛选
             query = query.filter_by(customer_id=customer_id)
         
@@ -1519,7 +1519,7 @@ def get_miners():
         
         # Calculate counts for UI display
         base_query = HostingMiner.query
-        if user_role not in ['owner', 'admin', 'mining_site']:
+        if user_role not in ['owner', 'admin', 'mining_site_owner']:
             base_query = base_query.filter_by(customer_id=user_id)
         
         counts = {
@@ -1576,7 +1576,7 @@ def create_miner():
             }), 400
         
         # 权限控制和状态设置
-        if user_role in ['owner', 'admin', 'mining_site']:
+        if user_role in ['owner', 'admin', 'mining_site_owner']:
             # 托管方直接录入 - 立即激活
             approval_status = 'approved'
             approved_by = user_id
@@ -1631,7 +1631,7 @@ def create_miner():
         }), 500
 
 @hosting_bp.route('/api/miners/batch', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def batch_create_miners():
     """批量创建矿机"""
     try:
@@ -1710,7 +1710,7 @@ def batch_create_miners():
         }), 500
 
 @hosting_bp.route('/api/miners/<int:miner_id>/approve', methods=['PUT'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def approve_miner(miner_id):
     """审核通过矿机"""
     try:
@@ -1749,7 +1749,7 @@ def approve_miner(miner_id):
         }), 500
 
 @hosting_bp.route('/api/miners/<int:miner_id>/reject', methods=['PUT'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def reject_miner(miner_id):
     """拒绝矿机申请"""
     try:
@@ -1798,7 +1798,7 @@ def get_miner_detail(miner_id):
         miner = HostingMiner.query.get_or_404(miner_id)
         
         # 权限检查：托管商可以查看所有，客户只能查看自己的
-        if user_role not in ['owner', 'admin', 'mining_site'] and miner.customer_id != user_id:
+        if user_role not in ['owner', 'admin', 'mining_site_owner'] and miner.customer_id != user_id:
             return jsonify({
                 'success': False,
                 'error': '无权限查看此矿机'
@@ -1845,7 +1845,7 @@ def get_miner_telemetry_history(miner_id):
         miner = HostingMiner.query.get_or_404(miner_id)
         
         # 权限检查：防御性检查确保session完整性
-        if user_role not in ['owner', 'admin', 'mining_site']:
+        if user_role not in ['owner', 'admin', 'mining_site_owner']:
             if not user_id or miner.customer_id != user_id:
                 return jsonify({'success': False, 'error': '无权限'}), 403
         
@@ -1893,7 +1893,7 @@ def miner_detail_page(miner_id):
         user_id = session.get('user_id')
         
         # 权限检查：防御性检查确保session完整性
-        if user_role not in ['owner', 'admin', 'mining_site']:
+        if user_role not in ['owner', 'admin', 'mining_site_owner']:
             if not user_id or miner.customer_id != user_id:
                 flash('无权限访问' if session.get('language', 'zh') == 'zh' else 'Access denied', 'error')
                 return redirect(url_for('hosting_service_bp.host_view', view_type='devices'))
@@ -1915,7 +1915,7 @@ def update_miner(miner_id):
         
         miner = HostingMiner.query.get_or_404(miner_id)
         
-        if user_role not in ['owner', 'admin', 'mining_site'] and miner.customer_id != user_id:
+        if user_role not in ['owner', 'admin', 'mining_site_owner'] and miner.customer_id != user_id:
             return jsonify({
                 'success': False,
                 'error': '无权限操作'
@@ -1968,7 +1968,7 @@ def get_encrypted_network(miner_id):
         
         miner = HostingMiner.query.get_or_404(miner_id)
         
-        if user_role not in ['owner', 'admin', 'mining_site'] and miner.customer_id != user_id:
+        if user_role not in ['owner', 'admin', 'mining_site_owner'] and miner.customer_id != user_id:
             return jsonify({
                 'success': False,
                 'error': '无权限操作'
@@ -2012,7 +2012,7 @@ def get_owner_encryption_status():
         user_id = session.get('user_id')
         user_role = session.get('role', 'guest')
         
-        if user_role not in ['owner', 'admin', 'mining_site']:
+        if user_role not in ['owner', 'admin', 'mining_site_owner']:
             return jsonify({'success': False, 'error': '无权限'}), 403
         
         owner_enc = HostingOwnerEncryption.query.filter_by(owner_id=user_id).first()
@@ -2056,7 +2056,7 @@ def set_owner_encryption_key():
         user_id = session.get('user_id')
         user_role = session.get('role', 'guest')
         
-        if user_role not in ['owner', 'admin', 'mining_site']:
+        if user_role not in ['owner', 'admin', 'mining_site_owner']:
             return jsonify({'success': False, 'error': '无权限'}), 403
         
         data = request.get_json()
@@ -2107,7 +2107,7 @@ def verify_owner_encryption_key():
         user_id = session.get('user_id')
         user_role = session.get('role', 'guest')
         
-        if user_role not in ['owner', 'admin', 'mining_site']:
+        if user_role not in ['owner', 'admin', 'mining_site_owner']:
             return jsonify({'success': False, 'error': '无权限'}), 403
         
         owner_enc = HostingOwnerEncryption.query.filter_by(owner_id=user_id).first()
@@ -2143,7 +2143,7 @@ def get_bulk_encrypted_network():
         user_id = session.get('user_id')
         user_role = session.get('role', 'guest')
         
-        if user_role not in ['owner', 'admin', 'mining_site']:
+        if user_role not in ['owner', 'admin', 'mining_site_owner']:
             return jsonify({'success': False, 'error': '无权限'}), 403
         
         page = request.args.get('page', 1, type=int)
@@ -2202,7 +2202,7 @@ def bulk_encrypt_miners():
         user_id = session.get('user_id')
         user_role = session.get('role', 'guest')
         
-        if user_role not in ['owner', 'admin', 'mining_site']:
+        if user_role not in ['owner', 'admin', 'mining_site_owner']:
             return jsonify({'success': False, 'error': '无权限'}), 403
         
         data = request.get_json()
@@ -2259,7 +2259,7 @@ def bulk_encrypt_miners():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/miners/<int:miner_id>', methods=['DELETE'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def delete_miner(miner_id):
     """删除矿机"""
     try:
@@ -2513,7 +2513,7 @@ def global_status():
 # ==================== 使用记录和对账系统 ====================
 
 @hosting_bp.route('/api/usage/preview', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def generate_usage_preview():
     """生成使用情况预估"""
     try:
@@ -2593,7 +2593,7 @@ def generate_usage_preview():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/usage/create', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def create_usage_record():
     """根据预估创建正式使用记录"""
     try:
@@ -2644,7 +2644,7 @@ def create_usage_record():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/reconcile/upload', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def upload_reconcile_data():
     """上传对账数据（CSV文件）"""
     try:
@@ -2723,7 +2723,7 @@ def upload_reconcile_data():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/reconcile/analyze', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def analyze_reconciliation():
     """分析对账差异"""
     try:
@@ -2815,7 +2815,7 @@ def health_check():
 # ==================== 监控API路由 ====================
 
 @hosting_bp.route('/api/monitoring/overview', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def get_monitoring_overview():
     """获取监控概览数据"""
     try:
@@ -2890,7 +2890,7 @@ def get_monitoring_overview():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/monitoring/incidents', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def get_monitoring_incidents():
     """获取事件管理数据"""
     try:
@@ -2963,7 +2963,7 @@ def get_monitoring_incidents():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/monitoring/incidents', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def create_monitoring_incident():
     """创建新的监控事件"""
     try:
@@ -2995,7 +2995,7 @@ def create_monitoring_incident():
 # ==================== 限电管理API Curtailment Management API ====================
 
 @hosting_bp.route('/api/curtailment/calculate', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def calculate_curtailment():
     """
     计算限电方案 Calculate curtailment plan
@@ -3172,7 +3172,7 @@ def calculate_curtailment():
         }), 500
 
 @hosting_bp.route('/api/curtailment/execute', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def execute_curtailment():
     """
     执行限电计划 Execute curtailment plan
@@ -3308,7 +3308,7 @@ def execute_curtailment():
         }), 500
 
 @hosting_bp.route('/api/curtailment/cancel', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def cancel_curtailment():
     """
     取消限电计划 Cancel curtailment plan
@@ -3397,7 +3397,7 @@ def cancel_curtailment():
         }), 500
 
 @hosting_bp.route('/api/curtailment/emergency-restore', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def emergency_restore():
     """
     紧急恢复所有矿机 Emergency restore all miners
@@ -3518,7 +3518,7 @@ def emergency_restore():
 # ==================== 限电前端支持API ====================
 
 @hosting_bp.route('/api/sites/list', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def get_sites_list():
     """获取站点列表（简化版，用于下拉选择）"""
     try:
@@ -3530,7 +3530,7 @@ def get_sites_list():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/curtailment/strategies', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def get_curtailment_strategies():
     """获取限电策略列表"""
     try:
@@ -3560,7 +3560,7 @@ def get_curtailment_strategies():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/curtailment/kpis', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def get_curtailment_kpis():
     """获取限电KPI统计数据"""
     try:
@@ -3598,7 +3598,7 @@ def get_curtailment_kpis():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/curtailment/history', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def get_curtailment_history():
     """获取限电执行历史"""
     try:
@@ -3656,7 +3656,7 @@ def get_curtailment_history():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/curtailment/predict', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def predict_curtailment_schedule():
     """
     AI预测未来24小时最佳限电策略
@@ -3710,7 +3710,7 @@ def predict_curtailment_schedule():
 # ==================== 限电计划管理 API ====================
 
 @hosting_bp.route('/api/curtailment/schedules', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def create_curtailment_schedule():
     """
     创建限电计划
@@ -3803,7 +3803,7 @@ def create_curtailment_schedule():
 
 
 @hosting_bp.route('/api/curtailment/schedules', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site', 'customer'])
+@requires_role(['owner', 'admin', 'mining_site_owner', 'customer'])
 def get_curtailment_schedules():
     """
     获取限电计划列表
@@ -3884,7 +3884,7 @@ def get_curtailment_schedules():
 
 
 @hosting_bp.route('/api/curtailment/schedules/<int:schedule_id>/execute', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def execute_curtailment_schedule(schedule_id):
     """
     手动执行限电计划
@@ -3932,7 +3932,7 @@ def execute_curtailment_schedule(schedule_id):
 
 
 @hosting_bp.route('/api/curtailment/schedules/<int:schedule_id>', methods=['DELETE'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def cancel_curtailment_schedule(schedule_id):
     """
     取消限电计划
@@ -3984,7 +3984,7 @@ def cancel_curtailment_schedule(schedule_id):
 
 
 @hosting_bp.route('/api/curtailment/schedules/<int:schedule_id>/recover', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def recover_curtailment_schedule(schedule_id):
     """
     恢复限电计划的所有矿机
@@ -4034,7 +4034,7 @@ def recover_curtailment_schedule(schedule_id):
 # ==================== CGMiner 实时监控 API ====================
 
 @hosting_bp.route('/api/miners/<int:miner_id>/telemetry', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def update_miner_telemetry(miner_id):
     """
     更新矿机CGMiner遥测数据
@@ -4160,7 +4160,7 @@ def update_miner_telemetry(miner_id):
 
 
 @hosting_bp.route('/api/miners/<int:miner_id>/test-connection', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def test_miner_connection(miner_id):
     """
     测试矿机CGMiner连接
@@ -4223,7 +4223,7 @@ def test_miner_connection(miner_id):
 # ==================== 设备管理升级API (Phase 1) ====================
 
 @hosting_bp.route('/api/miners/stats', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def get_miners_stats():
     """
     KPI统计API - 返回矿机综合统计数据
@@ -4245,7 +4245,7 @@ def get_miners_stats():
         if user_role == 'admin':
             # 管理员可以查看所有矿机
             allowed_site_ids = None
-        elif user_role == 'mining_site':
+        elif user_role == 'mining_site_owner':
             # 矿场运营方只能查看自己管理站点的矿机
             managed_sites = HostingSite.query.filter_by(contact_email=user_email).all()
             allowed_site_ids = [s.id for s in managed_sites]
@@ -4260,7 +4260,7 @@ def get_miners_stats():
         if user_role == 'admin':
             if site_id:
                 query = query.filter_by(site_id=site_id)
-        elif user_role == 'mining_site':
+        elif user_role == 'mining_site_owner':
             if allowed_site_ids:
                 if site_id and site_id in allowed_site_ids:
                     query = query.filter_by(site_id=site_id)
@@ -4287,7 +4287,7 @@ def get_miners_stats():
         if user_role == 'admin':
             if site_id:
                 stats_query = stats_query.filter(HostingMiner.site_id == site_id)
-        elif user_role == 'mining_site':
+        elif user_role == 'mining_site_owner':
             if allowed_site_ids:
                 if site_id and site_id in allowed_site_ids:
                     stats_query = stats_query.filter(HostingMiner.site_id == site_id)
@@ -4310,7 +4310,7 @@ def get_miners_stats():
         if user_role == 'admin':
             if site_id:
                 status_distribution = status_distribution.filter(HostingMiner.site_id == site_id)
-        elif user_role == 'mining_site':
+        elif user_role == 'mining_site_owner':
             if allowed_site_ids:
                 if site_id and site_id in allowed_site_ids:
                     status_distribution = status_distribution.filter(HostingMiner.site_id == site_id)
@@ -4358,7 +4358,7 @@ def get_miners_stats():
 
 
 @hosting_bp.route('/api/miners/batch-approve', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def batch_approve_miners():
     """批量审核通过矿机"""
     try:
@@ -4408,7 +4408,7 @@ def batch_approve_miners():
 
 
 @hosting_bp.route('/api/miners/batch-status', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def batch_change_status():
     """批量修改矿机状态"""
     try:
@@ -4500,7 +4500,7 @@ def batch_delete_miners():
 
 
 @hosting_bp.route('/api/miners/batch-start', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def batch_start_miners():
     """批量启动矿机 - 发送控制命令到边缘采集器
     
@@ -4588,7 +4588,7 @@ def batch_start_miners():
 
 
 @hosting_bp.route('/api/miners/batch-shutdown', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def batch_shutdown_miners():
     """批量关闭矿机 - 发送控制命令到边缘采集器
     
@@ -4676,7 +4676,7 @@ def batch_shutdown_miners():
 
 
 @hosting_bp.route('/api/miners/<int:miner_id>/start', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def start_single_miner(miner_id):
     """启动单个矿机 - 发送控制命令到边缘采集器"""
     try:
@@ -4747,7 +4747,7 @@ def start_single_miner(miner_id):
 
 
 @hosting_bp.route('/api/miners/<int:miner_id>/shutdown', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def shutdown_single_miner(miner_id):
     """关闭单个矿机 - 发送控制命令到边缘采集器"""
     try:
@@ -4818,7 +4818,7 @@ def shutdown_single_miner(miner_id):
 
 
 @hosting_bp.route('/api/miners/<int:miner_id>/restart', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def restart_single_miner(miner_id):
     """重启单个矿机 - 发送控制命令到边缘采集器"""
     try:
@@ -4899,7 +4899,7 @@ def restart_single_miner(miner_id):
 
 
 @hosting_bp.route('/api/miners/<int:miner_id>/logs', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def get_miner_operation_logs(miner_id):
     """获取矿机操作日志（分页）"""
     try:
@@ -4933,7 +4933,7 @@ def get_miner_operation_logs(miner_id):
 
 
 @hosting_bp.route('/api/miners/export', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def export_miners_csv():
     """导出矿机数据为CSV（支持筛选）"""
     try:
@@ -5267,7 +5267,7 @@ def miner_setup_guide_pdf():
 
 
 @hosting_bp.route('/api/revenue/summary', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def get_revenue_summary():
     """
     获取收益预测汇总
@@ -5301,7 +5301,7 @@ def get_revenue_summary():
 
 
 @hosting_bp.route('/api/revenue/miners', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def get_miners_revenue():
     """
     获取所有矿机的收益预测列表
@@ -5341,7 +5341,7 @@ def get_miners_revenue():
 
 
 @hosting_bp.route('/api/revenue/miners/<int:miner_id>/projection', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site', 'customer'])
+@requires_role(['owner', 'admin', 'mining_site_owner', 'customer'])
 def get_miner_projection(miner_id):
     """
     获取单个矿机的24小时收益预测
@@ -5369,7 +5369,7 @@ def get_miner_projection(miner_id):
 
 
 @hosting_bp.route('/api/evaluation/site/<int:site_id>', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def get_site_evaluation(site_id):
     """
     获取站点所有矿机的评估汇总
@@ -5403,7 +5403,7 @@ def get_site_evaluation(site_id):
 
 
 @hosting_bp.route('/api/evaluation/miners', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@requires_role(['owner', 'admin', 'mining_site_owner'])
 def get_miners_evaluation():
     """
     获取所有矿机的评估列表
@@ -5441,7 +5441,7 @@ def get_miners_evaluation():
 
 
 @hosting_bp.route('/api/evaluation/miner/<int:miner_id>', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site', 'customer'])
+@requires_role(['owner', 'admin', 'mining_site_owner', 'customer'])
 def get_single_miner_evaluation(miner_id):
     """
     获取单个矿机的详细评估

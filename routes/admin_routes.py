@@ -489,7 +489,7 @@ def add_user_access():
         notes = request.form.get('notes')
         role = request.form.get('role', 'guest')
         
-        valid_roles = ['owner', 'admin', 'mining_site', 'guest']
+        valid_roles = ['owner', 'admin', 'mining_site_owner', 'guest']
         if role not in valid_roles:
             role = 'guest'
             
@@ -586,7 +586,7 @@ def view_user_details(user_id):
                     <span class="role-badge role-{{ user.role }} mb-2 d-inline-block">
                         {% if user.role == 'owner' %}{% if current_lang == 'en' %}Owner{% else %}拥有者{% endif %}
                         {% elif user.role == 'admin' %}{% if current_lang == 'en' %}Admin{% else %}管理员{% endif %}
-                        {% elif user.role == 'mining_site' %}{% if current_lang == 'en' %}Mining Manager{% else %}矿场管理{% endif %}
+                        {% elif user.role == 'mining_site_owner' %}{% if current_lang == 'en' %}Mining Manager{% else %}矿场管理{% endif %}
                         {% else %}{% if current_lang == 'en' %}Guest{% else %}客人{% endif %}
                         {% endif %}
                     </span>
@@ -715,7 +715,7 @@ def edit_user_access(user_id):
             
             if has_role(['owner']):
                 new_role = request.form.get('role')
-                if new_role in ['owner', 'admin', 'mining_site', 'guest']:
+                if new_role in ['owner', 'admin', 'mining_site_owner', 'guest']:
                     user.role = new_role
                 
                 subscription_plan = request.form.get('subscription_plan')
