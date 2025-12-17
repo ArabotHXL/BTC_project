@@ -1,48 +1,230 @@
 {% extends "hosting/hosting_base.html" %}
 
-{% block page_title %}<span data-i18n="hosting.host_dashboard">Host Dashboard</span>{% endblock %}
-{% block page_subtitle %}<span data-i18n="hosting.manage_sites_devices">Manage hosting sites, devices and customers</span>{% endblock %}
+{% block page_title %}<span data-i18n="hosting.operations_dashboard">Operations Dashboard</span>{% endblock %}
+{% block page_subtitle %}<span data-i18n="hosting.realtime_monitoring">Real-time Monitoring & Operations Control</span>{% endblock %}
 
 {% block content %}
 
-<!-- 概览统计 -->
-<div class="hosting-stats-grid">
-    <div class="hosting-stat-card">
-        <div class="hosting-stat-value" id="total-sites">--</div>
-        <div class="hosting-stat-label" data-i18n="hosting.hosting_sites">Hosting Sites</div>
-        <i class="bi bi-geo-alt hosting-stat-icon"></i>
+<!-- 运营状态面板 -->
+<div class="row g-3 mb-4">
+    <!-- 在线率圆环 -->
+    <div class="col-lg-3 col-md-6">
+        <div class="hosting-card h-100">
+            <div class="hosting-card-body text-center">
+                <div class="online-rate-ring mx-auto mb-3">
+                    <canvas id="onlineRateChart" width="120" height="120"></canvas>
+                    <div class="ring-center">
+                        <span class="ring-value" id="online-rate">--</span>
+                        <span class="ring-unit">%</span>
+                    </div>
+                </div>
+                <h6 class="text-muted mb-0" data-i18n="hosting.online_rate">Online Rate</h6>
+            </div>
+        </div>
     </div>
-    <div class="hosting-stat-card">
-        <div class="hosting-stat-value" id="total-devices">--</div>
-        <div class="hosting-stat-label" data-i18n="hosting.hosted_devices">Hosted Devices</div>
-        <i class="bi bi-cpu hosting-stat-icon"></i>
+    
+    <!-- 矿机状态分布 -->
+    <div class="col-lg-5 col-md-6">
+        <div class="hosting-card h-100">
+            <div class="hosting-card-body">
+                <h6 class="text-muted mb-3"><i class="bi bi-cpu me-2"></i><span data-i18n="hosting.device_status">Device Status</span></h6>
+                <div class="row g-2">
+                    <div class="col-4">
+                        <div class="status-box status-online">
+                            <div class="status-count" id="active-count">--</div>
+                            <div class="status-label" data-i18n="hosting.online">Online</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="status-box status-offline">
+                            <div class="status-count" id="offline-count">--</div>
+                            <div class="status-label" data-i18n="hosting.offline">Offline</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="status-box status-warning">
+                            <div class="status-count" id="warning-count">--</div>
+                            <div class="status-label" data-i18n="hosting.warning">Warning</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress mt-3" style="height: 8px;">
+                    <div class="progress-bar bg-success" id="online-bar" style="width: 0%"></div>
+                    <div class="progress-bar bg-danger" id="offline-bar" style="width: 0%"></div>
+                    <div class="progress-bar bg-warning" id="warning-bar" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="hosting-stat-card">
-        <div class="hosting-stat-value" id="total-capacity">--</div>
-        <div class="hosting-stat-label" data-i18n="hosting.total_capacity_mw">Total Capacity (MW)</div>
-        <i class="bi bi-lightning hosting-stat-icon"></i>
-    </div>
-    <div class="hosting-stat-card">
-        <div class="hosting-stat-value" id="monthly-revenue">--</div>
-        <div class="hosting-stat-label" data-i18n="hosting.monthly_revenue">Monthly Revenue</div>
-        <i class="bi bi-currency-dollar hosting-stat-icon"></i>
+    
+    <!-- 实时算力 -->
+    <div class="col-lg-4 col-md-12">
+        <div class="hosting-card h-100">
+            <div class="hosting-card-body">
+                <h6 class="text-muted mb-3"><i class="bi bi-lightning-charge me-2"></i><span data-i18n="hosting.realtime_hashrate">Real-time Hashrate</span></h6>
+                <div class="d-flex align-items-baseline mb-2">
+                    <span class="fs-2 fw-bold text-warning" id="total-hashrate">--</span>
+                    <span class="text-muted ms-2">PH/s</span>
+                </div>
+                <div class="row g-2 small">
+                    <div class="col-6">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted" data-i18n="hosting.total_power">Total Power</span>
+                            <span class="fw-bold" id="total-power">-- MW</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted" data-i18n="hosting.avg_efficiency">Avg Efficiency</span>
+                            <span class="fw-bold" id="avg-efficiency">-- J/TH</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- 站点总览 -->
+<!-- 24小时算力趋势 + 快捷操作 -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="hosting-card">
+            <div class="hosting-card-header">
+                <h5 class="hosting-card-title">
+                    <i class="bi bi-graph-up me-2"></i><span data-i18n="hosting.hashrate_trend_24h">24H Hashrate Trend</span>
+                </h5>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button class="btn btn-hosting-outline active" onclick="loadHashrateTrend('24h')" data-period="24h">24H</button>
+                    <button class="btn btn-hosting-outline" onclick="loadHashrateTrend('7d')" data-period="7d">7D</button>
+                </div>
+            </div>
+            <div class="hosting-card-body">
+                <canvas id="hashrateTrendChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="hosting-card h-100">
+            <div class="hosting-card-header">
+                <h5 class="hosting-card-title">
+                    <i class="bi bi-lightning me-2"></i><span data-i18n="hosting.quick_actions">Quick Actions</span>
+                </h5>
+            </div>
+            <div class="hosting-card-body">
+                <div class="d-grid gap-2">
+                    <a href="/hosting/host/devices" class="btn btn-hosting-primary">
+                        <i class="bi bi-cpu me-2"></i><span data-i18n="hosting.device_management">Device Management</span>
+                    </a>
+                    <a href="/hosting/host/monitoring" class="btn btn-hosting-secondary">
+                        <i class="bi bi-activity me-2"></i><span data-i18n="hosting.event_monitoring">Event Monitoring</span>
+                    </a>
+                    <a href="/hosting/host/curtailment" class="btn btn-hosting-secondary">
+                        <i class="bi bi-power me-2"></i><span data-i18n="hosting.smart_curtailment">Smart Curtailment</span>
+                    </a>
+                    <a href="/hosting/host/collectors" class="btn btn-hosting-secondary">
+                        <i class="bi bi-diagram-3 me-2"></i><span data-i18n="hosting.edge_collectors">Edge Collectors</span>
+                    </a>
+                    <button class="btn btn-outline-warning" onclick="refreshAllData()">
+                        <i class="bi bi-arrow-clockwise me-2"></i><span data-i18n="common.refresh">Refresh Data</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 今日运营摘要 + 最近告警 -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-6">
+        <div class="hosting-card">
+            <div class="hosting-card-header">
+                <h5 class="hosting-card-title">
+                    <i class="bi bi-calendar-day me-2"></i><span data-i18n="hosting.today_summary">Today's Summary</span>
+                </h5>
+            </div>
+            <div class="hosting-card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="summary-item">
+                            <div class="summary-icon bg-success-subtle">
+                                <i class="bi bi-check-circle text-success"></i>
+                            </div>
+                            <div class="summary-content">
+                                <div class="summary-value" id="tickets-resolved">0</div>
+                                <div class="summary-label" data-i18n="hosting.tickets_resolved">Tickets Resolved</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="summary-item">
+                            <div class="summary-icon bg-warning-subtle">
+                                <i class="bi bi-exclamation-triangle text-warning"></i>
+                            </div>
+                            <div class="summary-content">
+                                <div class="summary-value" id="alerts-today">0</div>
+                                <div class="summary-label" data-i18n="hosting.alerts_today">Alerts Today</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="summary-item">
+                            <div class="summary-icon bg-info-subtle">
+                                <i class="bi bi-plus-circle text-info"></i>
+                            </div>
+                            <div class="summary-content">
+                                <div class="summary-value" id="new-devices">0</div>
+                                <div class="summary-label" data-i18n="hosting.new_devices">New Devices</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="summary-item">
+                            <div class="summary-icon bg-primary-subtle">
+                                <i class="bi bi-arrow-up-circle text-primary"></i>
+                            </div>
+                            <div class="summary-content">
+                                <div class="summary-value" id="uptime-today">--</div>
+                                <div class="summary-label" data-i18n="hosting.avg_uptime">Avg Uptime</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="hosting-card">
+            <div class="hosting-card-header">
+                <h5 class="hosting-card-title">
+                    <i class="bi bi-exclamation-triangle me-2"></i><span data-i18n="hosting.recent_alerts">Recent Alerts</span>
+                </h5>
+                <a href="/hosting/host/monitoring" class="btn btn-hosting-outline btn-sm">
+                    <span data-i18n="hosting.view_all">View All</span>
+                </a>
+            </div>
+            <div class="hosting-card-body">
+                <div id="alerts-list">
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-shield-check fs-1 mb-2 d-block text-success"></i>
+                        <p class="mb-0" data-i18n="hosting.no_active_alerts">No active alerts</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 站点概览 -->
 <div class="hosting-card">
     <div class="hosting-card-header">
         <h5 class="hosting-card-title">
             <i class="bi bi-building me-2"></i><span data-i18n="hosting.sites_overview">Sites Overview</span>
         </h5>
-        <div class="btn-group" role="group">
-            <button class="btn btn-hosting-secondary btn-sm" onclick="refreshSites()">
-                <i class="bi bi-arrow-clockwise me-1"></i><span data-i18n="common.refresh">Refresh</span>
-            </button>
-            <a href="/hosting/host/devices" class="btn btn-hosting-primary btn-sm">
-                <i class="bi bi-cpu me-1"></i><span data-i18n="hosting.miner_management">Miner Management</span>
-            </a>
-        </div>
+        <a href="/hosting/host/sites" class="btn btn-hosting-outline btn-sm">
+            <i class="bi bi-gear me-1"></i><span data-i18n="hosting.manage_sites">Manage Sites</span>
+        </a>
     </div>
     <div class="hosting-card-body">
         <div class="hosting-table">
@@ -51,148 +233,452 @@
                     <tr>
                         <th data-i18n="hosting.site_name">Site Name</th>
                         <th data-i18n="hosting.location">Location</th>
-                        <th data-i18n="hosting.capacity">Capacity</th>
-                        <th data-i18n="hosting.used">Used</th>
                         <th data-i18n="hosting.devices">Devices</th>
+                        <th data-i18n="hosting.online_rate">Online Rate</th>
+                        <th data-i18n="hosting.hashrate">Hashrate</th>
                         <th data-i18n="hosting.status">Status</th>
-                        <th data-i18n="hosting.actions">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <!-- 数据通过JavaScript加载 -->
+                <tbody id="sites-tbody">
                 </tbody>
             </table>
         </div>
     </div>
 </div>
 
-<!-- 事件监控 -->
-<div class="hosting-card">
-    <div class="hosting-card-header">
-        <h5 class="hosting-card-title">
-            <i class="bi bi-exclamation-triangle me-2"></i><span data-i18n="hosting.recent_events">Recent Events</span>
-        </h5>
-    </div>
-    <div class="hosting-card-body">
-        <div id="events-list">
-            <div class="text-center text-muted py-4">
-                <i class="bi bi-clock-history fs-1 mb-3"></i>
-                <p data-i18n="hosting.no_recent_events">No recent events</p>
-            </div>
-        </div>
-    </div>
-</div>
+<style>
+/* 在线率圆环 */
+.online-rate-ring {
+    position: relative;
+    width: 120px;
+    height: 120px;
+}
+.ring-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+.ring-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--hosting-secondary);
+}
+.ring-unit {
+    font-size: 0.875rem;
+    color: var(--hosting-text-muted);
+}
+
+/* 状态盒子 */
+.status-box {
+    text-align: center;
+    padding: 0.75rem;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.03);
+}
+.status-box.status-online { border-left: 3px solid #28a745; }
+.status-box.status-offline { border-left: 3px solid #dc3545; }
+.status-box.status-warning { border-left: 3px solid #ffc107; }
+.status-count {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+}
+.status-label {
+    font-size: 0.75rem;
+    color: var(--hosting-text-muted);
+}
+
+/* 摘要项 */
+.summary-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+}
+.summary-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+.summary-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+.summary-label {
+    font-size: 0.75rem;
+    color: var(--hosting-text-muted);
+}
+
+/* 告警列表 */
+.alert-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.alert-item:last-child { border-bottom: none; }
+.alert-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.alert-icon.critical { background: rgba(220,53,69,0.2); color: #dc3545; }
+.alert-icon.warning { background: rgba(255,193,7,0.2); color: #ffc107; }
+.alert-icon.info { background: rgba(13,202,240,0.2); color: #0dcaf0; }
+.alert-content { flex: 1; }
+.alert-title { font-weight: 500; font-size: 0.875rem; }
+.alert-time { font-size: 0.75rem; color: var(--hosting-text-muted); }
+</style>
 
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+let hashrateTrendChart = null;
+let onlineRateChart = null;
+
 document.addEventListener('DOMContentLoaded', function() {
-    loadDashboardData();
+    loadAllData();
     
-    // 监听语言变化，重新渲染表格
+    // 自动刷新（每60秒）
+    setInterval(loadAllData, 60000);
+    
+    // 监听语言变化
     if (window.I18n) {
-        I18n.onLangChange(function(newLang, oldLang) {
+        I18n.onLangChange(function() {
             loadSitesOverview();
         });
     }
 });
 
-function loadDashboardData() {
-    // 加载概览统计
+function loadAllData() {
+    loadMinerStats();
+    loadHashrateTrend('24h');
     loadSitesOverview();
-    loadEventsData();
+    loadTodaySummary();
+    loadRecentAlerts();
+}
+
+function refreshAllData() {
+    loadAllData();
+    showToast(getLanguage() === 'en' ? 'Data refreshed' : '数据已刷新', 'success');
+}
+
+function loadMinerStats() {
+    fetch('/hosting/api/miners/stats')
+        .then(response => {
+            if (!response.ok) throw new Error('API error');
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.data) {
+                const stats = data.data;
+                const total = stats.total_miners || 0;
+                const statusDist = stats.status_distribution || {};
+                const active = statusDist.active || 0;
+                const offline = statusDist.offline || 0;
+                const warning = statusDist.warning || statusDist.maintenance || 0;
+                
+                // 更新状态计数
+                document.getElementById('active-count').textContent = active.toLocaleString();
+                document.getElementById('offline-count').textContent = offline.toLocaleString();
+                document.getElementById('warning-count').textContent = warning.toLocaleString();
+                
+                // 更新进度条和在线率
+                const onlineRate = stats.online_rate || 0;
+                if (total > 0) {
+                    const onlinePercent = onlineRate.toFixed(1);
+                    const offlinePercent = (offline / total * 100).toFixed(1);
+                    const warningPercent = (warning / total * 100).toFixed(1);
+                    
+                    document.getElementById('online-bar').style.width = onlinePercent + '%';
+                    document.getElementById('offline-bar').style.width = offlinePercent + '%';
+                    document.getElementById('warning-bar').style.width = warningPercent + '%';
+                    document.getElementById('online-rate').textContent = onlinePercent;
+                    
+                    // 更新圆环图
+                    updateOnlineRateChart(parseFloat(onlinePercent));
+                } else {
+                    document.getElementById('online-rate').textContent = '--';
+                    updateOnlineRateChart(0);
+                }
+                
+                // 更新算力和功耗 (API返回的是PH和MW)
+                const hashratePH = stats.total_hashrate_ph || 0;
+                const powerMW = stats.total_power_mw || 0;
+                const efficiency = stats.avg_efficiency_w_th || '--';
+                
+                document.getElementById('total-hashrate').textContent = hashratePH.toFixed(2);
+                document.getElementById('total-power').textContent = powerMW.toFixed(2) + ' MW';
+                document.getElementById('avg-efficiency').textContent = (typeof efficiency === 'number' ? efficiency.toFixed(1) : efficiency) + ' J/TH';
+            } else {
+                // API returned but no data - set placeholders
+                document.getElementById('active-count').textContent = '0';
+                document.getElementById('offline-count').textContent = '0';
+                document.getElementById('warning-count').textContent = '0';
+                document.getElementById('online-rate').textContent = '--';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading miner stats:', error);
+            // Set placeholders on error
+            document.getElementById('active-count').textContent = '0';
+            document.getElementById('offline-count').textContent = '0';
+            document.getElementById('warning-count').textContent = '0';
+        });
+}
+
+function updateOnlineRateChart(rate) {
+    const ctx = document.getElementById('onlineRateChart').getContext('2d');
+    
+    if (onlineRateChart) {
+        onlineRateChart.data.datasets[0].data = [rate, 100 - rate];
+        onlineRateChart.update();
+        return;
+    }
+    
+    onlineRateChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            datasets: [{
+                data: [rate, 100 - rate],
+                backgroundColor: ['#28a745', 'rgba(255,255,255,0.1)'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            cutout: '75%',
+            responsive: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { enabled: false }
+            }
+        }
+    });
+}
+
+function loadHashrateTrend(period) {
+    // 更新按钮状态
+    document.querySelectorAll('[data-period]').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.period === period) btn.classList.add('active');
+    });
+    
+    fetch(`/hosting/api/client/reports/chart?period=${period}`)
+        .then(response => {
+            if (!response.ok) throw new Error('API error');
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                renderHashrateTrendChart(data.labels, data.hashrate);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading hashrate trend:', error);
+            renderHashrateTrendChart([], []);
+        });
+}
+
+function renderHashrateTrendChart(labels, hashrate) {
+    const ctx = document.getElementById('hashrateTrendChart').getContext('2d');
+    const lang = getLanguage();
+    
+    if (hashrateTrendChart) {
+        hashrateTrendChart.data.labels = labels;
+        hashrateTrendChart.data.datasets[0].data = hashrate;
+        hashrateTrendChart.update();
+        return;
+    }
+    
+    hashrateTrendChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: lang === 'en' ? 'Hashrate (TH/s)' : '算力 (TH/s)',
+                data: hashrate,
+                borderColor: '#f7931e',
+                backgroundColor: 'rgba(247, 147, 30, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 2,
+                pointHoverRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: '#888' }
+                },
+                y: {
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: '#888' }
+                }
+            }
+        }
+    });
 }
 
 function loadSitesOverview() {
     fetch('/hosting/api/sites')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) throw new Error('API error');
+            return response.json();
+        })
         .then(data => {
-            const sitesTable = document.getElementById('sites-table').getElementsByTagName('tbody')[0];
-            sitesTable.innerHTML = '';
+            const tbody = document.getElementById('sites-tbody');
+            tbody.innerHTML = '';
             
-            let totalCapacity = 0;
-            let usedCapacity = 0;
-            let totalDevices = 0;
-            let totalRevenue = 0;
-            
-            // Get current language for server-side fallback text
-            const currentLang = getLanguage();
-            const viewText = currentLang === 'en' ? 'View' : '查看';
+            if (!data.sites || data.sites.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">${getLanguage() === 'en' ? 'No sites found' : '暂无站点数据'}</td></tr>`;
+                return;
+            }
             
             data.sites.forEach(site => {
-                const row = sitesTable.insertRow();
-                row.innerHTML = `
-                    <td><a href="/hosting/host/sites/${site.id}" class="text-decoration-none text-warning">${site.name}</a></td>
-                    <td>${site.location}</td>
-                    <td>${site.capacity_mw} MW</td>
-                    <td>${site.used_capacity_mw} MW</td>
-                    <td><span class="badge bg-success">${site.device_count || 0}</span></td>
-                    <td><span class="badge bg-${site.status === 'active' ? 'success' : 'warning'}">${getStatusText(site.status)}</span></td>
-                    <td>
-                        <a href="/hosting/host/sites/${site.id}" class="btn btn-hosting-outline btn-sm">
-                            <i class="bi bi-eye"></i> <span data-i18n="hosting.view">${viewText}</span>
-                        </a>
-                    </td>
-                `;
+                const total = site.device_count || 0;
+                const active = site.active_devices || 0;
+                const onlineRate = total > 0 ? ((active / total) * 100).toFixed(1) : 0;
+                const hashrate = (site.total_hashrate || 0).toFixed(1);
                 
-                totalCapacity += parseFloat(site.capacity_mw || 0);
-                usedCapacity += parseFloat(site.used_capacity_mw || 0);
-                totalDevices += parseInt(site.device_count || 0);
-                totalRevenue += parseFloat(site.monthly_revenue || 0);
+                const statusClass = site.status === 'active' || site.status === 'online' ? 'success' : 'warning';
+                const statusText = site.status === 'active' || site.status === 'online' 
+                    ? (getLanguage() === 'en' ? 'Online' : '在线') 
+                    : (getLanguage() === 'en' ? 'Offline' : '离线');
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><a href="/hosting/host/sites/${site.id}" class="text-warning text-decoration-none">${site.name}</a></td>
+                    <td>${site.location || '--'}</td>
+                    <td><span class="badge bg-secondary">${total}</span></td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="progress flex-grow-1" style="height: 6px; max-width: 80px;">
+                                <div class="progress-bar bg-success" style="width: ${onlineRate}%"></div>
+                            </div>
+                            <span class="small">${onlineRate}%</span>
+                        </div>
+                    </td>
+                    <td>${hashrate} TH/s</td>
+                    <td><span class="badge bg-${statusClass}">${statusText}</span></td>
+                `;
+                tbody.appendChild(row);
             });
-            
-            // 更新统计数据
-            document.getElementById('total-sites').textContent = data.sites.length;
-            document.getElementById('total-devices').textContent = totalDevices;
-            document.getElementById('total-capacity').textContent = totalCapacity.toFixed(1);
-            document.getElementById('monthly-revenue').textContent = '$' + totalRevenue.toLocaleString();
-            
-            // Update translations for newly added elements (always attempt - i18n.js handles not-ready state)
-            if (window.I18n) {
-                I18n.updatePageTranslations();
+        })
+        .catch(error => console.error('Error loading sites:', error));
+}
+
+function loadTodaySummary() {
+    // 从overview API获取今日摘要数据
+    fetch('/hosting/api/overview')
+        .then(response => {
+            if (!response.ok) throw new Error('API error');
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.data) {
+                const d = data.data;
+                document.getElementById('tickets-resolved').textContent = d.alerts?.pending_tickets || 0;
+                document.getElementById('alerts-today').textContent = d.alerts?.recent_incidents || 0;
+                document.getElementById('new-devices').textContent = 0;
+                
+                const miners = d.miners || {};
+                const onlineRate = miners.total > 0 
+                    ? ((miners.active / miners.total) * 100).toFixed(1) + '%'
+                    : '--';
+                document.getElementById('uptime-today').textContent = onlineRate;
             }
         })
+        .catch(error => console.error('Error loading summary:', error));
+}
+
+function loadRecentAlerts() {
+    fetch('/hosting/api/incidents?limit=5')
+        .then(response => {
+            if (!response.ok) throw new Error('API error');
+            return response.json();
+        })
+        .then(data => {
+            const alertsList = document.getElementById('alerts-list');
+            
+            if (!data.success || !data.incidents || data.incidents.length === 0) {
+                alertsList.innerHTML = `
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-shield-check fs-1 mb-2 d-block text-success"></i>
+                        <p class="mb-0" data-i18n="hosting.no_active_alerts">${getLanguage() === 'en' ? 'No active alerts' : '暂无活跃告警'}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            alertsList.innerHTML = data.incidents.slice(0, 5).map(incident => {
+                const severityClass = incident.severity === 'critical' ? 'critical' : 
+                                     incident.severity === 'warning' ? 'warning' : 'info';
+                const iconClass = incident.severity === 'critical' ? 'bi-x-circle-fill' :
+                                 incident.severity === 'warning' ? 'bi-exclamation-triangle-fill' : 'bi-info-circle-fill';
+                
+                return `
+                    <div class="alert-item">
+                        <div class="alert-icon ${severityClass}">
+                            <i class="bi ${iconClass}"></i>
+                        </div>
+                        <div class="alert-content">
+                            <div class="alert-title">${incident.description || incident.title}</div>
+                            <div class="alert-time">${formatTime(incident.created_at)}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        })
         .catch(error => {
-            console.error('Error loading sites overview:', error);
+            console.error('Error loading alerts:', error);
         });
 }
 
-function loadEventsData() {
-    // 模拟加载事件数据
-    const eventsList = document.getElementById('events-list');
-    // 这里可以添加实际的事件数据加载逻辑
-}
-
-function refreshSites() {
-    loadSitesOverview();
-}
-
-function getStatusText(status) {
-    if (window.I18n && I18n.initialized) {
-        const statusMap = {
-            'active': I18n.t('hosting.online'),
-            'maintenance': I18n.t('hosting.maintenance'),
-            'offline': I18n.t('hosting.offline')
-        };
-        return statusMap[status] || status;
-    }
-    // Fallback using meta tag language
-    const language = getLanguage();
-    const statusMap = {
-        'active': language === 'en' ? 'Online' : '在线',
-        'maintenance': language === 'en' ? 'Maintenance' : '维护中',
-        'offline': language === 'en' ? 'Offline' : '离线'
-    };
-    return statusMap[status] || status;
+function formatTime(dateStr) {
+    if (!dateStr) return '--';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = Math.floor((now - date) / 60000);
+    
+    if (diff < 1) return getLanguage() === 'en' ? 'Just now' : '刚刚';
+    if (diff < 60) return diff + (getLanguage() === 'en' ? ' min ago' : ' 分钟前');
+    if (diff < 1440) return Math.floor(diff / 60) + (getLanguage() === 'en' ? ' hours ago' : ' 小时前');
+    return date.toLocaleDateString();
 }
 
 function getLanguage() {
-    if (window.I18n && I18n.initialized) {
-        return I18n.getLang();
-    }
+    if (window.I18n && I18n.initialized) return I18n.getLang();
     const meta = document.querySelector('meta[name="language"]');
     return meta ? meta.content : 'en';
+}
+
+function showToast(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'success' ? 'success' : 'warning'} position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 200px;';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
 }
 </script>
 {% endblock %}

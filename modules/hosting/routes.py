@@ -346,6 +346,51 @@ def get_hosting_overview():
         logger.error(f"获取托管总览失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
+@hosting_bp.route('/api/incidents', methods=['GET'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
+def get_incidents():
+    """获取最近事件/告警列表"""
+    try:
+        user_role = session.get('role', 'guest')
+        user_email = session.get('email', '')
+        limit = request.args.get('limit', 10, type=int)
+        
+        # 构建查询
+        query = HostingIncident.query.filter(
+            HostingIncident.created_at >= datetime.now() - timedelta(days=7)
+        )
+        
+        # 权限过滤
+        if user_role == 'mining_site_owner':
+            managed_sites = HostingSite.query.filter_by(contact_email=user_email).all()
+            managed_site_ids = [s.id for s in managed_sites]
+            if managed_site_ids:
+                query = query.filter(HostingIncident.site_id.in_(managed_site_ids))
+            else:
+                return jsonify({'success': True, 'incidents': []})
+        elif user_role not in ['owner', 'admin']:
+            return jsonify({'success': True, 'incidents': []})
+        
+        incidents = query.order_by(HostingIncident.created_at.desc()).limit(limit).all()
+        
+        incidents_data = [{
+            'id': inc.id,
+            'title': inc.title,
+            'description': inc.description,
+            'severity': inc.severity,
+            'status': inc.status,
+            'site_id': inc.site_id,
+            'created_at': inc.created_at.isoformat() if inc.created_at else None
+        } for inc in incidents]
+        
+        return jsonify({'success': True, 'incidents': incidents_data})
+    except Exception as e:
+        logger.error(f"获取事件列表失败: {e}")
+        return jsonify({'success': False, 'incidents': [], 'error': str(e)}), 500
+
+
 @hosting_bp.route('/api/sites', methods=['GET'])
 @login_required
 @requires_module_access(Module.HOSTING_SITE_MGMT)
