@@ -26,14 +26,30 @@ jobs:
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      - run: pip install -r requirements.txt || echo "requirements.txt not found"
-      - run: pip install pytest pytest-cov
-      - run: pytest tests/unit/ -v --cov=. --cov-report=term
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpq-dev
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+      
+      - name: Run unit tests
+        run: |
+          pytest tests/unit/ -v --cov=. --cov-report=xml --cov-report=term
         continue-on-error: true
 
   summary:
