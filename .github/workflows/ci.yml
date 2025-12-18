@@ -26,30 +26,19 @@ jobs:
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      
-      - name: Install system dependencies
-        run: |
+      - run: |
           sudo apt-get update
           sudo apt-get install -y libpq-dev
-      
-      - name: Install dependencies
-        run: |
+      - run: |
           pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest pytest-cov
-      
-      - name: Run unit tests
-        run: |
-          pytest tests/unit/ -v --cov=. --cov-report=xml --cov-report=term
+      - run: pytest tests/unit/ -v --cov=. --cov-report=xml
         continue-on-error: true
 
   summary:
