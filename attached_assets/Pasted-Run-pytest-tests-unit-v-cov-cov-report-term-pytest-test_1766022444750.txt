@@ -1,0 +1,49 @@
+Run pytest tests/unit/ -v --cov=. --cov-report=term
+  pytest tests/unit/ -v --cov=. --cov-report=term
+  shell: /usr/bin/bash -e {0}
+  env:
+    PYTHON_VERSION: 3.11
+    NODE_VERSION: 20
+    pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+    PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+    Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+    Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+    Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+    LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+============================= test session starts ==============================
+platform linux -- Python 3.11.14, pytest-9.0.2, pluggy-1.6.0 -- /opt/hostedtoolcache/Python/3.11.14/x64/bin/python
+cachedir: .pytest_cache
+rootdir: /home/runner/work/BTC_project/BTC_project
+configfile: pyproject.toml
+plugins: cov-7.0.0
+collecting ... collected 22 items / 2 errors
+
+==================================== ERRORS ====================================
+___________________ ERROR collecting tests/unit/test_auth.py ___________________
+ImportError while importing test module '/home/runner/work/BTC_project/BTC_project/tests/unit/test_auth.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_auth.py:15: in <module>
+    from werkzeug.security import generate_password_hash, check_password_hash
+E   ModuleNotFoundError: No module named 'werkzeug'
+____________ ERROR collecting tests/unit/test_mining_calculator.py _____________
+ImportError while importing test module '/home/runner/work/BTC_project/BTC_project/tests/unit/test_mining_calculator.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_mining_calculator.py:7: in <module>
+    from analytics.roi_heatmap_generator import ROIHeatmapGenerator
+analytics/roi_heatmap_generator.py:15: in <module>
+    import numpy as np
+E   ModuleNotFoundError: No module named 'numpy'
+=========================== short test summary info ============================
+ERROR tests/unit/test_auth.py
+ERROR tests/unit/test_mining_calculator.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 2 errors in 0.40s ===============================
+Error: Process completed with exit code 2.
