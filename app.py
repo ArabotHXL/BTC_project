@@ -4466,6 +4466,16 @@ except ImportError as e:
 except Exception as e:
     logging.error(f"Failed to register Collector Management Routes: {e}")
 
+# Monitor Routes (监控页面)
+try:
+    from routes.monitor_routes import monitor_bp
+    app.register_blueprint(monitor_bp)
+    logging.info("Monitor Routes registered successfully")
+except ImportError as e:
+    logging.warning(f"Monitor Routes not available: {e}")
+except Exception as e:
+    logging.error(f"Failed to register Monitor Routes: {e}")
+
 # Register calculator module blueprint for modular architecture
 try:
     from modules.config import register_modules
