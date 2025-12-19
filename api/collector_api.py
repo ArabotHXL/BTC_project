@@ -584,12 +584,16 @@ def upload_telemetry():
         
         db.session.commit()
         
-        logger.info(f"Received telemetry: site={site_id}, miners={miner_count}, online={online_count}")
+        logger.info(f"Received telemetry: site={site_id}, miners={miner_count}, inserted={len(inserts)}, updated={len(updates)}, online={online_count}")
         
         return jsonify({
             'success': True,
+            'inserted': len(inserts),
+            'updated': len(updates),
             'data': {
                 'processed': miner_count,
+                'inserted': len(inserts),
+                'updated': len(updates),
                 'online': online_count,
                 'offline': offline_count,
                 'processing_time_ms': processing_time
