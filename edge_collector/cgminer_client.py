@@ -12,6 +12,7 @@ import socket
 import json
 import time
 import logging
+import re
 from typing import Dict, Optional, Any, Tuple
 
 logger = logging.getLogger('CGMinerClient')
@@ -125,11 +126,34 @@ class CGMinerClient:
             self._last_latency_ms = (time.time() - start_time) * 1000
             
             data = response.rstrip(b'\x00').decode('utf-8', errors='ignore')
+            data = data.strip()
             
             if not data:
                 raise CGMinerError(
                     "Empty response", self.host, self.port, "parse"
                 )
+            
+            # Try parsing as-is first
+            try:
+                return json.loads(data)
+            except json.JSONDecodeError:
+                pass
+            
+            # Fix malformed JSON from some miner firmware
+            # Handles concatenated objects: {"A":1}{"B":2} -> {"A":1},{"B":2}
+            data = re.sub(r'}\s*{', '},{', data)
+            data = re.sub(r']\s*\[', '],[', data)
+            
+            try:
+                return json.loads(data)
+            except json.JSONDecodeError:
+                pass
+            
+            # Last resort: fix missing brackets
+            if not data.startswith('{'):
+                data = '{' + data
+            if not data.endswith('}'):
+                data = data + '}'
             
             try:
                 return json.loads(data)

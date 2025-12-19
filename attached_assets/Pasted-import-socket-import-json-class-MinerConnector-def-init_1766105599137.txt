@@ -1,0 +1,91 @@
+import socket
+import json
+
+class MinerConnector:
+    def __init__(self, ip, port=4028, timeout=3):
+        self.ip = ip
+        self.port = port
+        self.timeout = timeout
+
+    def _send_command(self, command):
+        """Low-level socket handler"""
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(self.timeout)
+            sock.connect((self.ip, self.port))
+            
+            # Send Command
+            payload = json.dumps(command).encode('utf-8')
+            sock.sendall(payload)
+            
+            # Receive Data
+            response = b""
+            while True:
+                chunk = sock.recv(4096)
+                if not chunk: break
+                response += chunk
+            sock.close()
+            
+            # Clean "Null Byte" errors (Common in Antminer)
+            clean_resp = response.decode('utf-8', errors='ignore').strip('\x00').replace('}{', '},{')
+            return json.loads(clean_resp)
+            
+        except Exception as e:
+            return {"error": str(e)}
+
+    def get_stats(self):
+        """
+        Smart function that tries Antminer command first, 
+        then Whatsminer command if that fails.
+        """
+        # 1. Try Antminer / Braiins / Vnish / LuxOS (Standard Cgminer API)
+        # They all respond to 'stats' or 'summary'
+        ant_cmd = {"command": "stats"}
+        data = self._send_command(ant_cmd)
+        
+        if "STATS" in data or "summary" in data:
+            return self._parse_antminer(data)
+            
+        # 2. Try Whatsminer (MicroBT)
+        # Whatsminer API is similar but response format differs
+        wm_cmd = {"command": "summary"} 
+        data = self._send_command(wm_cmd)
+        
+        if "SUMMARY" in data:
+            return self._parse_whatsminer(data)
+            
+        return {"status": "Offline", "type": "Unknown"}
+
+    def _parse_antminer(self, data):
+        """Normalizes Antminer data to a standard format"""
+        try:
+            # Handle different firmware versions (Stock vs Braiins)
+            stats = data.get('STATS', [{}])
+            if len(stats) > 1: stats = stats[1] # Cgminer specific quirk
+            else: stats = stats[0]
+
+            return {
+                "type": "Antminer/Braiins",
+                "status": "Online",
+                "hashrate": float(stats.get("GHS 5s", 0)) / 1000, # Convert to TH/s
+                "temp": stats.get("temp2_1", stats.get("temp_pcb1", 0)),
+                "fan": stats.get("fan1", 0)
+            }
+        except:
+            return {"status": "Error Parsing Antminer Data"}
+
+    def _parse_whatsminer(self, data):
+        """Normalizes Whatsminer data to match Antminer format"""
+        try:
+            # Whatsminer usually puts data in 'SUMMARY' list
+            summary = data.get('SUMMARY', [{}])[0]
+            
+            return {
+                "type": "Whatsminer",
+                "status": "Online",
+                "hashrate": float(summary.get("GHS 5s", 0)) / 1000,
+                "temp": summary.get("Temperature", 0),
+                "fan": summary.get("Fan Speed In", 0)
+            }
+        except:
+            return {"status": "Error Parsing Whatsminer Data"}
