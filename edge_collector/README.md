@@ -231,6 +231,119 @@ iptables -L -n | grep 4028
 |------|------|------|
 | /api/collector/upload | POST | 上传遥测数据 |
 | /api/collector/status | GET | 采集器状态 |
+| /api/collector/summary/{site_id} | GET | 站点汇总统计 |
+| /api/collector/monitor/sites/{site_id}/miners/latest | GET | 最新矿机列表 (分页) |
+| /api/collector/monitor/sites/{site_id}/miners/{miner_id}/history | GET | 矿机历史数据 |
+
+### Upload Response Format
+
+```json
+{
+  "success": true,
+  "inserted": 5,
+  "updated": 95,
+  "data": {
+    "processed": 100,
+    "inserted": 5,
+    "updated": 95,
+    "online": 98,
+    "offline": 2,
+    "processing_time_ms": 125
+  }
+}
+```
+
+## curl 测试示例
+
+### JSON 上传 (明文)
+
+```bash
+curl -X POST "https://calc.hashinsight.net/api/collector/upload" \
+  -H "X-Collector-Key: hsc_your-api-key" \
+  -H "X-Site-ID: 1" \
+  -H "Content-Type: application/json" \
+  -d '[
+    {
+      "miner_id": "miner-001",
+      "ip_address": "192.168.1.101",
+      "online": true,
+      "hashrate_ghs": 140000,
+      "temperature_avg": 65,
+      "temperature_max": 72,
+      "fan_speeds": [4500, 4600],
+      "power_consumption": 3250,
+      "accepted_shares": 12500,
+      "rejected_shares": 15,
+      "uptime_seconds": 86400
+    }
+  ]'
+```
+
+### Gzip 压缩上传
+
+```bash
+# 创建测试数据
+echo '[{"miner_id":"miner-001","ip_address":"192.168.1.101","online":true,"hashrate_ghs":140000,"temperature_avg":65}]' > /tmp/telemetry.json
+
+# 压缩并上传
+gzip -c /tmp/telemetry.json | curl -X POST "https://calc.hashinsight.net/api/collector/upload" \
+  -H "X-Collector-Key: hsc_your-api-key" \
+  -H "X-Site-ID: 1" \
+  -H "Content-Type: application/gzip" \
+  -H "Content-Encoding: gzip" \
+  --data-binary @-
+```
+
+### 批量上传多台矿机
+
+```bash
+curl -X POST "https://calc.hashinsight.net/api/collector/upload" \
+  -H "X-Collector-Key: hsc_your-api-key" \
+  -H "X-Site-ID: 1" \
+  -H "Content-Type: application/json" \
+  -d '[
+    {"miner_id":"rack1-001","ip_address":"10.0.1.1","online":true,"hashrate_ghs":140000,"temperature_max":68},
+    {"miner_id":"rack1-002","ip_address":"10.0.1.2","online":true,"hashrate_ghs":138500,"temperature_max":71},
+    {"miner_id":"rack1-003","ip_address":"10.0.1.3","online":false,"hashrate_ghs":0}
+  ]'
+```
+
+### 查询站点汇总
+
+```bash
+curl "https://calc.hashinsight.net/api/collector/summary/1" \
+  -H "X-Collector-Key: hsc_your-api-key"
+```
+
+### 查询矿机列表
+
+```bash
+curl "https://calc.hashinsight.net/api/collector/monitor/sites/1/miners/latest?page=1&per_page=50&online_only=true"
+```
+
+### 查询矿机历史数据
+
+```bash
+# 查询算力历史 (最近24小时)
+curl "https://calc.hashinsight.net/api/collector/monitor/sites/1/miners/miner-001/history?metric=hashrate_ghs&hours=24"
+
+# 查询温度历史
+curl "https://calc.hashinsight.net/api/collector/monitor/sites/1/miners/miner-001/history?metric=temperature_max&hours=12"
+```
+
+## 监控页面
+
+访问实时监控仪表板：
+```
+https://calc.hashinsight.net/monitor/<site_id>
+```
+
+功能：
+- 矿机实时状态表格 (支持在线/离线筛选)
+- 点击矿机查看历史图表
+- 多指标支持: 算力、温度、风扇转速、功耗
+- 时间范围: 6小时、12小时、24小时、48小时、7天
+- 自动刷新 (30秒)
 
 ## 支持
 
