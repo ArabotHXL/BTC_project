@@ -12,9 +12,13 @@ from datetime import datetime, timedelta
 from functools import wraps
 from flask import Blueprint, request, jsonify, g
 from sqlalchemy import func
-from models import db, HostingSite
+from models import db, HostingSite, HostingMiner, MinerModel
 
 logger = logging.getLogger(__name__)
+
+# 默认值用于自动创建矿机
+DEFAULT_MINER_MODEL_ID = 1  # Antminer S19
+DEFAULT_OWNER_ID = 7  # 系统默认 owner
 
 collector_bp = Blueprint('collector', __name__, url_prefix='/api/collector')
 
@@ -270,6 +274,160 @@ def verify_collector_key(f):
     return decorated
 
 
+def find_or_create_hosting_miner(site_id: int, miner_data: dict) -> HostingMiner:
+    """
+    查找或创建 HostingMiner 记录
+    
+    匹配优先级（同站点内）:
+    1. serial_number = miner_id（最可靠的唯一标识）
+    2. IP地址匹配（miner_id 可能变化时使用）
+    3. 自动创建新矿机（使用 miner_id 作为 serial_number）
+    
+    Args:
+        site_id: 站点ID
+        miner_data: 采集器上传的矿机数据
+    
+    Returns:
+        HostingMiner: 矿机对象
+    """
+    miner_id = miner_data.get('miner_id', '')
+    ip_address = miner_data.get('ip_address', '')
+    
+    # 1. 先尝试用 miner_id = serial_number 匹配（最可靠）
+    if miner_id:
+        miner = HostingMiner.query.filter_by(
+            site_id=site_id,
+            serial_number=miner_id
+        ).first()
+        if miner:
+            # 更新 IP 如果有变化
+            if ip_address and miner.ip_address != ip_address:
+                miner.ip_address = ip_address
+            return miner
+    
+    # 2. 再尝试用 IP 地址匹配（适用于 miner_id 变化的情况）
+    if ip_address:
+        miner = HostingMiner.query.filter_by(
+            site_id=site_id,
+            ip_address=ip_address
+        ).first()
+        if miner:
+            # 如果通过 IP 找到，且有新的 miner_id，更新 serial_number
+            if miner_id and miner.serial_number != miner_id:
+                # 检查新 miner_id 是否与其他记录冲突
+                conflict = HostingMiner.query.filter_by(serial_number=miner_id).first()
+                if not conflict:
+                    miner.serial_number = miner_id
+            return miner
+    
+    # 3. 都没找到，自动创建新矿机
+    # 使用 miner_id 作为 serial_number（保持一致性）
+    serial_number = miner_id if miner_id else f"AUTO_{ip_address.replace('.', '_')}_{site_id}"
+    
+    # 确保 serial_number 全局唯一（跨站点）
+    existing = HostingMiner.query.filter_by(serial_number=serial_number).first()
+    if existing:
+        # 如果已存在相同 serial，添加站点ID和时间戳后缀
+        serial_number = f"{serial_number}_{site_id}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+    
+    # 获取默认 miner_model
+    default_model = MinerModel.query.filter_by(id=DEFAULT_MINER_MODEL_ID).first()
+    if not default_model:
+        default_model = MinerModel.query.first()
+    
+    model_id = default_model.id if default_model else 1
+    
+    # 从上传数据推断算力和功耗
+    hashrate_ths = miner_data.get('hashrate_ghs', 0) / 1000  # GH/s -> TH/s
+    power_w = miner_data.get('power_consumption', 3250)  # 默认 3250W
+    
+    if hashrate_ths == 0:
+        # 如果没有算力数据，使用型号参考值
+        hashrate_ths = default_model.reference_hashrate if default_model else 110
+    
+    new_miner = HostingMiner(
+        site_id=site_id,
+        customer_id=DEFAULT_OWNER_ID,
+        miner_model_id=model_id,
+        serial_number=serial_number,
+        actual_hashrate=hashrate_ths,
+        actual_power=power_w,
+        ip_address=ip_address,
+        status='online',
+        health_score=100,
+        approval_status='approved',
+        install_date=datetime.utcnow(),
+        cgminer_online=True,
+        last_seen=datetime.utcnow()
+    )
+    
+    db.session.add(new_miner)
+    logger.info(f"Auto-created miner: {serial_number} at {ip_address} for site {site_id}")
+    
+    return new_miner
+
+
+def sync_hosting_miner_telemetry(miner: HostingMiner, miner_data: dict, now: datetime):
+    """
+    同步采集器数据到 hosting_miners 表
+    
+    Args:
+        miner: HostingMiner 对象
+        miner_data: 采集器上传的矿机数据
+        now: 当前时间
+    """
+    import json as json_lib
+    
+    is_online = miner_data.get('online', False)
+    
+    # 更新基础状态
+    miner.cgminer_online = is_online
+    if is_online:
+        miner.last_seen = now
+        miner.status = 'online'
+    else:
+        miner.status = 'offline'
+    
+    # 更新实时数据
+    hashrate_ghs = miner_data.get('hashrate_ghs', 0)
+    miner.actual_hashrate = hashrate_ghs / 1000  # GH/s -> TH/s
+    miner.hashrate_5s = miner_data.get('hashrate_5s_ghs', 0) / 1000
+    
+    miner.temperature_avg = miner_data.get('temperature_avg', 0)
+    miner.temperature_max = miner_data.get('temperature_max', 0)
+    
+    # 风扇转速
+    fan_speeds = miner_data.get('fan_speeds', [])
+    if fan_speeds:
+        miner.fan_speeds = json_lib.dumps(fan_speeds)
+        miner.fan_avg = sum(fan_speeds) // len(fan_speeds) if fan_speeds else 0
+    
+    # 矿池信息
+    miner.pool_url = miner_data.get('pool_url', '')
+    miner.pool_worker = miner_data.get('worker_name', '')
+    
+    # 份额统计
+    miner.accepted_shares = miner_data.get('accepted_shares', 0)
+    miner.rejected_shares = miner_data.get('rejected_shares', 0)
+    miner.hardware_errors = miner_data.get('hardware_errors', 0)
+    miner.uptime_seconds = miner_data.get('uptime_seconds', 0)
+    
+    # 功耗
+    power = miner_data.get('power_consumption', 0)
+    if power > 0:
+        miner.actual_power = power
+    
+    # 计算拒绝率
+    total_shares = miner.accepted_shares + miner.rejected_shares
+    if total_shares > 0:
+        miner.reject_rate = (miner.rejected_shares / total_shares) * 100
+    
+    # 更新 IP (如果提供)
+    ip = miner_data.get('ip_address')
+    if ip:
+        miner.ip_address = ip
+
+
 @collector_bp.route('/upload', methods=['POST'])
 @verify_collector_key
 def upload_telemetry():
@@ -392,6 +550,13 @@ def upload_telemetry():
                         'net_profit_usd': 0.0,
                         'revenue_usd': 0.0,
                     })
+                
+                # 同步数据到 hosting_miners 表（自动创建不存在的矿机）
+                try:
+                    hosting_miner = find_or_create_hosting_miner(site_id, miner_data)
+                    sync_hosting_miner_telemetry(hosting_miner, miner_data, now)
+                except Exception as sync_err:
+                    logger.warning(f"Failed to sync hosting miner {miner_id}: {sync_err}")
                     
             except Exception as e:
                 logger.error(f"Error processing miner {miner_data.get('miner_id')}: {e}")
