@@ -693,6 +693,142 @@ def get_live_telemetry(site_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+# ============ Monitor API Endpoints ============
+
+@collector_bp.route('/monitor/sites/<int:site_id>/miners/latest', methods=['GET'])
+def get_miners_latest(site_id):
+    """
+    获取站点最新矿机列表
+    
+    GET /api/collector/monitor/sites/<site_id>/miners/latest
+    
+    Query params:
+        - page: 页码 (默认 1)
+        - per_page: 每页数量 (默认 100)
+        - online_only: 是否只返回在线矿机 (默认 false)
+    
+    Returns:
+        - miners: 矿机列表 (按 updated_at 降序)
+        - pagination: 分页信息
+    """
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 100, type=int)
+        online_only = request.args.get('online_only', 'false').lower() == 'true'
+        
+        query = MinerTelemetryLive.query.filter_by(site_id=site_id)
+        
+        if online_only:
+            query = query.filter_by(online=True)
+        
+        query = query.order_by(MinerTelemetryLive.updated_at.desc())
+        
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        
+        miners = []
+        for m in pagination.items:
+            miners.append({
+                'miner_id': m.miner_id,
+                'ip_address': m.ip_address,
+                'online': m.online,
+                'updated_at': m.updated_at.isoformat() if m.updated_at else None,
+                'last_seen': m.last_seen.isoformat() if m.last_seen else None,
+                'hashrate_ghs': m.hashrate_ghs or 0,
+                'hashrate_ths': (m.hashrate_ghs or 0) / 1000,
+                'temperature_avg': m.temperature_avg or 0,
+                'temperature_max': m.temperature_max or 0,
+                'fan_speeds': m.fan_speeds or [],
+                'accepted_shares': m.accepted_shares or 0,
+                'rejected_shares': m.rejected_shares or 0,
+                'hardware_errors': m.hardware_errors or 0,
+                'uptime_seconds': m.uptime_seconds or 0,
+                'pool_url': m.pool_url or '',
+                'worker_name': m.worker_name or '',
+                'model': m.model or '',
+                'overall_health': m.overall_health or 'unknown'
+            })
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'miners': miners,
+                'pagination': {
+                    'page': page,
+                    'per_page': per_page,
+                    'total': pagination.total,
+                    'pages': pagination.pages
+                }
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Get miners latest error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@collector_bp.route('/monitor/sites/<int:site_id>/miners/<miner_id>/history', methods=['GET'])
+def get_miner_history(site_id, miner_id):
+    """
+    获取矿机历史遥测数据
+    
+    GET /api/collector/monitor/sites/<site_id>/miners/<miner_id>/history
+    
+    Query params:
+        - metric: 指标类型 (hashrate_ghs, temperature_avg, temperature_max, fan_speed_avg, power_consumption)
+        - hours: 查询小时数 (默认 24, 最大 168)
+    
+    Returns:
+        - points: 时间序列数据点 [{timestamp, value}]
+        - metric: 请求的指标名
+        - miner_id: 矿机ID
+    """
+    try:
+        metric = request.args.get('metric', 'hashrate_ghs')
+        hours = min(request.args.get('hours', 24, type=int), 168)  # 最大7天
+        
+        # 验证 metric 参数
+        valid_metrics = ['hashrate_ghs', 'temperature_avg', 'temperature_max', 'fan_speed_avg', 'power_consumption']
+        if metric not in valid_metrics:
+            return jsonify({
+                'success': False, 
+                'error': f'Invalid metric. Valid options: {", ".join(valid_metrics)}'
+            }), 400
+        
+        since = datetime.utcnow() - timedelta(hours=hours)
+        
+        # 从历史表查询
+        history = MinerTelemetryHistory.query.filter(
+            MinerTelemetryHistory.site_id == site_id,
+            MinerTelemetryHistory.miner_id == miner_id,
+            MinerTelemetryHistory.timestamp >= since
+        ).order_by(MinerTelemetryHistory.timestamp.asc()).all()
+        
+        points = []
+        for h in history:
+            value = getattr(h, metric, None)
+            if value is not None:
+                points.append({
+                    'timestamp': h.timestamp.isoformat(),
+                    'value': value
+                })
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'miner_id': miner_id,
+                'site_id': site_id,
+                'metric': metric,
+                'hours': hours,
+                'points': points,
+                'count': len(points)
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Get miner history error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @collector_bp.route('/summary/<int:site_id>', methods=['GET'])
 def get_site_summary(site_id):
     """获取站点遥测摘要"""
