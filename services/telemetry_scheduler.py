@@ -9,8 +9,10 @@ Scheduled jobs for:
 - History cleanup (daily)
 """
 
+import atexit
 import logging
 import os
+import socket
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
@@ -26,24 +28,76 @@ class TelemetrySchedulerService:
     """
     
     _instance = None
-    _scheduler = None
-    _app = None
-    _lock = None
     
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
+            cls._instance._scheduler = None
+            cls._instance._app = None
+            cls._instance._is_running = False
+            cls._instance.lock_key = "telemetry_scheduler_lock"
+            cls._instance.process_id = os.getpid()
+            cls._instance.hostname = socket.gethostname()
         return cls._instance
+    
+    def _acquire_scheduler_lock(self):
+        """Acquire database lock to prevent multiple scheduler instances"""
+        if not self._app:
+            logger.error("Flask app not set, cannot acquire scheduler lock")
+            return False
+        
+        try:
+            with self._app.app_context():
+                from models import SchedulerLock, db
+                
+                lock_timeout = 300
+                worker_info = f"Telemetry Scheduler - PID {self.process_id} @ {self.hostname}"
+                
+                acquired = SchedulerLock.acquire_lock(
+                    lock_key=self.lock_key,
+                    process_id=self.process_id,
+                    hostname=self.hostname,
+                    timeout_seconds=lock_timeout,
+                    worker_info=worker_info
+                )
+                
+                if acquired:
+                    logger.info(f"🔒 Telemetry scheduler acquired lock: {worker_info}")
+                else:
+                    logger.info("⏳ Telemetry scheduler lock held by another worker, skipping startup")
+                
+                return acquired
+                
+        except Exception as e:
+            logger.error(f"Failed to acquire telemetry scheduler lock: {e}", exc_info=True)
+            return False
+    
+    def _release_scheduler_lock(self):
+        """Release database lock"""
+        if not self._app:
+            return
+        
+        try:
+            with self._app.app_context():
+                from models import SchedulerLock
+                
+                released = SchedulerLock.release_lock(
+                    lock_key=self.lock_key,
+                    process_id=self.process_id
+                )
+                
+                if released:
+                    logger.info("🔓 Telemetry scheduler released lock")
+                    
+        except Exception as e:
+            logger.error(f"Failed to release telemetry scheduler lock: {e}")
     
     def init_app(self, app):
         """Initialize scheduler with Flask app context"""
         self._app = app
         
-        from scheduler_lock import SchedulerLock
-        self._lock = SchedulerLock('telemetry_scheduler_lock')
-        
-        if not self._lock.acquire():
-            logger.info("Telemetry scheduler lock held by another worker, skipping startup")
+        if not self._acquire_scheduler_lock():
+            logger.info("Telemetry scheduler not started (no lock)")
             return False
         
         logger.info(f"Telemetry scheduler acquired lock (PID={os.getpid()})")
@@ -97,7 +151,9 @@ class TelemetrySchedulerService:
         )
         
         self._scheduler.start()
-        logger.info("Telemetry scheduler started successfully")
+        self._is_running = True
+        atexit.register(self.stop)
+        logger.info("Telemetry scheduler started successfully with 5 jobs")
         
         return True
     
@@ -155,19 +211,34 @@ class TelemetrySchedulerService:
                 logger.error(f"[TelemetryScheduler] History cleanup failed: {e}")
     
     def _heartbeat_job(self):
-        """Refresh scheduler lock"""
-        if self._lock:
-            self._lock.refresh()
+        """Refresh scheduler lock to prevent expiration"""
+        if not self._app:
+            return
+        
+        try:
+            with self._app.app_context():
+                from models import SchedulerLock, db
+                
+                lock = SchedulerLock.get_active_lock(self.lock_key)
+                if lock and lock.process_id == self.process_id:
+                    lock.refresh_lock(timeout_seconds=300)
+                    db.session.commit()
+                    logger.debug("🔄 Telemetry scheduler heartbeat refreshed")
+                else:
+                    logger.warning("⚠️ Heartbeat failed: lock lost, stopping scheduler")
+                    self.stop()
+                    
+        except Exception as e:
+            logger.error(f"Telemetry scheduler heartbeat failed: {e}")
     
     def stop(self):
         """Stop scheduler and release lock"""
-        if self._scheduler:
+        if self._scheduler and self._is_running:
             self._scheduler.shutdown(wait=False)
+            self._is_running = False
             logger.info("Telemetry scheduler stopped")
         
-        if self._lock:
-            self._lock.release()
-            logger.info("Telemetry scheduler lock released")
+        self._release_scheduler_lock()
     
     def get_status(self) -> dict:
         """Get scheduler status"""
