@@ -13,6 +13,7 @@ from functools import wraps
 from flask import Blueprint, request, jsonify, g
 from sqlalchemy import func
 from models import db, HostingSite, HostingMiner, MinerModel
+from services.telemetry_storage import TelemetryRaw24h
 
 logger = logging.getLogger(__name__)
 
@@ -471,6 +472,7 @@ def upload_telemetry():
         updates = []
         inserts = []
         history_inserts = []
+        raw_24h_inserts = []
         
         for miner_data in data:
             try:
@@ -550,6 +552,24 @@ def upload_telemetry():
                         'net_profit_usd': 0.0,
                         'revenue_usd': 0.0,
                     })
+                    
+                    hashrate_ghs = miner_data.get('hashrate_ghs', 0) or 0
+                    accepted = miner_data.get('accepted_shares', 0) or 0
+                    rejected = miner_data.get('rejected_shares', 0) or 0
+                    reject_rate = (rejected / (accepted + rejected) * 100) if (accepted + rejected) > 0 else 0
+                    
+                    raw_24h_inserts.append({
+                        'ts': now,
+                        'site_id': site_id,
+                        'miner_id': miner_id,
+                        'status': 'online',
+                        'hashrate_ths': hashrate_ghs / 1000,
+                        'temperature_c': miner_data.get('temperature_avg', 0) or 0,
+                        'power_w': miner_data.get('power_consumption', 0) or 0,
+                        'fan_rpm': fan_speed_avg,
+                        'reject_rate': reject_rate,
+                        'pool_url': (miner_data.get('pool_url', '') or '')[:200] or None,
+                    })
                 
                 # 同步数据到 hosting_miners 表（自动创建不存在的矿机）
                 try:
@@ -569,13 +589,11 @@ def upload_telemetry():
         if history_inserts:
             db.session.bulk_insert_mappings(MinerTelemetryHistory, history_inserts)
         
-        raw_inserted = 0
-        try:
-            from services.telemetry_storage import TelemetryStorageManager
-            raw_records = [{'site_id': site_id, 'ts': now, **m} for m in data if m.get('online', False)]
-            raw_inserted = TelemetryStorageManager.batch_insert_raw(raw_records)
-        except Exception as raw_err:
-            logger.warning(f"Raw telemetry insert failed (non-critical): {raw_err}")
+        if raw_24h_inserts:
+            try:
+                db.session.bulk_insert_mappings(TelemetryRaw24h, raw_24h_inserts)
+            except Exception as raw_err:
+                logger.warning(f"Raw telemetry insert failed (non-critical): {raw_err}")
         
         processing_time = int((time.time() - start_time) * 1000)
         
@@ -823,14 +841,25 @@ def get_miner_history(site_id, miner_id):
             history = TelemetryRaw24h.query.filter(
                 TelemetryRaw24h.site_id == site_id,
                 TelemetryRaw24h.miner_id == miner_id,
-                TelemetryRaw24h.timestamp >= since
-            ).order_by(TelemetryRaw24h.timestamp.asc()).all()
+                TelemetryRaw24h.ts >= since
+            ).order_by(TelemetryRaw24h.ts.asc()).all()
+            
+            raw_metric_map = {
+                'hashrate_ghs': 'hashrate_ths',
+                'temperature_avg': 'temperature_c',
+                'temperature_max': 'temperature_c',
+                'fan_speed_avg': 'fan_rpm',
+                'power_consumption': 'power_w'
+            }
+            attr_name = raw_metric_map.get(metric, metric)
             
             for h in history:
-                value = getattr(h, metric, None)
+                value = getattr(h, attr_name, None)
                 if value is not None:
+                    if metric == 'hashrate_ghs':
+                        value = value * 1000
                     points.append({
-                        'timestamp': h.timestamp.isoformat(),
+                        'timestamp': h.ts.isoformat(),
                         'value': value
                     })
                     
