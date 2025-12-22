@@ -529,10 +529,27 @@ def upload_telemetry():
                 else:
                     inserts.append(record_data)
                 
+                fan_speeds = miner_data.get('fan_speeds', [])
+                fan_speed_avg = sum(fan_speeds) // max(len(fan_speeds), 1) if fan_speeds else 0
+                hashrate_ghs = miner_data.get('hashrate_ghs', 0) or 0
+                accepted = miner_data.get('accepted_shares', 0) or 0
+                rejected = miner_data.get('rejected_shares', 0) or 0
+                reject_rate = (rejected / (accepted + rejected) * 100) if (accepted + rejected) > 0 else 0
+                
+                raw_24h_inserts.append({
+                    'ts': now,
+                    'site_id': site_id,
+                    'miner_id': miner_id,
+                    'status': 'online' if is_online else 'offline',
+                    'hashrate_ths': hashrate_ghs / 1000 if is_online else 0,
+                    'temperature_c': miner_data.get('temperature_avg', 0) or 0,
+                    'power_w': miner_data.get('power_consumption', 0) or 0 if is_online else 0,
+                    'fan_rpm': fan_speed_avg if is_online else 0,
+                    'reject_rate': reject_rate if is_online else 0,
+                    'pool_url': (miner_data.get('pool_url', '') or '')[:200] or None,
+                })
+                
                 if is_online:
-                    fan_speeds = miner_data.get('fan_speeds', [])
-                    fan_speed_avg = sum(fan_speeds) // max(len(fan_speeds), 1) if fan_speeds else 0
-                    
                     history_inserts.append({
                         'miner_id': miner_id,
                         'site_id': site_id,
@@ -551,24 +568,6 @@ def upload_telemetry():
                         'overall_health': miner_data.get('overall_health', 'healthy'),
                         'net_profit_usd': 0.0,
                         'revenue_usd': 0.0,
-                    })
-                    
-                    hashrate_ghs = miner_data.get('hashrate_ghs', 0) or 0
-                    accepted = miner_data.get('accepted_shares', 0) or 0
-                    rejected = miner_data.get('rejected_shares', 0) or 0
-                    reject_rate = (rejected / (accepted + rejected) * 100) if (accepted + rejected) > 0 else 0
-                    
-                    raw_24h_inserts.append({
-                        'ts': now,
-                        'site_id': site_id,
-                        'miner_id': miner_id,
-                        'status': 'online',
-                        'hashrate_ths': hashrate_ghs / 1000,
-                        'temperature_c': miner_data.get('temperature_avg', 0) or 0,
-                        'power_w': miner_data.get('power_consumption', 0) or 0,
-                        'fan_rpm': fan_speed_avg,
-                        'reject_rate': reject_rate,
-                        'pool_url': (miner_data.get('pool_url', '') or '')[:200] or None,
                     })
                 
                 # 同步数据到 hosting_miners 表（自动创建不存在的矿机）
