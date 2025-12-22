@@ -781,24 +781,32 @@ def get_miners_latest(site_id):
 @collector_bp.route('/monitor/sites/<int:site_id>/miners/<miner_id>/history', methods=['GET'])
 def get_miner_history(site_id, miner_id):
     """
-    获取矿机历史遥测数据
+    获取矿机历史遥测数据 - 4层智能路由
     
     GET /api/collector/monitor/sites/<site_id>/miners/<miner_id>/history
     
     Query params:
         - metric: 指标类型 (hashrate_ghs, temperature_avg, temperature_max, fan_speed_avg, power_consumption)
-        - hours: 查询小时数 (默认 24, 最大 168)
+        - hours: 查询小时数 (默认 24)
+        - layer: 强制指定层 (raw, history, daily) - 可选
+    
+    Intelligent Layer Routing:
+        - hours ≤ 24: telemetry_raw_24h (high resolution ~30s)
+        - hours ≤ 1440 (60 days): telemetry_history_5min (5-min rollups)
+        - hours > 1440: telemetry_daily (daily aggregates)
     
     Returns:
         - points: 时间序列数据点 [{timestamp, value}]
         - metric: 请求的指标名
-        - miner_id: 矿机ID
+        - layer: 使用的存储层
     """
     try:
-        metric = request.args.get('metric', 'hashrate_ghs')
-        hours = min(request.args.get('hours', 24, type=int), 168)  # 最大7天
+        from services.telemetry_storage import TelemetryRaw24h, TelemetryHistory5min, TelemetryDaily
         
-        # 验证 metric 参数
+        metric = request.args.get('metric', 'hashrate_ghs')
+        hours = request.args.get('hours', 24, type=int)
+        force_layer = request.args.get('layer')
+        
         valid_metrics = ['hashrate_ghs', 'temperature_avg', 'temperature_max', 'fan_speed_avg', 'power_consumption']
         if metric not in valid_metrics:
             return jsonify({
@@ -807,22 +815,91 @@ def get_miner_history(site_id, miner_id):
             }), 400
         
         since = datetime.utcnow() - timedelta(hours=hours)
-        
-        # 从历史表查询
-        history = MinerTelemetryHistory.query.filter(
-            MinerTelemetryHistory.site_id == site_id,
-            MinerTelemetryHistory.miner_id == miner_id,
-            MinerTelemetryHistory.timestamp >= since
-        ).order_by(MinerTelemetryHistory.timestamp.asc()).all()
-        
         points = []
-        for h in history:
-            value = getattr(h, metric, None)
-            if value is not None:
-                points.append({
-                    'timestamp': h.timestamp.isoformat(),
-                    'value': value
-                })
+        layer_used = 'unknown'
+        
+        if force_layer == 'raw' or (not force_layer and hours <= 24):
+            layer_used = 'raw_24h'
+            history = TelemetryRaw24h.query.filter(
+                TelemetryRaw24h.site_id == site_id,
+                TelemetryRaw24h.miner_id == miner_id,
+                TelemetryRaw24h.timestamp >= since
+            ).order_by(TelemetryRaw24h.timestamp.asc()).all()
+            
+            for h in history:
+                value = getattr(h, metric, None)
+                if value is not None:
+                    points.append({
+                        'timestamp': h.timestamp.isoformat(),
+                        'value': value
+                    })
+                    
+        elif force_layer == 'history' or (not force_layer and hours <= 1440):
+            layer_used = 'history_5min'
+            history = TelemetryHistory5min.query.filter(
+                TelemetryHistory5min.site_id == site_id,
+                TelemetryHistory5min.miner_id == miner_id,
+                TelemetryHistory5min.bucket_time >= since
+            ).order_by(TelemetryHistory5min.bucket_time.asc()).all()
+            
+            metric_map = {
+                'hashrate_ghs': 'hashrate_avg',
+                'temperature_avg': 'temp_avg',
+                'temperature_max': 'temp_max',
+                'fan_speed_avg': 'fan_avg',
+                'power_consumption': 'power_avg'
+            }
+            attr_name = metric_map.get(metric, metric)
+            
+            for h in history:
+                value = getattr(h, attr_name, None)
+                if value is not None:
+                    points.append({
+                        'timestamp': h.bucket_time.isoformat(),
+                        'value': value
+                    })
+                    
+        else:
+            layer_used = 'daily'
+            history = TelemetryDaily.query.filter(
+                TelemetryDaily.site_id == site_id,
+                TelemetryDaily.miner_id == miner_id,
+                TelemetryDaily.date >= since.date()
+            ).order_by(TelemetryDaily.date.asc()).all()
+            
+            metric_map = {
+                'hashrate_ghs': 'hashrate_avg',
+                'temperature_avg': 'temp_avg',
+                'temperature_max': 'temp_max',
+                'fan_speed_avg': 'fan_avg',
+                'power_consumption': 'power_total'
+            }
+            attr_name = metric_map.get(metric, metric)
+            
+            for h in history:
+                value = getattr(h, attr_name, None)
+                if value is not None:
+                    points.append({
+                        'timestamp': h.date.isoformat(),
+                        'value': value
+                    })
+        
+        if not points and layer_used == 'raw_24h':
+            fallback_history = MinerTelemetryHistory.query.filter(
+                MinerTelemetryHistory.site_id == site_id,
+                MinerTelemetryHistory.miner_id == miner_id,
+                MinerTelemetryHistory.timestamp >= since
+            ).order_by(MinerTelemetryHistory.timestamp.asc()).all()
+            
+            for h in fallback_history:
+                value = getattr(h, metric, None)
+                if value is not None:
+                    points.append({
+                        'timestamp': h.timestamp.isoformat(),
+                        'value': value
+                    })
+            if points:
+                layer_used = 'legacy_history'
         
         return jsonify({
             'success': True,
@@ -831,6 +908,7 @@ def get_miner_history(site_id, miner_id):
                 'site_id': site_id,
                 'metric': metric,
                 'hours': hours,
+                'layer': layer_used,
                 'points': points,
                 'count': len(points)
             }
