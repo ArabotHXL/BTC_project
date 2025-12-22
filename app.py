@@ -5302,6 +5302,26 @@ try:
 except Exception as e:
     logging.error(f"限电调度器初始化异常: {e}")
 
+# 🔧 初始化遥测存储调度器 - 4层存储系统 (raw_24h, live, history_5min, daily)
+def init_telemetry_scheduler():
+    """安全初始化遥测存储调度器 - 管理分区清理和rollup任务"""
+    try:
+        with app.app_context():
+            from services.telemetry_storage import TelemetryStorageManager
+            TelemetryStorageManager.ensure_tables_exist()
+        
+        from services.telemetry_scheduler import telemetry_scheduler
+        telemetry_scheduler.init_app(app)
+        logging.info("遥测存储调度器初始化完成 (4-layer storage)")
+        
+    except Exception as e:
+        logging.warning(f"遥测存储调度器初始化失败: {e}")
+
+try:
+    init_telemetry_scheduler()
+except Exception as e:
+    logging.error(f"遥测存储调度器初始化异常: {e}")
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
 # 支付监控管理API路由

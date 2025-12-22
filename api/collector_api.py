@@ -569,6 +569,14 @@ def upload_telemetry():
         if history_inserts:
             db.session.bulk_insert_mappings(MinerTelemetryHistory, history_inserts)
         
+        raw_inserted = 0
+        try:
+            from services.telemetry_storage import TelemetryStorageManager
+            raw_records = [{'site_id': site_id, 'ts': now, **m} for m in data if m.get('online', False)]
+            raw_inserted = TelemetryStorageManager.batch_insert_raw(raw_records)
+        except Exception as raw_err:
+            logger.warning(f"Raw telemetry insert failed (non-critical): {raw_err}")
+        
         processing_time = int((time.time() - start_time) * 1000)
         
         upload_log = CollectorUploadLog(
@@ -1879,6 +1887,53 @@ CMD ["python", "cgminer_collector.py"]
         as_attachment=True,
         download_name='edge_collector.zip'
     )
+
+
+@collector_bp.route('/storage-stats', methods=['GET'])
+def get_storage_stats():
+    """
+    获取遥测存储统计
+    
+    GET /api/collector/storage-stats
+    
+    Returns:
+        - Table sizes and row counts
+        - Oldest/newest data timestamps
+        - Total telemetry storage size
+    """
+    try:
+        from services.telemetry_storage import TelemetryStorageManager
+        stats = TelemetryStorageManager.get_storage_stats()
+        
+        return jsonify({
+            'success': True,
+            'data': stats
+        })
+        
+    except Exception as e:
+        logger.error(f"Get storage stats error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@collector_bp.route('/scheduler-status', methods=['GET'])
+def get_scheduler_status():
+    """
+    获取遥测调度器状态
+    
+    GET /api/collector/scheduler-status
+    """
+    try:
+        from services.telemetry_scheduler import telemetry_scheduler
+        status = telemetry_scheduler.get_status()
+        
+        return jsonify({
+            'success': True,
+            'data': status
+        })
+        
+    except Exception as e:
+        logger.error(f"Get scheduler status error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 def register_collector_routes(app):
