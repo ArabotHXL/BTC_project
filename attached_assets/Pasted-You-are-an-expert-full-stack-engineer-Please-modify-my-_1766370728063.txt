@@ -1,0 +1,151 @@
+You are an expert full-stack engineer. Please modify my existing repo to implement the Cloud-side (Replit) requirements for HashInsight collector ingestion + 24h monitor (Option A: all data stored in Postgres on Replit).
+
+Repository:
+- https://github.com/ArabotHXL/BTC_project
+
+Goal:
+- Support site collector uploads via IP-based miner polling (Pickaxe runs on-site), and store/serve:
+  1) latest status per miner (near-real-time view)
+  2) raw telemetry for last 24 hours (for 24h monitor feature)
+  3) aggregated history 30–60 days (1m or 5m rollup)
+  4) long-term daily aggregates (archive)
+
+Constraints:
+- Replit Postgres storage limit is 10 GiB, so raw telemetry must be strict TTL 24h and must not grow unbounded.
+- Upload should be fast and resilient. Avoid per-row commits. Use batch insert/upsert.
+- Do NOT break existing endpoints. Extend/adjust carefully and update README.
+
+Deliverables (Cloud / Replit side):
+
+A) API & Auth (must be on cloud)
+1) Implement/confirm endpoint:
+   POST /api/collector/upload
+   - Accept either:
+     a) JSON array payload: [ {...minerRecord...}, ... ]
+     b) gzip-compressed JSON array (Content-Encoding: gzip) with Content-Type: application/octet-stream
+   - Auth:
+     - Read headers:
+       X-Collector-Key: <collector_api_key>
+       X-Site-ID: <site_id>
+     - Validate key against DB table (collector_keys) or existing auth mechanism in repo.
+     - Site ID must be validated/linked to collector key (or allow if key explicitly authorizes the site).
+   - Response JSON format MUST include:
+     {
+       "success": true,
+       "inserted": <int>,
+       "updated": <int>,
+       "data": {
+         "processed": <int>,
+         "online": <int>,
+         "offline": <int>,
+         "processing_time_ms": <int>
+       }
+     }
+   - Return proper 4xx/401 with JSON error message if invalid key or malformed payload.
+
+2) Monitoring APIs:
+   - GET /api/collector/monitor/sites/<site_id>/miners/latest
+     Query params:
+       - page, page_size
+       - online_only=true/false
+     Returns paginated latest miner list for the site (from miners_latest table), plus summary counts.
+   - GET /api/collector/monitor/sites/<site_id>/miners/<miner_id>/history
+     Query params:
+       - metric=hashrate|temperature|fan|power (default hashrate)
+       - hours=<int> (default 24, max 168)
+     Returns time series from telemetry_raw_24h (for hours<=24) or from telemetry_history (for larger), whichever is available.
+
+B) Database: 4-layer storage (Option A)
+Create/ensure these tables (use migrations or SQLAlchemy models based on repo style):
+
+1) miners_latest  (Hot: latest status, 1 row per miner)
+   - PK: (site_id, miner_id)
+   - Columns (minimum):
+     site_id, miner_id, ip, type, status, hashrate_ths, temperature_c, power_w,
+     fan_rpm (int[] or json), pool_url, worker_name,
+     last_seen_ts (timestamp), updated_at (timestamp)
+   - Upsert on conflict (site_id, miner_id) DO UPDATE.
+
+2) telemetry_raw_24h (Hot time-series: raw points only for last 24h)
+   - Columns (minimum):
+     ts (timestamp), site_id, miner_id,
+     status, hashrate_ths, temperature_c, power_w, fan_rpm, reject_rate, pool_url
+   - Index minimal: (site_id, miner_id, ts)
+   - MUST be partitioned by day (range partition on ts) OR by hour if easier.
+   - TTL cleanup: keep only last 24h. Implement automated dropping of old partitions.
+   - IMPORTANT: Avoid DELETE for TTL; prefer DROP PARTITION.
+
+3) telemetry_history (Warm: 30–60 days rollup, recommend 5-minute or 1-minute buckets)
+   - Columns:
+     bucket_ts (timestamp), site_id, miner_id,
+     avg_hashrate, max_temp, avg_power, online_ratio, samples
+   - Index: (site_id, miner_id, bucket_ts)
+   - Keep 60 days. Cleanup job for old data.
+
+4) telemetry_daily (Cold archive: daily aggregates)
+   - Columns:
+     day (date), site_id, miner_id,
+     avg_hashrate, max_temp, avg_power, online_ratio, samples
+   - Index: (site_id, miner_id, day)
+
+C) Ingestion logic (must be in cloud)
+For each upload batch:
+1) Always update miners_latest via batch UPSERT (fast path for near real-time UI).
+2) Insert into telemetry_raw_24h ONLY for points intended for raw monitor.
+   - If payload does not distinguish, treat each upload batch as raw (simplest MVP),
+     but still enforce TTL via partition dropping.
+   - Better: support optional field per record: "persist_raw": true/false,
+     OR accept a header "X-Upload-Mode: latest|raw" (default raw) to reduce raw volume.
+   - Choose the simplest option that still keeps DB under 10 GiB.
+3) Do NOT compute history rollup synchronously inside upload request if it adds latency.
+   - Implement an async/scheduled job (APScheduler or background worker) that:
+     a) aggregates telemetry_raw_24h into telemetry_history buckets (1m or 5m)
+     b) aggregates telemetry_history into telemetry_daily once per day
+4) Upload must be efficient:
+   - Use bulk insert for raw
+   - Use bulk upsert for latest
+   - One transaction per batch (not per miner)
+
+D) Partition & Cleanup Jobs
+Implement scheduled jobs on the cloud app:
+1) Ensure today's partition exists for telemetry_raw_24h (create on startup and daily).
+2) Drop partitions older than 2 days (to guarantee last 24h window).
+3) Trim telemetry_history to last 60 days.
+4) Optional: Trim telemetry_daily older than X (or keep indefinitely since it’s small).
+
+E) Web UI (Cloud)
+Implement/confirm a monitoring page:
+- GET /monitor/<site_id>
+  - Uses miners_latest endpoint for real-time table
+  - Click a miner -> calls history endpoint to draw chart
+  - Use Bootstrap + Chart.js (or existing UI stack in repo)
+  - Auto refresh every 30s (configurable)
+
+F) README updates
+Add a “Collector” section:
+- Correct Cloud API Base URL format: https://calc.hashinsight.net (no trailing /api/collector/upload)
+- Curl examples:
+  1) Plain JSON array
+  2) gzip upload (matching collector)
+- Explain headers: X-Collector-Key, X-Site-ID
+- Explain payload schema: MUST be an array of miner objects (not {"site_id":..., "items":...})
+
+Acceptance tests (must be verifiable):
+1) curl with JSON array returns 200 with success=true and inserted/updated integers.
+2) /api/collector/monitor/sites/site_001/miners/latest returns paginated list.
+3) /api/collector/monitor/sites/site_001/miners/<miner_id>/history?metric=hashrate&hours=24 returns time series.
+4) Raw table does not grow beyond 24h window (partitions are being dropped).
+5) Monitor page loads and shows miners list.
+
+Implementation notes:
+- Inspect existing project structure first. Reuse existing Flask/FastAPI routing, DB layer, and auth tables if present.
+- Prefer migrations if repo has Alembic; otherwise create SQL init scripts and ensure they run.
+- Log meaningful messages with request_id, site_id, processed counts.
+- Do not hardcode any tokens. Use placeholders and environment variables for DB connection.
+- Keep changes minimal but production-safe.
+
+Now implement the above in the repo. Show:
+- Which files you changed
+- Any new files added (migrations, scheduler, UI templates)
+- How to run locally and on Replit
+- Example curl commands with placeholders
