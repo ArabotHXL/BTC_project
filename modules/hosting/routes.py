@@ -6795,17 +6795,14 @@ def kpi_dashboard():
     """
     lang = session.get('language', 'zh')
     user_role = normalize_role(session.get('role', 'guest'))
+    user_email = session.get('email')
     
     sites = []
     if rbac_manager.has_full_access(user_role, Module.HOSTING_SITE_MGMT):
-        sites = HostingSite.query.filter_by(is_active=True).all()
+        sites = HostingSite.query.all()
     else:
-        user_id = session.get('user_id')
-        if user_id:
-            sites = HostingSite.query.filter(
-                HostingSite.is_active == True,
-                HostingSite.owner_id == user_id
-            ).all()
+        if user_email:
+            sites = HostingSite.query.filter_by(contact_email=user_email).all()
     
     selected_site_id = request.args.get('site_id', type=int)
     period_days = request.args.get('period', 7, type=int)
@@ -6836,7 +6833,7 @@ def kpi_dashboard():
                            selected_site_id=selected_site_id,
                            period_days=period_days,
                            kpi_data=kpi_data,
-                           lang=lang)
+                           current_lang=lang)
 
 
 @hosting_bp.route('/api/kpi/<int:site_id>')
@@ -6847,14 +6844,13 @@ def api_get_kpi(site_id):
     try:
         # Verify site access
         user_role = normalize_role(session.get('role', 'guest'))
+        user_email = session.get('email')
         if rbac_manager.has_full_access(user_role, Module.HOSTING_SITE_MGMT):
-            site = HostingSite.query.filter_by(id=site_id, is_active=True).first()
+            site = HostingSite.query.get(site_id)
         else:
-            user_id = session.get('user_id')
             site = HostingSite.query.filter(
                 HostingSite.id == site_id,
-                HostingSite.is_active == True,
-                HostingSite.owner_id == user_id
+                HostingSite.contact_email == user_email
             ).first()
         
         if not site:
