@@ -162,6 +162,8 @@ class MinerCommand(db.Model):
     site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=False)
     ip_address = db.Column(db.String(45))
     
+    remote_command_id = db.Column(db.String(36), db.ForeignKey('remote_commands.id'), nullable=True, index=True)
+    
     command_type = db.Column(db.String(30), nullable=False, index=True)
     parameters = db.Column(db.JSON, default={})
     
@@ -181,10 +183,14 @@ class MinerCommand(db.Model):
     retry_count = db.Column(db.Integer, default=0)
     max_retries = db.Column(db.Integer, default=3)
     
+    execution_time_ms = db.Column(db.Integer)
+    edge_device_id = db.Column(db.String(50))
+    
     __table_args__ = (
         db.Index('ix_miner_commands_site_status', 'site_id', 'status'),
         db.Index('ix_miner_commands_miner_status', 'miner_id', 'status'),
         db.Index('ix_miner_commands_expires', 'expires_at'),
+        db.Index('ix_miner_commands_remote_cmd', 'remote_command_id'),
     )
     
     COMMAND_TYPES = {
@@ -212,7 +218,7 @@ class MinerCommand(db.Model):
             'id': self.id,
             'miner_id': self.miner_id,
             'site_id': self.site_id,
-            'ip_address': self.ip_address,
+            'remote_command_id': self.remote_command_id,
             'command_type': self.command_type,
             'command_desc': self.COMMAND_TYPES.get(self.command_type, self.command_type),
             'parameters': self.parameters,
@@ -227,19 +233,22 @@ class MinerCommand(db.Model):
             'result_message': self.result_message,
             'operator_id': self.operator_id,
             'retry_count': self.retry_count,
-            'max_retries': self.max_retries
+            'max_retries': self.max_retries,
+            'execution_time_ms': self.execution_time_ms,
+            'edge_device_id': self.edge_device_id
         }
     
     def to_command_payload(self):
-        """生成发送给采集器的命令载荷"""
+        """生成发送给采集器的命令载荷 (不包含IP，由Edge本地解析)"""
         return {
             'command_id': self.id,
             'miner_id': self.miner_id,
-            'ip_address': self.ip_address,
+            'site_id': self.site_id,
             'command': self.command_type,
             'params': self.parameters or {},
             'priority': self.priority,
-            'expires_at': self.expires_at.isoformat() if self.expires_at else None
+            'expires_at': self.expires_at.isoformat() if self.expires_at else None,
+            'remote_command_id': self.remote_command_id
         }
 
 
@@ -1422,8 +1431,12 @@ def report_command_result(command_id):
     {
         "status": "completed|failed",
         "result_code": 0,  // 0=成功, 非0=错误
-        "result_message": "Success" 
+        "result_message": "Success",
+        "execution_time_ms": 1234,  // 执行耗时(毫秒)
+        "edge_device_id": "edge-001"  // 执行设备ID
     }
+    
+    如果命令关联了 RemoteCommand，会自动聚合结果并更新 RemoteCommandResult
     """
     try:
         site_id = g.site_id
@@ -1437,19 +1450,32 @@ def report_command_result(command_id):
             return jsonify({'success': False, 'error': 'Command not found'}), 404
         
         data = request.get_json()
+        now = datetime.utcnow()
         
         command.status = data.get('status', 'completed')
         command.result_code = data.get('result_code', 0)
         command.result_message = data.get('result_message')
-        command.executed_at = datetime.utcnow()
+        command.executed_at = now
+        command.execution_time_ms = data.get('execution_time_ms')
+        command.edge_device_id = data.get('edge_device_id')
         
         db.session.commit()
         
         logger.info(f"Command {command_id} result: {command.status} - {command.result_message}")
         
+        aggregation_result = None
+        if command.remote_command_id:
+            try:
+                from services.command_dispatcher import aggregate_command_results
+                aggregation_result = aggregate_command_results(command.remote_command_id)
+                logger.info(f"Aggregated results for RemoteCommand {command.remote_command_id[:8]}: {aggregation_result}")
+            except Exception as agg_error:
+                logger.warning(f"Failed to aggregate results: {agg_error}")
+        
         return jsonify({
             'success': True,
-            'message': 'Result reported successfully'
+            'message': 'Result reported successfully',
+            'aggregation': aggregation_result
         })
         
     except Exception as e:

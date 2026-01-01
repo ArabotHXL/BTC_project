@@ -332,6 +332,8 @@ def approve_command(command_id):
     RBAC权限: REMOTE_CONTROL_EXECUTE
     - Owner/Admin/Mining_Site_Owner: FULL (可以批准执行)
     - 其他角色: NONE (无权限)
+    
+    审批后自动调度到 MinerCommand 队列，供 Edge Collector 轮询
     """
     
     command = RemoteCommand.query.get(command_id)
@@ -348,11 +350,36 @@ def approve_command(command_id):
     
     db.session.commit()
     
-    log_command_event(command, 'approve', {'approved_by': g.user_id})
+    dispatch_result = None
+    try:
+        from services.command_dispatcher import dispatch_remote_command
+        success_list, error_list = dispatch_remote_command(
+            remote_command_id=command.id,
+            site_id=command.site_id,
+            target_ids=command.target_ids,
+            command_type=command.command_type,
+            parameters=command.payload_json,
+            operator_id=g.user_id,
+            expires_at=command.expires_at
+        )
+        dispatch_result = {
+            'dispatched': len(success_list),
+            'errors': len(error_list),
+            'error_details': error_list if error_list else None
+        }
+        logger.info(f"Dispatched RemoteCommand {command_id}: {len(success_list)} commands, {len(error_list)} errors")
+    except Exception as e:
+        logger.error(f"Failed to dispatch commands: {e}")
+        dispatch_result = {'error': str(e)}
+    
+    log_command_event(command, 'approve', {'approved_by': g.user_id, 'dispatch': dispatch_result})
+    
+    response_data = command.to_dict(include_results=True)
+    response_data['dispatch'] = dispatch_result
     
     return jsonify({
         'success': True,
-        'command': command.to_dict(include_results=True)
+        'command': response_data
     })
 
 

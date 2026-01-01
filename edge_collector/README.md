@@ -345,11 +345,128 @@ https://calc.hashinsight.net/monitor/<site_id>
 - 时间范围: 6小时、12小时、24小时、48小时、7天
 - 自动刷新 (30秒)
 
+## 远程命令控制
+
+Edge Collector 支持从云端接收并执行矿机控制命令。
+
+### 启用命令控制
+
+在配置文件中添加：
+
+```json
+{
+    "api_url": "https://your-app.replit.app",
+    "api_key": "hsc_xxxxx",
+    "site_id": "7",
+    "enable_commands": true,
+    "command_poll_interval": 5
+}
+```
+
+或使用环境变量：
+
+```bash
+export API_URL="https://your-app.replit.app"
+export COLLECTOR_KEY="hsc_xxxxx"
+export SITE_ID="7"
+export ENABLE_COMMANDS="true"
+```
+
+### 命令配置说明
+
+| 参数 | 说明 | 默认值 |
+|------|------|--------|
+| enable_commands | 是否启用命令控制 | false |
+| command_poll_interval | 命令轮询间隔 (秒) | 5 |
+
+### 支持的命令类型
+
+| 云端命令 | Edge 命令 | 说明 |
+|----------|-----------|------|
+| REBOOT | restart | 重启矿机 |
+| POWER_MODE | set_frequency | 调整功耗/频率 |
+| CHANGE_POOL | set_pool | 切换矿池 |
+| START / ENABLE | enable | 启动挖矿 |
+| STOP / DISABLE | disable | 停止挖矿 |
+| SET_FAN | set_fan | 调整风扇转速 |
+
+### 安全模型
+
+**重要**: Edge Collector 采用安全优先的设计：
+
+1. **云端不发送 IP 地址** - 云端只提供 `site_id` + `miner_id`
+2. **本地 IP 解析** - Edge 根据 `miner_id` 在本地白名单/配置查找 IP
+3. **命令认证** - 所有命令必须通过 Collector Key 认证
+4. **TTL 过期** - 超时命令自动作废，不会执行
+
+### 命令轮询 API
+
+Edge Collector 会定期轮询待执行命令：
+
+```
+GET /api/collector/commands/pending
+Headers:
+  X-Collector-Key: hsc_xxxxx
+  X-Site-ID: 7
+```
+
+响应：
+```json
+{
+  "success": true,
+  "commands": [
+    {
+      "command_id": 123,
+      "miner_id": "S19_0001",
+      "site_id": 7,
+      "command": "restart",
+      "params": {},
+      "priority": 5,
+      "expires_at": "2026-01-02T12:00:00Z"
+    }
+  ]
+}
+```
+
+### 结果上报 API
+
+执行完成后，上报结果：
+
+```
+POST /api/collector/commands/123/result
+Headers:
+  X-Collector-Key: hsc_xxxxx
+Body:
+{
+  "status": "completed",
+  "result_code": 0,
+  "result_message": "Miner restarted successfully",
+  "execution_time_ms": 1234,
+  "edge_device_id": "edge-001"
+}
+```
+
+### 矿机白名单配置
+
+为了安全，Edge 需要在本地维护矿机白名单，将 `miner_id` 映射到 IP：
+
+```json
+{
+  "miner_whitelist": {
+    "S19_0001": "192.168.1.100",
+    "S19_0002": "192.168.1.101",
+    "M30_0001": "192.168.2.100"
+  }
+}
+```
+
+或者使用配置中的 `miners` 列表自动生成白名单。
+
 ## 支持
 
 如有问题，请联系技术支持或提交 Issue。
 
 ---
 
-版本: 1.0.0  
-更新: 2024-11
+版本: 2.0.0  
+更新: 2026-01
