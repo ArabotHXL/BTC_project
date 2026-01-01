@@ -1523,6 +1523,9 @@ def get_miners():
         sort_by = request.args.get('sort_by', 'serial_number')
         sort_dir = request.args.get('sort_dir', 'asc')
         
+        # 性能优化：是否加载详细计算数据
+        include_metrics = request.args.get('include_metrics', 'false').lower() == 'true'
+        
         # 允许排序的字段白名单
         allowed_sort_fields = {
             'serial_number': HostingMiner.serial_number,
@@ -1538,8 +1541,13 @@ def get_miners():
             'evaluation_grade': HostingMiner.health_score,  # 以健康分数代替评级
         }
         
-        # 构建查询
-        query = HostingMiner.query
+        # 构建查询 - 使用 joinedload 一次性加载关联数据，避免N+1
+        from sqlalchemy.orm import joinedload
+        query = HostingMiner.query.options(
+            joinedload(HostingMiner.customer),
+            joinedload(HostingMiner.site),
+            joinedload(HostingMiner.miner_model)
+        )
         
         # 权限控制 - 角色级别数据隔离
         if user_role == 'admin':
@@ -1588,16 +1596,19 @@ def get_miners():
         
         current_lang = session.get('language', 'zh')
         
-        try:
-            from services.hosting_revenue_service import get_revenue_service
-            from services.miner_evaluation_service import get_evaluation_service
-            revenue_service = get_revenue_service()
-            evaluation_service = get_evaluation_service()
-            services_available = True
-            logger.info("收益和评估服务加载成功")
-        except Exception as svc_err:
-            logger.warning(f"收益/评估服务加载失败: {svc_err}", exc_info=True)
-            services_available = False
+        # 性能优化：只在需要时加载重量级服务
+        services_available = False
+        revenue_service = None
+        evaluation_service = None
+        if include_metrics:
+            try:
+                from services.hosting_revenue_service import get_revenue_service
+                from services.miner_evaluation_service import get_evaluation_service
+                revenue_service = get_revenue_service()
+                evaluation_service = get_evaluation_service()
+                services_available = True
+            except Exception as svc_err:
+                logger.warning(f"收益/评估服务加载失败: {svc_err}")
         
         site_ids = list(set(m.site_id for m in pagination.items if m.site_id))
         miner_identifiers = [(m.serial_number, m.site_id) for m in pagination.items if m.serial_number and m.site_id]
@@ -1662,68 +1673,107 @@ def get_miners():
             miner_data['alerts'] = alerts_info
             
             # 添加收益和评分数据
-            if services_available and miner.actual_hashrate and miner.actual_power:
-                try:
-                    model = miner.miner_model
-                    model_name = model.model_name if model else "Unknown"
-                    rated_hashrate = model.reference_hashrate if model else miner.actual_hashrate
-                    rated_power = model.reference_power if model else miner.actual_power
-                    
-                    revenue_metrics = revenue_service.calculate_miner_revenue(
-                        miner_id=miner.id,
-                        serial_number=miner.serial_number,
-                        model_name=model_name,
-                        hashrate_th=miner.actual_hashrate,
-                        power_w=miner.actual_power,
-                        electricity_rate=electricity_rate,
-                        health_score=miner.health_score or 100
-                    )
-                    miner_data['daily_net_profit'] = revenue_metrics.daily_net_profit
-                    miner_data['daily_usd'] = revenue_metrics.daily_usd
-                    miner_data['efficiency_jth'] = revenue_metrics.efficiency_jth
-                    miner_data['efficiency_grade'] = revenue_metrics.efficiency_grade
-                    
-                    evaluation = evaluation_service.evaluate_miner(
-                        miner_id=miner.id,
-                        serial_number=miner.serial_number,
-                        model_name=model_name,
-                        actual_hashrate_th=miner.actual_hashrate or 0,
-                        rated_hashrate_th=rated_hashrate,
-                        actual_power_w=miner.actual_power or 0,
-                        rated_power_w=rated_power,
-                        electricity_rate=electricity_rate,
-                        temp_avg=miner.temperature_avg or 0,
-                        temp_max=miner.temperature_max or 0,
-                        fan_avg=miner.fan_avg or 0,
-                        hardware_errors=miner.hardware_errors or 0,
-                        reject_rate=miner.reject_rate or 0,
-                        uptime_seconds=miner.uptime_seconds or 0,
-                        is_online=miner.status == 'active' or miner.cgminer_online,
-                        expected_daily_usd=revenue_metrics.daily_usd
-                    )
-                    miner_data['evaluation_grade'] = evaluation.composite_grade
-                    miner_data['evaluation_score'] = evaluation.composite_score
-                except Exception as eval_err:
-                    logger.error(f"矿机 {miner.id} 评估失败: {eval_err}", exc_info=True)
-            else:
-                if not services_available:
-                    logger.debug(f"矿机 {miner.id}: 服务不可用")
-                elif not miner.actual_hashrate:
-                    logger.debug(f"矿机 {miner.id}: 无算力数据")
-                elif not miner.actual_power:
-                    logger.debug(f"矿机 {miner.id}: 无功耗数据")
+            if miner.actual_hashrate and miner.actual_power:
+                if services_available and revenue_service and evaluation_service:
+                    # 完整计算模式（慢但精确）
+                    try:
+                        model = miner.miner_model
+                        model_name = model.model_name if model else "Unknown"
+                        rated_hashrate = model.reference_hashrate if model else miner.actual_hashrate
+                        rated_power = model.reference_power if model else miner.actual_power
+                        
+                        revenue_metrics = revenue_service.calculate_miner_revenue(
+                            miner_id=miner.id,
+                            serial_number=miner.serial_number,
+                            model_name=model_name,
+                            hashrate_th=miner.actual_hashrate,
+                            power_w=miner.actual_power,
+                            electricity_rate=electricity_rate,
+                            health_score=miner.health_score or 100
+                        )
+                        miner_data['daily_net_profit'] = revenue_metrics.daily_net_profit
+                        miner_data['daily_usd'] = revenue_metrics.daily_usd
+                        miner_data['efficiency_jth'] = revenue_metrics.efficiency_jth
+                        miner_data['efficiency_grade'] = revenue_metrics.efficiency_grade
+                        
+                        evaluation = evaluation_service.evaluate_miner(
+                            miner_id=miner.id,
+                            serial_number=miner.serial_number,
+                            model_name=model_name,
+                            actual_hashrate_th=miner.actual_hashrate or 0,
+                            rated_hashrate_th=rated_hashrate,
+                            actual_power_w=miner.actual_power or 0,
+                            rated_power_w=rated_power,
+                            electricity_rate=electricity_rate,
+                            temp_avg=miner.temperature_avg or 0,
+                            temp_max=miner.temperature_max or 0,
+                            fan_avg=miner.fan_avg or 0,
+                            hardware_errors=miner.hardware_errors or 0,
+                            reject_rate=miner.reject_rate or 0,
+                            uptime_seconds=miner.uptime_seconds or 0,
+                            is_online=miner.status == 'active' or miner.cgminer_online,
+                            expected_daily_usd=revenue_metrics.daily_usd
+                        )
+                        miner_data['evaluation_grade'] = evaluation.composite_grade
+                        miner_data['evaluation_score'] = evaluation.composite_score
+                    except Exception as eval_err:
+                        logger.error(f"矿机 {miner.id} 评估失败: {eval_err}")
+                else:
+                    # 快速估算模式（默认）- 使用简化公式
+                    # 日收益 = 算力(TH/s) * $0.055/TH/day - 功耗(kW) * 电价 * 24h
+                    hashrate = miner.actual_hashrate or 0
+                    power_kw = (miner.actual_power or 0) / 1000
+                    daily_revenue = hashrate * 0.055  # ~$0.055/TH/day估算
+                    daily_cost = power_kw * electricity_rate * 24
+                    daily_profit = daily_revenue - daily_cost
+                    miner_data['daily_net_profit'] = round(daily_profit, 2)
+                    miner_data['daily_usd'] = round(daily_revenue, 2)
+                    # 简化能效评级
+                    if power_kw > 0:
+                        efficiency = (miner.actual_power or 0) / hashrate if hashrate > 0 else 999
+                        miner_data['efficiency_jth'] = round(efficiency, 1)
+                        if efficiency < 25:
+                            miner_data['efficiency_grade'] = 'A'
+                        elif efficiency < 30:
+                            miner_data['efficiency_grade'] = 'B'
+                        elif efficiency < 35:
+                            miner_data['efficiency_grade'] = 'C'
+                        else:
+                            miner_data['efficiency_grade'] = 'D'
+                    # 使用数据库已存储的评级（如果有）
+                    if miner.health_score:
+                        if miner.health_score >= 90:
+                            miner_data['evaluation_grade'] = 'A'
+                        elif miner.health_score >= 75:
+                            miner_data['evaluation_grade'] = 'B'
+                        elif miner.health_score >= 60:
+                            miner_data['evaluation_grade'] = 'C'
+                        else:
+                            miner_data['evaluation_grade'] = 'D'
+                        miner_data['evaluation_score'] = miner.health_score
             
             miners_data.append(miner_data)
         
-        # Calculate counts for UI display
-        base_query = HostingMiner.query
+        # 性能优化：使用单次聚合查询获取所有计数，替代3次单独查询
+        count_query = db.session.query(
+            db.func.count(HostingMiner.id).label('total'),
+            db.func.sum(db.case((HostingMiner.status == 'active', 1), else_=0)).label('active'),
+            db.func.sum(db.case((HostingMiner.approval_status == 'pending_approval', 1), else_=0)).label('pending')
+        )
         if user_role not in ['owner', 'admin', 'mining_site_owner']:
-            base_query = base_query.filter_by(customer_id=user_id)
+            count_query = count_query.filter(HostingMiner.customer_id == user_id)
+        elif user_role == 'mining_site_owner':
+            user_email = session.get('email', '')
+            managed_sites = HostingSite.query.filter_by(contact_email=user_email).all()
+            managed_site_ids = [s.id for s in managed_sites]
+            if managed_site_ids:
+                count_query = count_query.filter(HostingMiner.site_id.in_(managed_site_ids))
         
+        count_result = count_query.first()
         counts = {
-            'total': base_query.count(),
-            'active': base_query.filter_by(status='active').count(),
-            'pending': base_query.filter_by(approval_status='pending_approval').count()
+            'total': count_result.total or 0,
+            'active': int(count_result.active or 0),
+            'pending': int(count_result.pending or 0)
         }
         
         return jsonify({
