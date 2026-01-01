@@ -1506,7 +1506,7 @@ def save_usage_alerts():
 @login_required
 @requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def get_miners():
-    """获取矿机列表（支持筛选和分页）"""
+    """获取矿机列表（支持筛选、分页和排序）"""
     try:
         user_id = session.get('user_id')
         user_role = session.get('role', 'guest')
@@ -1518,6 +1518,25 @@ def get_miners():
         approval_status = request.args.get('approval_status')
         site_id = request.args.get('site_id', type=int)
         customer_id = request.args.get('customer_id', type=int)
+        
+        # 排序参数
+        sort_by = request.args.get('sort_by', 'serial_number')
+        sort_dir = request.args.get('sort_dir', 'asc')
+        
+        # 允许排序的字段白名单
+        allowed_sort_fields = {
+            'serial_number': HostingMiner.serial_number,
+            'customer_email': None,  # 关联字段，需要特殊处理
+            'miner_model': None,  # 关联字段
+            'site_name': None,  # 关联字段
+            'actual_hashrate': HostingMiner.actual_hashrate,
+            'actual_power': HostingMiner.actual_power,
+            'daily_profit': HostingMiner.actual_hashrate,  # 以算力排序作为收益代理
+            'temperature_avg': HostingMiner.temperature_avg,
+            'fan_avg': HostingMiner.fan_avg,
+            'status': HostingMiner.status,
+            'evaluation_grade': HostingMiner.health_score,  # 以健康分数代替评级
+        }
         
         # 构建查询
         query = HostingMiner.query
@@ -1550,6 +1569,17 @@ def get_miners():
         if customer_id and user_role in ['admin', 'mining_site_owner']:
             # 管理员和矿场运营方可以按客户ID筛选
             query = query.filter_by(customer_id=customer_id)
+        
+        # 应用排序
+        if sort_by in allowed_sort_fields and allowed_sort_fields[sort_by] is not None:
+            sort_column = allowed_sort_fields[sort_by]
+            if sort_dir == 'desc':
+                query = query.order_by(sort_column.desc().nulls_last())
+            else:
+                query = query.order_by(sort_column.asc().nulls_last())
+        else:
+            # 默认按序列号升序
+            query = query.order_by(HostingMiner.serial_number.asc())
         
         # 分页
         pagination = query.paginate(

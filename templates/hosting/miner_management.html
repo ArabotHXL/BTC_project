@@ -308,18 +308,51 @@
                 <thead>
                     <tr>
                         <th style="width: 40px;"><input type="checkbox" id="selectAll" class="form-check-input"></th>
-                        <th>{% if current_lang == 'en' %}Serial Number{% else %}序列号{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Grade{% else %}评级{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Customer{% else %}客户{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Miner Model{% else %}矿机型号{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Site{% else %}站点{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Power{% else %}功耗{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Daily Profit{% else %}日收益{% endif %}</th>
+                        <th class="sortable-header" data-sort="serial_number" onclick="toggleSort('serial_number')">
+                            {% if current_lang == 'en' %}Serial Number{% else %}序列号{% endif %}
+                            <i class="bi bi-arrow-down-up sort-icon ms-1"></i>
+                        </th>
+                        <th class="sortable-header" data-sort="evaluation_grade" onclick="toggleSort('evaluation_grade')">
+                            {% if current_lang == 'en' %}Grade{% else %}评级{% endif %}
+                            <i class="bi bi-arrow-down-up sort-icon ms-1"></i>
+                        </th>
+                        <th class="sortable-header" data-sort="customer_email" onclick="toggleSort('customer_email')">
+                            {% if current_lang == 'en' %}Customer{% else %}客户{% endif %}
+                            <i class="bi bi-arrow-down-up sort-icon ms-1"></i>
+                        </th>
+                        <th class="sortable-header" data-sort="miner_model" onclick="toggleSort('miner_model')">
+                            {% if current_lang == 'en' %}Miner Model{% else %}矿机型号{% endif %}
+                            <i class="bi bi-arrow-down-up sort-icon ms-1"></i>
+                        </th>
+                        <th class="sortable-header" data-sort="site_name" onclick="toggleSort('site_name')">
+                            {% if current_lang == 'en' %}Site{% else %}站点{% endif %}
+                            <i class="bi bi-arrow-down-up sort-icon ms-1"></i>
+                        </th>
+                        <th class="sortable-header" data-sort="actual_hashrate" onclick="toggleSort('actual_hashrate')">
+                            {% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}
+                            <i class="bi bi-arrow-down-up sort-icon ms-1"></i>
+                        </th>
+                        <th class="sortable-header" data-sort="actual_power" onclick="toggleSort('actual_power')">
+                            {% if current_lang == 'en' %}Power{% else %}功耗{% endif %}
+                            <i class="bi bi-arrow-down-up sort-icon ms-1"></i>
+                        </th>
+                        <th class="sortable-header" data-sort="daily_profit" onclick="toggleSort('daily_profit')">
+                            {% if current_lang == 'en' %}Daily Profit{% else %}日收益{% endif %}
+                            <i class="bi bi-arrow-down-up sort-icon ms-1"></i>
+                        </th>
                         <th>{% if current_lang == 'en' %}CGMiner{% else %}CGMiner{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Temperature{% else %}温度{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Fan{% else %}风扇{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                        <th class="sortable-header" data-sort="temperature_avg" onclick="toggleSort('temperature_avg')">
+                            {% if current_lang == 'en' %}Temperature{% else %}温度{% endif %}
+                            <i class="bi bi-arrow-down-up sort-icon ms-1"></i>
+                        </th>
+                        <th class="sortable-header" data-sort="fan_avg" onclick="toggleSort('fan_avg')">
+                            {% if current_lang == 'en' %}Fan{% else %}风扇{% endif %}
+                            <i class="bi bi-arrow-down-up sort-icon ms-1"></i>
+                        </th>
+                        <th class="sortable-header" data-sort="status" onclick="toggleSort('status')">
+                            {% if current_lang == 'en' %}Status{% else %}状态{% endif %}
+                            <i class="bi bi-arrow-down-up sort-icon ms-1"></i>
+                        </th>
                         <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
                     </tr>
                 </thead>
@@ -758,6 +791,39 @@
 .hosting-card-header[aria-expanded="true"] .collapse-icon { transform: rotate(180deg); }
 #encryption-control-center .hosting-card-header { border-bottom: none; }
 #encryption-control-center .hosting-card-header[aria-expanded="true"] { border-bottom: 1px solid rgba(255,255,255,0.1); }
+
+/* 可排序表头样式 */
+.sortable-header {
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    transition: background-color 0.2s ease;
+}
+.sortable-header:hover {
+    background-color: rgba(247, 147, 26, 0.15);
+}
+.sortable-header.active {
+    background-color: rgba(247, 147, 26, 0.25);
+    color: #f7931a;
+}
+.sortable-header .sort-icon {
+    opacity: 0.4;
+    font-size: 0.75rem;
+    transition: opacity 0.2s, color 0.2s;
+}
+.sortable-header:hover .sort-icon {
+    opacity: 0.7;
+}
+.sortable-header.active .sort-icon {
+    opacity: 1;
+    color: #f7931a;
+}
+.sortable-header.asc .sort-icon::before {
+    content: "\F128";
+}
+.sortable-header.desc .sort-icon::before {
+    content: "\F127";
+}
 </style>
 
 {% endblock %}
@@ -774,12 +840,74 @@ document.addEventListener('DOMContentLoaded', function() {
 
 let currentPage = 1;
 const perPage = 20;
+let currentSortBy = '';
+let currentSortDir = '';
+
+function toggleSort(field) {
+    if (currentSortBy === field) {
+        if (currentSortDir === 'asc') {
+            currentSortDir = 'desc';
+        } else if (currentSortDir === 'desc') {
+            currentSortBy = '';
+            currentSortDir = '';
+        } else {
+            currentSortDir = 'asc';
+        }
+    } else {
+        currentSortBy = field;
+        currentSortDir = 'asc';
+    }
+    
+    updateSortHeaders();
+    loadMiners(1, getCurrentFilters());
+}
+
+function updateSortHeaders() {
+    document.querySelectorAll('.sortable-header').forEach(th => {
+        th.classList.remove('active', 'asc', 'desc');
+        const icon = th.querySelector('.sort-icon');
+        if (icon) {
+            icon.className = 'bi bi-arrow-down-up sort-icon ms-1';
+        }
+    });
+    
+    if (currentSortBy) {
+        const activeHeader = document.querySelector(`.sortable-header[data-sort="${currentSortBy}"]`);
+        if (activeHeader) {
+            activeHeader.classList.add('active', currentSortDir);
+            const icon = activeHeader.querySelector('.sort-icon');
+            if (icon) {
+                icon.className = currentSortDir === 'asc' 
+                    ? 'bi bi-sort-up sort-icon ms-1' 
+                    : 'bi bi-sort-down sort-icon ms-1';
+            }
+        }
+    }
+}
+
+function getCurrentFilters() {
+    const filters = {};
+    const status = document.getElementById('status-filter')?.value;
+    const siteId = document.getElementById('site-filter')?.value;
+    const customerId = document.getElementById('customer-filter')?.value;
+    if (status) filters.status = status;
+    if (siteId) filters.site_id = siteId;
+    if (customerId) filters.customer_id = customerId;
+    return filters;
+}
 
 function loadMiners(page = 1, filters = {}) {
+    const sortParams = {};
+    if (currentSortBy) {
+        sortParams.sort_by = currentSortBy;
+        sortParams.sort_dir = currentSortDir || 'asc';
+    }
+    
     const queryParams = new URLSearchParams({
         page: page,
         per_page: perPage,
-        ...filters
+        ...filters,
+        ...sortParams
     });
     
     return fetch(`/hosting/api/miners?${queryParams}`)
