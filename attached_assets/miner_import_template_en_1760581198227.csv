@@ -1,4 +1,0 @@
-﻿Miner Number,Model Name,Hashrate (TH/s),Power (W),Electricity Cost ($/kWh),Machine Price ($),Quantity,Custom Name,Notes
-M001,Antminer S21e XP Hyd 3U,860.0,11180,0.08,17000.0,1,Farm A - Rack 1,
-M002,Auradine Teraflux AH3880,600.0,8700,0.08,7800.0,1,Farm A - Rack 2,
-M003,Bitdeer SEALMINER A2 Pro Hyd,500.0,7450,0.08,3958.0,1,Farm A - Rack 3,
