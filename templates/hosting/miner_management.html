@@ -257,15 +257,12 @@
                 </select>
             </div>
             <div class="col-md-3">
-                <label for="approval-filter" class="form-label">
-                    {% if current_lang == 'en' %}Approval Status{% else %}审核状态{% endif %}
+                <label for="model-filter" class="form-label">
+                    {% if current_lang == 'en' %}Miner Model{% else %}矿机型号{% endif %}
                 </label>
-                <select class="form-select" id="approval-filter" name="approval_status">
-                    <option value="">{% if current_lang == 'en' %}All Status{% else %}全部状态{% endif %}</option>
-                    <option value="draft">{% if current_lang == 'en' %}Draft{% else %}草稿{% endif %}</option>
-                    <option value="pending_approval">{% if current_lang == 'en' %}Pending Review{% else %}待审核{% endif %}</option>
-                    <option value="approved">{% if current_lang == 'en' %}Approved{% else %}已通过{% endif %}</option>
-                    <option value="rejected">{% if current_lang == 'en' %}Rejected{% else %}已拒绝{% endif %}</option>
+                <select class="form-select" id="model-filter" name="model_id">
+                    <option value="">{% if current_lang == 'en' %}All Models{% else %}全部型号{% endif %}</option>
+                    <!-- 动态加载矿机型号选项 -->
                 </select>
             </div>
             <div class="col-md-3">
@@ -834,6 +831,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadMiners();
     loadSitesForDropdown();
     loadCustomersForDropdown();
+    loadModelsForDropdown();
     setupFilterForm();
     setupBatchImport();
 });
@@ -890,9 +888,11 @@ function getCurrentFilters() {
     const status = document.getElementById('status-filter')?.value;
     const siteId = document.getElementById('site-filter')?.value;
     const customerId = document.getElementById('customer-filter')?.value;
+    const modelId = document.getElementById('model-filter')?.value;
     if (status) filters.status = status;
     if (siteId) filters.site_id = siteId;
     if (customerId) filters.customer_id = customerId;
+    if (modelId) filters.model_id = modelId;
     return filters;
 }
 
@@ -1336,6 +1336,24 @@ function loadCustomersForDropdown() {
         })
         .catch(error => {
             console.error('Error loading customers:', error);
+        });
+}
+
+function loadModelsForDropdown() {
+    fetch('/hosting/api/miner-models')
+        .then(response => response.json())
+        .then(data => {
+            const modelFilter = document.getElementById('model-filter');
+            
+            if (data.success && data.models && modelFilter) {
+                data.models.forEach(model => {
+                    const option = `<option value="${model.id}">${model.model_name}</option>`;
+                    modelFilter.insertAdjacentHTML('beforeend', option);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading miner models:', error);
         });
 }
 

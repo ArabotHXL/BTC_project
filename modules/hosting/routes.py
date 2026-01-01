@@ -13,7 +13,7 @@ from common.rbac import (
     Module, Role, requires_module_access, requires_role as rbac_requires_role,
     rbac_manager, normalize_role
 )
-from models import db, HostingSite, HostingMiner, HostingTicket, HostingIncident, HostingUsageRecord, HostingUsageItem, MinerTelemetry, HostingBill, HostingBillItem, HostingMinerOperationLog, HostingOwnerEncryption
+from models import db, HostingSite, HostingMiner, HostingTicket, HostingIncident, HostingUsageRecord, HostingUsageItem, MinerTelemetry, HostingBill, HostingBillItem, HostingMinerOperationLog, HostingOwnerEncryption, MinerModel
 from api.collector_api import MinerTelemetryLive, MinerCommand, CollectorKey
 from models import CurtailmentPlan, CurtailmentStrategy, CurtailmentExecution
 from models import ExecutionMode, PlanStatus, ExecutionAction, ExecutionStatus
@@ -506,6 +506,27 @@ def get_customers():
         return jsonify({'success': True, 'customers': customers_data})
     except Exception as e:
         logger.error(f"获取客户列表失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/miner-models', methods=['GET'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
+def get_miner_models():
+    """获取矿机型号列表（用于下拉筛选）"""
+    try:
+        models = MinerModel.query.order_by(MinerModel.model_name).all()
+        models_data = [
+            {
+                'id': m.id,
+                'model_name': m.model_name,
+                'manufacturer': m.manufacturer
+            }
+            for m in models
+        ]
+        return jsonify({'success': True, 'models': models_data})
+    except Exception as e:
+        logger.error(f"获取矿机型号列表失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
@@ -1518,6 +1539,7 @@ def get_miners():
         approval_status = request.args.get('approval_status')
         site_id = request.args.get('site_id', type=int)
         customer_id = request.args.get('customer_id', type=int)
+        model_id = request.args.get('model_id', type=int)
         
         # 排序参数
         sort_by = request.args.get('sort_by', 'serial_number')
@@ -1577,6 +1599,8 @@ def get_miners():
         if customer_id and user_role in ['admin', 'mining_site_owner']:
             # 管理员和矿场运营方可以按客户ID筛选
             query = query.filter_by(customer_id=customer_id)
+        if model_id:
+            query = query.filter_by(miner_model_id=model_id)
         
         # 应用排序
         if sort_by in allowed_sort_fields and allowed_sort_fields[sort_by] is not None:
