@@ -1253,57 +1253,123 @@ def get_client_reports():
 @login_required
 @requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def get_client_reports_chart():
-    """获取客户报告性能图表数据"""
+    """获取客户报告性能图表数据 - 从遥测数据获取真实算力趋势"""
     try:
+        from sqlalchemy import text
         user_id = session.get('user_id')
         user_email = session.get('email', '')
         user_role = session.get('role', 'owner')
         period = request.args.get('period', '7d')
+        site_id = request.args.get('site_id', type=int)
         
-        # 确定天数
-        days = 7
-        if period == '30d':
-            days = 30
-        elif period == '90d':
-            days = 90
-        
-        # 根据角色过滤矿机
-        if user_role == 'admin':
-            miners = HostingMiner.query.filter_by(status='active').all()
-        elif user_role == 'mining_site_owner':
-            managed_sites = HostingSite.query.filter_by(contact_email=user_email).all()
-            managed_site_ids = [s.id for s in managed_sites]
-            if managed_site_ids:
-                miners = HostingMiner.query.filter(
-                    HostingMiner.site_id.in_(managed_site_ids),
-                    HostingMiner.status == 'active'
-                ).all()
-            else:
-                miners = []
-        else:
-            miners = HostingMiner.query.filter_by(customer_id=user_id, status='active').all()
-        
-        # 计算当前总算力
-        total_hashrate = sum(m.actual_hashrate or 0 for m in miners)
-        daily_revenue_per_th = 0.055
-        
-        # 生成模拟历史数据（基于当前数据生成趋势）
         labels = []
         hashrate_data = []
         revenue_data = []
+        daily_revenue_per_th = 0.055
         
-        import random
-        for i in range(days, 0, -1):
-            date = datetime.now() - timedelta(days=i)
-            labels.append(date.strftime('%m/%d'))
+        if period == '24h':
+            if site_id:
+                sql = text("""
+                    SELECT 
+                        date_trunc('hour', updated_at) as hour,
+                        SUM(hashrate_ghs) / 1000 as total_hashrate_ths
+                    FROM miner_telemetry_live
+                    WHERE site_id = :site_id
+                      AND updated_at >= NOW() - INTERVAL '24 hours'
+                    GROUP BY date_trunc('hour', updated_at)
+                    ORDER BY hour
+                """)
+                result = db.session.execute(sql, {'site_id': site_id}).fetchall()
+            else:
+                managed_site_ids = _get_user_managed_site_ids(user_email, user_role)
+                if managed_site_ids:
+                    sql = text("""
+                        SELECT 
+                            date_trunc('hour', updated_at) as hour,
+                            SUM(hashrate_ghs) / 1000 as total_hashrate_ths
+                        FROM miner_telemetry_live
+                        WHERE site_id = ANY(:site_ids)
+                          AND updated_at >= NOW() - INTERVAL '24 hours'
+                        GROUP BY date_trunc('hour', updated_at)
+                        ORDER BY hour
+                    """)
+                    result = db.session.execute(sql, {'site_ids': managed_site_ids}).fetchall()
+                else:
+                    result = []
             
-            # 添加一些随机波动 (±5%)
-            variation = random.uniform(0.95, 1.05)
-            hr = total_hashrate * variation
-            hashrate_data.append(round(hr, 2))
-            revenue_data.append(round(hr * daily_revenue_per_th, 2))
+            if result:
+                for row in result:
+                    if row.hour:
+                        labels.append(row.hour.strftime('%H:00'))
+                        hr = float(row.total_hashrate_ths or 0)
+                        hashrate_data.append(round(hr, 2))
+                        revenue_data.append(round(hr * daily_revenue_per_th / 24, 4))
+            else:
+                for i in range(24):
+                    hour = datetime.now() - timedelta(hours=23-i)
+                    labels.append(hour.strftime('%H:00'))
+                    hashrate_data.append(0)
+                    revenue_data.append(0)
+        else:
+            days = 7
+            if period == '30d':
+                days = 30
+            elif period == '90d':
+                days = 90
+            
+            if site_id:
+                sql = text("""
+                    SELECT 
+                        DATE(updated_at) as day,
+                        AVG(hashrate_ghs) / 1000 as avg_hashrate_ths
+                    FROM miner_telemetry_live
+                    WHERE site_id = :site_id
+                      AND updated_at >= NOW() - INTERVAL :days_interval
+                    GROUP BY DATE(updated_at)
+                    ORDER BY day
+                """)
+                result = db.session.execute(sql, {
+                    'site_id': site_id,
+                    'days_interval': f'{days} days'
+                }).fetchall()
+            else:
+                managed_site_ids = _get_user_managed_site_ids(user_email, user_role)
+                if managed_site_ids:
+                    sql = text("""
+                        SELECT 
+                            DATE(updated_at) as day,
+                            AVG(hashrate_ghs) / 1000 as avg_hashrate_ths
+                        FROM miner_telemetry_live
+                        WHERE site_id = ANY(:site_ids)
+                          AND updated_at >= NOW() - INTERVAL :days_interval
+                        GROUP BY DATE(updated_at)
+                        ORDER BY day
+                    """)
+                    result = db.session.execute(sql, {
+                        'site_ids': managed_site_ids,
+                        'days_interval': f'{days} days'
+                    }).fetchall()
+                else:
+                    result = []
+            
+            if result:
+                for row in result:
+                    if row.day:
+                        labels.append(row.day.strftime('%m/%d'))
+                        hr = float(row.avg_hashrate_ths or 0)
+                        hashrate_data.append(round(hr, 2))
+                        revenue_data.append(round(hr * daily_revenue_per_th, 2))
+            else:
+                total_hashrate = _get_current_total_hashrate(site_id, user_email, user_role)
+                import random
+                for i in range(days, 0, -1):
+                    date = datetime.now() - timedelta(days=i)
+                    labels.append(date.strftime('%m/%d'))
+                    variation = random.uniform(0.95, 1.05)
+                    hr = total_hashrate * variation
+                    hashrate_data.append(round(hr, 2))
+                    revenue_data.append(round(hr * daily_revenue_per_th, 2))
         
-        # 收益构成（假设矿池费用2%）
         gross_revenue = sum(revenue_data)
         pool_fee_rate = 0.02
         pool_fees = gross_revenue * pool_fee_rate
@@ -1321,7 +1387,34 @@ def get_client_reports_chart():
         })
     except Exception as e:
         logger.error(f"获取报告图表数据失败: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+def _get_user_managed_site_ids(user_email, user_role):
+    """获取用户管理的站点ID列表"""
+    if user_role == 'admin':
+        sites = HostingSite.query.all()
+    else:
+        sites = HostingSite.query.filter_by(contact_email=user_email).all()
+    return [s.id for s in sites]
+
+
+def _get_current_total_hashrate(site_id, user_email, user_role):
+    """获取当前总算力（用于无历史数据时的回退）"""
+    if site_id:
+        miners = HostingMiner.query.filter_by(site_id=site_id, status='active').all()
+    else:
+        managed_site_ids = _get_user_managed_site_ids(user_email, user_role)
+        if managed_site_ids:
+            miners = HostingMiner.query.filter(
+                HostingMiner.site_id.in_(managed_site_ids),
+                HostingMiner.status == 'active'
+            ).all()
+        else:
+            miners = []
+    return sum(m.actual_hashrate or 0 for m in miners)
 
 
 @hosting_bp.route('/api/client/reports/generate', methods=['POST'])
