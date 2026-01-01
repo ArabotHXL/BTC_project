@@ -1359,7 +1359,26 @@ function submitControlCommand() {
             target_ids: [minerSerial]
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        const isOk = response.ok;
+        return response.text().then(text => {
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                if (!isOk) {
+                    throw new Error(response.status === 401 ? (t('common.login_required') || 'Please login first') : 
+                                   response.status === 403 ? (t('common.no_permission') || 'Permission denied') :
+                                   `Server error (${response.status})`);
+                }
+                throw new Error('Invalid response from server');
+            }
+            if (!isOk) {
+                throw new Error(data.error || `Request failed (${response.status})`);
+            }
+            return data;
+        });
+    })
     .then(result => {
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="bi bi-send me-1"></i>' + (t('common.execute') || 'Execute');
@@ -1375,7 +1394,8 @@ function submitControlCommand() {
     .catch(error => {
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="bi bi-send me-1"></i>' + (t('common.execute') || 'Execute');
-        showToast('error', 'Network error: ' + error.message);
+        console.error('Command submission error:', error);
+        showToast('error', error.message || 'Network error');
     });
 }
 
@@ -1415,9 +1435,24 @@ function loadCommandHistory() {
     if (!siteId) return;
     
     fetch(`/api/sites/${siteId}/commands?limit=10`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                if (response.status === 403 || response.status === 401) {
+                    console.log('No permission to view command history');
+                    return { commands: [], error: 'no_permission' };
+                }
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+        })
         .then(result => {
             const tbody = document.getElementById('command-history-body');
+            if (!tbody) return;
+            
+            if (result.error === 'no_permission') {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3">${t('common.no_permission') || 'Permission required'}</td></tr>`;
+                return;
+            }
             
             const minerCommands = (result.commands || []).filter(cmd => 
                 cmd.target_ids && cmd.target_ids.includes(minerSerial)
@@ -1447,6 +1482,10 @@ function loadCommandHistory() {
         })
         .catch(error => {
             console.error('Failed to load command history:', error);
+            const tbody = document.getElementById('command-history-body');
+            if (tbody) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3">-</td></tr>`;
+            }
         });
 }
 
