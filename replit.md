@@ -72,3 +72,21 @@ The architecture emphasizes modularity with page-isolated components and databas
 - **Redis**: In-memory data store (cache + task queue).
 - **Python 3.9+**: Runtime.
 - **Replit Platform**: Deployment and hosting.
+
+## Recent Changes (2026-01-01)
+
+### API Optimization
+- Optimized miner list API (`/hosting/api/miners`) with joinedload() to eliminate N+1 queries
+- Aggregated 3 count queries into 1 for better performance
+- Added fast estimation mode (default) vs full metrics mode (`?include_metrics=true`)
+
+### Miner Model Filter
+- Added "Miner Model" dropdown filter to `/hosting/host/devices` page
+- Created `/hosting/api/miner-models` API endpoint for populating the dropdown
+- Removed restrictive `@requires_module_access` decorator from the endpoint - now only requires login since model list is public lookup data
+- Added `loadModelsForDropdown()` JavaScript function with DOMContentLoaded initialization
+
+### Memory Optimization Notes
+- Server uses minimal gunicorn settings (1 worker) to conserve memory
+- Background schedulers use SchedulerLock to prevent duplicate workers
+- For production stability, consider Reserved VM deployment with more RAM

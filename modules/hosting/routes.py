@@ -511,9 +511,12 @@ def get_customers():
 
 @hosting_bp.route('/api/miner-models', methods=['GET'])
 @login_required
-@requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def get_miner_models():
-    """获取矿机型号列表（用于下拉筛选）"""
+    """获取矿机型号列表（用于下拉筛选）
+    
+    此API仅需登录，不需要模块访问权限
+    因为型号列表是公开的查询数据
+    """
     try:
         models = MinerModel.query.order_by(MinerModel.model_name).all()
         models_data = [
