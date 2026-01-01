@@ -6781,3 +6781,92 @@ def api_scan_cleanup(scan_id):
     except Exception as e:
         logger.error(f"Scan cleanup error: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/kpi-dashboard')
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR, require_full=False)
+def kpi_dashboard():
+    """KPI 仪表板 - OKR 绩效追踪
+    
+    显示 9 个关键绩效指标:
+    O1: 降低电力成本
+    O2: 降低矿机损坏风险
+    """
+    lang = session.get('language', 'zh')
+    user_role = normalize_role(session.get('role', 'guest'))
+    
+    sites = []
+    if rbac_manager.has_full_access(user_role, Module.HOSTING_SITE_MGMT):
+        sites = HostingSite.query.filter_by(is_active=True).all()
+    else:
+        user_id = session.get('user_id')
+        if user_id:
+            sites = HostingSite.query.filter(
+                HostingSite.is_active == True,
+                HostingSite.owner_id == user_id
+            ).all()
+    
+    selected_site_id = request.args.get('site_id', type=int)
+    period_days = request.args.get('period', 7, type=int)
+    
+    kpi_data = None
+    selected_site = None
+    
+    if selected_site_id:
+        # Verify site access - only allow access to sites in the user's permitted list
+        allowed_site_ids = [s.id for s in sites]
+        if selected_site_id not in allowed_site_ids:
+            from flask import abort
+            logger.warning(f"Unauthorized KPI access attempt: user tried to access site {selected_site_id}")
+            abort(403)
+        
+        selected_site = HostingSite.query.get(selected_site_id)
+        if selected_site:
+            try:
+                from services.kpi_calculator import get_site_kpis
+                kpi_data = get_site_kpis(selected_site_id, period_days)
+            except Exception as e:
+                logger.error(f"KPI calculation error: {e}")
+                kpi_data = {'error': str(e)}
+    
+    return render_template('hosting/kpi_dashboard.html',
+                           sites=sites,
+                           selected_site=selected_site,
+                           selected_site_id=selected_site_id,
+                           period_days=period_days,
+                           kpi_data=kpi_data,
+                           lang=lang)
+
+
+@hosting_bp.route('/api/kpi/<int:site_id>')
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR, require_full=False)
+def api_get_kpi(site_id):
+    """获取站点 KPI 数据 API"""
+    try:
+        # Verify site access
+        user_role = normalize_role(session.get('role', 'guest'))
+        if rbac_manager.has_full_access(user_role, Module.HOSTING_SITE_MGMT):
+            site = HostingSite.query.filter_by(id=site_id, is_active=True).first()
+        else:
+            user_id = session.get('user_id')
+            site = HostingSite.query.filter(
+                HostingSite.id == site_id,
+                HostingSite.is_active == True,
+                HostingSite.owner_id == user_id
+            ).first()
+        
+        if not site:
+            return jsonify({'success': False, 'error': 'Site not found or access denied'}), 403
+        
+        period_days = request.args.get('period', 7, type=int)
+        
+        from services.kpi_calculator import get_site_kpis
+        kpi_data = get_site_kpis(site_id, period_days)
+        
+        return jsonify({'success': True, 'data': kpi_data})
+        
+    except Exception as e:
+        logger.error(f"KPI API error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500

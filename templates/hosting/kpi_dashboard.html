@@ -1,0 +1,304 @@
+{% extends "hosting/hosting_base.html" %}
+
+{% block page_title %}<span data-i18n="kpi.dashboard">KPI Dashboard</span>{% endblock %}
+{% block page_subtitle %}<span data-i18n="kpi.okr_tracking">OKR Performance Tracking</span>{% endblock %}
+
+{% block content %}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <select class="form-select bg-dark text-light border-secondary" id="siteSelect" onchange="changeSite()">
+            <option value="" data-i18n="kpi.select_site">Select Site</option>
+            {% for site in sites %}
+            <option value="{{ site.id }}" {% if selected_site_id == site.id %}selected{% endif %}>
+                {{ site.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3">
+        <select class="form-select bg-dark text-light border-secondary" id="periodSelect" onchange="changeSite()">
+            <option value="7" {% if period_days == 7 %}selected{% endif %}>7 <span data-i18n="common.days">Days</span></option>
+            <option value="14" {% if period_days == 14 %}selected{% endif %}>14 <span data-i18n="common.days">Days</span></option>
+            <option value="30" {% if period_days == 30 %}selected{% endif %}>30 <span data-i18n="common.days">Days</span></option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <button class="btn btn-warning w-100" onclick="refreshKPI()">
+            <i class="bi bi-arrow-clockwise me-2"></i><span data-i18n="common.refresh">Refresh</span>
+        </button>
+    </div>
+</div>
+
+{% if not selected_site %}
+<div class="text-center py-5">
+    <i class="bi bi-bar-chart-line display-1 text-muted"></i>
+    <h4 class="mt-4 text-muted" data-i18n="kpi.select_site_prompt">Please select a site to view KPI data</h4>
+</div>
+{% elif kpi_data and kpi_data.get('error') %}
+<div class="alert alert-danger">
+    <i class="bi bi-exclamation-triangle me-2"></i>{{ kpi_data.error }}
+</div>
+{% elif kpi_data %}
+
+<div class="mb-4">
+    <h4 class="text-warning mb-3">
+        <i class="bi bi-lightning-charge me-2"></i>
+        <span data-i18n="kpi.o1_title">O1: Energy Cost Optimization</span>
+    </h4>
+    <div class="row g-3">
+        {% set kr1 = kpi_data.o1_energy_optimization.kr1_total_cost %}
+        <div class="col-lg-4 col-md-6">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="text-muted mb-0" data-i18n="kpi.kr1_title">KR1: Total Cost</h6>
+                        <span class="badge bg-{{ 'success' if kr1.status == 'good' else 'warning' if kr1.status == 'warning' else 'danger' }}">
+                            {{ kr1.change_pct }}%
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-baseline">
+                        <span class="fs-3 fw-bold text-light">${{ kr1.current_value }}</span>
+                        <span class="text-muted ms-2">vs ${{ kr1.baseline_value }}</span>
+                    </div>
+                    <div class="progress mt-2" style="height: 6px;">
+                        {% set pct_value = 100 + kr1.change_pct %}
+                        {% set bar_width = pct_value if pct_value > 0 else 0 %}
+                        {% set bar_width = bar_width if bar_width < 100 else 100 %}
+                        <div class="progress-bar bg-{{ 'success' if kr1.status == 'good' else 'warning' if kr1.status == 'warning' else 'danger' }}" 
+                             style="width: {{ bar_width }}%"></div>
+                    </div>
+                    <small class="text-muted"><span data-i18n="kpi.target">Target</span>: {{ kr1.target_min }}% ~ {{ kr1.target_max }}%</small>
+                </div>
+            </div>
+        </div>
+        
+        {% set kr2 = kpi_data.o1_energy_optimization.kr2_cost_per_th %}
+        <div class="col-lg-4 col-md-6">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="text-muted mb-0" data-i18n="kpi.kr2_title">KR2: Cost per TH</h6>
+                        <span class="badge bg-{{ 'success' if kr2.status == 'good' else 'warning' if kr2.status == 'warning' else 'danger' }}">
+                            {{ kr2.change_pct }}%
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-baseline">
+                        <span class="fs-3 fw-bold text-light">${{ kr2.current_value }}</span>
+                        <span class="text-muted ms-2">/TH·h</span>
+                    </div>
+                    <div class="progress mt-2" style="height: 6px;">
+                        {% set pct_value = 100 + kr2.change_pct %}
+                        {% set bar_width = pct_value if pct_value > 0 else 0 %}
+                        {% set bar_width = bar_width if bar_width < 100 else 100 %}
+                        <div class="progress-bar bg-{{ 'success' if kr2.status == 'good' else 'warning' if kr2.status == 'warning' else 'danger' }}" 
+                             style="width: {{ bar_width }}%"></div>
+                    </div>
+                    <small class="text-muted"><span data-i18n="kpi.target">Target</span>: {{ kr2.target }}%</small>
+                </div>
+            </div>
+        </div>
+        
+        {% set kr3 = kpi_data.o1_energy_optimization.kr3_peak_usage %}
+        <div class="col-lg-4 col-md-6">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="text-muted mb-0" data-i18n="kpi.kr3_title">KR3: Peak Usage</h6>
+                        <span class="badge bg-{{ 'success' if kr3.status == 'good' else 'warning' if kr3.status == 'warning' else 'danger' }}">
+                            {{ kr3.change_pct }}%
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-baseline">
+                        <span class="fs-3 fw-bold text-light">{{ kr3.current_value }}%</span>
+                        <span class="text-muted ms-2">vs {{ kr3.baseline_value }}%</span>
+                    </div>
+                    <div class="progress mt-2" style="height: 6px;">
+                        <div class="progress-bar bg-{{ 'success' if kr3.status == 'good' else 'warning' if kr3.status == 'warning' else 'danger' }}" 
+                             style="width: {{ kr3.current_value }}%"></div>
+                    </div>
+                    <small class="text-muted"><span data-i18n="kpi.target">Target</span>: {{ kr3.target }}%</small>
+                </div>
+            </div>
+        </div>
+        
+        {% set kr4 = kpi_data.o1_energy_optimization.kr4_curtailment_accuracy %}
+        <div class="col-lg-6 col-md-6">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="text-muted mb-0" data-i18n="kpi.kr4_title">KR4: Curtailment Accuracy</h6>
+                        <span class="badge bg-{{ 'success' if kr4.status == 'good' else 'warning' if kr4.status == 'warning' else 'danger' }}">
+                            {{ kr4.current_value }}%
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-baseline">
+                        <span class="fs-3 fw-bold text-light">{{ kr4.current_value }}%</span>
+                        <span class="text-muted ms-2"><span data-i18n="kpi.target">Target</span>: ≥{{ kr4.target }}%</span>
+                    </div>
+                    <div class="progress mt-2" style="height: 6px;">
+                        <div class="progress-bar bg-{{ 'success' if kr4.status == 'good' else 'warning' if kr4.status == 'warning' else 'danger' }}" 
+                             style="width: {{ kr4.current_value }}%"></div>
+                    </div>
+                    <small class="text-muted"><span data-i18n="kpi.samples">Samples</span>: {{ kr4.sample_count }}</small>
+                </div>
+            </div>
+        </div>
+        
+        {% set kr5 = kpi_data.o1_energy_optimization.kr5_uptime %}
+        <div class="col-lg-6 col-md-6">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="text-muted mb-0" data-i18n="kpi.kr5_title">KR5: Uptime</h6>
+                        <span class="badge bg-{{ 'success' if kr5.status == 'good' else 'warning' if kr5.status == 'warning' else 'danger' }}">
+                            {{ kr5.current_value }}%
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-baseline">
+                        <span class="fs-3 fw-bold text-light">{{ kr5.current_value }}%</span>
+                        <span class="text-muted ms-2"><span data-i18n="kpi.target">Target</span>: ≥{{ kr5.target }}%</span>
+                    </div>
+                    <div class="progress mt-2" style="height: 6px;">
+                        <div class="progress-bar bg-{{ 'success' if kr5.status == 'good' else 'warning' if kr5.status == 'warning' else 'danger' }}" 
+                             style="width: {{ kr5.current_value }}%"></div>
+                    </div>
+                    <small class="text-muted"><span data-i18n="kpi.online_records">Online records</span>: {{ kr5.online_records }} / {{ kr5.total_records }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mb-4">
+    <h4 class="text-info mb-3">
+        <i class="bi bi-shield-check me-2"></i>
+        <span data-i18n="kpi.o2_title">O2: Reduce Equipment Risk</span>
+    </h4>
+    <div class="row g-3">
+        {% set kr6 = kpi_data.o2_risk_control.kr6_high_temp %}
+        <div class="col-lg-3 col-md-6">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="text-muted mb-0" data-i18n="kpi.kr6_title">KR6: High Temp Events</h6>
+                        <span class="badge bg-{{ 'success' if kr6.status == 'good' else 'warning' if kr6.status == 'warning' else 'danger' }}">
+                            {{ kr6.change_pct }}%
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-baseline">
+                        <span class="fs-3 fw-bold text-light">{{ kr6.current_value }}</span>
+                        <span class="text-muted ms-2">vs {{ kr6.baseline_value }}</span>
+                    </div>
+                    <small class="text-muted"><span data-i18n="kpi.target">Target</span>: {{ kr6.target }}%</small>
+                </div>
+            </div>
+        </div>
+        
+        {% set kr7 = kpi_data.o2_risk_control.kr7_critical_board %}
+        <div class="col-lg-3 col-md-6">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="text-muted mb-0" data-i18n="kpi.kr7_title">KR7: Critical Board</h6>
+                        <span class="badge bg-{{ 'success' if kr7.status == 'good' else 'warning' if kr7.status == 'warning' else 'danger' }}">
+                            {{ kr7.change_pct }}%
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-baseline">
+                        <span class="fs-3 fw-bold text-light">{{ kr7.current_value }}</span>
+                        <span class="text-muted ms-2">vs {{ kr7.baseline_value }}</span>
+                    </div>
+                    <small class="text-muted"><span data-i18n="kpi.target">Target</span>: {{ kr7.target }}%</small>
+                </div>
+            </div>
+        </div>
+        
+        {% set kr8 = kpi_data.o2_risk_control.kr8_mttr %}
+        <div class="col-lg-3 col-md-6">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="text-muted mb-0" data-i18n="kpi.kr8_title">KR8: MTTR</h6>
+                        <span class="badge bg-{{ 'success' if kr8.status == 'good' else 'warning' if kr8.status == 'warning' else 'danger' }}">
+                            {{ kr8.change_pct }}%
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-baseline">
+                        <span class="fs-3 fw-bold text-light">{{ kr8.current_value }}</span>
+                        <span class="text-muted ms-2"><span data-i18n="kpi.hours">hours</span></span>
+                    </div>
+                    <small class="text-muted"><span data-i18n="kpi.target">Target</span>: {{ kr8.target }}% | <span data-i18n="kpi.samples">Samples</span>: {{ kr8.sample_count }}</small>
+                </div>
+            </div>
+        </div>
+        
+        {% set kr9 = kpi_data.o2_risk_control.kr9_unplanned_offline %}
+        <div class="col-lg-3 col-md-6">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="text-muted mb-0" data-i18n="kpi.kr9_title">KR9: Unplanned Offline</h6>
+                        <span class="badge bg-{{ 'success' if kr9.status == 'good' else 'warning' if kr9.status == 'warning' else 'danger' }}">
+                            {{ kr9.change_pct }}%
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-baseline">
+                        <span class="fs-3 fw-bold text-light">{{ kr9.current_value }}</span>
+                        <span class="text-muted ms-2"><span data-i18n="kpi.hours">hours</span></span>
+                    </div>
+                    <small class="text-muted"><span data-i18n="kpi.target">Target</span>: {{ kr9.target }}%</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card bg-dark border-secondary">
+    <div class="card-body">
+        <h6 class="text-muted mb-2"><i class="bi bi-info-circle me-2"></i><span data-i18n="kpi.period_info">Period Information</span></h6>
+        <div class="row small">
+            <div class="col-md-3">
+                <span class="text-muted" data-i18n="kpi.current_period">Current Period</span>:
+                <span class="text-light">{{ kpi_data.period.start[:10] }} ~ {{ kpi_data.period.end[:10] }}</span>
+            </div>
+            <div class="col-md-3">
+                <span class="text-muted" data-i18n="kpi.baseline_period">Baseline Period</span>:
+                <span class="text-light">{{ kpi_data.period.baseline_start[:10] }} ~ {{ kpi_data.period.baseline_end[:10] }}</span>
+            </div>
+            <div class="col-md-3">
+                <span class="text-muted" data-i18n="kpi.calculated_at">Calculated At</span>:
+                <span class="text-light">{{ kpi_data.calculated_at[:19] }}</span>
+            </div>
+            <div class="col-md-3">
+                <span class="text-muted" data-i18n="kpi.site">Site</span>:
+                <span class="text-light">{{ selected_site.name }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-bar-chart-line display-1 text-muted"></i>
+    <h4 class="mt-4 text-muted" data-i18n="kpi.no_data">No KPI data available</h4>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function changeSite() {
+    const siteId = document.getElementById('siteSelect').value;
+    const period = document.getElementById('periodSelect').value;
+    if (siteId) {
+        window.location.href = `/hosting/kpi-dashboard?site_id=${siteId}&period=${period}`;
+    }
+}
+
+function refreshKPI() {
+    window.location.reload();
+}
+</script>
+{% endblock %}
