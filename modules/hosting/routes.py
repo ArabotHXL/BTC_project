@@ -7436,15 +7436,15 @@ def get_power_bills():
         for bill in bills:
             bills_data.append({
                 'id': bill.id,
-                'bill_number': getattr(bill, 'bill_number', f'BILL-{bill.id}'),
+                'bill_number': bill.bill_number or f'BILL-{bill.id}',
                 'site_name': bill.site.name if bill.site else 'Unknown',
-                'customer_name': bill.customer.name if bill.customer else 'Unknown',
-                'period_start': bill.period_start.isoformat() if bill.period_start else None,
-                'period_end': bill.period_end.isoformat() if bill.period_end else None,
-                'total_kwh': getattr(bill, 'total_kwh', 0),
-                'electricity_cost': getattr(bill, 'electricity_cost', 0),
+                'customer_name': bill.customer.name if hasattr(bill.customer, 'name') else (bill.customer.email if bill.customer else 'Unknown'),
+                'period_start': bill.billing_period_start.isoformat() if bill.billing_period_start else None,
+                'period_end': bill.billing_period_end.isoformat() if bill.billing_period_end else None,
+                'total_kwh': 0,  # 从明细项计算
+                'electricity_cost': bill.electricity_cost or 0,
                 'total_amount': bill.total_amount or 0,
-                'status': getattr(bill, 'status', 'pending'),
+                'status': bill.status or 'draft',
                 'created_at': bill.created_at.isoformat() if bill.created_at else None
             })
         
@@ -7498,20 +7498,17 @@ def generate_power_bill():
         electricity_cost = total_kwh * rate
         
         # 创建账单
+        bill_number = f'PWR-{site_id}-{customer_id}-{month}'
         bill = HostingBill(
+            bill_number=bill_number,
             site_id=site_id,
             customer_id=customer_id,
-            period_start=period_start,
-            period_end=period_end,
-            total_amount=electricity_cost
+            billing_period_start=period_start.date(),
+            billing_period_end=period_end.date(),
+            electricity_cost=electricity_cost,
+            total_amount=electricity_cost,
+            status='draft'
         )
-        
-        if hasattr(bill, 'total_kwh'):
-            bill.total_kwh = total_kwh
-        if hasattr(bill, 'electricity_cost'):
-            bill.electricity_cost = electricity_cost
-        if hasattr(bill, 'bill_number'):
-            bill.bill_number = f'PWR-{site_id}-{customer_id}-{month}'
         
         db.session.add(bill)
         db.session.commit()
