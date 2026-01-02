@@ -3727,3 +3727,59 @@ class PowerAlert(db.Model):
         return f"<PowerAlert site={self.site_id} type={self.alert_type} severity={self.severity} status={self.status}>"
 
 
+class SiteElectricityRateHistory(db.Model):
+    """站点电价历史记录 - 支持历史电价保留和按时间段计算电费"""
+    __tablename__ = 'site_electricity_rate_history'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=False, index=True)
+    
+    rate_usd_per_kwh = db.Column(db.Float, nullable=False)
+    effective_from = db.Column(db.DateTime, nullable=False, index=True)
+    effective_to = db.Column(db.DateTime, nullable=True, index=True)
+    
+    rate_type = db.Column(db.String(20), default='flat', nullable=False)
+    notes = db.Column(db.String(500), nullable=True)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_by_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True)
+    
+    __table_args__ = (
+        db.Index('ix_rate_history_site_effective', 'site_id', 'effective_from'),
+    )
+    
+    site = db.relationship('HostingSite', backref=db.backref('rate_history', lazy=True, order_by='SiteElectricityRateHistory.effective_from.desc()'))
+    created_by = db.relationship('UserAccess', foreign_keys=[created_by_id])
+    
+    def __init__(self, site_id, rate_usd_per_kwh, effective_from, **kwargs):
+        self.site_id = site_id
+        self.rate_usd_per_kwh = rate_usd_per_kwh
+        self.effective_from = effective_from
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    @property
+    def is_current(self):
+        """是否为当前生效的电价"""
+        return self.effective_to is None
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'site_id': self.site_id,
+            'rate_usd_per_kwh': self.rate_usd_per_kwh,
+            'effective_from': self.effective_from.isoformat() if self.effective_from else None,
+            'effective_to': self.effective_to.isoformat() if self.effective_to else None,
+            'rate_type': self.rate_type,
+            'notes': self.notes,
+            'is_current': self.is_current,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'created_by_id': self.created_by_id
+        }
+    
+    def __repr__(self):
+        status = 'current' if self.is_current else 'historical'
+        return f"<SiteElectricityRateHistory site={self.site_id} rate=${self.rate_usd_per_kwh}/kWh {status}>"
+
+
