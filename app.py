@@ -5322,6 +5322,21 @@ try:
 except Exception as e:
     logging.error(f"遥测存储调度器初始化异常: {e}")
 
+# 🔧 初始化电力聚合调度器 - 小时/日/月用电量聚合
+def init_power_aggregation_scheduler():
+    """安全初始化电力聚合调度器 - 管理站点用电量聚合任务"""
+    try:
+        from services.power_aggregation_scheduler import power_aggregation_scheduler
+        power_aggregation_scheduler.init_app(app)
+        logging.info("电力聚合调度器初始化完成 (hourly/daily/monthly aggregation)")
+    except Exception as e:
+        logging.warning(f"电力聚合调度器初始化失败: {e}")
+
+try:
+    init_power_aggregation_scheduler()
+except Exception as e:
+    logging.error(f"电力聚合调度器初始化异常: {e}")
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
 # 支付监控管理API路由
