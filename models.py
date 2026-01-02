@@ -3344,3 +3344,320 @@ class SiteBranding(db.Model):
         return f"<SiteBranding {self.company_name or 'Unnamed'} (site={self.site_id})>"
 
 
+# ==================== 电力监控数据模型 ====================
+# Power Monitoring Data Models for Energy Management Center
+# ===========================================================
+
+class SiteEnergyHourly(db.Model):
+    """站点小时用电聚合"""
+    __tablename__ = 'site_energy_hourly'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=False, index=True)
+    hour_ts = db.Column(db.DateTime, nullable=False, index=True)  # 小时时间戳
+    
+    kwh = db.Column(db.Float, default=0.0, nullable=False)  # 用电量 kWh
+    avg_kw = db.Column(db.Float, default=0.0, nullable=False)  # 平均功率 kW
+    peak_kw = db.Column(db.Float, default=0.0, nullable=False)  # 峰值功率 kW
+    cost_usd = db.Column(db.Float, default=0.0, nullable=False)  # 成本 USD
+    co2_kg = db.Column(db.Float, default=0.0, nullable=False)  # 碳排放 kg
+    
+    miner_count = db.Column(db.Integer, default=0, nullable=False)  # 矿机数量
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    
+    __table_args__ = (db.UniqueConstraint('site_id', 'hour_ts', name='uq_site_energy_hourly'),)
+    
+    site = db.relationship('HostingSite', backref=db.backref('energy_hourly', lazy=True))
+    
+    def __init__(self, site_id, hour_ts, **kwargs):
+        self.site_id = site_id
+        self.hour_ts = hour_ts
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'site_id': self.site_id,
+            'hour_ts': self.hour_ts.isoformat() if self.hour_ts else None,
+            'kwh': self.kwh,
+            'avg_kw': self.avg_kw,
+            'peak_kw': self.peak_kw,
+            'cost_usd': self.cost_usd,
+            'co2_kg': self.co2_kg,
+            'miner_count': self.miner_count,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+    
+    def __repr__(self):
+        return f"<SiteEnergyHourly site={self.site_id} hour={self.hour_ts} kwh={self.kwh}>"
+
+
+class SiteEnergyDaily(db.Model):
+    """站点日用电聚合"""
+    __tablename__ = 'site_energy_daily'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=False, index=True)
+    date = db.Column(db.Date, nullable=False, index=True)
+    
+    kwh = db.Column(db.Float, default=0.0, nullable=False)
+    cost_usd = db.Column(db.Float, default=0.0, nullable=False)
+    peak_kw = db.Column(db.Float, default=0.0, nullable=False)
+    co2_kg = db.Column(db.Float, default=0.0, nullable=False)
+    
+    avg_price_per_kwh = db.Column(db.Float, default=0.0, nullable=False)  # 平均电价
+    miner_count = db.Column(db.Integer, default=0, nullable=False)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    
+    __table_args__ = (db.UniqueConstraint('site_id', 'date', name='uq_site_energy_daily'),)
+    
+    site = db.relationship('HostingSite', backref=db.backref('energy_daily', lazy=True))
+    
+    def __init__(self, site_id, date, **kwargs):
+        self.site_id = site_id
+        self.date = date
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'site_id': self.site_id,
+            'date': self.date.isoformat() if self.date else None,
+            'kwh': self.kwh,
+            'cost_usd': self.cost_usd,
+            'peak_kw': self.peak_kw,
+            'co2_kg': self.co2_kg,
+            'avg_price_per_kwh': self.avg_price_per_kwh,
+            'miner_count': self.miner_count,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+    
+    def __repr__(self):
+        return f"<SiteEnergyDaily site={self.site_id} date={self.date} kwh={self.kwh}>"
+
+
+class SiteEnergyMonthly(db.Model):
+    """站点月用电聚合"""
+    __tablename__ = 'site_energy_monthly'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=False, index=True)
+    month = db.Column(db.Date, nullable=False, index=True)  # 月份第一天
+    
+    kwh = db.Column(db.Float, default=0.0, nullable=False)
+    cost_usd = db.Column(db.Float, default=0.0, nullable=False)
+    peak_kw = db.Column(db.Float, default=0.0, nullable=False)
+    co2_kg = db.Column(db.Float, default=0.0, nullable=False)
+    
+    avg_price_per_kwh = db.Column(db.Float, default=0.0, nullable=False)
+    
+    contract_kwh = db.Column(db.Float, nullable=True)  # 合同用电量
+    contract_usage_pct = db.Column(db.Float, nullable=True)  # 用量百分比
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    
+    __table_args__ = (db.UniqueConstraint('site_id', 'month', name='uq_site_energy_monthly'),)
+    
+    site = db.relationship('HostingSite', backref=db.backref('energy_monthly', lazy=True))
+    
+    def __init__(self, site_id, month, **kwargs):
+        self.site_id = site_id
+        self.month = month
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'site_id': self.site_id,
+            'month': self.month.isoformat() if self.month else None,
+            'kwh': self.kwh,
+            'cost_usd': self.cost_usd,
+            'peak_kw': self.peak_kw,
+            'co2_kg': self.co2_kg,
+            'avg_price_per_kwh': self.avg_price_per_kwh,
+            'contract_kwh': self.contract_kwh,
+            'contract_usage_pct': self.contract_usage_pct,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+    
+    def __repr__(self):
+        return f"<SiteEnergyMonthly site={self.site_id} month={self.month} kwh={self.kwh}>"
+
+
+class PowerContract(db.Model):
+    """电力合同"""
+    __tablename__ = 'power_contracts'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=False, index=True)
+    
+    provider = db.Column(db.String(200), nullable=False)  # 供电商
+    contract_number = db.Column(db.String(100), nullable=True)  # 合同编号
+    
+    start_date = db.Column(db.Date, nullable=False)
+    end_date = db.Column(db.Date, nullable=False)
+    
+    contract_kwh_month = db.Column(db.Float, nullable=True)  # 月合同电量 kWh
+    demand_limit_kw = db.Column(db.Float, nullable=True)  # 需量限制 kW
+    
+    rate_model = db.Column(db.String(20), default='flat', nullable=False)  # flat/tou/index
+    base_rate = db.Column(db.Float, nullable=True)  # 基础费率
+    
+    notes = db.Column(db.Text, nullable=True)
+    attachments_url = db.Column(db.String(500), nullable=True)
+    
+    status = db.Column(db.String(20), default='active', nullable=False)  # active/expired/terminated
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    site = db.relationship('HostingSite', backref=db.backref('power_contracts', lazy=True))
+    
+    def __init__(self, site_id, provider, start_date, end_date, **kwargs):
+        self.site_id = site_id
+        self.provider = provider
+        self.start_date = start_date
+        self.end_date = end_date
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'site_id': self.site_id,
+            'provider': self.provider,
+            'contract_number': self.contract_number,
+            'start_date': self.start_date.isoformat() if self.start_date else None,
+            'end_date': self.end_date.isoformat() if self.end_date else None,
+            'contract_kwh_month': self.contract_kwh_month,
+            'demand_limit_kw': self.demand_limit_kw,
+            'rate_model': self.rate_model,
+            'base_rate': self.base_rate,
+            'notes': self.notes,
+            'attachments_url': self.attachments_url,
+            'status': self.status,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+    
+    def __repr__(self):
+        return f"<PowerContract site={self.site_id} provider={self.provider} status={self.status}>"
+
+
+class CarbonConfig(db.Model):
+    """碳排放配置"""
+    __tablename__ = 'carbon_configs'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=False, unique=True)
+    
+    kg_co2_per_kwh = db.Column(db.Float, default=0.42, nullable=False)  # 每kWh碳排放 kg
+    source_type = db.Column(db.String(50), default='grid', nullable=False)  # grid/renewable/mixed/hydro/solar/wind/nuclear/coal
+    
+    renewable_percentage = db.Column(db.Float, default=0.0, nullable=True)  # 可再生能源占比
+    grid_region = db.Column(db.String(100), nullable=True)  # 电网区域
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    site = db.relationship('HostingSite', backref=db.backref('carbon_config', uselist=False))
+    
+    def __init__(self, site_id, **kwargs):
+        self.site_id = site_id
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'site_id': self.site_id,
+            'kg_co2_per_kwh': self.kg_co2_per_kwh,
+            'source_type': self.source_type,
+            'renewable_percentage': self.renewable_percentage,
+            'grid_region': self.grid_region,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+    
+    def __repr__(self):
+        return f"<CarbonConfig site={self.site_id} co2={self.kg_co2_per_kwh}kg/kWh source={self.source_type}>"
+
+
+class PowerAlert(db.Model):
+    """电力告警"""
+    __tablename__ = 'power_alerts'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=False, index=True)
+    miner_id = db.Column(db.Integer, db.ForeignKey('hosting_miners.id'), nullable=True, index=True)
+    
+    alert_type = db.Column(db.String(50), nullable=False)  # POWER_SPIKE/PEAK_HOUR/OVER_CONTRACT/ABNORMAL_CONSUMPTION/PRICE_CHANGE
+    severity = db.Column(db.String(20), default='warning', nullable=False)  # info/warning/critical
+    
+    title = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    context = db.Column(db.JSON, nullable=True)  # 告警上下文数据
+    
+    status = db.Column(db.String(20), default='active', nullable=False)  # active/acknowledged/resolved
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    acknowledged_at = db.Column(db.DateTime, nullable=True)
+    resolved_at = db.Column(db.DateTime, nullable=True)
+    
+    acknowledged_by_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True)
+    
+    site = db.relationship('HostingSite', backref=db.backref('power_alerts', lazy=True))
+    miner = db.relationship('HostingMiner', backref=db.backref('power_alerts', lazy=True))
+    acknowledged_by = db.relationship('UserAccess', foreign_keys=[acknowledged_by_id])
+    
+    def __init__(self, site_id, alert_type, title, message, **kwargs):
+        self.site_id = site_id
+        self.alert_type = alert_type
+        self.title = title
+        self.message = message
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def acknowledge(self, user_id):
+        """确认告警"""
+        self.status = 'acknowledged'
+        self.acknowledged_at = datetime.utcnow()
+        self.acknowledged_by_id = user_id
+    
+    def resolve(self):
+        """解决告警"""
+        self.status = 'resolved'
+        self.resolved_at = datetime.utcnow()
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'site_id': self.site_id,
+            'miner_id': self.miner_id,
+            'alert_type': self.alert_type,
+            'severity': self.severity,
+            'title': self.title,
+            'message': self.message,
+            'context': self.context,
+            'status': self.status,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'acknowledged_at': self.acknowledged_at.isoformat() if self.acknowledged_at else None,
+            'resolved_at': self.resolved_at.isoformat() if self.resolved_at else None,
+            'acknowledged_by_id': self.acknowledged_by_id
+        }
+    
+    def __repr__(self):
+        return f"<PowerAlert site={self.site_id} type={self.alert_type} severity={self.severity} status={self.status}>"
+
+
