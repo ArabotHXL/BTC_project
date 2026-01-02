@@ -112,6 +112,14 @@ The architecture emphasizes modularity with page-isolated components and databas
 - **Carbon emission factors**: hydro (0.024), solar (0.048), wind (0.011), nuclear (0.012), natural_gas (0.41), coal (0.82), grid (0.42) kg CO2/kWh
 - **Data models**: `SiteEnergyHourly`, `SiteEnergyDaily`, `SiteEnergyMonthly` with proper unique constraints and indexes
 
+### Edge Collector Integration Enhancement (边缘采集器集成增强)
+- **Power Extraction**: `edge_collector/parsers.py` now extracts real power from CGMiner API with fallback to hashrate×efficiency estimation (default 30 J/TH)
+- **Board-Level Health**: Full chip-level health tracking (chips_ok, chips_total, board_temp, board_hashrate, frequency, voltage)
+- **New Data Flow**: Edge Collector → Cloud API → `MinerBoardTelemetry` table → Power Center aggregation
+- **Database Model**: Added `MinerBoardTelemetry` table for time-series board health data
+- **MinerData Updates**: Added `boards[]`, `boards_total`, `boards_healthy`, `overall_health`, `model` fields to collector dataclass
+- **Cloud API**: Bulk insert board telemetry data with proper FK integrity via `find_or_create_hosting_miner()`
+
 ### Previous Changes (2026-01-01)
 
 ### API Optimization

@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from functools import wraps
 from flask import Blueprint, request, jsonify, g
 from sqlalchemy import func
-from models import db, HostingSite, HostingMiner, MinerModel
+from models import db, HostingSite, HostingMiner, MinerModel, MinerBoardTelemetry
 from services.telemetry_storage import TelemetryRaw24h
 
 logger = logging.getLogger(__name__)
@@ -482,6 +482,7 @@ def upload_telemetry():
         inserts = []
         history_inserts = []
         raw_24h_inserts = []
+        board_telemetry_inserts = []
         
         for miner_data in data:
             try:
@@ -583,6 +584,27 @@ def upload_telemetry():
                 try:
                     hosting_miner = find_or_create_hosting_miner(site_id, miner_data)
                     sync_hosting_miner_telemetry(hosting_miner, miner_data, now)
+                    
+                    # 存储板级遥测数据
+                    boards = miner_data.get('boards', [])
+                    if boards and is_online:
+                        for board in boards:
+                            if isinstance(board, dict):
+                                board_telemetry_inserts.append({
+                                    'miner_id': hosting_miner.id,
+                                    'site_id': site_id,
+                                    'board_index': board.get('board_index', board.get('index', 0)),
+                                    'hashrate_ths': board.get('hashrate_ths', 0),
+                                    'temperature_c': board.get('temperature_c', 0),
+                                    'chips_total': board.get('chips_total', 0),
+                                    'chips_ok': board.get('chips_ok', 0),
+                                    'chips_failed': board.get('chips_failed', 0),
+                                    'chip_status': (board.get('chip_status', '') or '')[:200] or None,
+                                    'frequency_mhz': board.get('frequency_mhz', 0),
+                                    'voltage_mv': board.get('voltage_mv', 0),
+                                    'health': board.get('health', 'offline'),
+                                    'recorded_at': now,
+                                })
                 except Exception as sync_err:
                     logger.warning(f"Failed to sync hosting miner {miner_id}: {sync_err}")
                     
@@ -602,6 +624,13 @@ def upload_telemetry():
                 db.session.bulk_insert_mappings(TelemetryRaw24h, raw_24h_inserts)
             except Exception as raw_err:
                 logger.warning(f"Raw telemetry insert failed (non-critical): {raw_err}")
+        
+        # 插入板级遥测数据
+        if board_telemetry_inserts:
+            try:
+                db.session.bulk_insert_mappings(MinerBoardTelemetry, board_telemetry_inserts)
+            except Exception as board_err:
+                logger.warning(f"Board telemetry insert failed (non-critical): {board_err}")
         
         processing_time = int((time.time() - start_time) * 1000)
         

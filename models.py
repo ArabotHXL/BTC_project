@@ -1783,6 +1783,72 @@ class MinerTelemetry(db.Model):
             if hasattr(self, key):
                 setattr(self, key, value)
 
+
+class MinerBoardTelemetry(db.Model):
+    """矿机板级遥测数据 - 芯片级健康追踪
+    
+    Board-Level Telemetry for Chip Health Tracking
+    存储每个哈希板的详细健康数据
+    """
+    __tablename__ = 'miner_board_telemetry'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    miner_id = db.Column(db.Integer, db.ForeignKey('hosting_miners.id'), nullable=False, index=True)
+    site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=False, index=True)
+    
+    board_index = db.Column(db.Integer, nullable=False)
+    
+    hashrate_ths = db.Column(db.Float, default=0.0, nullable=False)
+    temperature_c = db.Column(db.Float, default=0.0, nullable=False)
+    
+    chips_total = db.Column(db.Integer, default=0, nullable=False)
+    chips_ok = db.Column(db.Integer, default=0, nullable=False)
+    chips_failed = db.Column(db.Integer, default=0, nullable=False)
+    chip_status = db.Column(db.String(200), nullable=True)
+    
+    frequency_mhz = db.Column(db.Float, default=0.0, nullable=False)
+    voltage_mv = db.Column(db.Float, default=0.0, nullable=False)
+    
+    health = db.Column(db.String(20), default='offline', nullable=False)
+    
+    recorded_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    
+    __table_args__ = (
+        db.Index('idx_board_telemetry_miner_time', 'miner_id', 'recorded_at'),
+        db.Index('idx_board_telemetry_site_time', 'site_id', 'recorded_at'),
+        db.Index('idx_board_telemetry_health', 'health'),
+    )
+    
+    miner = db.relationship('HostingMiner', backref=db.backref('board_telemetry', lazy='dynamic'))
+    site = db.relationship('HostingSite', backref=db.backref('board_telemetry', lazy='dynamic'))
+    
+    def __init__(self, miner_id, site_id, board_index, **kwargs):
+        self.miner_id = miner_id
+        self.site_id = site_id
+        self.board_index = board_index
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'miner_id': self.miner_id,
+            'site_id': self.site_id,
+            'board_index': self.board_index,
+            'hashrate_ths': self.hashrate_ths,
+            'temperature_c': self.temperature_c,
+            'chips_total': self.chips_total,
+            'chips_ok': self.chips_ok,
+            'chips_failed': self.chips_failed,
+            'chip_status': self.chip_status,
+            'frequency_mhz': self.frequency_mhz,
+            'voltage_mv': self.voltage_mv,
+            'health': self.health,
+            'recorded_at': self.recorded_at.isoformat() if self.recorded_at else None
+        }
+
+
 class HostingMinerOperationLog(db.Model):
     """矿机操作日志表 - 记录所有重要操作（启动、关闭、状态变更等）"""
     __tablename__ = 'hosting_miner_operation_logs'

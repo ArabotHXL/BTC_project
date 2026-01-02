@@ -36,6 +36,14 @@ logging.basicConfig(
 )
 logger = logging.getLogger('EdgeCollector')
 
+# 导入板级健康解析器
+try:
+    from .parsers import parse_board_health, parse_power_consumption
+    BOARD_PARSER_AVAILABLE = True
+except ImportError:
+    BOARD_PARSER_AVAILABLE = False
+    logger.warning("Board health parser not available")
+
 
 @dataclass
 class MinerData:
@@ -61,12 +69,20 @@ class MinerData:
     worker_name: str = ""
     firmware_version: str = ""
     error_message: str = ""
+    # 新增字段
+    model: str = ""
+    boards: List[Dict] = None  # 板级健康数据
+    boards_total: int = 0
+    boards_healthy: int = 0
+    overall_health: str = "offline"
     
     def __post_init__(self):
         if self.temperature_chips is None:
             self.temperature_chips = []
         if self.fan_speeds is None:
             self.fan_speeds = []
+        if self.boards is None:
+            self.boards = []
 
 
 class CGMinerAPI:
@@ -287,6 +303,48 @@ class MinerDataParser:
                 pool = pools['POOLS'][0]
                 data.pool_url = pool.get('URL', '')
                 data.worker_name = pool.get('User', '')
+            
+            # 解析板级健康数据
+            if BOARD_PARSER_AVAILABLE and stats:
+                try:
+                    boards = parse_board_health(stats)
+                    if boards:
+                        data.boards = [board.to_dict() for board in boards]
+                        data.boards_total = len(boards)
+                        data.boards_healthy = sum(1 for b in boards if b.health.value in ['healthy', 'warning'])
+                        
+                        # 计算整体健康状态
+                        if all(b.health.value == 'healthy' for b in boards):
+                            data.overall_health = 'healthy'
+                        elif any(b.health.value == 'critical' for b in boards):
+                            data.overall_health = 'critical'
+                        elif any(b.health.value == 'warning' for b in boards):
+                            data.overall_health = 'warning'
+                        else:
+                            data.overall_health = 'offline'
+                    
+                    # 提取功率 (默认效率30 J/TH - 现代ASIC平均值)
+                    # 效率估算: S19 Pro ~30 J/TH, S21 ~17 J/TH, M50 ~25 J/TH
+                    default_efficiency = 30.0
+                    power = parse_power_consumption(
+                        summary_data=summary,
+                        stats_data=stats,
+                        hashrate_ths=data.hashrate_ghs / 1000.0,
+                        model_efficiency_jth=default_efficiency
+                    )
+                    if power > 0:
+                        data.power_consumption = power
+                except Exception as e:
+                    logger.debug(f"Board health parsing failed for {ip}: {e}")
+            
+            # 提取型号信息
+            if stats and 'STATS' in stats:
+                for stat in stats['STATS']:
+                    if isinstance(stat, dict):
+                        model = stat.get('Type', stat.get('Model', ''))
+                        if model:
+                            data.model = model
+                            break
         
         except Exception as e:
             logger.error(f"Error parsing Antminer data for {ip}: {e}")

@@ -406,10 +406,77 @@ def parse_summary_info(summary_data: Dict[str, Any]) -> Dict[str, Any]:
     return result
 
 
+def parse_power_consumption(summary_data: Dict[str, Any], stats_data: Dict[str, Any], 
+                            hashrate_ths: float = 0, model_efficiency_jth: float = 0) -> float:
+    """
+    提取或估算功率消耗 (Watts)
+    
+    优先级:
+    1. CGMiner SUMMARY 中的 Power 字段（真实功率）
+    2. CGMiner STATS 中的功率字段
+    3. 算力 × 效率估算 (如果提供了效率参数)
+    4. 返回 0 (无法获取)
+    
+    Args:
+        summary_data: CGMiner summary响应
+        stats_data: CGMiner stats响应
+        hashrate_ths: 当前算力 TH/s (用于估算)
+        model_efficiency_jth: 矿机型号效率 J/TH (用于估算)
+        
+    Returns:
+        功率 (Watts)
+    """
+    power_watts = 0.0
+    
+    # 1. 尝试从 SUMMARY 提取
+    if summary_data:
+        summary_list = summary_data.get('SUMMARY', [])
+        if summary_list:
+            summary = summary_list[0]
+            # 不同固件可能用不同的键名
+            power_keys = ['Power', 'POWER', 'power', 'Power Consumption', 'Watt', 'watts']
+            for key in power_keys:
+                if key in summary:
+                    try:
+                        power_watts = float(summary[key])
+                        if power_watts > 0:
+                            return power_watts
+                    except:
+                        pass
+    
+    # 2. 尝试从 STATS 提取
+    if stats_data:
+        stats_list = stats_data.get('STATS', [])
+        for stat in stats_list:
+            if not isinstance(stat, dict):
+                continue
+            # Antminer/Whatsminer/Avalon 可能的功率键名
+            power_keys = ['Power', 'POWER', 'power', 'Total Power', 'Fan Power In', 
+                         'Power Consumption', 'Watt', 'PowerConsumption', 'power_rt']
+            for key in power_keys:
+                if key in stat:
+                    try:
+                        power_watts = float(stat[key])
+                        if power_watts > 0:
+                            return power_watts
+                    except:
+                        pass
+    
+    # 3. 使用算力×效率估算（备选方案）
+    if hashrate_ths > 0 and model_efficiency_jth > 0:
+        # 效率 J/TH = W / (TH/s)
+        # 所以 W = TH/s × J/TH
+        power_watts = hashrate_ths * model_efficiency_jth
+        return power_watts
+    
+    return power_watts
+
+
 def create_miner_snapshot(miner_id: str, ip_address: str,
                          summary_data: Dict, stats_data: Dict, 
                          pools_data: Dict,
-                         expected_hashrate_ths: float = 0) -> MinerSnapshot:
+                         expected_hashrate_ths: float = 0,
+                         model_efficiency_jth: float = 30.0) -> MinerSnapshot:
     """
     创建完整的矿机快照
     
@@ -456,6 +523,14 @@ def create_miner_snapshot(miner_id: str, ip_address: str,
     hashrate_total_ths = summary_info['hashrate_ghs'] / 1000.0
     hashrate_5s_ths = summary_info['hashrate_5s_ghs'] / 1000.0
     
+    # 提取或估算功率
+    power_watts = parse_power_consumption(
+        summary_data=summary_data,
+        stats_data=stats_data,
+        hashrate_ths=hashrate_total_ths,
+        model_efficiency_jth=model_efficiency_jth
+    )
+    
     snapshot = MinerSnapshot(
         miner_id=miner_id,
         ip_address=ip_address,
@@ -464,6 +539,7 @@ def create_miner_snapshot(miner_id: str, ip_address: str,
         hashrate_total_ths=hashrate_total_ths,
         hashrate_5s_ths=hashrate_5s_ths,
         hashrate_expected_ths=expected_hashrate_ths,
+        power_watts=power_watts,
         fan_speeds_rpm=fan_speeds,
         boards=boards,
         pool_url=pool_info['url'],
