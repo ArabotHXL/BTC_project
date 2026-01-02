@@ -103,6 +103,15 @@ The architecture emphasizes modularity with page-isolated components and databas
 - GET `/hosting/api/power/carbon` - Carbon emissions
 - GET `/hosting/api/power/comparison` - Historical comparison
 
+### Power Aggregation Scheduler (电力聚合调度器)
+- New scheduler: `services/power_aggregation_scheduler.py` using APScheduler
+- Uses `SchedulerLock` mechanism to prevent duplicate workers in multi-instance environments
+- **Hourly aggregation**: Runs every hour to calculate site-level energy consumption from miner telemetry
+- **Daily aggregation**: Runs at 00:30 to aggregate hourly data into daily summaries
+- **Monthly aggregation**: Runs on 1st of each month at 01:00 to create monthly records
+- **Carbon emission factors**: hydro (0.024), solar (0.048), wind (0.011), nuclear (0.012), natural_gas (0.41), coal (0.82), grid (0.42) kg CO2/kWh
+- **Data models**: `SiteEnergyHourly`, `SiteEnergyDaily`, `SiteEnergyMonthly` with proper unique constraints and indexes
+
 ### Previous Changes (2026-01-01)
 
 ### API Optimization
