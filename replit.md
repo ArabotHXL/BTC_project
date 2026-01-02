@@ -120,6 +120,11 @@ The architecture emphasizes modularity with page-isolated components and databas
 - **MinerData Updates**: Added `boards[]`, `boards_total`, `boards_healthy`, `overall_health`, `model` fields to collector dataclass
 - **Cloud API**: Bulk insert board telemetry data with proper FK integrity via `find_or_create_hosting_miner()`
 
+### Deprecated: /hosting/host/monitoring Page (已废弃)
+- Old monitoring page (`/hosting/host/monitoring`) now 301 redirects to Power Consumption Center (`/hosting/host/power_consumption`)
+- Removed "监控管理/Monitoring" link from sidebar navigation
+- Power Center consolidates all power monitoring, billing, carbon tracking, and curtailment analytics
+
 ### Previous Changes (2026-01-01)
 
 ### API Optimization
