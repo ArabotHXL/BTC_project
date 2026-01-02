@@ -167,7 +167,8 @@ def host_view(subpath='dashboard'):
         elif subpath == 'devices':
             return render_template('hosting/miner_management.html')
         elif subpath == 'monitoring':
-            return render_template('hosting/event_monitoring.html')
+            # 旧版监控页面已被电力监控中心取代，301重定向
+            return redirect(url_for('hosting_service_bp.host_view', subpath='power_consumption'), code=301)
         elif subpath == 'power_consumption':
             logger.debug("Rendering power_consumption.html")
             return render_template('hosting/power_consumption.html')
