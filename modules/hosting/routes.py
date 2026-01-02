@@ -13,7 +13,7 @@ from common.rbac import (
     Module, Role, requires_module_access, requires_role as rbac_requires_role,
     rbac_manager, normalize_role
 )
-from models import db, HostingSite, HostingMiner, HostingTicket, HostingIncident, HostingUsageRecord, HostingUsageItem, MinerTelemetry, HostingBill, HostingBillItem, HostingMinerOperationLog, HostingOwnerEncryption, MinerModel
+from models import db, HostingSite, HostingMiner, HostingTicket, HostingIncident, HostingUsageRecord, HostingUsageItem, MinerTelemetry, HostingBill, HostingBillItem, HostingMinerOperationLog, HostingOwnerEncryption, MinerModel, SiteElectricityRateHistory
 from api.collector_api import MinerTelemetryLive, MinerCommand, CollectorKey
 from models import CurtailmentPlan, CurtailmentStrategy, CurtailmentExecution
 from models import ExecutionMode, PlanStatus, ExecutionAction, ExecutionStatus
@@ -7311,21 +7311,52 @@ def get_power_rates():
 @login_required
 @requires_module_access(Module.HOSTING_SITE_MGMT, require_full=True)
 def update_power_rate(site_id):
-    """更新站点电价"""
+    """
+    更新站点电价 - 支持历史电价保留
+    新电价从指定时间开始生效，旧电价自动关闭
+    只计算新电价生效后的用电成本
+    """
     try:
         data = request.get_json()
         site = HostingSite.query.get_or_404(site_id)
         
-        # 验证访问权限
         user_role = session.get('role', 'guest')
         user_email = session.get('email', '')
+        user_id = session.get('user_id')
         
         if user_role not in ['admin', 'owner']:
             if user_role == 'mining_site_owner' and site.contact_email != user_email:
                 return jsonify({'success': False, 'error': 'Access denied'}), 403
         
         if 'electricity_rate' in data:
-            site.electricity_rate = float(data['electricity_rate'])
+            new_rate = float(data['electricity_rate'])
+            effective_from = datetime.utcnow()
+            notes = data.get('notes', '')
+            
+            if 'effective_from' in data and data['effective_from']:
+                try:
+                    effective_from = datetime.fromisoformat(data['effective_from'].replace('Z', '+00:00').replace('+00:00', ''))
+                except ValueError:
+                    pass
+            
+            current_rate = SiteElectricityRateHistory.query.filter(
+                SiteElectricityRateHistory.site_id == site_id,
+                SiteElectricityRateHistory.effective_to.is_(None)
+            ).first()
+            
+            if current_rate:
+                current_rate.effective_to = effective_from
+            
+            new_rate_record = SiteElectricityRateHistory(
+                site_id=site_id,
+                rate_usd_per_kwh=new_rate,
+                effective_from=effective_from,
+                notes=notes,
+                created_by_id=user_id
+            )
+            db.session.add(new_rate_record)
+            
+            site.electricity_rate = new_rate
         
         if 'electricity_source' in data:
             if hasattr(site, 'electricity_source'):
@@ -7335,7 +7366,7 @@ def update_power_rate(site_id):
         
         return jsonify({
             'success': True,
-            'message': '电价更新成功',
+            'message': '电价更新成功 Rate updated successfully',
             'site': {
                 'id': site.id,
                 'name': site.name,
@@ -7345,6 +7376,36 @@ def update_power_rate(site_id):
     except Exception as e:
         db.session.rollback()
         logger.error(f"更新电价失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/power/rates/<int:site_id>/history', methods=['GET'])
+@login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT)
+def get_power_rate_history(site_id):
+    """获取站点电价历史记录"""
+    try:
+        site = HostingSite.query.get_or_404(site_id)
+        
+        user_role = session.get('role', 'guest')
+        user_email = session.get('email', '')
+        
+        if user_role not in ['admin', 'owner']:
+            if user_role == 'mining_site_owner' and site.contact_email != user_email:
+                return jsonify({'success': False, 'error': 'Access denied'}), 403
+        
+        history = SiteElectricityRateHistory.query.filter_by(
+            site_id=site_id
+        ).order_by(SiteElectricityRateHistory.effective_from.desc()).all()
+        
+        return jsonify({
+            'success': True,
+            'site_id': site_id,
+            'site_name': site.name,
+            'history': [r.to_dict() for r in history]
+        })
+    except Exception as e:
+        logger.error(f"获取电价历史失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 

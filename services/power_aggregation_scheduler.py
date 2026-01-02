@@ -18,6 +18,8 @@ from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.cron import CronTrigger
 from sqlalchemy import func
 
+from app import db
+
 logger = logging.getLogger(__name__)
 
 CARBON_EMISSION_FACTORS = {
@@ -166,6 +168,36 @@ class PowerAggregationScheduler:
             return CARBON_EMISSION_FACTORS[energy_source.lower()]
         return CARBON_EMISSION_FACTORS['grid']
     
+    def _get_electricity_rate_for_time(self, site_id: int, target_time: datetime) -> float:
+        """
+        Get the electricity rate applicable at a specific time
+        按时间获取适用的电价（支持历史电价）
+        
+        Returns rate from SiteElectricityRateHistory if available,
+        otherwise falls back to HostingSite.electricity_rate
+        """
+        from models import SiteElectricityRateHistory, HostingSite
+        
+        rate_record = SiteElectricityRateHistory.query.filter(
+            SiteElectricityRateHistory.site_id == site_id,
+            SiteElectricityRateHistory.effective_from <= target_time,
+            db.or_(
+                SiteElectricityRateHistory.effective_to.is_(None),
+                SiteElectricityRateHistory.effective_to > target_time
+            )
+        ).order_by(
+            SiteElectricityRateHistory.effective_from.desc()
+        ).first()
+        
+        if rate_record:
+            return rate_record.rate_usd_per_kwh
+        
+        site = HostingSite.query.get(site_id)
+        if site and site.electricity_rate:
+            return site.electricity_rate
+        
+        return 0.0
+    
     def _aggregate_hourly(self):
         """Aggregate telemetry data into hourly site energy records"""
         if not self._app:
@@ -208,7 +240,7 @@ class PowerAggregationScheduler:
                     peak_kw = max(power_readings) / 1000.0
                     kwh = avg_kw * 1.0
                     
-                    electricity_rate = getattr(site, 'electricity_rate', 0.0) or 0.0
+                    electricity_rate = self._get_electricity_rate_for_time(site.id, hour_start)
                     cost_usd = kwh * electricity_rate
                     
                     electricity_source = getattr(site, 'electricity_source', None)
