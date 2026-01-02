@@ -335,10 +335,10 @@
 
 <!-- 编辑电价模态框 -->
 <div class="modal fade" id="editRateModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content bg-dark">
             <div class="modal-header border-secondary">
-                <h5 class="modal-title">{% if current_lang == 'en' %}Edit Electricity Rate{% else %}编辑电价{% endif %}</h5>
+                <h5 class="modal-title">{% if current_lang == 'en' %}Update Electricity Rate{% else %}更新电价{% endif %}</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -348,27 +348,54 @@
                         <label class="form-label">{% if current_lang == 'en' %}Site Name{% else %}站点名称{% endif %}</label>
                         <input type="text" class="form-control" id="edit-site-name" readonly>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">{% if current_lang == 'en' %}Rate ($/kWh){% else %}电价 ($/kWh){% endif %}</label>
-                        <input type="number" class="form-control" id="edit-rate" step="0.001" min="0" required>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{% if current_lang == 'en' %}New Rate ($/kWh){% else %}新电价 ($/kWh){% endif %}</label>
+                            <input type="number" class="form-control" id="edit-rate" step="0.001" min="0" required>
+                            <small class="text-muted">{% if current_lang == 'en' %}Previous rates will be preserved in history{% else %}旧电价将保留在历史记录中{% endif %}</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{% if current_lang == 'en' %}Electricity Source{% else %}电力来源{% endif %}</label>
+                            <select class="form-select" id="edit-source">
+                                <option value="grid">{% if current_lang == 'en' %}Grid{% else %}电网{% endif %}</option>
+                                <option value="hydro">{% if current_lang == 'en' %}Hydro{% else %}水电{% endif %}</option>
+                                <option value="solar">{% if current_lang == 'en' %}Solar{% else %}太阳能{% endif %}</option>
+                                <option value="wind">{% if current_lang == 'en' %}Wind{% else %}风电{% endif %}</option>
+                                <option value="nuclear">{% if current_lang == 'en' %}Nuclear{% else %}核电{% endif %}</option>
+                                <option value="natural_gas">{% if current_lang == 'en' %}Natural Gas{% else %}天然气{% endif %}</option>
+                                <option value="coal">{% if current_lang == 'en' %}Coal{% else %}煤电{% endif %}</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">{% if current_lang == 'en' %}Electricity Source{% else %}电力来源{% endif %}</label>
-                        <select class="form-select" id="edit-source">
-                            <option value="grid">{% if current_lang == 'en' %}Grid{% else %}电网{% endif %}</option>
-                            <option value="hydro">{% if current_lang == 'en' %}Hydro{% else %}水电{% endif %}</option>
-                            <option value="solar">{% if current_lang == 'en' %}Solar{% else %}太阳能{% endif %}</option>
-                            <option value="wind">{% if current_lang == 'en' %}Wind{% else %}风电{% endif %}</option>
-                            <option value="nuclear">{% if current_lang == 'en' %}Nuclear{% else %}核电{% endif %}</option>
-                            <option value="natural_gas">{% if current_lang == 'en' %}Natural Gas{% else %}天然气{% endif %}</option>
-                            <option value="coal">{% if current_lang == 'en' %}Coal{% else %}煤电{% endif %}</option>
-                        </select>
+                        <label class="form-label">{% if current_lang == 'en' %}Notes (Optional){% else %}备注 (可选){% endif %}</label>
+                        <input type="text" class="form-control" id="edit-notes" placeholder="{% if current_lang == 'en' %}e.g., New contract, price adjustment{% else %}如: 新合同, 电价调整{% endif %}">
                     </div>
                 </form>
+                
+                <!-- 电价历史 -->
+                <div class="mt-4">
+                    <h6 class="text-warning mb-3"><i class="bi bi-clock-history me-2"></i>{% if current_lang == 'en' %}Rate History{% else %}电价历史{% endif %}</h6>
+                    <div id="rate-history-container" style="max-height: 200px; overflow-y: auto;">
+                        <table class="table table-sm table-dark">
+                            <thead>
+                                <tr>
+                                    <th>{% if current_lang == 'en' %}Rate{% else %}电价{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Effective From{% else %}生效时间{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Effective To{% else %}结束时间{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Notes{% else %}备注{% endif %}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rate-history-tbody">
+                                <tr><td colspan="4" class="text-center text-muted">{% if current_lang == 'en' %}Loading...{% else %}加载中...{% endif %}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer border-secondary">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}</button>
-                <button type="button" class="btn btn-warning" onclick="saveRate()">{% if current_lang == 'en' %}Save{% else %}保存{% endif %}</button>
+                <button type="button" class="btn btn-warning" onclick="saveRate()">{% if current_lang == 'en' %}Save New Rate{% else %}保存新电价{% endif %}</button>
             </div>
         </div>
     </div>
@@ -547,18 +574,55 @@ function editRate(siteId, siteName, rate, source) {
     document.getElementById('edit-site-name').value = siteName;
     document.getElementById('edit-rate').value = rate;
     document.getElementById('edit-source').value = source;
+    document.getElementById('edit-notes').value = '';
+    loadRateHistory(siteId);
     new bootstrap.Modal(document.getElementById('editRateModal')).show();
+}
+
+function loadRateHistory(siteId) {
+    const tbody = document.getElementById('rate-history-tbody');
+    tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">${isEn ? 'Loading...' : '加载中...'}</td></tr>`;
+    
+    fetch('/hosting/api/power/rates/' + siteId + '/history')
+        .then(r => r.json())
+        .then(res => {
+            if (res.success && res.history && res.history.length > 0) {
+                tbody.innerHTML = res.history.map(h => {
+                    const from = new Date(h.effective_from).toLocaleDateString();
+                    const to = h.effective_to ? new Date(h.effective_to).toLocaleDateString() : (isEn ? 'Current' : '当前');
+                    const rateClass = h.rate_usd_per_kwh < 0.06 ? 'low' : (h.rate_usd_per_kwh < 0.10 ? 'medium' : 'high');
+                    const statusBadge = h.is_current ? `<span class="badge bg-success ms-1">${isEn ? 'Active' : '当前'}</span>` : '';
+                    return `<tr>
+                        <td><span class="rate-badge ${rateClass}">$${h.rate_usd_per_kwh.toFixed(3)}</span>${statusBadge}</td>
+                        <td>${from}</td>
+                        <td>${to}</td>
+                        <td class="text-muted">${h.notes || '-'}</td>
+                    </tr>`;
+                }).join('');
+            } else {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">${isEn ? 'No history' : '无历史记录'}</td></tr>`;
+            }
+        })
+        .catch(err => {
+            console.error('Load rate history error:', err);
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">${isEn ? 'Load failed' : '加载失败'}</td></tr>`;
+        });
 }
 
 function saveRate() {
     const siteId = document.getElementById('edit-site-id').value;
     const rate = parseFloat(document.getElementById('edit-rate').value);
     const source = document.getElementById('edit-source').value;
+    const notes = document.getElementById('edit-notes').value.trim();
     
     fetch('/hosting/api/power/rates/' + siteId, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ electricity_rate: rate, electricity_source: source })
+        body: JSON.stringify({ 
+            electricity_rate: rate, 
+            electricity_source: source,
+            notes: notes
+        })
     })
     .then(r => r.json())
     .then(res => {
@@ -566,6 +630,7 @@ function saveRate() {
             bootstrap.Modal.getInstance(document.getElementById('editRateModal')).hide();
             loadRates();
             loadPowerOverview();
+            alert(isEn ? 'Rate updated! Previous rate preserved in history.' : '电价已更新！旧电价已保存到历史记录。');
         } else {
             alert(res.error || (isEn ? 'Save failed' : '保存失败'));
         }

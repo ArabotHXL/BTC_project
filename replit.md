@@ -125,6 +125,17 @@ The architecture emphasizes modularity with page-isolated components and databas
 - Removed "监控管理/Monitoring" link from sidebar navigation
 - Power Center consolidates all power monitoring, billing, carbon tracking, and curtailment analytics
 
+### Historical Electricity Rate Management (历史电价管理)
+- **New Model**: `SiteElectricityRateHistory` table tracks all electricity rate changes with effective periods
+- **Rate Versioning**: When updating a rate, previous rate records are preserved with `effective_to` timestamp
+- **Time-Based Cost Calculation**: Power aggregation scheduler now calculates costs based on the rate applicable at each time period
+- **API Endpoints**:
+  - PUT `/hosting/api/power/rates/<site_id>` - Creates new rate record, closes previous rate
+  - GET `/hosting/api/power/rates/<site_id>/history` - Retrieves full rate history for a site
+- **UI Enhancements**: Edit Rate modal now shows rate history table and accepts optional notes field
+- **Helper Function**: `_get_electricity_rate_for_time(site_id, target_time)` in power_aggregation_scheduler.py queries correct rate for any timestamp
+- **Data Migration**: Existing `HostingSite.electricity_rate` values migrated to history table on first deploy
+
 ### Previous Changes (2026-01-01)
 
 ### API Optimization
