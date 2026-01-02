@@ -75,6 +75,11 @@ The architecture emphasizes modularity with page-isolated components and databas
 
 ## Recent Changes (2026-01-02)
 
+### RBAC Role Mapping Fix
+- Added `site_manager` role mapping to `MINING_SITE_OWNER` in `common/rbac.py`
+- This fixes access control for users with `site_manager` role in database
+- Without this mapping, `site_manager` users were defaulting to `Guest` permissions
+
 ### Power Consumption Center (电力监控中心)
 - New page: `/hosting/host/power_consumption` replaces the old monitoring page
 - **Core Statistics**: Real-time power (kW), daily consumption (kWh), monthly cost estimate ($), curtailment savings ($)

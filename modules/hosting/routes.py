@@ -159,6 +159,7 @@ def host_view(subpath='dashboard'):
     - 限电管理: CURTAILMENT_STRATEGY (完全访问)
     """
     try:
+        logger.debug(f"host_view called with subpath: {subpath}")
         if subpath == 'dashboard':
             return render_template('hosting/host_dashboard.html')
         elif subpath == 'sites':
@@ -168,6 +169,7 @@ def host_view(subpath='dashboard'):
         elif subpath == 'monitoring':
             return render_template('hosting/event_monitoring.html')
         elif subpath == 'power_consumption':
+            logger.debug("Rendering power_consumption.html")
             return render_template('hosting/power_consumption.html')
         elif subpath == 'sla':
             return render_template('hosting/sla_management.html')
@@ -176,9 +178,10 @@ def host_view(subpath='dashboard'):
         elif subpath == 'collectors':
             return render_template('hosting/collector_management.html')
         else:
+            logger.debug(f"Unknown subpath: {subpath}, falling back to dashboard")
             return render_template('hosting/host_dashboard.html')
     except Exception as e:
-        logger.error(f"托管商视图错误: {e}")
+        logger.error(f"托管商视图错误: {e}", exc_info=True)
         current_lang = session.get('language', 'zh')
         if current_lang == 'en':
             flash('Page loading failed', 'error')

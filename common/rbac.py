@@ -73,6 +73,7 @@ ROLE_MIGRATION_MAP = {
     'finance': Role.ADMIN,        # 财务人员 -> 管理员权限
     'trader': Role.CLIENT,        # 交易员 -> 客户端权限
     'readonly': Role.CUSTOMER,    # 只读用户 -> 应用客户
+    'site_manager': Role.MINING_SITE_OWNER,  # 站点经理 -> 矿场站点负责人
 }
 
 
