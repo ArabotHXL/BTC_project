@@ -73,7 +73,32 @@ The architecture emphasizes modularity with page-isolated components and databas
 - **Python 3.9+**: Runtime.
 - **Replit Platform**: Deployment and hosting.
 
-## Recent Changes (2026-01-01)
+## Recent Changes (2026-01-02)
+
+### Power Consumption Center (电力监控中心)
+- New page: `/hosting/host/power_consumption` replaces the old monitoring page
+- **Core Statistics**: Real-time power (kW), daily consumption (kWh), monthly cost estimate ($), curtailment savings ($)
+- **Electricity Rate Management**: Site-by-site rate configuration with edit modal, supports time-of-use pricing (peak/off-peak/normal)
+- **Power Trend Charts**: 24H/7D/30D consumption visualization with Chart.js
+- **Power Bills**: Generate monthly electricity bills per customer
+- **Power Alerts**: Peak hour warnings, abnormal consumption detection, price change notifications
+- **Historical Comparison**: Month-over-Month (MoM) and Year-over-Year (YoY) analysis
+- **Contract Tracking**: Contracted capacity vs actual usage with over-limit warnings
+- **Carbon Emissions**: Calculate carbon footprint based on electricity source (hydro/solar/wind/nuclear/grid/coal)
+- **Curtailment Savings**: Smart curtailment effect statistics
+
+### Power APIs (11 endpoints)
+- GET `/hosting/api/power/overview` - Power overview data
+- GET `/hosting/api/power/consumption` - Consumption with time range
+- GET/PUT `/hosting/api/power/rates` - Electricity rate management
+- GET `/hosting/api/power/curtailment-savings` - Curtailment savings
+- GET/POST `/hosting/api/power/bills` - Power bill management
+- GET `/hosting/api/power/alerts` - Power alerts
+- GET `/hosting/api/power/contracts` - Contract tracking
+- GET `/hosting/api/power/carbon` - Carbon emissions
+- GET `/hosting/api/power/comparison` - Historical comparison
+
+### Previous Changes (2026-01-01)
 
 ### API Optimization
 - Optimized miner list API (`/hosting/api/miners`) with joinedload() to eliminate N+1 queries
