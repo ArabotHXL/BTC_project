@@ -1,0 +1,267 @@
+1) 先把数据口径“锁死”（否则后面每个功能都会扯皮）
+1.1 功耗与用电量的标准口径
+
+瞬时功耗（kW）：站点在线矿机最新遥测 power_consumption_w 求和 / 1000
+
+用电量（kWh）：对遥测做时间积分
+
+公式：kWh = Σ( power_kW * Δt_hours )
+
+Δt 建议用“相邻遥测时间差”，并对异常间隔做上限截断（例如 >30 分钟按 30 分钟算，避免断点拉爆）
+
+1.2 电费口径
+
+平电价：Cost = Σ(kWh) * rate_flat
+
+分时电价（TOU）：Cost = Σ( kWh_hour[h] * rate[h] )（按小时或 15min 对齐）
+
+客户电费分摊（按客户拥有矿机的实际用电计费）：
+CustomerCost = Σ( miner_kWh * price_at_time ) + (可选)PUE/场地附加费 + 服务费
+
+1.3 限电节省口径（必须定义“对照基线”）
+
+建议你做 两条（一个保守、一个更真实）：
+
+保守节省（必可算）：按计划关机矿机的“铭牌功率/最近均值功率”估算被削减的 kWh
+
+真实节省（推荐）：Baseline 模型（同站点同小时的历史均值功率）减去实际功率，得到实际削减 kW，再积分得到 kWh
+
+2) 数据模型（DB Schema）怎么加，才能支撑“全部功能”
+
+你说“站点可设置电价字段已有”，但要支持 TOU、合同、账单、碳，就需要拆表。
+
+2.1 电价配置（支持平价 + 分时）
+
+power_price_config
+
+id, site_id, mode（FLAT / TOU / REALTIME）
+
+flat_rate（$/kWh）
+
+currency
+
+timezone
+
+is_active
+
+power_price_tou_period
+
+config_id
+
+name（peak/offpeak/mid）
+
+days_of_week（位图或数组）
+
+start_time, end_time（本地时间）
+
+rate（$/kWh）
+
+（可选）power_price_hourly：如果你后面要接“实时电价”，按小时落库
+
+2.2 站点用电聚合（让卡片秒开）
+
+site_energy_hourly
+
+site_id, hour_ts
+
+kWh, avg_kW, peak_kW
+
+cost_usd（按当小时电价算好的）
+
+site_energy_daily
+
+site_id, date
+
+kWh, cost_usd, peak_kW
+
+site_energy_monthly
+
+site_id, month
+
+kWh, cost_usd, peak_kW
+
+2.3 客户账单
+
+invoice
+
+site_id, customer_id, period_start, period_end
+
+subtotal_energy, service_fee, adjustments, tax, total
+
+status（draft/issued/paid）
+
+invoice_line_item
+
+invoice_id
+
+type（energy / hosting / maintenance / adjustment）
+
+quantity（kWh）
+
+unit_price
+
+amount
+
+meta（json：矿机列表、分摊逻辑、PUE 等）
+
+2.4 合同追踪（电力合同、需量/电量）
+
+power_contract
+
+site_id, provider, start_date, end_date
+
+contract_kWh_month（或总量）
+
+demand_limit_kW（如果有需量）
+
+rate_model（flat/tou/index）
+
+notes, attachments_url
+
+2.5 碳排放参数
+
+carbon_config
+
+site_id
+
+kg_co2_per_kwh（默认值，允许手填）
+
+source_type（grid / renewable / mixed）
+
+在聚合表里加：co2_kg
+
+3) 后端实现：API + 定时任务（核心是“算得快、算得准、可追溯”）
+3.1 电价管理功能（快捷编辑 + TOU）
+
+API
+
+GET /sites/:id/power-price（返回当前配置）
+
+PUT /sites/:id/power-price（更新 flat 或 tou periods）
+
+POST /sites/:id/power-price/activate（切换 active config，保留历史）
+
+快捷编辑入口
+
+站点详情页一个“电价”卡片：显示当前模式+摘要（例如：Flat $0.052/kWh 或 Peak/Offpeak）
+
+点击直接弹窗编辑（不跳页面）
+
+3.2 核心卡片（你列的四张）
+
+卡片要做到：不扫原始遥测，全部走聚合表或缓存。
+
+当前总功耗
+
+数据源：latest miner telemetry（建议你做一张 miner_latest_snapshot 表/视图，每台矿机一行最新值）
+
+计算：站点所有在线矿机 power_w sum
+
+今日用电量
+
+数据源：site_energy_daily（当天 kWh）
+
+本月电费
+
+数据源：site_energy_monthly.cost_usd
+
+限电节省
+
+数据源：curtailment_schedule + site_energy_hourly
+
+输出：本月累计 saved_kWh, saved_cost, revenue_lost, net_benefit
+
+3.3 定时任务（关键）
+
+每 5 分钟/每 1 分钟：刷新 miner_latest_snapshot
+
+每小时：落 site_energy_hourly（对上一小时做结算：kWh、成本、peak）
+
+每天 00:10：写 site_energy_daily
+
+每月 1 号 00:30：写 site_energy_monthly + 生成账单草稿（invoice draft）
+
+技术实现：用你现有 scheduler/worker（APScheduler/Celery/RQ 任一）即可，重点是“幂等 + 可重跑”。
+
+4) 你列的“还可以加的功能”：逐个给出落地方式
+4.1 电费账单生成（按月客户明细）
+
+步骤
+
+先算每台矿机在周期内的 miner_kWh_hourly（或直接在聚合时带上 customer_id 分组）
+
+按小时电价计算成本，汇总到客户
+
+生成 invoice + invoice_line_item
+
+输出 PDF/CSV（PDF 可以后面做，先 CSV 最快）
+
+关键点（别踩坑）
+
+矿机在月中转移客户/下架：按时间切片归属
+
+公摊（PUE、网络设备、风机等）：提供一个可配置的“附加系数/固定费用”
+
+4.2 电价预警（高峰时段提醒）
+
+规则：进入 Peak 时段前 X 分钟提醒，或电价高于阈值提醒
+
+通道：站内通知 + Email/微信/Slack（先站内 + Email）
+
+数据源：TOU 配置 / hourly price 表
+
+4.3 功耗异常检测（矿机功耗超标告警）
+
+给你两个层次（先易后难）：
+
+规则阈值：power_w > expected_w * 1.15 持续 N 个采样点触发
+
+统计检测：对每台矿机做滚动均值/标准差，power 超出 mean ± 3σ 触发（你现有异常检测框架可复用）
+
+告警要落库：alert_event(miner_id, type=POWER_SPIKE, created_at, resolved_at, context)
+
+4.4 历史对比（同比/环比）
+
+基于 site_energy_monthly 直接做：
+
+环比：本月 vs 上月 kWh/cost/peak_kW
+
+同比：本月 vs 去年同月
+
+前端展示：趋势折线 + 百分比变化 + 解释（电价变了/负载变了/限电变了）
+
+4.5 电力合同追踪（合同电量 vs 实际用量）
+
+合同录入：合同电量、需量上限、有效期
+
+对比面板：
+
+actual_kWh_month vs contract_kWh_month
+
+峰值功率 peak_kW vs demand_limit_kW
+
+超标预警：达到 80%/95% 阈值提醒
+
+4.6 碳排放估算
+
+简化做法（立即可上线）：站点配置 kg_co2_per_kwh，然后
+
+co2_kg = kWh * kg_co2_per_kwh
+
+展示：本月 CO2、每 TH CO2、趋势图、（可选）减排等价物
+
+4.7 限电策略效果（智能限电省多少钱）
+
+做成“策略归因报表”：
+
+维度：策略类型（性能优先/客户优先/公平/自定义）、站点、日期
+
+指标：
+
+saved_kWh、saved_cost
+
+revenue_lost（按 BTC 收益模型估算）
+
+net_benefit = saved_cost - revenue_lost
+
+risk_reduction_proxy（高温分钟下降、CRITICAL 比例下降）

@@ -649,17 +649,20 @@
                     
                     <!-- 设备与监控 (可折叠) -->
                     <div class="hosting-nav-item hosting-nav-parent">
-                        <a href="javascript:void(0)" class="hosting-nav-link hosting-nav-toggle" data-bs-toggle="collapse" data-bs-target="#submenu-devices" aria-expanded="{{ 'true' if request.path.startswith('/hosting/host/devices') or request.path.startswith('/hosting/host/monitoring') else 'false' }}" aria-controls="submenu-devices">
+                        <a href="javascript:void(0)" class="hosting-nav-link hosting-nav-toggle" data-bs-toggle="collapse" data-bs-target="#submenu-devices" aria-expanded="{{ 'true' if request.path.startswith('/hosting/host/devices') or request.path.startswith('/hosting/host/monitoring') or request.path.startswith('/hosting/host/power_consumption') else 'false' }}" aria-controls="submenu-devices">
                             <i class="bi bi-cpu hosting-nav-icon"></i>
                             <span class="hosting-nav-text" data-i18n="devices_monitoring">{% if current_lang == 'en' %}Devices & Monitoring{% else %}设备与监控{% endif %}</span>
                             <i class="bi bi-chevron-down hosting-nav-arrow"></i>
                         </a>
-                        <div class="collapse hosting-submenu {{ 'show' if request.path.startswith('/hosting/host/devices') or request.path.startswith('/hosting/host/monitoring') }}" id="submenu-devices">
+                        <div class="collapse hosting-submenu {{ 'show' if request.path.startswith('/hosting/host/devices') or request.path.startswith('/hosting/host/monitoring') or request.path.startswith('/hosting/host/power_consumption') }}" id="submenu-devices">
                             <a href="/hosting/host/devices" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path.startswith('/hosting/host/devices') }}">
                                 <span class="hosting-nav-text" data-i18n="device_management">{% if current_lang == 'en' %}Device Management{% else %}设备管理{% endif %}</span>
                             </a>
                             <a href="/hosting/host/monitoring" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path.startswith('/hosting/host/monitoring') }}">
                                 <span class="hosting-nav-text" data-i18n="monitoring">{% if current_lang == 'en' %}Monitoring{% else %}监控管理{% endif %}</span>
+                            </a>
+                            <a href="/hosting/host/power_consumption" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path.startswith('/hosting/host/power_consumption') }}">
+                                <span class="hosting-nav-text" data-i18n="power_consumption">{% if current_lang == 'en' %}Power Center{% else %}电力监控{% endif %}</span>
                             </a>
                         </div>
                     </div>
@@ -967,6 +970,7 @@
                 'devices_monitoring': { zh: '设备与监控', en: 'Devices & Monitoring' },
                 'device_management': { zh: '设备管理', en: 'Device Management' },
                 'monitoring': { zh: '监控管理', en: 'Monitoring' },
+                'power_consumption': { zh: '电力监控', en: 'Power Center' },
                 'site_operations': { zh: '站点运营', en: 'Site Operations' },
                 'site_management': { zh: '站点管理', en: 'Site Management' },
                 'smart_curtailment': { zh: '智能限电', en: 'Smart Curtailment' },

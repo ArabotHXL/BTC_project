@@ -1,0 +1,795 @@
+{% extends "hosting/hosting_base.html" %}
+
+{% block page_title %}{% if current_lang == 'en' %}Power Consumption Center{% else %}电力监控中心{% endif %}{% endblock %}
+{% block page_subtitle %}{% if current_lang == 'en' %}Electricity monitoring, billing and carbon tracking{% else %}电力监控、账单管理与碳排放追踪{% endif %}{% endblock %}
+
+{% block header_actions %}
+{{ super() }}
+<div class="btn-group ms-3" role="group">
+    <button class="btn btn-hosting-primary btn-sm" data-bs-toggle="modal" data-bs-target="#generateBillModal">
+        <i class="bi bi-receipt me-1"></i>{% if current_lang == 'en' %}Generate Bill{% else %}生成账单{% endif %}
+    </button>
+    <button class="btn btn-hosting-secondary btn-sm" onclick="refreshPowerData()">
+        <i class="bi bi-arrow-clockwise me-1"></i>{% if current_lang == 'en' %}Refresh{% else %}刷新{% endif %}
+    </button>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.power-chart-container {
+    height: 350px;
+    position: relative;
+}
+.rate-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+.rate-badge.low { background: rgba(40, 167, 69, 0.2); color: #28a745; }
+.rate-badge.medium { background: rgba(255, 193, 7, 0.2); color: #ffc107; }
+.rate-badge.high { background: rgba(220, 53, 69, 0.2); color: #dc3545; }
+.progress-bar-power {
+    height: 20px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.1);
+    overflow: hidden;
+}
+.progress-bar-power .fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.5s ease;
+}
+.progress-bar-power .fill.safe { background: linear-gradient(90deg, #28a745, #20c997); }
+.progress-bar-power .fill.warning { background: linear-gradient(90deg, #ffc107, #fd7e14); }
+.progress-bar-power .fill.danger { background: linear-gradient(90deg, #dc3545, #e83e8c); }
+.carbon-source-tag {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    margin-right: 0.5rem;
+}
+.carbon-source-tag.hydro { background: #0dcaf0; color: #000; }
+.carbon-source-tag.solar { background: #ffc107; color: #000; }
+.carbon-source-tag.wind { background: #20c997; color: #000; }
+.carbon-source-tag.nuclear { background: #6f42c1; color: #fff; }
+.carbon-source-tag.grid { background: #6c757d; color: #fff; }
+.carbon-source-tag.coal { background: #343a40; color: #fff; }
+.alert-card {
+    border-left: 4px solid;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    background: rgba(255,255,255,0.03);
+    border-radius: 0 8px 8px 0;
+}
+.alert-card.critical { border-color: #dc3545; }
+.alert-card.warning { border-color: #ffc107; }
+.alert-card.info { border-color: #0dcaf0; }
+.comparison-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+.comparison-value.positive { color: #dc3545; }
+.comparison-value.negative { color: #28a745; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- 核心统计卡片 -->
+<div class="hosting-stats-grid">
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="total-power">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Current Power (kW){% else %}当前总功耗 (kW){% endif %}</div>
+        <i class="bi bi-lightning-charge hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="today-consumption">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Today's Usage (kWh){% else %}今日用电量 (kWh){% endif %}</div>
+        <i class="bi bi-battery-charging hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="monthly-cost">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Monthly Cost Est. ($){% else %}本月电费估算 ($){% endif %}</div>
+        <i class="bi bi-currency-dollar hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="curtailment-savings">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Curtailment Savings ($){% else %}限电节省 ($){% endif %}</div>
+        <i class="bi bi-piggy-bank hosting-stat-icon"></i>
+    </div>
+</div>
+
+<!-- 功耗趋势图表 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-graph-up me-2"></i>{% if current_lang == 'en' %}Power Consumption Trend{% else %}功耗趋势{% endif %}
+        </h5>
+        <div class="btn-group" role="group">
+            <button class="btn btn-hosting-outline btn-sm active" onclick="switchTimeRange('24h')" id="btn-24h">24H</button>
+            <button class="btn btn-hosting-outline btn-sm" onclick="switchTimeRange('7d')" id="btn-7d">7D</button>
+            <button class="btn btn-hosting-outline btn-sm" onclick="switchTimeRange('30d')" id="btn-30d">30D</button>
+        </div>
+    </div>
+    <div class="hosting-card-body">
+        <div class="power-chart-container">
+            <canvas id="powerChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 电价管理 -->
+    <div class="col-lg-6">
+        <div class="hosting-card">
+            <div class="hosting-card-header">
+                <h5 class="hosting-card-title">
+                    <i class="bi bi-tag me-2"></i>{% if current_lang == 'en' %}Electricity Rates{% else %}电价管理{% endif %}
+                </h5>
+            </div>
+            <div class="hosting-card-body">
+                <div class="hosting-table">
+                    <table class="table table-hover" id="rates-table">
+                        <thead>
+                            <tr>
+                                <th>{% if current_lang == 'en' %}Site{% else %}站点{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Rate ($/kWh){% else %}电价 ($/kWh){% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Source{% else %}电力来源{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Action{% else %}操作{% endif %}</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rates-tbody">
+                            <tr><td colspan="4" class="text-center text-muted">{% if current_lang == 'en' %}Loading...{% else %}加载中...{% endif %}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 电力告警 -->
+    <div class="col-lg-6">
+        <div class="hosting-card">
+            <div class="hosting-card-header">
+                <h5 class="hosting-card-title">
+                    <i class="bi bi-bell me-2"></i>{% if current_lang == 'en' %}Power Alerts{% else %}电力告警{% endif %}
+                </h5>
+            </div>
+            <div class="hosting-card-body">
+                <div id="alerts-container">
+                    <div class="text-center text-muted py-3">{% if current_lang == 'en' %}Loading...{% else %}加载中...{% endif %}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 电力合同追踪 -->
+    <div class="col-lg-6">
+        <div class="hosting-card">
+            <div class="hosting-card-header">
+                <h5 class="hosting-card-title">
+                    <i class="bi bi-file-earmark-text me-2"></i>{% if current_lang == 'en' %}Power Contracts{% else %}电力合同追踪{% endif %}
+                </h5>
+            </div>
+            <div class="hosting-card-body">
+                <div id="contracts-container">
+                    <div class="text-center text-muted py-3">{% if current_lang == 'en' %}Loading...{% else %}加载中...{% endif %}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 历史对比分析 -->
+    <div class="col-lg-6">
+        <div class="hosting-card">
+            <div class="hosting-card-header">
+                <h5 class="hosting-card-title">
+                    <i class="bi bi-bar-chart me-2"></i>{% if current_lang == 'en' %}Historical Comparison{% else %}历史对比分析{% endif %}
+                </h5>
+            </div>
+            <div class="hosting-card-body">
+                <div class="row text-center" id="comparison-container">
+                    <div class="col-6">
+                        <div class="mb-2 text-muted">{% if current_lang == 'en' %}Month-over-Month{% else %}环比 (上月对比){% endif %}</div>
+                        <div class="comparison-value" id="mom-change">--</div>
+                        <small class="text-muted" id="mom-detail"></small>
+                    </div>
+                    <div class="col-6">
+                        <div class="mb-2 text-muted">{% if current_lang == 'en' %}Year-over-Year{% else %}同比 (去年同期){% endif %}</div>
+                        <div class="comparison-value" id="yoy-change">--</div>
+                        <small class="text-muted" id="yoy-detail"></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 碳排放估算 -->
+    <div class="col-lg-6">
+        <div class="hosting-card">
+            <div class="hosting-card-header">
+                <h5 class="hosting-card-title">
+                    <i class="bi bi-tree me-2"></i>{% if current_lang == 'en' %}Carbon Emissions{% else %}碳排放估算{% endif %}
+                </h5>
+            </div>
+            <div class="hosting-card-body">
+                <div class="row mb-3">
+                    <div class="col-6 text-center">
+                        <div class="h2 text-warning" id="total-carbon">--</div>
+                        <div class="text-muted">{% if current_lang == 'en' %}Total CO₂ (tons){% else %}总碳排放 (吨){% endif %}</div>
+                    </div>
+                    <div class="col-6 text-center">
+                        <div class="h2 text-info" id="total-kwh">--</div>
+                        <div class="text-muted">{% if current_lang == 'en' %}Usage (MWh){% else %}用电量 (MWh){% endif %}</div>
+                    </div>
+                </div>
+                <div id="carbon-sites-container">
+                    <div class="text-center text-muted py-2">{% if current_lang == 'en' %}Loading...{% else %}加载中...{% endif %}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 限电节省统计 -->
+    <div class="col-lg-6">
+        <div class="hosting-card">
+            <div class="hosting-card-header">
+                <h5 class="hosting-card-title">
+                    <i class="bi bi-shield-check me-2"></i>{% if current_lang == 'en' %}Curtailment Savings{% else %}限电策略效果{% endif %}
+                </h5>
+            </div>
+            <div class="hosting-card-body">
+                <div class="row mb-3">
+                    <div class="col-6 text-center">
+                        <div class="h2 text-success" id="savings-total">$0</div>
+                        <div class="text-muted">{% if current_lang == 'en' %}Total Savings{% else %}总节省金额{% endif %}</div>
+                    </div>
+                    <div class="col-6 text-center">
+                        <div class="h2 text-info" id="savings-kwh">0</div>
+                        <div class="text-muted">{% if current_lang == 'en' %}Power Saved (kWh){% else %}节省电量 (kWh){% endif %}</div>
+                    </div>
+                </div>
+                <div id="curtailment-records">
+                    <div class="text-center text-muted py-2">{% if current_lang == 'en' %}Loading...{% else %}加载中...{% endif %}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 电费账单管理 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-receipt me-2"></i>{% if current_lang == 'en' %}Power Bills{% else %}电费账单管理{% endif %}
+        </h5>
+        <button class="btn btn-hosting-primary btn-sm" data-bs-toggle="modal" data-bs-target="#generateBillModal">
+            <i class="bi bi-plus-circle me-1"></i>{% if current_lang == 'en' %}Generate{% else %}生成账单{% endif %}
+        </button>
+    </div>
+    <div class="hosting-card-body">
+        <div class="hosting-table">
+            <table class="table table-hover" id="bills-table">
+                <thead>
+                    <tr>
+                        <th>{% if current_lang == 'en' %}Bill #{% else %}账单号{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Site{% else %}站点{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Customer{% else %}客户{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Period{% else %}周期{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Usage (kWh){% else %}用电量{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Amount{% else %}金额{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                    </tr>
+                </thead>
+                <tbody id="bills-tbody">
+                    <tr><td colspan="7" class="text-center text-muted">{% if current_lang == 'en' %}Loading...{% else %}加载中...{% endif %}</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 生成账单模态框 -->
+<div class="modal fade" id="generateBillModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">{% if current_lang == 'en' %}Generate Power Bill{% else %}生成电费账单{% endif %}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="generateBillForm">
+                    <div class="mb-3">
+                        <label class="form-label">{% if current_lang == 'en' %}Site{% else %}站点{% endif %}</label>
+                        <select class="form-select" id="bill-site" required>
+                            <option value="">{% if current_lang == 'en' %}Select Site{% else %}选择站点{% endif %}</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% if current_lang == 'en' %}Customer{% else %}客户{% endif %}</label>
+                        <select class="form-select" id="bill-customer" required>
+                            <option value="">{% if current_lang == 'en' %}Select Customer{% else %}选择客户{% endif %}</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% if current_lang == 'en' %}Month{% else %}月份{% endif %}</label>
+                        <input type="month" class="form-control" id="bill-month" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}</button>
+                <button type="button" class="btn btn-warning" onclick="generateBill()">{% if current_lang == 'en' %}Generate{% else %}生成{% endif %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑电价模态框 -->
+<div class="modal fade" id="editRateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">{% if current_lang == 'en' %}Edit Electricity Rate{% else %}编辑电价{% endif %}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editRateForm">
+                    <input type="hidden" id="edit-site-id">
+                    <div class="mb-3">
+                        <label class="form-label">{% if current_lang == 'en' %}Site Name{% else %}站点名称{% endif %}</label>
+                        <input type="text" class="form-control" id="edit-site-name" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% if current_lang == 'en' %}Rate ($/kWh){% else %}电价 ($/kWh){% endif %}</label>
+                        <input type="number" class="form-control" id="edit-rate" step="0.001" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% if current_lang == 'en' %}Electricity Source{% else %}电力来源{% endif %}</label>
+                        <select class="form-select" id="edit-source">
+                            <option value="grid">{% if current_lang == 'en' %}Grid{% else %}电网{% endif %}</option>
+                            <option value="hydro">{% if current_lang == 'en' %}Hydro{% else %}水电{% endif %}</option>
+                            <option value="solar">{% if current_lang == 'en' %}Solar{% else %}太阳能{% endif %}</option>
+                            <option value="wind">{% if current_lang == 'en' %}Wind{% else %}风电{% endif %}</option>
+                            <option value="nuclear">{% if current_lang == 'en' %}Nuclear{% else %}核电{% endif %}</option>
+                            <option value="natural_gas">{% if current_lang == 'en' %}Natural Gas{% else %}天然气{% endif %}</option>
+                            <option value="coal">{% if current_lang == 'en' %}Coal{% else %}煤电{% endif %}</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}</button>
+                <button type="button" class="btn btn-warning" onclick="saveRate()">{% if current_lang == 'en' %}Save{% else %}保存{% endif %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const isEn = '{{ current_lang }}' === 'en';
+let powerChart = null;
+let currentRange = '24h';
+
+document.addEventListener('DOMContentLoaded', function() {
+    initChart();
+    loadPowerOverview();
+    loadConsumptionData('24h');
+    loadRates();
+    loadAlerts();
+    loadContracts();
+    loadComparison();
+    loadCarbonData();
+    loadCurtailmentSavings();
+    loadBills();
+    loadSitesForBillForm();
+    loadCustomersForBillForm();
+    
+    const today = new Date();
+    document.getElementById('bill-month').value = today.toISOString().slice(0, 7);
+});
+
+function initChart() {
+    const ctx = document.getElementById('powerChart').getContext('2d');
+    powerChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: isEn ? 'Power (kW)' : '功耗 (kW)',
+                    data: [],
+                    borderColor: '#f7931a',
+                    backgroundColor: 'rgba(247, 147, 26, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    yAxisID: 'y'
+                },
+                {
+                    label: isEn ? 'Consumption (kWh)' : '用电量 (kWh)',
+                    data: [],
+                    borderColor: '#28a745',
+                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(255,255,255,0.1)' },
+                    ticks: { color: '#adb5bd' }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    grid: { color: 'rgba(255,255,255,0.1)' },
+                    ticks: { color: '#f7931a' },
+                    title: { display: true, text: isEn ? 'Power (kW)' : '功耗 (kW)', color: '#f7931a' }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    grid: { drawOnChartArea: false },
+                    ticks: { color: '#28a745' },
+                    title: { display: true, text: isEn ? 'Consumption (kWh)' : '用电量 (kWh)', color: '#28a745' }
+                }
+            },
+            plugins: {
+                legend: { labels: { color: '#fff' } }
+            }
+        }
+    });
+}
+
+function refreshPowerData() {
+    loadPowerOverview();
+    loadConsumptionData(currentRange);
+    loadRates();
+    loadAlerts();
+    loadContracts();
+    loadComparison();
+    loadCarbonData();
+    loadCurtailmentSavings();
+    loadBills();
+}
+
+function loadPowerOverview() {
+    fetch('/hosting/api/power/overview')
+        .then(r => r.json())
+        .then(res => {
+            if (res.success && res.data) {
+                const d = res.data;
+                document.getElementById('total-power').textContent = d.total_power_kw.toLocaleString();
+                document.getElementById('today-consumption').textContent = d.today_consumption_kwh.toLocaleString();
+                document.getElementById('monthly-cost').textContent = '$' + d.monthly_cost_estimate.toLocaleString();
+                document.getElementById('curtailment-savings').textContent = '$' + d.curtailment_savings.toLocaleString();
+            }
+        })
+        .catch(err => console.error('Load power overview error:', err));
+}
+
+function switchTimeRange(range) {
+    currentRange = range;
+    document.querySelectorAll('.hosting-card-header .btn-group .btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById('btn-' + range).classList.add('active');
+    loadConsumptionData(range);
+}
+
+function loadConsumptionData(range) {
+    fetch('/hosting/api/power/consumption?range=' + range)
+        .then(r => r.json())
+        .then(res => {
+            if (res.success && res.data) {
+                const points = res.data.points;
+                const labels = points.map(p => {
+                    const date = new Date(p.timestamp);
+                    if (range === '24h') return date.getHours() + ':00';
+                    if (range === '7d') return (date.getMonth()+1) + '/' + date.getDate();
+                    return (date.getMonth()+1) + '/' + date.getDate();
+                });
+                powerChart.data.labels = labels;
+                powerChart.data.datasets[0].data = points.map(p => p.power_kw);
+                powerChart.data.datasets[1].data = points.map(p => p.consumption_kwh);
+                powerChart.update();
+            }
+        })
+        .catch(err => console.error('Load consumption error:', err));
+}
+
+function loadRates() {
+    fetch('/hosting/api/power/rates')
+        .then(r => r.json())
+        .then(res => {
+            const tbody = document.getElementById('rates-tbody');
+            if (res.success && res.rates && res.rates.length > 0) {
+                tbody.innerHTML = res.rates.map(r => {
+                    const rateClass = r.electricity_rate < 0.06 ? 'low' : (r.electricity_rate < 0.10 ? 'medium' : 'high');
+                    const sourceLabel = { hydro: isEn ? 'Hydro' : '水电', solar: isEn ? 'Solar' : '太阳能', wind: isEn ? 'Wind' : '风电', nuclear: isEn ? 'Nuclear' : '核电', grid: isEn ? 'Grid' : '电网', coal: isEn ? 'Coal' : '煤电', natural_gas: isEn ? 'Gas' : '天然气' }[r.electricity_source] || r.electricity_source;
+                    return `<tr>
+                        <td>${r.site_name}</td>
+                        <td><span class="rate-badge ${rateClass}">$${r.electricity_rate.toFixed(3)}</span></td>
+                        <td><span class="carbon-source-tag ${r.electricity_source}">${sourceLabel}</span></td>
+                        <td><button class="btn btn-sm btn-outline-warning" onclick="editRate(${r.site_id}, '${r.site_name}', ${r.electricity_rate}, '${r.electricity_source}')"><i class="bi bi-pencil"></i></button></td>
+                    </tr>`;
+                }).join('');
+            } else {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">${isEn ? 'No data' : '暂无数据'}</td></tr>`;
+            }
+        })
+        .catch(err => {
+            console.error('Load rates error:', err);
+            document.getElementById('rates-tbody').innerHTML = `<tr><td colspan="4" class="text-center text-danger">${isEn ? 'Load failed' : '加载失败'}</td></tr>`;
+        });
+}
+
+function editRate(siteId, siteName, rate, source) {
+    document.getElementById('edit-site-id').value = siteId;
+    document.getElementById('edit-site-name').value = siteName;
+    document.getElementById('edit-rate').value = rate;
+    document.getElementById('edit-source').value = source;
+    new bootstrap.Modal(document.getElementById('editRateModal')).show();
+}
+
+function saveRate() {
+    const siteId = document.getElementById('edit-site-id').value;
+    const rate = parseFloat(document.getElementById('edit-rate').value);
+    const source = document.getElementById('edit-source').value;
+    
+    fetch('/hosting/api/power/rates/' + siteId, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ electricity_rate: rate, electricity_source: source })
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res.success) {
+            bootstrap.Modal.getInstance(document.getElementById('editRateModal')).hide();
+            loadRates();
+            loadPowerOverview();
+        } else {
+            alert(res.error || (isEn ? 'Save failed' : '保存失败'));
+        }
+    })
+    .catch(err => {
+        console.error('Save rate error:', err);
+        alert(isEn ? 'Save failed' : '保存失败');
+    });
+}
+
+function loadAlerts() {
+    fetch('/hosting/api/power/alerts')
+        .then(r => r.json())
+        .then(res => {
+            const container = document.getElementById('alerts-container');
+            if (res.success && res.alerts && res.alerts.length > 0) {
+                container.innerHTML = res.alerts.map(a => `
+                    <div class="alert-card ${a.severity}">
+                        <div class="d-flex justify-content-between">
+                            <strong>${a.site_name}</strong>
+                            <small class="text-muted">${new Date(a.timestamp).toLocaleTimeString()}</small>
+                        </div>
+                        <div>${a.message}</div>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = `<div class="text-center text-muted py-3"><i class="bi bi-check-circle me-2"></i>${isEn ? 'No active alerts' : '无活跃告警'}</div>`;
+            }
+        })
+        .catch(err => console.error('Load alerts error:', err));
+}
+
+function loadContracts() {
+    fetch('/hosting/api/power/contracts')
+        .then(r => r.json())
+        .then(res => {
+            const container = document.getElementById('contracts-container');
+            if (res.success && res.contracts && res.contracts.length > 0) {
+                container.innerHTML = res.contracts.map(c => {
+                    const pct = Math.min(c.usage_percentage, 100);
+                    const fillClass = pct < 80 ? 'safe' : (pct < 95 ? 'warning' : 'danger');
+                    return `
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>${c.site_name}</span>
+                            <span class="${c.is_over_limit ? 'text-danger' : ''}">${c.actual_usage_mw.toFixed(2)} / ${c.contracted_capacity_mw} MW</span>
+                        </div>
+                        <div class="progress-bar-power">
+                            <div class="fill ${fillClass}" style="width: ${pct}%"></div>
+                        </div>
+                        ${c.is_over_limit ? `<small class="text-danger">${isEn ? 'Over contract limit!' : '超过合同限额!'}</small>` : ''}
+                    </div>
+                    `;
+                }).join('');
+            } else {
+                container.innerHTML = `<div class="text-center text-muted py-3">${isEn ? 'No contracts' : '暂无合同数据'}</div>`;
+            }
+        })
+        .catch(err => console.error('Load contracts error:', err));
+}
+
+function loadComparison() {
+    fetch('/hosting/api/power/comparison')
+        .then(r => r.json())
+        .then(res => {
+            if (res.success && res.data) {
+                const mom = res.data.last_month.change_percent;
+                const yoy = res.data.last_year_same_month.change_percent;
+                
+                const momEl = document.getElementById('mom-change');
+                momEl.textContent = (mom >= 0 ? '+' : '') + mom.toFixed(1) + '%';
+                momEl.className = 'comparison-value ' + (mom >= 0 ? 'positive' : 'negative');
+                document.getElementById('mom-detail').textContent = res.data.last_month.consumption_kwh.toLocaleString() + ' kWh';
+                
+                const yoyEl = document.getElementById('yoy-change');
+                yoyEl.textContent = (yoy >= 0 ? '+' : '') + yoy.toFixed(1) + '%';
+                yoyEl.className = 'comparison-value ' + (yoy >= 0 ? 'positive' : 'negative');
+                document.getElementById('yoy-detail').textContent = res.data.last_year_same_month.consumption_kwh.toLocaleString() + ' kWh';
+            }
+        })
+        .catch(err => console.error('Load comparison error:', err));
+}
+
+function loadCarbonData() {
+    fetch('/hosting/api/power/carbon?days=30')
+        .then(r => r.json())
+        .then(res => {
+            if (res.success && res.data) {
+                document.getElementById('total-carbon').textContent = res.data.total_emissions_tons.toFixed(2);
+                document.getElementById('total-kwh').textContent = (res.data.total_consumption_kwh / 1000).toFixed(1);
+                
+                const container = document.getElementById('carbon-sites-container');
+                if (res.data.sites && res.data.sites.length > 0) {
+                    container.innerHTML = res.data.sites.map(s => {
+                        const sourceLabel = { hydro: isEn ? 'Hydro' : '水电', solar: isEn ? 'Solar' : '太阳能', wind: isEn ? 'Wind' : '风电', nuclear: isEn ? 'Nuclear' : '核电', grid: isEn ? 'Grid' : '电网', coal: isEn ? 'Coal' : '煤电', natural_gas: isEn ? 'Gas' : '天然气' }[s.electricity_source] || s.electricity_source;
+                        return `
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary">
+                            <span>${s.site_name} <span class="carbon-source-tag ${s.electricity_source}">${sourceLabel}</span></span>
+                            <span>${s.emissions_kg.toLocaleString()} kg CO₂</span>
+                        </div>
+                        `;
+                    }).join('');
+                } else {
+                    container.innerHTML = `<div class="text-center text-muted">${isEn ? 'No data' : '暂无数据'}</div>`;
+                }
+            }
+        })
+        .catch(err => console.error('Load carbon error:', err));
+}
+
+function loadCurtailmentSavings() {
+    fetch('/hosting/api/power/curtailment-savings?days=30')
+        .then(r => r.json())
+        .then(res => {
+            if (res.success && res.data) {
+                document.getElementById('savings-total').textContent = '$' + res.data.total_savings.toLocaleString();
+                document.getElementById('savings-kwh').textContent = res.data.total_power_saved_kwh.toLocaleString();
+                
+                const container = document.getElementById('curtailment-records');
+                if (res.data.executions && res.data.executions.length > 0) {
+                    container.innerHTML = '<div class="small">' + res.data.executions.slice(0, 5).map(e => `
+                        <div class="d-flex justify-content-between py-1 border-bottom border-secondary">
+                            <span>${e.site_name}</span>
+                            <span class="text-success">+$${e.savings_usd.toFixed(2)}</span>
+                        </div>
+                    `).join('') + '</div>';
+                } else {
+                    container.innerHTML = `<div class="text-center text-muted">${isEn ? 'No curtailment records' : '暂无限电记录'}</div>`;
+                }
+            }
+        })
+        .catch(err => console.error('Load curtailment savings error:', err));
+}
+
+function loadBills() {
+    fetch('/hosting/api/power/bills')
+        .then(r => r.json())
+        .then(res => {
+            const tbody = document.getElementById('bills-tbody');
+            if (res.success && res.bills && res.bills.length > 0) {
+                tbody.innerHTML = res.bills.map(b => {
+                    const statusBadge = { pending: 'warning', paid: 'success', overdue: 'danger' }[b.status] || 'secondary';
+                    const periodStart = b.period_start ? new Date(b.period_start).toLocaleDateString() : '-';
+                    const periodEnd = b.period_end ? new Date(b.period_end).toLocaleDateString() : '-';
+                    return `<tr>
+                        <td>${b.bill_number}</td>
+                        <td>${b.site_name}</td>
+                        <td>${b.customer_name}</td>
+                        <td>${periodStart} - ${periodEnd}</td>
+                        <td>${b.total_kwh.toLocaleString()}</td>
+                        <td>$${b.total_amount.toLocaleString()}</td>
+                        <td><span class="badge bg-${statusBadge}">${b.status}</span></td>
+                    </tr>`;
+                }).join('');
+            } else {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">${isEn ? 'No bills' : '暂无账单'}</td></tr>`;
+            }
+        })
+        .catch(err => console.error('Load bills error:', err));
+}
+
+function loadSitesForBillForm() {
+    fetch('/hosting/api/sites')
+        .then(r => r.json())
+        .then(res => {
+            if (res.success && res.sites) {
+                const select = document.getElementById('bill-site');
+                res.sites.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.textContent = s.name;
+                    select.appendChild(opt);
+                });
+            }
+        })
+        .catch(err => console.error('Load sites error:', err));
+}
+
+function loadCustomersForBillForm() {
+    fetch('/hosting/api/customers')
+        .then(r => r.json())
+        .then(res => {
+            if (res.success && res.customers) {
+                const select = document.getElementById('bill-customer');
+                res.customers.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.id;
+                    opt.textContent = c.name || c.email;
+                    select.appendChild(opt);
+                });
+            }
+        })
+        .catch(err => console.error('Load customers error:', err));
+}
+
+function generateBill() {
+    const siteId = document.getElementById('bill-site').value;
+    const customerId = document.getElementById('bill-customer').value;
+    const month = document.getElementById('bill-month').value;
+    
+    if (!siteId || !customerId || !month) {
+        alert(isEn ? 'Please fill all fields' : '请填写所有字段');
+        return;
+    }
+    
+    fetch('/hosting/api/power/bills/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ site_id: parseInt(siteId), customer_id: parseInt(customerId), month: month })
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res.success) {
+            bootstrap.Modal.getInstance(document.getElementById('generateBillModal')).hide();
+            loadBills();
+            alert(isEn ? 'Bill generated successfully!' : '账单生成成功!');
+        } else {
+            alert(res.error || (isEn ? 'Generation failed' : '生成失败'));
+        }
+    })
+    .catch(err => {
+        console.error('Generate bill error:', err);
+        alert(isEn ? 'Generation failed' : '生成失败');
+    });
+}
+</script>
+{% endblock %}

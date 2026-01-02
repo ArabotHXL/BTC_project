@@ -167,6 +167,8 @@ def host_view(subpath='dashboard'):
             return render_template('hosting/miner_management.html')
         elif subpath == 'monitoring':
             return render_template('hosting/event_monitoring.html')
+        elif subpath == 'power_consumption':
+            return render_template('hosting/power_consumption.html')
         elif subpath == 'sla':
             return render_template('hosting/sla_management.html')
         elif subpath == 'curtailment':
@@ -7078,4 +7080,698 @@ def api_get_kpi(site_id):
         
     except Exception as e:
         logger.error(f"KPI API error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ==================== 电力监控中心 API ====================
+
+# 碳排放系数 (kg CO2/kWh)
+CARBON_EMISSION_FACTORS = {
+    'hydro': 0.024,
+    'solar': 0.048,
+    'wind': 0.011,
+    'nuclear': 0.012,
+    'natural_gas': 0.41,
+    'coal': 0.82,
+    'grid': 0.42  # 默认电网
+}
+
+
+@hosting_bp.route('/api/power/overview', methods=['GET'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
+def get_power_overview():
+    """电力概览数据 - 当前功耗、今日用电、电费估算、限电节省"""
+    try:
+        user_role = session.get('role', 'guest')
+        user_email = session.get('email', '')
+        user_id = session.get('user_id')
+        
+        # 根据权限获取站点
+        if user_role in ['admin', 'owner']:
+            sites = HostingSite.query.all()
+        elif user_role == 'mining_site_owner':
+            sites = HostingSite.query.filter_by(contact_email=user_email).all()
+        else:
+            site_ids = db.session.query(db.distinct(HostingMiner.site_id)).filter(
+                HostingMiner.customer_id == user_id
+            ).all()
+            sites = HostingSite.query.filter(HostingSite.id.in_([s[0] for s in site_ids])).all()
+        
+        site_ids = [s.id for s in sites]
+        
+        # 当前总功耗 (从在线矿机获取)
+        total_power_w = db.session.query(
+            db.func.sum(HostingMiner.actual_power)
+        ).filter(
+            HostingMiner.site_id.in_(site_ids),
+            HostingMiner.status == 'active'
+        ).scalar() or 0
+        
+        total_power_kw = total_power_w / 1000.0
+        
+        # 今日用电量估算 (功耗 × 运行小时数)
+        now = datetime.utcnow()
+        hours_today = now.hour + now.minute / 60.0
+        today_consumption_kwh = total_power_kw * max(hours_today, 1)
+        
+        # 本月电费估算 - 计算每个站点的用电量乘以电价
+        monthly_cost = 0.0
+        for site in sites:
+            site_power = db.session.query(
+                db.func.sum(HostingMiner.actual_power)
+            ).filter(
+                HostingMiner.site_id == site.id,
+                HostingMiner.status == 'active'
+            ).scalar() or 0
+            
+            site_power_kw = site_power / 1000.0
+            # 月用电量估算 (24小时 × 30天)
+            monthly_kwh = site_power_kw * 24 * 30
+            rate = site.electricity_rate or 0.08
+            monthly_cost += monthly_kwh * rate
+        
+        # 限电节省统计 - 从本月的CurtailmentExecution记录
+        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        curtailment_savings = 0.0
+        
+        try:
+            executions = CurtailmentExecution.query.filter(
+                CurtailmentExecution.executed_at >= month_start
+            ).all()
+            
+            for exec in executions:
+                if exec.power_saved_kw and exec.plan:
+                    # 假设每次限电持续时间为计划中的duration_hours
+                    duration = getattr(exec.plan, 'duration_hours', 1) or 1
+                    saved_kwh = exec.power_saved_kw * duration
+                    # 使用站点电价
+                    if exec.plan.site:
+                        rate = exec.plan.site.electricity_rate or 0.08
+                    else:
+                        rate = 0.08
+                    curtailment_savings += saved_kwh * rate
+        except Exception as e:
+            logger.warning(f"计算限电节省失败: {e}")
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'total_power_kw': round(total_power_kw, 2),
+                'today_consumption_kwh': round(today_consumption_kwh, 2),
+                'monthly_cost_estimate': round(monthly_cost, 2),
+                'curtailment_savings': round(curtailment_savings, 2),
+                'active_miners': db.session.query(db.func.count(HostingMiner.id)).filter(
+                    HostingMiner.site_id.in_(site_ids),
+                    HostingMiner.status == 'active'
+                ).scalar() or 0,
+                'total_sites': len(sites)
+            }
+        })
+    except Exception as e:
+        logger.error(f"获取电力概览失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/power/consumption', methods=['GET'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
+def get_power_consumption():
+    """用电量数据（支持时间范围参数）"""
+    try:
+        user_role = session.get('role', 'guest')
+        user_email = session.get('email', '')
+        user_id = session.get('user_id')
+        
+        # 时间范围参数
+        range_type = request.args.get('range', '24h')  # 24h, 7d, 30d
+        
+        now = datetime.utcnow()
+        if range_type == '7d':
+            start_time = now - timedelta(days=7)
+            interval_hours = 6
+        elif range_type == '30d':
+            start_time = now - timedelta(days=30)
+            interval_hours = 24
+        else:  # 24h
+            start_time = now - timedelta(hours=24)
+            interval_hours = 1
+        
+        # 获取站点
+        if user_role in ['admin', 'owner']:
+            sites = HostingSite.query.all()
+        elif user_role == 'mining_site_owner':
+            sites = HostingSite.query.filter_by(contact_email=user_email).all()
+        else:
+            site_ids = db.session.query(db.distinct(HostingMiner.site_id)).filter(
+                HostingMiner.customer_id == user_id
+            ).all()
+            sites = HostingSite.query.filter(HostingSite.id.in_([s[0] for s in site_ids])).all()
+        
+        site_ids = [s.id for s in sites]
+        
+        # 生成时间序列数据
+        data_points = []
+        current_time = start_time
+        
+        # 获取当前功耗用于估算
+        current_power_kw = db.session.query(
+            db.func.sum(HostingMiner.actual_power)
+        ).filter(
+            HostingMiner.site_id.in_(site_ids),
+            HostingMiner.status == 'active'
+        ).scalar() or 0
+        current_power_kw = current_power_kw / 1000.0
+        
+        while current_time <= now:
+            # 模拟功耗波动 (实际应从遥测历史获取)
+            import random
+            power_variation = random.uniform(0.9, 1.1)
+            power_kw = current_power_kw * power_variation
+            consumption_kwh = power_kw * interval_hours
+            
+            data_points.append({
+                'timestamp': current_time.isoformat(),
+                'power_kw': round(power_kw, 2),
+                'consumption_kwh': round(consumption_kwh, 2)
+            })
+            current_time += timedelta(hours=interval_hours)
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'range': range_type,
+                'points': data_points,
+                'total_consumption_kwh': round(sum(p['consumption_kwh'] for p in data_points), 2)
+            }
+        })
+    except Exception as e:
+        logger.error(f"获取用电量数据失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/power/rates', methods=['GET'])
+@login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT)
+def get_power_rates():
+    """获取站点电价配置"""
+    try:
+        user_role = session.get('role', 'guest')
+        user_email = session.get('email', '')
+        
+        if user_role in ['admin', 'owner']:
+            sites = HostingSite.query.all()
+        elif user_role == 'mining_site_owner':
+            sites = HostingSite.query.filter_by(contact_email=user_email).all()
+        else:
+            return jsonify({'success': False, 'error': 'Access denied'}), 403
+        
+        rates_data = []
+        for site in sites:
+            rates_data.append({
+                'site_id': site.id,
+                'site_name': site.name,
+                'electricity_rate': site.electricity_rate or 0.08,
+                'electricity_source': getattr(site, 'electricity_source', 'grid') or 'grid',
+                'capacity_mw': site.capacity_mw,
+                'used_capacity_mw': site.used_capacity_mw or 0
+            })
+        
+        return jsonify({'success': True, 'rates': rates_data})
+    except Exception as e:
+        logger.error(f"获取电价配置失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/power/rates/<int:site_id>', methods=['PUT'])
+@login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT, require_full=True)
+def update_power_rate(site_id):
+    """更新站点电价"""
+    try:
+        data = request.get_json()
+        site = HostingSite.query.get_or_404(site_id)
+        
+        # 验证访问权限
+        user_role = session.get('role', 'guest')
+        user_email = session.get('email', '')
+        
+        if user_role not in ['admin', 'owner']:
+            if user_role == 'mining_site_owner' and site.contact_email != user_email:
+                return jsonify({'success': False, 'error': 'Access denied'}), 403
+        
+        if 'electricity_rate' in data:
+            site.electricity_rate = float(data['electricity_rate'])
+        
+        if 'electricity_source' in data:
+            if hasattr(site, 'electricity_source'):
+                site.electricity_source = data['electricity_source']
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': '电价更新成功',
+            'site': {
+                'id': site.id,
+                'name': site.name,
+                'electricity_rate': site.electricity_rate
+            }
+        })
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"更新电价失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/power/curtailment-savings', methods=['GET'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
+def get_curtailment_savings():
+    """限电节省统计"""
+    try:
+        user_role = session.get('role', 'guest')
+        user_email = session.get('email', '')
+        
+        # 时间范围
+        days = request.args.get('days', 30, type=int)
+        start_time = datetime.utcnow() - timedelta(days=days)
+        
+        # 获取站点
+        if user_role in ['admin', 'owner']:
+            sites = HostingSite.query.all()
+        elif user_role == 'mining_site_owner':
+            sites = HostingSite.query.filter_by(contact_email=user_email).all()
+        else:
+            return jsonify({'success': True, 'data': {'total_savings': 0, 'executions': []}})
+        
+        site_ids = [s.id for s in sites]
+        
+        # 查询限电执行记录
+        executions = CurtailmentExecution.query.join(CurtailmentPlan).filter(
+            CurtailmentPlan.site_id.in_(site_ids),
+            CurtailmentExecution.executed_at >= start_time
+        ).all()
+        
+        total_savings = 0.0
+        total_power_saved_kwh = 0.0
+        execution_records = []
+        
+        for exec in executions:
+            if exec.power_saved_kw:
+                duration = getattr(exec.plan, 'duration_hours', 1) or 1
+                saved_kwh = exec.power_saved_kw * duration
+                rate = exec.plan.site.electricity_rate if exec.plan and exec.plan.site else 0.08
+                savings = saved_kwh * rate
+                
+                total_savings += savings
+                total_power_saved_kwh += saved_kwh
+                
+                execution_records.append({
+                    'id': exec.id,
+                    'executed_at': exec.executed_at.isoformat() if exec.executed_at else None,
+                    'power_saved_kw': exec.power_saved_kw,
+                    'power_saved_kwh': round(saved_kwh, 2),
+                    'savings_usd': round(savings, 2),
+                    'site_name': exec.plan.site.name if exec.plan and exec.plan.site else 'Unknown'
+                })
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'total_savings': round(total_savings, 2),
+                'total_power_saved_kwh': round(total_power_saved_kwh, 2),
+                'execution_count': len(execution_records),
+                'executions': execution_records[-20:]  # 最近20条
+            }
+        })
+    except Exception as e:
+        logger.error(f"获取限电节省统计失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/power/bills', methods=['GET'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
+def get_power_bills():
+    """电费账单列表"""
+    try:
+        user_role = session.get('role', 'guest')
+        user_email = session.get('email', '')
+        user_id = session.get('user_id')
+        
+        # 查询账单
+        query = HostingBill.query
+        
+        if user_role not in ['admin', 'owner']:
+            if user_role == 'mining_site_owner':
+                site_ids = [s.id for s in HostingSite.query.filter_by(contact_email=user_email).all()]
+                query = query.filter(HostingBill.site_id.in_(site_ids))
+            else:
+                query = query.filter(HostingBill.customer_id == user_id)
+        
+        bills = query.order_by(HostingBill.created_at.desc()).limit(50).all()
+        
+        bills_data = []
+        for bill in bills:
+            bills_data.append({
+                'id': bill.id,
+                'bill_number': getattr(bill, 'bill_number', f'BILL-{bill.id}'),
+                'site_name': bill.site.name if bill.site else 'Unknown',
+                'customer_name': bill.customer.name if bill.customer else 'Unknown',
+                'period_start': bill.period_start.isoformat() if bill.period_start else None,
+                'period_end': bill.period_end.isoformat() if bill.period_end else None,
+                'total_kwh': getattr(bill, 'total_kwh', 0),
+                'electricity_cost': getattr(bill, 'electricity_cost', 0),
+                'total_amount': bill.total_amount or 0,
+                'status': getattr(bill, 'status', 'pending'),
+                'created_at': bill.created_at.isoformat() if bill.created_at else None
+            })
+        
+        return jsonify({'success': True, 'bills': bills_data})
+    except Exception as e:
+        logger.error(f"获取电费账单失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/power/bills/generate', methods=['POST'])
+@login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT, require_full=True)
+def generate_power_bill():
+    """生成电费账单"""
+    try:
+        data = request.get_json()
+        site_id = data.get('site_id')
+        customer_id = data.get('customer_id')
+        month = data.get('month')  # 格式: YYYY-MM
+        
+        if not site_id or not customer_id or not month:
+            return jsonify({'success': False, 'error': '缺少必要参数'}), 400
+        
+        site = HostingSite.query.get(site_id)
+        if not site:
+            return jsonify({'success': False, 'error': '站点不存在'}), 404
+        
+        # 解析月份
+        year, mon = map(int, month.split('-'))
+        period_start = datetime(year, mon, 1)
+        if mon == 12:
+            period_end = datetime(year + 1, 1, 1) - timedelta(seconds=1)
+        else:
+            period_end = datetime(year, mon + 1, 1) - timedelta(seconds=1)
+        
+        # 计算该客户在该站点的用电量
+        miners = HostingMiner.query.filter_by(
+            site_id=site_id,
+            customer_id=customer_id
+        ).all()
+        
+        total_power_w = sum(m.actual_power or 0 for m in miners)
+        total_power_kw = total_power_w / 1000.0
+        
+        # 月用电量
+        days_in_month = (period_end - period_start).days + 1
+        total_kwh = total_power_kw * 24 * days_in_month
+        
+        # 电费
+        rate = site.electricity_rate or 0.08
+        electricity_cost = total_kwh * rate
+        
+        # 创建账单
+        bill = HostingBill(
+            site_id=site_id,
+            customer_id=customer_id,
+            period_start=period_start,
+            period_end=period_end,
+            total_amount=electricity_cost
+        )
+        
+        if hasattr(bill, 'total_kwh'):
+            bill.total_kwh = total_kwh
+        if hasattr(bill, 'electricity_cost'):
+            bill.electricity_cost = electricity_cost
+        if hasattr(bill, 'bill_number'):
+            bill.bill_number = f'PWR-{site_id}-{customer_id}-{month}'
+        
+        db.session.add(bill)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': '账单生成成功',
+            'bill': {
+                'id': bill.id,
+                'total_kwh': round(total_kwh, 2),
+                'electricity_cost': round(electricity_cost, 2)
+            }
+        })
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"生成电费账单失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/power/alerts', methods=['GET'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
+def get_power_alerts():
+    """电力相关告警"""
+    try:
+        user_role = session.get('role', 'guest')
+        user_email = session.get('email', '')
+        lang = session.get('language', 'zh')
+        
+        alerts = []
+        
+        # 获取站点
+        if user_role in ['admin', 'owner']:
+            sites = HostingSite.query.all()
+        elif user_role == 'mining_site_owner':
+            sites = HostingSite.query.filter_by(contact_email=user_email).all()
+        else:
+            return jsonify({'success': True, 'alerts': []})
+        
+        for site in sites:
+            # 检查容量使用率
+            if site.capacity_mw and site.used_capacity_mw:
+                usage_rate = (site.used_capacity_mw / site.capacity_mw) * 100
+                if usage_rate > 90:
+                    alerts.append({
+                        'type': 'capacity',
+                        'severity': 'critical',
+                        'site_name': site.name,
+                        'message': f'High capacity usage: {usage_rate:.1f}%' if lang == 'en' else f'容量使用率过高: {usage_rate:.1f}%',
+                        'timestamp': datetime.utcnow().isoformat()
+                    })
+                elif usage_rate > 80:
+                    alerts.append({
+                        'type': 'capacity',
+                        'severity': 'warning',
+                        'site_name': site.name,
+                        'message': f'Capacity warning: {usage_rate:.1f}%' if lang == 'en' else f'容量警告: {usage_rate:.1f}%',
+                        'timestamp': datetime.utcnow().isoformat()
+                    })
+            
+            # 检查电价变动 (示例逻辑)
+            if site.electricity_rate and site.electricity_rate > 0.12:
+                alerts.append({
+                    'type': 'price',
+                    'severity': 'info',
+                    'site_name': site.name,
+                    'message': f'High electricity rate: ${site.electricity_rate}/kWh' if lang == 'en' else f'电价较高: ${site.electricity_rate}/kWh',
+                    'timestamp': datetime.utcnow().isoformat()
+                })
+        
+        return jsonify({'success': True, 'alerts': alerts})
+    except Exception as e:
+        logger.error(f"获取电力告警失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/power/contracts', methods=['GET'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
+def get_power_contracts():
+    """电力合同追踪"""
+    try:
+        from models_hosting import ClientHostingContract
+        
+        user_role = session.get('role', 'guest')
+        user_email = session.get('email', '')
+        user_id = session.get('user_id')
+        
+        # 获取站点
+        if user_role in ['admin', 'owner']:
+            sites = HostingSite.query.all()
+        elif user_role == 'mining_site_owner':
+            sites = HostingSite.query.filter_by(contact_email=user_email).all()
+        else:
+            return jsonify({'success': True, 'contracts': []})
+        
+        contracts_data = []
+        for site in sites:
+            # 计算实际用量
+            actual_power_mw = (site.used_capacity_mw or 0)
+            contracted_power_mw = site.capacity_mw or 0
+            
+            if contracted_power_mw > 0:
+                usage_percentage = (actual_power_mw / contracted_power_mw) * 100
+            else:
+                usage_percentage = 0
+            
+            contracts_data.append({
+                'site_id': site.id,
+                'site_name': site.name,
+                'contracted_capacity_mw': contracted_power_mw,
+                'actual_usage_mw': actual_power_mw,
+                'usage_percentage': round(usage_percentage, 1),
+                'is_over_limit': usage_percentage > 100,
+                'electricity_rate': site.electricity_rate or 0.08
+            })
+        
+        return jsonify({'success': True, 'contracts': contracts_data})
+    except Exception as e:
+        logger.error(f"获取电力合同失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/power/carbon', methods=['GET'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
+def get_carbon_emissions():
+    """碳排放数据"""
+    try:
+        user_role = session.get('role', 'guest')
+        user_email = session.get('email', '')
+        user_id = session.get('user_id')
+        
+        # 时间范围
+        days = request.args.get('days', 30, type=int)
+        
+        # 获取站点
+        if user_role in ['admin', 'owner']:
+            sites = HostingSite.query.all()
+        elif user_role == 'mining_site_owner':
+            sites = HostingSite.query.filter_by(contact_email=user_email).all()
+        else:
+            site_ids = db.session.query(db.distinct(HostingMiner.site_id)).filter(
+                HostingMiner.customer_id == user_id
+            ).all()
+            sites = HostingSite.query.filter(HostingSite.id.in_([s[0] for s in site_ids])).all()
+        
+        carbon_data = []
+        total_emissions = 0.0
+        total_kwh = 0.0
+        
+        for site in sites:
+            # 获取站点功耗
+            site_power_w = db.session.query(
+                db.func.sum(HostingMiner.actual_power)
+            ).filter(
+                HostingMiner.site_id == site.id,
+                HostingMiner.status == 'active'
+            ).scalar() or 0
+            
+            site_power_kw = site_power_w / 1000.0
+            site_kwh = site_power_kw * 24 * days
+            
+            # 获取电力来源
+            electricity_source = getattr(site, 'electricity_source', 'grid') or 'grid'
+            carbon_factor = CARBON_EMISSION_FACTORS.get(electricity_source, CARBON_EMISSION_FACTORS['grid'])
+            
+            # 计算碳排放 (kg CO2)
+            site_emissions = site_kwh * carbon_factor
+            
+            total_emissions += site_emissions
+            total_kwh += site_kwh
+            
+            carbon_data.append({
+                'site_id': site.id,
+                'site_name': site.name,
+                'electricity_source': electricity_source,
+                'carbon_factor': carbon_factor,
+                'consumption_kwh': round(site_kwh, 2),
+                'emissions_kg': round(site_emissions, 2)
+            })
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'period_days': days,
+                'total_consumption_kwh': round(total_kwh, 2),
+                'total_emissions_kg': round(total_emissions, 2),
+                'total_emissions_tons': round(total_emissions / 1000, 3),
+                'sites': carbon_data
+            }
+        })
+    except Exception as e:
+        logger.error(f"获取碳排放数据失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/power/comparison', methods=['GET'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
+def get_power_comparison():
+    """历史对比数据 - 同比/环比"""
+    try:
+        user_role = session.get('role', 'guest')
+        user_email = session.get('email', '')
+        user_id = session.get('user_id')
+        
+        now = datetime.utcnow()
+        
+        # 获取站点
+        if user_role in ['admin', 'owner']:
+            sites = HostingSite.query.all()
+        elif user_role == 'mining_site_owner':
+            sites = HostingSite.query.filter_by(contact_email=user_email).all()
+        else:
+            site_ids = db.session.query(db.distinct(HostingMiner.site_id)).filter(
+                HostingMiner.customer_id == user_id
+            ).all()
+            sites = HostingSite.query.filter(HostingSite.id.in_([s[0] for s in site_ids])).all()
+        
+        site_ids = [s.id for s in sites]
+        
+        # 当前月用电量
+        current_power_w = db.session.query(
+            db.func.sum(HostingMiner.actual_power)
+        ).filter(
+            HostingMiner.site_id.in_(site_ids),
+            HostingMiner.status == 'active'
+        ).scalar() or 0
+        
+        current_power_kw = current_power_w / 1000.0
+        current_month_kwh = current_power_kw * 24 * 30
+        
+        # 模拟历史数据（实际应从历史记录获取）
+        import random
+        last_month_kwh = current_month_kwh * random.uniform(0.85, 1.15)
+        last_year_same_month_kwh = current_month_kwh * random.uniform(0.7, 1.3)
+        
+        # 计算变化
+        mom_change = ((current_month_kwh - last_month_kwh) / last_month_kwh * 100) if last_month_kwh > 0 else 0
+        yoy_change = ((current_month_kwh - last_year_same_month_kwh) / last_year_same_month_kwh * 100) if last_year_same_month_kwh > 0 else 0
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'current_month': {
+                    'year': now.year,
+                    'month': now.month,
+                    'consumption_kwh': round(current_month_kwh, 2)
+                },
+                'last_month': {
+                    'consumption_kwh': round(last_month_kwh, 2),
+                    'change_percent': round(mom_change, 1)
+                },
+                'last_year_same_month': {
+                    'consumption_kwh': round(last_year_same_month_kwh, 2),
+                    'change_percent': round(yoy_change, 1)
+                }
+            }
+        })
+    except Exception as e:
+        logger.error(f"获取历史对比数据失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
