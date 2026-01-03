@@ -73,7 +73,16 @@ The architecture emphasizes modularity with page-isolated components and databas
 - **Python 3.9+**: Runtime.
 - **Replit Platform**: Deployment and hosting.
 
-## Recent Changes (2026-01-02)
+## Recent Changes (2026-01-03)
+
+### Power Bill kWh Calculation Fix (电费账单用电量修复)
+- **Bug Fixed**: Bills API was returning `total_kwh: 0` despite having valid electricity cost
+- **Root Cause**: In `get_power_bills()` API handler, code incorrectly referenced undefined `site.electricity_rate` variable
+- **Fix Applied**: Changed to `bill.site.electricity_rate` to properly access the site's electricity rate through the bill relationship
+- **Location**: `modules/hosting/routes.py` line 7509
+- **Verification**: Bill PWR-5-5-2025-12 now correctly shows 12,690,574.66 kWh (calculated from $634,528.73 / $0.05/kWh)
+
+## Previous Changes (2026-01-02)
 
 ### RBAC Role Mapping Fix
 - Added `site_manager` role mapping to `MINING_SITE_OWNER` in `common/rbac.py`
