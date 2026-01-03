@@ -7506,7 +7506,7 @@ def get_power_bills():
                 'customer_name': bill.customer.name if hasattr(bill.customer, 'name') else (bill.customer.email if bill.customer else 'Unknown'),
                 'period_start': bill.billing_period_start.isoformat() if bill.billing_period_start else None,
                 'period_end': bill.billing_period_end.isoformat() if bill.billing_period_end else None,
-                'total_kwh': 0,  # 从明细项计算
+                'total_kwh': round((bill.electricity_cost or 0) / (bill.site.electricity_rate or 0.08), 2) if bill.electricity_cost and bill.site else 0,  # 从电费反算用电量
                 'electricity_cost': bill.electricity_cost or 0,
                 'total_amount': bill.total_amount or 0,
                 'status': bill.status or 'draft',
@@ -7523,7 +7523,7 @@ def get_power_bills():
 @login_required
 @requires_module_access(Module.HOSTING_SITE_MGMT, require_full=True)
 def generate_power_bill():
-    """生成电费账单"""
+    """生成电费账单 - 基于实际遥测数据计算用电量"""
     try:
         data = request.get_json()
         site_id = data.get('site_id')
@@ -7545,21 +7545,66 @@ def generate_power_bill():
         else:
             period_end = datetime(year, mon + 1, 1) - timedelta(seconds=1)
         
-        # 计算该客户在该站点的用电量
+        # 获取该客户在该站点的矿机
         miners = HostingMiner.query.filter_by(
             site_id=site_id,
             customer_id=customer_id
         ).all()
         
-        total_power_w = sum(m.actual_power or 0 for m in miners)
-        total_power_kw = total_power_w / 1000.0
+        if not miners:
+            return jsonify({'success': False, 'error': '该客户在此站点没有矿机'}), 400
         
-        # 月用电量
-        days_in_month = (period_end - period_start).days + 1
-        total_kwh = total_power_kw * 24 * days_in_month
+        miner_ids = [m.id for m in miners]
         
-        # 电费
+        # 从遥测数据计算实际用电量
+        # 使用 SQL 聚合查询计算平均功率和数据点数量
+        from sqlalchemy import func
+        telemetry_stats = db.session.query(
+            func.avg(MinerTelemetry.power_consumption).label('avg_power_w'),
+            func.count(MinerTelemetry.id).label('data_points'),
+            func.min(MinerTelemetry.recorded_at).label('first_record'),
+            func.max(MinerTelemetry.recorded_at).label('last_record')
+        ).filter(
+            MinerTelemetry.miner_id.in_(miner_ids),
+            MinerTelemetry.recorded_at >= period_start,
+            MinerTelemetry.recorded_at <= period_end,
+            MinerTelemetry.power_consumption > 0
+        ).first()
+        
+        avg_power_w = telemetry_stats.avg_power_w or 0
+        data_points = telemetry_stats.data_points or 0
+        
+        # 计算用电量
+        if data_points > 0 and avg_power_w > 0:
+            # 有实际遥测数据: 平均功率(W) * 月天数 * 24小时 / 1000 = kWh
+            days_in_month = (period_end - period_start).days + 1
+            total_kwh = (avg_power_w / 1000.0) * 24 * days_in_month
+            calculation_method = 'telemetry'
+        else:
+            # 无遥测数据: 使用矿机额定功率估算
+            total_power_w = sum(m.actual_power or m.power_consumption or 0 for m in miners)
+            days_in_month = (period_end - period_start).days + 1
+            total_kwh = (total_power_w / 1000.0) * 24 * days_in_month
+            calculation_method = 'estimated'
+        
+        # 获取适用的电价（历史电价或当前电价）
         rate = site.electricity_rate or 0.08
+        try:
+            rate_history = SiteElectricityRateHistory.query.filter(
+                SiteElectricityRateHistory.site_id == site_id,
+                SiteElectricityRateHistory.effective_from <= period_end
+            ).filter(
+                db.or_(
+                    SiteElectricityRateHistory.effective_to.is_(None),
+                    SiteElectricityRateHistory.effective_to >= period_start
+                )
+            ).order_by(SiteElectricityRateHistory.effective_from.desc()).first()
+            
+            if rate_history:
+                rate = rate_history.rate_per_kwh
+        except Exception as e:
+            logger.warning(f"获取历史电价失败，使用当前电价: {e}")
+        
         electricity_cost = total_kwh * rate
         
         # 创建账单
@@ -7578,13 +7623,18 @@ def generate_power_bill():
         db.session.add(bill)
         db.session.commit()
         
+        logger.info(f"账单生成成功: {bill_number}, 用电量: {total_kwh:.2f} kWh, 电费: ${electricity_cost:.2f}, 计算方式: {calculation_method}, 数据点: {data_points}")
+        
         return jsonify({
             'success': True,
             'message': '账单生成成功',
             'bill': {
                 'id': bill.id,
                 'total_kwh': round(total_kwh, 2),
-                'electricity_cost': round(electricity_cost, 2)
+                'electricity_cost': round(electricity_cost, 2),
+                'calculation_method': calculation_method,
+                'data_points': data_points,
+                'rate_per_kwh': rate
             }
         })
     except Exception as e:
