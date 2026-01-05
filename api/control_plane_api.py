@@ -504,6 +504,102 @@ def deny_command(command_id):
     return jsonify({'success': True, 'command_status': command.status})
 
 
+@control_plane_bp.route('/api/v1/commands/<command_id>/rollback', methods=['POST'])
+@require_user_auth
+@require_customer_access
+def rollback_command(command_id):
+    """Create a rollback command for a previously executed command.
+    
+    Rollback also requires approval based on the same risk tier as the original command.
+    """
+    original_command = RemoteCommand.query.get(command_id)
+    if not original_command:
+        return jsonify({'error': 'Command not found'}), 404
+    
+    # Only completed/succeeded commands can be rolled back
+    rollback_eligible_statuses = ('COMPLETED', 'PARTIAL', 'SUCCEEDED', 'FAILED')
+    if original_command.status not in rollback_eligible_statuses:
+        return jsonify({
+            'error': f'Cannot rollback command in status {original_command.status}. Only commands in terminal states ({", ".join(rollback_eligible_statuses)}) can be rolled back.'
+        }), 400
+    
+    data = request.get_json() or {}
+    reason = data.get('reason', 'User requested rollback')
+    
+    # Get original targets
+    original_targets = CommandTarget.query.filter_by(command_id=command_id).all()
+    target_asset_ids = [t.asset_id for t in original_targets]
+    
+    if not target_asset_ids:
+        return jsonify({'error': 'No targets found for original command'}), 400
+    
+    # Create rollback command with ROLLBACK action type
+    rollback_command_id = str(uuid.uuid4())
+    
+    # Inherit risk tier from original command (rollbacks are equally risky)
+    original_risk_tier = RISK_TIER_MAP.get(original_command.command_type, 'MEDIUM')
+    
+    rollback_cmd = RemoteCommand(
+        id=rollback_command_id,
+        tenant_id=g.user_id,
+        site_id=original_command.site_id,
+        requested_by_user_id=g.user_id,
+        requested_by_role=g.user_role,
+        command_type='ROLLBACK',
+        payload_json={
+            'original_command_id': command_id,
+            'original_action': original_command.command_type,
+            'reason': reason,
+        },
+        target_ids=target_asset_ids,
+        status='PENDING_APPROVAL',
+        require_approval=True,
+    )
+    db.session.add(rollback_cmd)
+    
+    # Create targets for rollback command
+    for asset_id in target_asset_ids:
+        target = CommandTarget(
+            command_id=rollback_command_id,
+            asset_id=asset_id,
+        )
+        db.session.add(target)
+    
+    db.session.commit()
+    
+    # Get approval requirement for rollback (same as original risk tier)
+    approval_req = get_approval_requirement(
+        original_command.site_id,
+        'ROLLBACK',
+        len(target_asset_ids)
+    )
+    
+    log_audit_event(
+        event_type='command.rollback_proposed',
+        actor_type='user',
+        actor_id=g.user_id,
+        site_id=original_command.site_id,
+        ref_type='command',
+        ref_id=rollback_command_id,
+        payload={
+            'original_command_id': command_id,
+            'original_action': original_command.command_type,
+            'target_count': len(target_asset_ids),
+            'reason': reason,
+            'approval_required': approval_req,
+        }
+    )
+    
+    return jsonify({
+        'success': True,
+        'rollback_command_id': rollback_command_id,
+        'original_command_id': command_id,
+        'status': 'PENDING_APPROVAL',
+        'approval_required': approval_req,
+        'message': 'Rollback command created. Approval required before execution.',
+    }), 201
+
+
 @control_plane_bp.route('/api/v1/commands/<command_id>', methods=['GET'])
 @require_user_auth
 @require_customer_access

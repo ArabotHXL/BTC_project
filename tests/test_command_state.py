@@ -203,3 +203,163 @@ class TestCommandStateMachine:
             )
             
             assert response.status_code == 401
+
+
+class TestRollbackCommand:
+    """Test command rollback functionality"""
+
+    def test_rollback_completed_command(
+            self, app, authenticated_client, test_site, test_miner_asset, test_user, approval_policy_reboot):
+        """Test creating a rollback for a completed command"""
+        from db import db
+        from models_remote_control import RemoteCommand
+        from models_control_plane import CommandTarget
+        
+        with app.app_context():
+            original_id = str(uuid.uuid4())
+            original_cmd = RemoteCommand(
+                id=original_id,
+                tenant_id=test_user,
+                site_id=test_site,
+                requested_by_user_id=test_user,
+                requested_by_role='admin',
+                command_type='REBOOT',
+                payload_json={'mode': 'soft'},
+                target_ids=[test_miner_asset],
+                status='COMPLETED',
+            )
+            db.session.add(original_cmd)
+            
+            target = CommandTarget(
+                command_id=original_id,
+                asset_id=test_miner_asset,
+            )
+            db.session.add(target)
+            db.session.commit()
+            
+            rollback_response = authenticated_client.post(
+                f'/api/v1/commands/{original_id}/rollback',
+                json={'reason': 'Reverting due to issue'},
+                content_type='application/json'
+            )
+            
+            assert rollback_response.status_code == 201
+            data = rollback_response.get_json()
+            assert data['success'] is True
+            assert data['original_command_id'] == original_id
+            assert 'rollback_command_id' in data
+            assert data['status'] == 'PENDING_APPROVAL'
+
+    def test_rollback_succeeded_command(
+            self, app, authenticated_client, test_site, test_miner_asset, test_user, approval_policy_reboot):
+        """Test creating a rollback for a command in SUCCEEDED status"""
+        from db import db
+        from models_remote_control import RemoteCommand
+        from models_control_plane import CommandTarget
+        
+        with app.app_context():
+            original_id = str(uuid.uuid4())
+            original_cmd = RemoteCommand(
+                id=original_id,
+                tenant_id=test_user,
+                site_id=test_site,
+                requested_by_user_id=test_user,
+                requested_by_role='admin',
+                command_type='REBOOT',
+                payload_json={'mode': 'soft'},
+                target_ids=[test_miner_asset],
+                status='SUCCEEDED',
+            )
+            db.session.add(original_cmd)
+            
+            target = CommandTarget(
+                command_id=original_id,
+                asset_id=test_miner_asset,
+            )
+            db.session.add(target)
+            db.session.commit()
+            
+            rollback_response = authenticated_client.post(
+                f'/api/v1/commands/{original_id}/rollback',
+                json={'reason': 'Reverting succeeded command'},
+                content_type='application/json'
+            )
+            
+            assert rollback_response.status_code == 201
+            data = rollback_response.get_json()
+            assert data['success'] is True
+            assert data['original_command_id'] == original_id
+            assert 'rollback_command_id' in data
+
+    def test_cannot_rollback_pending_command(
+            self, app, authenticated_client, test_site, test_miner_asset, approval_policy_reboot):
+        """Test that pending commands cannot be rolled back"""
+        with app.app_context():
+            propose_response = authenticated_client.post(
+                '/api/v1/commands/propose',
+                json={
+                    'site_id': test_site,
+                    'command_type': 'REBOOT',
+                    'payload': {'mode': 'soft'},
+                    'target_ids': [test_miner_asset]
+                },
+                content_type='application/json'
+            )
+            
+            command_id = propose_response.get_json()['command_id']
+            
+            rollback_response = authenticated_client.post(
+                f'/api/v1/commands/{command_id}/rollback',
+                json={'reason': 'Trying to rollback pending'},
+                content_type='application/json'
+            )
+            
+            assert rollback_response.status_code == 400
+            assert 'Cannot rollback' in rollback_response.get_json()['error']
+
+    def test_rollback_requires_approval(
+            self, app, authenticated_client, test_site, test_miner_asset, test_user, approval_policy_reboot):
+        """Test that rollback commands require approval like regular commands"""
+        from db import db
+        from models_remote_control import RemoteCommand
+        from models_control_plane import CommandTarget
+        
+        with app.app_context():
+            original_id = str(uuid.uuid4())
+            original_cmd = RemoteCommand(
+                id=original_id,
+                tenant_id=test_user,
+                site_id=test_site,
+                requested_by_user_id=test_user,
+                requested_by_role='admin',
+                command_type='REBOOT',
+                payload_json={'mode': 'soft'},
+                target_ids=[test_miner_asset],
+                status='COMPLETED',
+            )
+            db.session.add(original_cmd)
+            
+            target = CommandTarget(
+                command_id=original_id,
+                asset_id=test_miner_asset,
+            )
+            db.session.add(target)
+            db.session.commit()
+            
+            rollback_response = authenticated_client.post(
+                f'/api/v1/commands/{original_id}/rollback',
+                json={'reason': 'Rollback test'},
+                content_type='application/json'
+            )
+            
+            data = rollback_response.get_json()
+            rollback_id = data['rollback_command_id']
+            
+            approve_response = authenticated_client.post(
+                f'/api/v1/commands/{rollback_id}/approve',
+                json={'reason': 'Approved rollback'},
+                content_type='application/json'
+            )
+            
+            assert approve_response.status_code == 200
+            assert approve_response.get_json()['command_status'] == 'QUEUED'
