@@ -1,0 +1,162 @@
+你是一个“资深矿场控制平面（Control Plane）后端架构师 + 安全合规工程师”。你的任务是：在一个 Replit 工作区里，把我现有的 Cloud 后端一次性整改到“100MW+ 可用、可审计、可验收、可扩展”的版本（一步到位），并且与 Edge Collector 采用统一的 v1 命令协议。你要直接产出可运行代码、数据库模型、迁移脚本、API 文档与自动化测试，不要只写建议。
+
+========================
+1) 背景与硬约束（必须满足）
+========================
+业务定位：矿机遥测采集 → 异常检测 → 运营策略建议（温控/限电/调度）→ 受控执行（可选）→ 报表与审计。
+目标客户：自营 + 托管（Hosting），面向 100MW+，小场也能用。
+部署：混合（云控 + 边缘算），多 Edge 分区（按机房/集装箱/电力分区），站点级汇聚；云端只做“控制与汇总”。
+
+关键约束（不可违背）：
+A. 多 Edge 分区：Site -> Zone(分区) -> EdgeDevice(边缘) -> MinerAsset(逻辑矿机)。
+B. 任何对矿机的操作都必须客户审批（默认单人审批；高风险/大范围动作可选二人审批/4-eyes）。
+C. 云端绝不存矿机 IP/凭据；IP/凭据只允许存在 Edge 端本地映射。云端只存逻辑资产ID与归属关系。
+D. 需量费/TOU/实时电价都要：第一期先支持客户上传价格表（CSV/JSON），后续再接第三方 API。
+E. 需量口径：默认 15-min demand；必须支持“月度峰值锁定（monthly peak lock-in）”与“回放 replay（what-if）”。
+F. 托管隔离：客户只能看到“自己的矿机 + 自己的报表 + 自己的审批”。不能看到站点级摘要。
+G. 离线缓存：Edge 端可缓存 24h；云端要支持补传延迟标记（你只做云端接口与数据模型适配）。
+H. 固件优先支持：Antminer stock、Whatsminer（云端要支持“能力探测结果”存储与下发前覆盖率提示）。
+I. 数据保留：默认 1 年（可按租户/站点配置）。
+J. 替换路径：逐步替换（Overlay → Replace），允许短期兼容旧接口但必须有废弃计划。
+
+========================
+2) 现状问题（必须修复）
+========================
+- 命令协议双轨：存在旧 /api/collector/commands/pending + /result 风格，以及新 /api/edge/v1/commands/poll + /ack 风格。整改后：云端以 /api/edge/v1/* 为唯一标准；旧接口只做兼容代理（adapter），并在代码中标注 deprecated。
+- 矿机导入强制 IP：必须改为云端导入不含 IP，IP 永不落库。
+- 电价/收益硬编码：必须替换为“价格计划 PricePlanVersion”输入与版本化引用。
+- 审批门禁必须不可绕过：Edge 只能 poll 到“已审批可执行”的命令。
+
+========================
+3) 你要交付的最终产物（必须全部交付）
+========================
+(1) 可运行的 Cloud 后端服务（推荐 Python + FastAPI 或 Flask；若你检测到已有框架就沿用，但要写清楚）。
+(2) 数据库模型（SQLAlchemy）+ 迁移（Alembic）。
+(3) 完整的 API（含 OpenAPI/Swagger）。
+(4) 认证与权限：用户 JWT + Edge device token（最小可用）；ABAC 强隔离；支持二人审批策略。
+(5) 审计日志：不可抵赖的事件记录（append-only），至少包含：提案/审批/执行/回滚/价格导入/口径变更；可导出。
+(6) 价格计划（CSV/JSON 上传）+ 版本化 + 缺口处理规则（缺口策略：carry-forward / interpolate / mark-missing）。
+(7) 15-min demand 计算 + 月度峰值账本 + replay 回放接口（what-if）。
+(8) Portal Lite 的后端 API（只读 + 审批 + 报表下载），严格客户隔离。
+(9) 自动化测试（pytest）：至少覆盖审批门禁、ABAC隔离、命令状态机、价格上传版本化、需量账本与回放。
+(10) 开发者文档：README 含启动方式、环境变量、示例请求、测试运行方式。
+
+========================
+4) 数据模型（必须实现，字段可补充但不可少）
+========================
+核心实体（至少这些表/模型）：
+- Tenant（可选，如你以 Site 作为租户边界也行，但必须能表达多租户）
+- Site(site_id, timezone, retention_policy_id, …)
+- Zone(zone_id, site_id, name, type[room/container/power], …)
+- Customer(customer_id, site_id, name, …)  # 托管客户
+- EdgeDevice(edge_id, site_id, zone_id, token_hash, last_seen_at, …)
+- MinerAsset(asset_id/miner_id, site_id, zone_id, customer_id(nullable), model, vendor, firmware, tags, …)  # 不包含IP
+- Capability(asset_id, supports_actions[], detected_at, …)  # 由Edge上报/或导入
+- PricePlan(price_plan_id, site_id, name, …)
+- PricePlanVersion(version_id, price_plan_id, effective_from/to, timezone, granularity, source_file_hash, missing_data_policy, payload_json, created_by, created_at)
+- DemandLedgerMonthly(id, site_id, month, peak_kw, peak_window_start, peak_window_end, source(est/measured), price_plan_version_id, created_at)
+- Command(command_id, site_id, zone_id, created_by, action_type, risk_tier, payload_json, ttl_seconds, blast_radius_est, status, created_at, …)
+- CommandTarget(command_id, asset_id)  # 支持批量
+- CommandApproval(approval_id, command_id, approver_user_id, decision[approve/deny], reason, step[1/2], decided_at)
+- CommandResult(result_id, command_id, asset_id, edge_id, status, before_snapshot_json, after_snapshot_json, error_code, error_message, started_at, finished_at)
+- AuditEvent(event_id, site_id, actor_type[user/edge/system], actor_id, event_type, ref_id, payload_json, created_at, prev_hash, event_hash)  # hash-chain 可选但推荐
+
+保留策略：
+- RetentionPolicy(policy_id, audit_days, telemetry_days, billing_days, ticket_days, …)  # 默认 365 天
+
+========================
+5) API 规范（必须实现）
+========================
+Edge-facing（只给Edge）：
+- POST /api/edge/v1/register
+  输入：edge_id, site_id, zone_id
+  输出：registered=true, server_time, polling_hints
+- GET /api/edge/v1/commands/poll
+  规则：仅返回 status=Queued 且已满足审批门禁的命令；按 site+zone 过滤；支持长轮询/短轮询参数可选
+- POST /api/edge/v1/commands/{command_id}/ack
+  输入：逐台结果数组（asset_id, status, before_snapshot, after_snapshot, error_code, error_message, started_at, finished_at）
+  规则：幂等；重复 ack 不会重复推进状态机
+- POST /api/edge/v1/telemetry/ingest  （最小可用）
+  输入：telemetry batch（包含asset_id、timestamp、hashrate、temp、fan、power_w、errors、uptime、reject_rate等）
+  规则：支持补传延迟标记（client_timestamp vs received_at）
+
+User-facing（Ops/客户）：
+- POST /api/v1/commands/propose
+- POST /api/v1/commands/{id}/approve   （支持 step=1/2）
+- POST /api/v1/commands/{id}/deny
+- POST /api/v1/commands/{id}/rollback  （回滚也必须走审批策略）
+- GET  /api/v1/commands/{id}
+- GET  /api/v1/commands?site_id=&zone_id=&status=
+- POST /api/v1/price-plans/upload  （CSV/JSON）
+- GET  /api/v1/price-plans/{plan_id}/versions
+- GET  /api/v1/demand/monthly-ledger?site_id=&month=
+- POST /api/v1/demand/replay  （输入：month、price_plan_version_id、policy_version/command_simulation_params；输出：peak_kw变化、需量费估算变化、收益影响估算）
+- Portal Lite（客户隔离）：
+  - GET /api/v1/portal/my-miners
+  - GET /api/v1/portal/my-approvals
+  - POST /api/v1/portal/approvals/{command_id}/approve
+  - POST /api/v1/portal/approvals/{command_id}/deny
+  - GET /api/v1/portal/my-reports  （先返回占位：SLA、shadow bill、audit summary 的下载链接/或生成任务）
+
+兼容旧接口（必须保留但标注 deprecated）：
+- /api/collector/commands/pending  → 代理到 v1 poll（内部转换）
+- /api/collector/commands/{id}/result → 代理到 v1 ack
+
+========================
+6) 审批与风险分级（必须实现）
+========================
+- action_risk_tier：LOW/MEDIUM/HIGH
+- 默认：所有 miner 操作 require_approval=true
+- 二人审批触发条件（可配置）：
+  - risk_tier=HIGH AND (blast_radius_est > 1% fleet OR target_count > N OR est_kw_impact > X)
+- 审批门禁规则：
+  - 未满足审批要求的命令不得进入 Queued（或进入 PendingApproval），Edge poll 不得看到
+- 审批记录必须写入 AuditEvent
+
+========================
+7) 实现要求（工程质量）
+========================
+- 使用数据库：优先 Postgres（Replit 常用），允许 SQLite 作为本地开发 fallback，但迁移必须可用。
+- 所有输入校验：Pydantic（FastAPI）或 Marshmallow（Flask），拒绝未知字段；尤其拒绝 ip 字段落库。
+- 结构化日志（JSON），关键路径打点：poll/ack/approve/upload/replay。
+- 全部 endpoint 必须有最小鉴权：Edge 用 device token；User 用 JWT。
+- ABAC：Customer token 只能访问 customer_id 自己的数据；任何越权返回 403，且写审计。
+- 需要提供示例数据 seed 脚本：创建 1 个 Site、2 个 Zone、2 个 Customer、若干 MinerAsset、1 个 EdgeDevice。
+- 提供 postman/curl 示例（写在 README）。
+
+========================
+8) 测试（必须写）
+========================
+pytest 必须覆盖：
+1) 未审批命令 Edge poll 拿不到；审批后才能拿到。
+2) 二人审批策略：满足触发条件时，单人审批后仍不可执行；第二人审批后才可执行。
+3) ABAC：Customer A 无法读取/审批 Customer B 的命令与矿机。
+4) 价格上传：生成 version_id；报表/策略引用版本号；缺口策略生效（至少验证 parse + store）。
+5) 15-min demand：给定 5-min 功率点，能算出 15-min 窗口 demand 与月度 peak；replay 输出可复算结果结构。
+6) 旧接口代理：调用 deprecated endpoint 能走通并产生同样的状态机变化（仅用于迁移期）。
+
+========================
+9) 你需要执行的工作步骤（必须按顺序做）
+========================
+Step 1：扫描当前代码结构，识别使用的框架与已有文件（尤其 remote_control_api.py 之类），决定沿用或升级到 FastAPI（倾向 FastAPI）。
+Step 2：建立 models + alembic migrations；写 seed 数据。
+Step 3：实现 auth（JWT + Edge token），实现 ABAC 中间件/依赖注入。
+Step 4：实现 Command 状态机与审批门禁；实现 Edge poll/ack。
+Step 5：实现 PricePlanVersion 上传与解析（CSV/JSON），并写版本化与缺口策略存储。
+Step 6：实现 demand 15-min 计算 + monthly ledger + replay。
+Step 7：实现 Portal Lite API（只读 + 审批 + 报表占位）。
+Step 8：实现 deprecated adapter endpoints。
+Step 9：补齐审计日志（AuditEvent）并在关键路径写入。
+Step 10：写 pytest，确保全部通过；补齐 README 与示例请求。
+
+========================
+10) 最终交付标准（必须满足，否则继续修）
+========================
+- `replit run` 一键启动 API，Swagger 可访问。
+- `pytest` 全绿。
+- 数据库迁移可一键执行。
+- 无任何地方把矿机 IP/凭据写入数据库或返回给用户（必须写一个测试保证这一点）。
+- Edge poll/ack + 审批门禁闭环可端到端演示（用 seed 数据 + curl 示例）。
+- 支持导出审计事件（至少 JSON 下载接口或 CLI 导出脚本）。
+
+开始工作。先输出你发现的项目结构与框架选择，然后直接动手实现，不要停在建议层面。

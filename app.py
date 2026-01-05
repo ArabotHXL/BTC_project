@@ -333,6 +333,8 @@ def initialize_database():
             # 🔧 CRITICAL FIX: Enable models_subscription import for payment system
             import models_subscription  # noqa: F401
             import models_device_encryption  # noqa: F401
+            import models_remote_control  # noqa: F401
+            import models_control_plane  # noqa: F401 - Zone/PricePlan/DemandLedger/CommandApproval/AuditEvent
             
             db.create_all()
             logging.info("Database tables created successfully")
@@ -505,6 +507,7 @@ import models
 import models_subscription  # noqa: F401
 import models_device_encryption  # noqa: F401
 import models_remote_control  # noqa: F401
+import models_control_plane  # noqa: F401 - Zone/Customer/PricePlan/DemandLedger/CommandApproval/AuditEvent
 logging.info("Models imported successfully at module level")
 
 # Helper functions that use database models - defined AFTER model imports
@@ -4475,6 +4478,36 @@ except ImportError as e:
     logging.warning(f"Monitor Routes not available: {e}")
 except Exception as e:
     logging.error(f"Failed to register Monitor Routes: {e}")
+
+# Control Plane API (控制平面 v1 API)
+try:
+    from api.control_plane_api import control_plane_bp
+    app.register_blueprint(control_plane_bp)
+    logging.info("Control Plane API registered successfully")
+except ImportError as e:
+    logging.warning(f"Control Plane API not available: {e}")
+except Exception as e:
+    logging.error(f"Failed to register Control Plane API: {e}")
+
+# Portal Lite API (客户门户 - 严格隔离)
+try:
+    from api.portal_lite_api import portal_bp
+    app.register_blueprint(portal_bp)
+    logging.info("Portal Lite API registered successfully")
+except ImportError as e:
+    logging.warning(f"Portal Lite API not available: {e}")
+except Exception as e:
+    logging.error(f"Failed to register Portal Lite API: {e}")
+
+# Legacy API Adapter (旧接口兼容层 - DEPRECATED)
+try:
+    from api.legacy_adapter import legacy_bp
+    app.register_blueprint(legacy_bp)
+    logging.info("Legacy API Adapter registered (DEPRECATED - will be removed 2026-06-01)")
+except ImportError as e:
+    logging.warning(f"Legacy API Adapter not available: {e}")
+except Exception as e:
+    logging.error(f"Failed to register Legacy API Adapter: {e}")
 
 # Register calculator module blueprint for modular architecture
 try:
