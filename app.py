@@ -4479,6 +4479,16 @@ except ImportError as e:
 except Exception as e:
     logging.error(f"Failed to register Monitor Routes: {e}")
 
+# Credential Protection API (凭证保护 API)
+try:
+    from api.credential_protection_api import credential_protection_bp
+    app.register_blueprint(credential_protection_bp)
+    logging.info("Credential Protection API registered successfully")
+except ImportError as e:
+    logging.warning(f"Credential Protection API not available: {e}")
+except Exception as e:
+    logging.error(f"Failed to register Credential Protection API: {e}")
+
 # Control Plane API (控制平面 v1 API)
 try:
     from api.control_plane_api import control_plane_bp
