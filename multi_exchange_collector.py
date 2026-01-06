@@ -248,8 +248,14 @@ class MultiExchangeCollector:
             logger.error(f"Bybit数据收集失败: {e}")
             return {'exchange': 'bybit', 'error': str(e)}
     
-    def collect_all_exchanges(self) -> List[Dict]:
-        """并行收集所有交易所数据"""
+    def collect_all_exchanges(self, minutes=15, max_okx=400, max_binance=400) -> List[Dict]:
+        """并行收集所有交易所数据
+        
+        Args:
+            minutes: 收集时间范围（分钟），此版本不使用但保留兼容性
+            max_okx: OKX最大记录数，此版本不使用但保留兼容性  
+            max_binance: Binance最大记录数，此版本不使用但保留兼容性
+        """
         results = []
         
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
