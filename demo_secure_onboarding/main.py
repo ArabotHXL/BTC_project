@@ -495,16 +495,46 @@ async def create_change(
     if not ctx.actor:
         raise HTTPException(401, "Actor authentication required")
     
+    target_resource = None
+    resource_tenant_id = data.tenant_id
+    resource_site_id = data.site_id
+    
+    if data.target_type == "miner":
+        miner = db.query(Miner).filter(Miner.id == data.target_id).first()
+        if not miner:
+            raise HTTPException(404, f"Miner {data.target_id} not found")
+        target_resource = miner
+        resource_tenant_id = miner.tenant_id
+        resource_site_id = miner.site_id
+        
+        allowed, reason = evaluate(db, "READ_MINER", ctx.actor, 
+                                   resource_tenant_id=resource_tenant_id,
+                                   resource_site_id=resource_site_id)
+        if not allowed:
+            raise HTTPException(403, f"Access denied to miner: {reason}")
+            
+    elif data.target_type == "site":
+        site = db.query(Site).filter(Site.id == data.target_id).first()
+        if not site:
+            raise HTTPException(404, f"Site {data.target_id} not found")
+        target_resource = site
+        resource_tenant_id = site.tenant_id
+        resource_site_id = site.id
+        
+        allowed, reason = evaluate(db, "READ_SITE", ctx.actor, resource=site)
+        if not allowed:
+            raise HTTPException(403, f"Access denied to site: {reason}")
+    
     cr, message = create_change_request(
         db,
-        tenant_id=data.tenant_id,
+        tenant_id=resource_tenant_id,
         requester=ctx.actor,
         request_type=data.request_type,
         target_type=data.target_type,
         target_id=data.target_id,
         requested_action=data.requested_action,
         reason=data.reason,
-        site_id=data.site_id
+        site_id=resource_site_id
     )
     
     if not cr:
@@ -560,6 +590,35 @@ async def approve_change(
     cr = db.query(ChangeRequest).filter(ChangeRequest.id == cr_id).first()
     if not cr:
         raise HTTPException(404, "Change request not found")
+    
+    if cr.target_type == "miner":
+        miner = db.query(Miner).filter(Miner.id == cr.target_id).first()
+        if not miner:
+            raise HTTPException(404, "Target miner no longer exists")
+        allowed, reason = evaluate(db, "APPROVE_CHANGE", ctx.actor,
+                                   resource_tenant_id=miner.tenant_id,
+                                   resource_site_id=miner.site_id)
+        if not allowed:
+            log_audit_event(
+                db, cr.tenant_id, "POLICY_DENY",
+                actor_id=ctx.actor_id, actor_name=ctx.actor_name, role=ctx.role,
+                site_id=miner.site_id, target_type="change_request", target_id=cr.id,
+                detail={"action": "APPROVE_CHANGE", "reason": reason}
+            )
+            raise HTTPException(403, f"Access denied: {reason}")
+    elif cr.target_type == "site":
+        site = db.query(Site).filter(Site.id == cr.target_id).first()
+        if not site:
+            raise HTTPException(404, "Target site no longer exists")
+        allowed, reason = evaluate(db, "APPROVE_CHANGE", ctx.actor, resource=site)
+        if not allowed:
+            log_audit_event(
+                db, cr.tenant_id, "POLICY_DENY",
+                actor_id=ctx.actor_id, actor_name=ctx.actor_name, role=ctx.role,
+                site_id=site.id, target_type="change_request", target_id=cr.id,
+                detail={"action": "APPROVE_CHANGE", "reason": reason}
+            )
+            raise HTTPException(403, f"Access denied: {reason}")
     
     success, message = approve_change_request(db, cr, ctx.actor)
     
@@ -643,6 +702,18 @@ async def execute_change(
         if not miner:
             raise HTTPException(404, "Miner not found")
         
+        allowed, reason = evaluate(db, "REVEAL_CREDENTIAL", ctx.actor,
+                                   resource_tenant_id=miner.tenant_id,
+                                   resource_site_id=miner.site_id)
+        if not allowed:
+            log_audit_event(
+                db, cr.tenant_id, "POLICY_DENY",
+                actor_id=ctx.actor_id, actor_name=ctx.actor_name, role=ctx.role,
+                site_id=miner.site_id, target_type="miner", target_id=miner.id,
+                detail={"action": "REVEAL_CREDENTIAL", "reason": reason}
+            )
+            raise HTTPException(403, f"Access denied: {reason}")
+        
         site = db.query(Site).filter(Site.id == miner.site_id).first()
         
         if miner.credential_mode == 1:
@@ -660,6 +731,16 @@ async def execute_change(
         if not site:
             raise HTTPException(404, "Site not found")
         
+        allowed, reason = evaluate(db, "CHANGE_SITE_MODE", ctx.actor, resource=site)
+        if not allowed:
+            log_audit_event(
+                db, cr.tenant_id, "POLICY_DENY",
+                actor_id=ctx.actor_id, actor_name=ctx.actor_name, role=ctx.role,
+                site_id=site.id, target_type="site", target_id=site.id,
+                detail={"action": "CHANGE_SITE_MODE", "reason": reason}
+            )
+            raise HTTPException(403, f"Access denied: {reason}")
+        
         new_mode = action.get("new_mode", site.ip_mode)
         old_mode = site.ip_mode
         
@@ -676,6 +757,16 @@ async def execute_change(
         site = db.query(Site).filter(Site.id == cr.target_id).first()
         if not site:
             raise HTTPException(404, "Site not found")
+        
+        allowed, reason = evaluate(db, "BATCH_MIGRATE", ctx.actor, resource=site)
+        if not allowed:
+            log_audit_event(
+                db, cr.tenant_id, "POLICY_DENY",
+                actor_id=ctx.actor_id, actor_name=ctx.actor_name, role=ctx.role,
+                site_id=site.id, target_type="site", target_id=site.id,
+                detail={"action": "BATCH_MIGRATE", "reason": reason}
+            )
+            raise HTTPException(403, f"Access denied: {reason}")
         
         miners = db.query(Miner).filter(Miner.site_id == site.id).all()
         migrated = 0

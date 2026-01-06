@@ -72,6 +72,32 @@ def setup_test_data():
     viewer.allowed_site_ids = [site1.id]
     db.commit()
     
+    miner = db.query(Miner).filter(Miner.site_id == site1.id).first()
+    if not miner:
+        cred_json = json.dumps({"ip": "10.0.0.1", "port": 4028, "password": "testpwd"})
+        stored, mode, fp = store_credential_mode1(cred_json)
+        miner = Miner(
+            tenant_id=tenant.id,
+            site_id=site1.id,
+            name="Test Miner 1",
+            credential_value=stored,
+            credential_mode=mode,
+            fingerprint=fp
+        )
+        db.add(miner)
+        db.commit()
+    
+    tenant2 = db.query(Tenant).filter(Tenant.name == "Tenant 2").first()
+    if not tenant2:
+        tenant2 = Tenant(name="Tenant 2")
+        db.add(tenant2)
+        db.commit()
+        db.refresh(tenant2)
+        
+        actor_t2 = Actor(tenant_id=tenant2.id, actor_name="attacker_dave", role="owner", api_token=secrets.token_hex(16))
+        db.add(actor_t2)
+        db.commit()
+    
     return tenant, owner, operator, viewer, site1, site2
 
 
@@ -242,6 +268,7 @@ def test_approval_workflow():
     operator = db.query(Actor).filter(Actor.actor_name == "operator_bob").first()
     owner = db.query(Actor).filter(Actor.actor_name == "owner_alice").first()
     site1 = db.query(Site).filter(Site.name == "Mode 1 Site").first()
+    miner = db.query(Miner).filter(Miner.site_id == site1.id).first()
     
     cr, msg = create_change_request(
         db,
@@ -249,7 +276,7 @@ def test_approval_workflow():
         requester=operator,
         request_type="REVEAL_CREDENTIAL",
         target_type="miner",
-        target_id=999,
+        target_id=miner.id,
         requested_action={"reveal_all": True},
         reason="Need to check miner configuration",
         site_id=site1.id
@@ -318,6 +345,96 @@ def test_discovery():
     print("  ✓ Discovery test PASSED")
 
 
+def test_cross_tenant_isolation():
+    """Test that actors cannot access cross-tenant resources"""
+    print("\n=== Test Cross-Tenant CR Isolation ===")
+    db = get_test_session()
+    
+    tenant1 = db.query(Tenant).filter(Tenant.name == "Test Tenant").first()
+    tenant2 = db.query(Tenant).filter(Tenant.name == "Tenant 2").first()
+    
+    actor_t1 = db.query(Actor).filter(Actor.tenant_id == tenant1.id, Actor.role == "owner").first()
+    actor_t2 = db.query(Actor).filter(Actor.tenant_id == tenant2.id).first()
+    
+    miner_t1 = db.query(Miner).filter(Miner.tenant_id == tenant1.id).first()
+    
+    if miner_t1 and actor_t2:
+        allowed, reason = evaluate(
+            db, "READ_MINER", actor_t2,
+            resource_tenant_id=miner_t1.tenant_id,
+            resource_site_id=miner_t1.site_id
+        )
+        assert not allowed, "Tenant 2 actor should NOT access Tenant 1 miner"
+        print(f"  ✓ Cross-tenant miner access blocked: {reason}")
+        
+        cr, msg = create_change_request(
+            db,
+            tenant_id=miner_t1.tenant_id,
+            requester=actor_t2,
+            request_type="REVEAL_CREDENTIAL",
+            target_type="miner",
+            target_id=miner_t1.id,
+            requested_action={"action": "reveal"},
+            reason="Test cross-tenant attack",
+            site_id=miner_t1.site_id
+        )
+        assert cr is None, f"Cross-tenant CR should be denied, but got: {cr}"
+        print(f"  ✓ Cross-tenant CR creation blocked: {msg}")
+    else:
+        if actor_t1 and miner_t1:
+            allowed, reason = evaluate(
+                db, "READ_MINER", actor_t1,
+                resource_tenant_id=miner_t1.tenant_id,
+                resource_site_id=miner_t1.site_id
+            )
+            assert allowed, f"Same tenant access should work: {reason}"
+            print(f"  ✓ Same-tenant miner access allowed")
+    
+    print("  ✓ Cross-tenant isolation test PASSED")
+
+
+def test_post_revocation_denial():
+    """Test that approver loses access after site removal"""
+    print("\n=== Test Post-Revocation Denial ===")
+    db = get_test_session()
+    
+    tenant = db.query(Tenant).filter(Tenant.name == "Test Tenant").first()
+    site1 = db.query(Site).filter(Site.name == "Mode 1 Site").first()
+    miner = db.query(Miner).filter(Miner.site_id == site1.id).first()
+    operator = db.query(Actor).filter(Actor.actor_name == "operator_bob").first()
+    owner = db.query(Actor).filter(Actor.actor_name == "owner_alice").first()
+    
+    cr, msg = create_change_request(
+        db,
+        tenant_id=tenant.id,
+        requester=operator,
+        request_type="REVEAL_CREDENTIAL",
+        target_type="miner",
+        target_id=miner.id,
+        requested_action={"action": "reveal"},
+        reason="Test revocation",
+        site_id=site1.id
+    )
+    assert cr is not None, f"Should create CR: {msg}"
+    print(f"  ✓ Created CR #{cr.id} for miner {miner.id}")
+    
+    old_sites = owner.allowed_site_ids.copy() if owner.allowed_site_ids else []
+    owner.allowed_site_ids = []
+    db.commit()
+    print(f"  ✓ Revoked owner's site access")
+    
+    success, reason = approve_change_request(db, cr, owner)
+    assert not success, f"Revoked owner should be denied by approve_change_request, got: {reason}"
+    assert "RULE-2 DENY" in reason or "Site isolation" in reason, f"Should fail with RULE-2: {reason}"
+    print(f"  ✓ Revoked owner denied via service: {reason}")
+    
+    owner.allowed_site_ids = old_sites
+    db.commit()
+    print(f"  ✓ Restored owner's site access")
+    
+    print("  ✓ Post-revocation denial test PASSED")
+
+
 def main():
     print("=" * 60)
     print("HashInsight Secure Miner Onboarding Demo - Test Suite")
@@ -339,6 +456,8 @@ def main():
         test_approval_workflow()
         test_audit_chain()
         test_discovery()
+        test_cross_tenant_isolation()
+        test_post_revocation_denial()
         
         print("\n" + "=" * 60)
         print("ALL TESTS PASSED ✓")

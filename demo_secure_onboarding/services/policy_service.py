@@ -59,8 +59,9 @@ def evaluate(
     
     if resource_site_id:
         allowed_sites = actor.allowed_site_ids
-        if allowed_sites and resource_site_id not in allowed_sites:
-            return False, f"RULE-2 DENY: Site isolation - site_id={resource_site_id} not in actor.allowed_site_ids={allowed_sites}"
+        if allowed_sites is not None:
+            if resource_site_id not in allowed_sites:
+                return False, f"RULE-2 DENY: Site isolation - site_id={resource_site_id} not in actor.allowed_site_ids={allowed_sites}"
     
     sensitive_actions = [
         "REVEAL_CREDENTIAL", "CHANGE_MODE", "CHANGE_SITE_MODE", "BATCH_MIGRATE", 
@@ -99,12 +100,13 @@ def check_device_access(
 def filter_sites_by_abac(db: Session, actor: Actor, sites: List[Site]) -> List[Site]:
     """Filter sites list based on ABAC rules"""
     result = []
+    allowed_sites = actor.allowed_site_ids
+    
     for site in sites:
         if site.tenant_id != actor.tenant_id:
             continue
         
-        allowed_sites = actor.allowed_site_ids
-        if allowed_sites and site.id not in allowed_sites:
+        if allowed_sites is not None and site.id not in allowed_sites:
             continue
         
         result.append(site)
@@ -121,7 +123,7 @@ def filter_miners_by_abac(db: Session, actor: Actor, miners: List[Miner]) -> Lis
         if miner.tenant_id != actor.tenant_id:
             continue
         
-        if allowed_sites and miner.site_id not in allowed_sites:
+        if allowed_sites is not None and miner.site_id not in allowed_sites:
             continue
         
         result.append(miner)

@@ -102,6 +102,7 @@ def approve_change_request(
     """
     Approve a pending Change Request.
     Four-Eyes: approver must be different from requester.
+    Re-validates ABAC against current resource state (not stale CR data).
     """
     if cr.status != "PENDING":
         return False, f"Cannot approve: CR status is {cr.status}"
@@ -129,12 +130,31 @@ def approve_change_request(
         )
         return False, reason
     
+    resource_tenant_id = None
+    resource_site_id = None
+    
+    if cr.target_type == "miner":
+        miner = db.query(Miner).filter(Miner.id == cr.target_id).first()
+        if not miner:
+            return False, "Target miner no longer exists"
+        resource_tenant_id = miner.tenant_id
+        resource_site_id = miner.site_id
+    elif cr.target_type == "site":
+        site = db.query(Site).filter(Site.id == cr.target_id).first()
+        if not site:
+            return False, "Target site no longer exists"
+        resource_tenant_id = site.tenant_id
+        resource_site_id = site.id
+    else:
+        resource_tenant_id = cr.tenant_id
+        resource_site_id = cr.site_id
+    
     allowed, deny_reason = evaluate(
         db,
         action="APPROVE_CHANGE",
         actor=approver,
-        resource_tenant_id=cr.tenant_id,
-        resource_site_id=cr.site_id
+        resource_tenant_id=resource_tenant_id,
+        resource_site_id=resource_site_id
     )
     
     if not allowed:
@@ -143,7 +163,7 @@ def approve_change_request(
             actor_id=approver.id,
             actor_name=approver.actor_name,
             role=approver.role,
-            site_id=cr.site_id,
+            site_id=resource_site_id,
             target_type="change_request",
             target_id=cr.id,
             detail={"action": "APPROVE_CHANGE", "reason": deny_reason}
