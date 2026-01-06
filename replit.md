@@ -91,3 +91,18 @@ The architecture emphasizes modularity with page-isolated components and databas
 - **Redis**: In-memory data store (cache + task queue).
 - **Python 3.9+**: Runtime.
 - **Replit Platform**: Deployment and hosting.
+
+## Documentation
+
+### Documentation Practices
+- **Update docs when making changes**: Always update relevant documentation when modifying modules, APIs, or system logic
+- **Keep docs/ folder current**: Technical architecture documents should reflect the current system state
+- **Include flowcharts for complex flows**: Use ASCII diagrams for data flow and system architecture
+
+### Key Documentation Files
+| File | Description |
+|------|-------------|
+| `docs/COLLECTOR_REMOTE_CONTROL_FLOWCHART.md` | Edge collector and remote control system architecture, endpoints, and database tables |
+| `SYSTEM_ARCHITECTURE_COMPLETE.md` | Complete system architecture overview |
+| `OPERATIONS_MANUAL_EN.md` | Operations and deployment guide |
+| `replit.md` | Project summary and user preferences (this file) |
