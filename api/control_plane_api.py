@@ -74,21 +74,29 @@ def require_user_auth(f):
 
 
 def require_device_auth(f):
-    """Require edge device token authentication"""
+    """Require edge device token authentication with zone binding"""
     @wraps(f)
     def decorated(*args, **kwargs):
+        import hashlib
         auth_header = request.headers.get('Authorization', '')
         if not auth_header.startswith('Bearer '):
             return jsonify({'error': 'Device token required'}), 401
         token = auth_header[7:]
-        device = EdgeDevice.query.filter_by(device_token=token, status='ACTIVE').first()
+        
+        token_hash = hashlib.sha256(token.encode()).hexdigest()
+        device = EdgeDevice.query.filter_by(token_hash=token_hash, status='ACTIVE').first()
+        if not device:
+            device = EdgeDevice.query.filter_by(device_token=token, status='ACTIVE').first()
         if not device:
             return jsonify({'error': 'Invalid or revoked device token'}), 401
+        
         device.last_seen_at = datetime.utcnow()
         db.session.commit()
+        
         g.device = device
         g.device_id = device.id
         g.site_id = device.site_id
+        g.zone_id = device.zone_id
         return f(*args, **kwargs)
     return decorated
 
@@ -160,10 +168,27 @@ def edge_register():
 @control_plane_bp.route('/api/edge/v1/commands/poll', methods=['GET'])
 @require_device_auth
 def edge_poll_commands():
-    """Poll for queued commands - only returns approved commands"""
+    """Poll for queued commands - only returns approved commands
+    
+    Zone binding: Device token is bound to (site_id, zone_id).
+    If zone_id param provided, it must match device's zone_id (validation only).
+    """
     site_id = g.site_id
-    zone_id = request.args.get('zone_id', type=int)
+    device_zone_id = g.zone_id
+    requested_zone_id = request.args.get('zone_id', type=int)
     limit = min(request.args.get('limit', 10, type=int), 50)
+    
+    if requested_zone_id and device_zone_id and requested_zone_id != device_zone_id:
+        log_audit_event(
+            event_type='security.zone_access_denied',
+            actor_type='device',
+            actor_id=g.device_id,
+            site_id=site_id,
+            payload={'requested_zone': requested_zone_id, 'bound_zone': device_zone_id}
+        )
+        return jsonify({'error': 'Zone access denied - device bound to different zone'}), 403
+    
+    zone_id = device_zone_id or requested_zone_id
     
     query = RemoteCommand.query.filter(
         RemoteCommand.site_id == site_id,

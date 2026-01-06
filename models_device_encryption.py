@@ -28,8 +28,10 @@ class EdgeDevice(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     tenant_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=False)
     site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=True)
+    zone_id = db.Column(db.Integer, nullable=True)
     device_name = db.Column(db.String(200), nullable=False)
     device_token = db.Column(db.String(512), unique=True, nullable=True)
+    token_hash = db.Column(db.String(64), unique=True, nullable=True, index=True)
     public_key = db.Column(db.Text, nullable=False)
     key_version = db.Column(db.Integer, default=1, nullable=False)
     status = db.Column(db.String(20), default='ACTIVE', nullable=False)
@@ -51,6 +53,7 @@ class EdgeDevice(db.Model):
             'id': self.id,
             'device_name': self.device_name,
             'site_id': self.site_id,
+            'zone_id': self.zone_id,
             'key_version': self.key_version,
             'status': self.status,
             'last_seen_at': self.last_seen_at.isoformat() if self.last_seen_at else None,
