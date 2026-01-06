@@ -31,7 +31,18 @@ The system is built on a Flask backend using Blueprints. It features custom emai
 - **Landing Page**: Enterprise-focused homepage with dynamic real-time statistics.
 - **Edge Collector Architecture**: Enables real-time miner telemetry collection from on-premises farms to cloud infrastructure via a Python-based edge collector, cloud receiver API, and management UI. Features an alert rules engine and bidirectional command control.
 - **IP Scanner & Miner Discovery**: Automatic network scanning to discover Bitcoin miners via CGMiner API.
-- **Control Plane System**: Enterprise-grade system for 100MW+ mining operations, featuring zone partitioning, Attribute-Based Access Control (ABAC) for customer isolation, dual-approval workflow for high-risk operations, price plan versioning, 15-minute demand calculation, and an immutable audit event hash chain.
+- **Control Plane System**: Enterprise-grade system for 100MW+ mining operations with:
+  - **Zone Partitioning**: Site-level operational boundaries for multi-tenant isolation (models_control_plane.py: Zone, ZoneMembership)
+  - **ABAC (Attribute-Based Access Control)**: Customer isolation ensuring users only access their own data (api/portal_lite_api.py)
+  - **Dual-Approval Workflow**: High-risk operations require both customer and owner approval with configurable risk levels and approver roles
+  - **Price Plan Versioning**: Audit-safe pricing with immutable version history (models_control_plane.py: PricePlan, PricePlanVersion)
+  - **15-Minute Demand Calculation**: Interval-based power metering with DemandLedger for billing accuracy
+  - **Audit Event Hash Chain**: SHA-256 blockchain-style immutable audit trail (AuditEvent, AuditChainService)
+  - **Portal Lite API**: Customer-facing REST API at /api/v1/portal/* for miners, approvals, and zone status
+  - **Legacy API Compatibility**: /api/remote/* adapter with deprecation warnings for gradual migration
+  - **Zone-Bound Device Security**: Edge devices have zone_id and token_hash for strict access control
+  - **Remote Command Flow**: Full state machine (PENDING → PENDING_APPROVAL → APPROVED → DISPATCHED → COMPLETED)
+  - **Test Coverage**: 56 tests covering security, ABAC, approval workflow, command states, and legacy adapter
 
 ### System Design Choices
 The architecture emphasizes modularity with page-isolated components and database-centric communication. Authentication is custom email-based with session management and RBAC. API integrations follow a strategy of intelligent fallback, Stale-While-Revalidate (SWR) caching, batch API calls, and robust error handling. The system is optimized for deployment on the Replit platform using Gunicorn.
