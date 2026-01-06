@@ -31,8 +31,10 @@ class CredentialProtectionService:
             return f"{parts[0]}.{parts[1]}.xxx.xxx"
         return ip[:len(ip)//2] + "***"
     
+    SENSITIVE_KEYS = ('api_password', 'password', 'secret', 'pass', 'key', 'token', 'credential')
+    
     def mask_credential(self, cred_json: str, role: str = 'viewer') -> Dict[str, Any]:
-        """根据角色脱敏凭证"""
+        """根据角色脱敏凭证（viewer角色会遮盖敏感字段）"""
         try:
             cred = json.loads(cred_json)
         except:
@@ -42,11 +44,15 @@ class CredentialProtectionService:
         for key, val in cred.items():
             if key == 'ip':
                 result[key] = self.mask_ip(str(val)) if role != 'admin' else val
-            elif key in ('api_password', 'password', 'secret'):
-                result[key] = '***' if role != 'admin' else val
+            elif key.lower() in self.SENSITIVE_KEYS or any(s in key.lower() for s in self.SENSITIVE_KEYS):
+                result[key] = '******' if role != 'admin' else val
             else:
                 result[key] = val
         return result
+    
+    def compute_fingerprint(self, data: str) -> str:
+        """计算凭证指纹（代理到 KMS 服务）"""
+        return kms_service.compute_fingerprint(data)
     
     def store_credential(self, site, credential_json: str, device_id: Optional[int] = None, 
                          e2ee_ciphertext: Optional[str] = None, counter: int = 1) -> Tuple[str, int, str]:

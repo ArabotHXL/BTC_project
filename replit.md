@@ -42,7 +42,14 @@ The system is built on a Flask backend using Blueprints. It features custom emai
   - **Legacy API Compatibility**: /api/remote/* adapter with deprecation warnings for gradual migration
   - **Zone-Bound Device Security**: Edge devices have zone_id and token_hash for strict access control
   - **Remote Command Flow**: Full state machine (PENDING → PENDING_APPROVAL → APPROVED → DISPATCHED → COMPLETED)
-  - **Test Coverage**: 56 tests covering security, ABAC, approval workflow, command states, and legacy adapter
+  - **Credential Protection (NEW)**: Three-tier IP/credential protection with anti-rollback validation:
+    - **Mode 1 (UI Masking)**: Plaintext storage with RBAC-based display masking for IP and sensitive fields
+    - **Mode 2 (Server Envelope)**: Two-layer key management (MASTER_KEY → Site DEK) using PBKDF2 + Fernet encryption
+    - **Mode 3 (Device E2EE)**: End-to-end encryption where server only stores ciphertext, Edge device decrypts locally
+    - **Anti-Rollback Counter**: Monotonic counter validation prevents replay attacks (ANTI_ROLLBACK_REJECT audit events)
+    - **Credential Fingerprint**: SHA-256 truncated hash for integrity verification
+    - **REST API**: /api/v1/sites/{id}/security-settings, /api/v1/miners/{id}/credential, /api/v1/miners/{id}/reveal, /api/v1/sites/{id}/batch-migrate, /api/v1/edge/decrypt, /api/v1/audit/verify
+  - **Test Coverage**: 63+ tests covering security, ABAC, approval workflow, command states, credential protection, and audit chain verification
 
 ### System Design Choices
 The architecture emphasizes modularity with page-isolated components and database-centric communication. Authentication is custom email-based with session management and RBAC. API integrations follow a strategy of intelligent fallback, Stale-While-Revalidate (SWR) caching, batch API calls, and robust error handling. The system is optimized for deployment on the Replit platform using Gunicorn.

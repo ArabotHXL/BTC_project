@@ -40,8 +40,9 @@ def require_admin(f):
     return decorated
 
 
-def log_audit_event(site_id, event_type, actor_id, ref_type, ref_id, payload=None):
-    """记录审计事件"""
+def log_audit_event(site_id, event_type, actor_id, ref_type, ref_id, payload=None, require_success=False):
+    """记录审计事件（增强版，确保审计事件不会丢失）"""
+    import logging
     try:
         last_event = AuditEvent.query.filter_by(site_id=site_id).order_by(AuditEvent.id.desc()).first()
         prev_hash = last_event.event_hash if last_event else '0' * 64
@@ -59,9 +60,13 @@ def log_audit_event(site_id, event_type, actor_id, ref_type, ref_id, payload=Non
         event.event_hash = event.compute_hash()
         db.session.add(event)
         db.session.commit()
+        logging.info(f"Audit event logged: {event_type} for {ref_type}/{ref_id}")
         return event
     except Exception as e:
         db.session.rollback()
+        logging.error(f"Failed to log audit event {event_type}: {e}")
+        if require_success:
+            raise RuntimeError(f"Audit logging failed: {e}")
         return None
 
 
@@ -151,7 +156,7 @@ def get_miner_credential_display(miner_id):
 @credential_protection_bp.route('/api/v1/miners/<int:miner_id>/reveal', methods=['POST'])
 @require_admin
 def reveal_miner_credential(miner_id):
-    """揭示矿机凭证（仅管理员）"""
+    """揭示矿机凭证（仅管理员，敏感模式需要原因）"""
     miner = HostingMiner.query.get(miner_id)
     if not miner:
         return jsonify({'error': 'Miner not found'}), 404
@@ -159,15 +164,17 @@ def reveal_miner_credential(miner_id):
     site = HostingSite.query.get(miner.site_id)
     
     data = request.get_json() or {}
-    reason = data.get('reason', '')
+    reason = data.get('reason', '').strip()
     
-    if not reason and miner.credential_mode == 2:
-        return jsonify({'error': 'Reason is required for server-encrypted credentials'}), 400
+    if miner.credential_mode in (2, 3) and len(reason) < 10:
+        return jsonify({
+            'error': 'Detailed reason (10+ chars) is required for encrypted credentials reveal',
+            'code': 'REASON_REQUIRED'
+        }), 400
     
     actor_id = session.get('user_id')
-    result = credential_service.reveal_credential(miner, site, reason, str(actor_id))
     
-    log_audit_event(
+    audit_event = log_audit_event(
         site_id=miner.site_id,
         event_type='REVEAL',
         actor_id=actor_id,
@@ -175,16 +182,25 @@ def reveal_miner_credential(miner_id):
         ref_id=miner_id,
         payload={
             'reason': reason,
-            'mode': miner.credential_mode,
-            'success': result.get('success', False)
-        }
+            'mode': miner.credential_mode
+        },
+        require_success=True
     )
+    
+    if not audit_event:
+        return jsonify({
+            'error': 'Audit logging failed - reveal blocked for security',
+            'code': 'AUDIT_REQUIRED'
+        }), 500
+    
+    result = credential_service.reveal_credential(miner, site, reason, str(actor_id))
     
     if result.get('success'):
         return jsonify({
             'miner_id': miner_id,
             'credential': result.get('credential'),
-            'mode': result.get('mode')
+            'mode': result.get('mode'),
+            'audit_id': audit_event.id if audit_event else None
         })
     else:
         return jsonify({
@@ -197,7 +213,7 @@ def reveal_miner_credential(miner_id):
 @credential_protection_bp.route('/api/v1/miners/<int:miner_id>/credential', methods=['POST'])
 @require_admin
 def update_miner_credential(miner_id):
-    """更新矿机凭证"""
+    """更新矿机凭证（所有模式都支持反回滚保护）"""
     miner = HostingMiner.query.get(miner_id)
     if not miner:
         return jsonify({'error': 'Miner not found'}), 404
@@ -205,30 +221,36 @@ def update_miner_credential(miner_id):
     site = HostingSite.query.get(miner.site_id)
     data = request.get_json()
     
+    counter = data.get('counter', miner.last_accepted_counter + 1)
+    
+    valid, msg = credential_service.validate_anti_rollback(miner, counter)
+    if not valid:
+        log_audit_event(
+            site_id=miner.site_id,
+            event_type='ANTI_ROLLBACK_REJECT',
+            actor_id=session.get('user_id'),
+            ref_type='miner',
+            ref_id=miner_id,
+            payload={'counter': counter, 'last_accepted': miner.last_accepted_counter}
+        )
+        return jsonify({'error': msg, 'code': 'ANTI_ROLLBACK_REJECT'}), 400
+    
     if site.ip_mode == 3:
         e2ee_ciphertext = data.get('credential_e2ee_b64')
-        counter = data.get('counter', 1)
         device_id = data.get('device_id')
         
         if not e2ee_ciphertext:
             return jsonify({'error': 'Mode 3 requires credential_e2ee_b64 from client'}), 400
         
-        valid, msg = credential_service.validate_anti_rollback(miner, counter)
-        if not valid:
-            log_audit_event(
-                site_id=miner.site_id,
-                event_type='ANTI_ROLLBACK_REJECT',
-                actor_id=session.get('user_id'),
-                ref_type='miner',
-                ref_id=miner_id,
-                payload={'counter': counter, 'last_accepted': miner.last_accepted_counter}
-            )
-            return jsonify({'error': msg}), 400
+        if not e2ee_ciphertext.startswith('E2EE:') and len(e2ee_ciphertext) < 32:
+            return jsonify({
+                'error': 'E2EE ciphertext format invalid (expected base64 or E2EE: prefix)',
+                'code': 'E2EE_FORMAT_INVALID'
+            }), 400
         
         cred_value, cred_mode, fingerprint = credential_service.store_credential(
             site, None, device_id, e2ee_ciphertext, counter
         )
-        miner.last_accepted_counter = counter
     else:
         credential_json = data.get('credential_plaintext_json')
         if not credential_json:
@@ -236,6 +258,8 @@ def update_miner_credential(miner_id):
             credential_json = json.dumps(credential_data)
         
         cred_value, cred_mode, fingerprint = credential_service.store_credential(site, credential_json)
+    
+    miner.last_accepted_counter = counter
     
     miner.credential_value = cred_value
     miner.credential_mode = cred_mode
