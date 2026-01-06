@@ -53,6 +53,8 @@ class RemoteCommand(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     tenant_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=False)
     site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=False)
+    zone_id = db.Column(db.Integer, nullable=True)
+    customer_id = db.Column(db.Integer, nullable=True)
     requested_by_user_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=False)
     requested_by_role = db.Column(db.String(50), default='user', nullable=False)
     command_type = db.Column(db.String(50), nullable=False)
@@ -98,6 +100,8 @@ class RemoteCommand(db.Model):
             'id': self.id,
             'tenant_id': self.tenant_id,
             'site_id': self.site_id,
+            'zone_id': self.zone_id,
+            'customer_id': self.customer_id,
             'requested_by_user_id': self.requested_by_user_id,
             'requested_by_role': self.requested_by_role,
             'command_type': self.command_type,
