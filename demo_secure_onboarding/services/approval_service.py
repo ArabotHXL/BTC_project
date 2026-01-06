@@ -29,6 +29,8 @@ def create_change_request(
 ) -> Tuple[Optional[ChangeRequest], str]:
     """
     Create a new Change Request for high-risk operation.
+    Anyone with at least operator role can CREATE a request, 
+    but only owner/admin can APPROVE and EXECUTE.
     
     Request types:
     - REVEAL_CREDENTIAL
@@ -39,7 +41,7 @@ def create_change_request(
     """
     allowed, deny_reason = evaluate(
         db, 
-        action=request_type,
+        action="CREATE_CHANGE_REQUEST",
         actor=requester,
         resource_tenant_id=tenant_id,
         resource_site_id=site_id
@@ -54,7 +56,7 @@ def create_change_request(
             site_id=site_id,
             target_type=target_type,
             target_id=target_id,
-            detail={"action": request_type, "reason": deny_reason}
+            detail={"action": "CREATE_CHANGE_REQUEST", "reason": deny_reason}
         )
         return None, deny_reason
     

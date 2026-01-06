@@ -51,7 +51,7 @@ def evaluate(
             resource_tenant_id = resource.tenant_id
         if hasattr(resource, 'site_id'):
             resource_site_id = resource.site_id
-        elif resource_type == 'site' and hasattr(resource, 'id'):
+        elif isinstance(resource, Site) and hasattr(resource, 'id'):
             resource_site_id = resource.id
     
     if resource_tenant_id and actor.tenant_id != resource_tenant_id:
@@ -63,14 +63,14 @@ def evaluate(
             return False, f"RULE-2 DENY: Site isolation - site_id={resource_site_id} not in actor.allowed_site_ids={allowed_sites}"
     
     sensitive_actions = [
-        "REVEAL_CREDENTIAL", "CHANGE_MODE", "BATCH_MIGRATE", 
-        "APPROVE_CHANGE", "EXECUTE_CHANGE"
+        "REVEAL_CREDENTIAL", "CHANGE_MODE", "CHANGE_SITE_MODE", "BATCH_MIGRATE", 
+        "APPROVE_CHANGE", "EXECUTE_CHANGE", "REVOKE_DEVICE"
     ]
     if action in sensitive_actions:
         if actor.role not in ("owner", "admin"):
             return False, f"RULE-3 DENY: Sensitive action '{action}' requires role in [owner, admin], got '{actor.role}'"
     
-    operator_actions = ["DISCOVERY_SCAN", "ONBOARD_MINER", "CREATE_MINER"]
+    operator_actions = ["DISCOVERY_SCAN", "ONBOARD_MINER", "CREATE_MINER", "CREATE_CHANGE_REQUEST"]
     if action in operator_actions:
         if get_role_level(actor.role) < get_role_level("operator"):
             return False, f"RULE-4 DENY: Action '{action}' requires at least operator role, got '{actor.role}'"
