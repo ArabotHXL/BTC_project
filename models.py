@@ -1507,6 +1507,10 @@ class HostingSite(db.Model):
     electricity_rate = db.Column(db.Float, nullable=False)  # 电费费率 ($/kWh)
     electricity_source = db.Column(db.String(50), nullable=True)  # 电力来源
     
+    # 凭证保护模式 (Mode 1=UI Masking, 2=Server Envelope, 3=Device E2EE)
+    ip_mode = db.Column(db.Integer, default=1, nullable=False)
+    site_dek_wrapped = db.Column(db.Text, nullable=True)  # Mode 2: 加密的 Site DEK
+    
     # 时间戳
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
@@ -1552,6 +1556,7 @@ class HostingSite(db.Model):
             'status': self.status,
             'operator_name': self.operator_name,
             'electricity_rate': self.electricity_rate,
+            'ip_mode': self.ip_mode,
             'created_at': self.created_at.isoformat()
         }
 
@@ -1622,6 +1627,12 @@ class HostingMiner(db.Model):
     encrypted_mac = db.Column(db.Text, nullable=True)  # E2EE加密的MAC地址
     encryption_scope = db.Column(db.String(20), default='none', nullable=False)  # none/miner/owner - 加密范围
     ip_encryption_mode = db.Column(db.Integer, default=1, nullable=False)  # IP隐藏策略: 1=UI脱敏, 2=服务器加密, 3=E2EE
+    
+    # 统一凭证保护字段 (Credential Blob)
+    credential_value = db.Column(db.Text, nullable=True)  # 凭证: 明文JSON / ENC:... / E2EE:...
+    credential_mode = db.Column(db.Integer, default=1, nullable=False)  # 凭证保护模式 (1/2/3)
+    last_accepted_counter = db.Column(db.Integer, default=0, nullable=False)  # 反回滚计数器
+    fingerprint = db.Column(db.String(64), nullable=True)  # 凭证指纹
     
     # Device Envelope Encryption - Capability Levels
     # Level 1: DISCOVERY (只读发现) - No credentials needed
