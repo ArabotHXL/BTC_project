@@ -383,130 +383,13 @@ def approve_command(command_id):
     })
 
 
-@remote_control_bp.route('/api/edge/v1/commands/poll', methods=['GET'])
-@require_device_auth
-def poll_commands():
-    """Edge device polls for queued commands"""
-    site_id = request.args.get('site_id', type=int) or g.site_id
-    limit = min(int(request.args.get('limit', 10)), 50)
-    
-    now = datetime.utcnow()
-    
-    RemoteCommand.query.filter(
-        RemoteCommand.status.in_(['QUEUED', 'RUNNING']),
-        RemoteCommand.expires_at < now
-    ).update({'status': 'EXPIRED'}, synchronize_session=False)
-    db.session.commit()
-    
-    commands = RemoteCommand.query.filter(
-        RemoteCommand.site_id == site_id,
-        RemoteCommand.status == 'QUEUED',
-        (RemoteCommand.expires_at.is_(None) | (RemoteCommand.expires_at > now))
-    ).order_by(RemoteCommand.created_at.asc()).limit(limit).all()
-    
-    result = []
-    for cmd in commands:
-        cmd.status = 'RUNNING'
-        cmd.updated_at = now
-        
-        RemoteCommandResult.query.filter_by(
-            command_id=cmd.id, 
-            result_status='PENDING'
-        ).update({
-            'edge_device_id': g.device_id,
-            'result_status': 'RUNNING',
-            'started_at': now
-        })
-        
-        cmd_data = cmd.to_edge_dict()
-        
-        from models_device_encryption import MinerSecret
-        secrets = {}
-        for miner_id in cmd.target_ids:
-            miner = HostingMiner.query.filter_by(serial_number=str(miner_id)).first()
-            if miner:
-                secret = MinerSecret.query.filter_by(
-                    miner_id=miner.id,
-                    device_id=g.device_id
-                ).first()
-                if secret:
-                    secrets[str(miner_id)] = secret.to_dict(include_encrypted=True)
-        
-        if secrets:
-            cmd_data['encrypted_credentials'] = secrets
-        
-        result.append(cmd_data)
-    
-    db.session.commit()
-    
-    return jsonify({
-        'commands': result,
-        'count': len(result)
-    })
-
-
-@remote_control_bp.route('/api/edge/v1/commands/<command_id>/ack', methods=['POST'])
-@require_device_auth
-def ack_command(command_id):
-    """Edge device acknowledges command completion with results"""
-    command = RemoteCommand.query.get(command_id)
-    if not command:
-        return jsonify({'error': 'Command not found'}), 404
-    
-    data = request.get_json() or {}
-    results = data.get('results', [])
-    
-    now = datetime.utcnow()
-    success_count = 0
-    fail_count = 0
-    
-    for result_data in results:
-        miner_id = result_data.get('miner_id')
-        status = result_data.get('status', 'SUCCEEDED')
-        message = result_data.get('message', '')
-        metrics = result_data.get('metrics', {})
-        
-        result = RemoteCommandResult.query.filter_by(
-            command_id=command_id,
-            miner_id=str(miner_id)
-        ).first()
-        
-        if result:
-            result.result_status = status
-            result.result_message = message
-            result.metrics_json = metrics
-            result.finished_at = now
-            
-            if status == 'SUCCEEDED':
-                success_count += 1
-            else:
-                fail_count += 1
-    
-    total_results = command.results.count()
-    completed = command.results.filter(
-        RemoteCommandResult.result_status.in_(['SUCCEEDED', 'FAILED', 'SKIPPED'])
-    ).count()
-    
-    if completed >= total_results:
-        if fail_count == 0:
-            command.status = 'SUCCEEDED'
-        else:
-            command.status = 'FAILED'
-        command.updated_at = now
-    
-    db.session.commit()
-    
-    log_command_event(command, 'ack', {
-        'success_count': success_count,
-        'fail_count': fail_count,
-        'device_id': g.device_id
-    })
-    
-    return jsonify({
-        'success': True,
-        'command_status': command.status,
-        'results_processed': len(results)
-    })
+# =============================================================================
+# DEPRECATED: v1 Edge endpoints removed - use control_plane_api.py instead
+# The following endpoints have been moved to api/control_plane_api.py:
+#   - GET /api/edge/v1/commands/poll
+#   - POST /api/edge/v1/commands/<command_id>/ack
+# This ensures single control plane with no secrets/IP leakage
+# =============================================================================
 
 
 def register_blueprint(app):
