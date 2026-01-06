@@ -1,6 +1,10 @@
 modules = ["python-3.11", "postgresql-16"]
 
 [[ports]]
+localPort = 3000
+externalPort = 3000
+
+[[ports]]
 localPort = 5000
 externalPort = 80
 
