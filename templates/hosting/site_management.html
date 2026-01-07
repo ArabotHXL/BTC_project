@@ -420,6 +420,20 @@
 document.addEventListener('DOMContentLoaded', function() {
     loadSitesData();
     loadLocationOptions();
+    
+    // Auto-generate slug from site name
+    const siteNameInput = document.getElementById('site-name');
+    const slugInput = document.getElementById('site-slug');
+    if (siteNameInput && slugInput) {
+        siteNameInput.addEventListener('input', function() {
+            const name = this.value;
+            const slug = name.toLowerCase()
+                .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
+                .replace(/^-+|-+$/g, '')
+                + '-' + Math.random().toString(36).substring(2, 8);
+            slugInput.value = slug;
+        });
+    }
 });
 
 function loadSitesData() {
