@@ -575,7 +575,7 @@ def create_site():
             }), 400
         
         # 创建新站点 - 自动关联当前用户邮箱
-        user_email = current_user.email if hasattr(current_user, 'email') else ''
+        user_email = session.get('email', '')
         site = HostingSite(
             name=data['name'],
             slug=data['slug'],
