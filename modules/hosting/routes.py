@@ -6,6 +6,7 @@
 RBAC v2.0: 使用模块化权限系统
 """
 from flask import render_template, request, jsonify, session, redirect, url_for, flash
+from flask_login import current_user
 from . import hosting_bp
 from auth import login_required
 from decorators import requires_role
@@ -24,6 +25,7 @@ import json
 from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
+
 
 def get_miner_alerts(miner, lang='zh'):
     """检测矿机告警状态
@@ -550,8 +552,10 @@ def get_miner_models():
 def create_site():
     """创建新站点"""
     try:
+        logger.info("=== CREATE SITE API CALLED ===")
         # 获取表单数据
         data = request.get_json() if request.is_json else request.form
+        logger.info(f"Request data: {dict(data) if data else 'None'}")
         
         # 检查必要字段
         required_fields = ['name', 'slug', 'location', 'capacity_mw']
@@ -595,7 +599,9 @@ def create_site():
         
     except Exception as e:
         db.session.rollback()
+        import traceback
         logger.error(f"创建站点失败: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/sites/<int:site_id>', methods=['GET'])

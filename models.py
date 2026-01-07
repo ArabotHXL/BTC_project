@@ -1511,6 +1511,9 @@ class HostingSite(db.Model):
     ip_mode = db.Column(db.Integer, default=1, nullable=False)
     site_dek_wrapped = db.Column(db.Text, nullable=True)  # Mode 2: 加密的 Site DEK
     
+    # 站点描述
+    description = db.Column(db.Text, nullable=True)
+    
     # 时间戳
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
