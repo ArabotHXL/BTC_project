@@ -567,10 +567,20 @@ function createSite() {
         body: JSON.stringify(siteData)
     })
     .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-        return response.json();
+        return response.json().then(data => {
+            if (!response.ok) {
+                const errorMsg = data.error || `HTTP ${response.status}`;
+                console.error('Server error:', response.status, errorMsg);
+                throw new Error(errorMsg);
+            }
+            return data;
+        }).catch(parseError => {
+            if (!response.ok) {
+                console.error('HTTP error:', response.status, response.statusText);
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            throw parseError;
+        });
     })
     .then(data => {
         if (data.success) {
@@ -579,12 +589,14 @@ function createSite() {
             loadSitesData();
             showToast(getLanguage() === 'en' ? 'Site created successfully' : '站点创建成功', 'success');
         } else {
-            showToast(data.error || (getLanguage() === 'en' ? 'Creation failed' : '创建失败'), 'error');
+            const errorMsg = data.error || (getLanguage() === 'en' ? 'Creation failed' : '创建失败');
+            console.error('API error:', errorMsg);
+            showToast(errorMsg, 'error');
         }
     })
     .catch(error => {
-        console.error('Error creating site:', error);
-        showToast(getLanguage() === 'en' ? 'Creation failed' : '创建失败', 'error');
+        console.error('Error creating site:', error.message || error);
+        showToast(error.message || (getLanguage() === 'en' ? 'Creation failed' : '创建失败'), 'error');
     });
 }
 
@@ -608,10 +620,20 @@ function updateSite() {
         body: JSON.stringify(siteData)
     })
     .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-        return response.json();
+        return response.json().then(data => {
+            if (!response.ok) {
+                const errorMsg = data.error || `HTTP ${response.status}`;
+                console.error('Server error:', response.status, errorMsg);
+                throw new Error(errorMsg);
+            }
+            return data;
+        }).catch(parseError => {
+            if (!response.ok) {
+                console.error('HTTP error:', response.status, response.statusText);
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            throw parseError;
+        });
     })
     .then(data => {
         if (data.success) {
@@ -619,12 +641,14 @@ function updateSite() {
             loadSitesData();
             showToast(getLanguage() === 'en' ? 'Site updated successfully' : '站点更新成功', 'success');
         } else {
-            showToast(data.error || (getLanguage() === 'en' ? 'Update failed' : '更新失败'), 'error');
+            const errorMsg = data.error || (getLanguage() === 'en' ? 'Update failed' : '更新失败');
+            console.error('API error:', errorMsg);
+            showToast(errorMsg, 'error');
         }
     })
     .catch(error => {
-        console.error('Error updating site:', error);
-        showToast(getLanguage() === 'en' ? 'Update failed' : '更新失败', 'error');
+        console.error('Error updating site:', error.message || error);
+        showToast(error.message || (getLanguage() === 'en' ? 'Update failed' : '更新失败'), 'error');
     });
 }
 
