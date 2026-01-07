@@ -387,11 +387,16 @@ function loadDropdownOptions() {
             const siteFilter = document.getElementById('site-filter');
             const regSiteSelect = document.getElementById('reg_hosting_site');
             
-            data.sites.forEach(site => {
-                const option = `<option value="${site.id}">${site.name}</option>`;
-                siteFilter.insertAdjacentHTML('beforeend', option);
-                regSiteSelect.insertAdjacentHTML('beforeend', option);
-            });
+            if (data.success && data.sites) {
+                data.sites.forEach(site => {
+                    const option = `<option value="${site.id}">${site.name}</option>`;
+                    siteFilter.insertAdjacentHTML('beforeend', option);
+                    regSiteSelect.insertAdjacentHTML('beforeend', option);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading sites:', error);
         });
 }
 
