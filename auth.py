@@ -182,6 +182,40 @@ def verify_email(email):
     logging.warning(f"邮箱 {email} 验证失败")
     return False
 
+def sync_user_roles(email):
+    """Sync roles between User and UserAccess tables to prevent conflicts.
+    UserAccess is the authoritative source for roles.
+    
+    Returns: The canonical role from UserAccess, or None if user not found
+    """
+    if not email:
+        return None
+    
+    email = email.lower().strip()
+    
+    try:
+        from models import User
+        
+        user_access = UserAccess.query.filter_by(email=email).first()
+        user = User.query.filter_by(email=email).first()
+        
+        if not user_access:
+            return None
+        
+        canonical_role = user_access.role
+        
+        if user and user.role != canonical_role:
+            logging.warning(f"Role conflict detected for {email}: users.role='{user.role}' vs user_access.role='{canonical_role}'. Syncing to '{canonical_role}'")
+            user.role = canonical_role
+            db.session.commit()
+            logging.info(f"Synced user role for {email} to '{canonical_role}'")
+        
+        return canonical_role
+    except Exception as e:
+        logging.error(f"Error syncing user roles for {email}: {str(e)}")
+        return None
+
+
 def get_user_role(email=None):
     """获取用户角色"""
     # 首先尝试从会话中获取角色
@@ -191,6 +225,8 @@ def get_user_role(email=None):
     # 如果会话中没有角色且提供了邮箱，从数据库查询
     if email:
         try:
+            sync_user_roles(email)
+            
             user = UserAccess.query.filter_by(email=email.lower().strip()).first()
             if user and user.has_access:
                 # 将角色存储到会话中
