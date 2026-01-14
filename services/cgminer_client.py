@@ -413,7 +413,7 @@ def quick_probe(host: str, port: int = 4028, timeout: float = 2.0) -> Dict[str, 
             "temp_max": float,
             "status": str,
             "as_of": str,
-            "error": str | None
+            "error": Optional[str]
         }
     """
     result = {

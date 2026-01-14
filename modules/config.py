@@ -15,7 +15,7 @@ AVAILABLE_MODULES = {
         'blueprint': 'modules.calculator',
         'url_prefix': '/calculator',
         'requires_auth': False,
-        'enabled': True
+        'enabled': False  # 已在app.py通过routes/calculator_routes.py注册，避免重复注册
     },
     'crm': {
         'name': 'CRM系统',

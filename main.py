@@ -2,6 +2,16 @@ import os
 import logging
 import sys
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+    logging.info("✅ Loaded environment variables from .env file")
+except ImportError:
+    logging.warning("python-dotenv not installed - .env file will not be loaded automatically")
+except Exception as e:
+    logging.warning(f"Could not load .env file: {e}")
+
 # 配置日志
 logging.basicConfig(level=logging.INFO)
 
@@ -202,4 +212,8 @@ app = create_app()
 
 # 确保在直接运行时可以启动
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    # Default to port 5001 (5000 is often used by macOS ControlCenter/AirPlay)
+    # Can override with FLASK_RUN_PORT environment variable
+    port = int(os.environ.get('FLASK_RUN_PORT', 5001))
+    logging.info(f"Starting Flask application on port {port}")
+    app.run(host="0.0.0.0", port=port, debug=False)

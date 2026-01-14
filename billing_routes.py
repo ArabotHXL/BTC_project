@@ -611,11 +611,16 @@ def payment_history():
         flash('获取支付历史失败', 'error')
         return redirect(url_for('index'))
 
-# 初始化时创建默认计划
-try:
-    create_default_plans()
-except Exception as e:
-    logger.error(f"初始化默认计划失败: {e}")
+# 初始化时创建默认计划 - 延迟到应用上下文可用时
+# Note: This will be called from app.py after app context is available
+def init_billing_plans(app):
+    """在应用上下文中初始化默认订阅计划"""
+    with app.app_context():
+        try:
+            create_default_plans()
+            logger.info("默认订阅计划初始化成功")
+        except Exception as e:
+            logger.error(f"初始化默认计划失败: {e}")
 
 # 导出Blueprint
 __all__ = ['billing_bp']

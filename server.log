@@ -1,0 +1,201 @@
+INFO:root:Database health check skipped for fast startup
+INFO:root:Security configuration loaded for hosting transparency platform
+INFO:root:Flask-WTF CSRF protection forcefully disabled
+WARNING:api_auth_middleware:Using development API key: hsi_dev_key_2025 with role developer
+INFO:api_auth_middleware:Loaded 1 API keys
+INFO:root:API authentication middleware loaded successfully
+INFO:cache_manager:内存缓存后端已启用
+INFO:cache_manager:使用内存缓存后端
+INFO:root:🚀 Starting deferred initialization (background thread)...
+INFO:root:📦 Background initialization thread started - server will respond immediately
+INFO:root:Models imported successfully at module level
+INFO:language_engine:Language Engine initialized with enhanced features
+INFO:language_engine:Enhanced Language Engine v2.0 loaded successfully
+INFO:root:Language Engine initialized with enhanced features
+INFO:crm_routes:CRM routes registered successfully
+INFO:root:System health routes registered successfully
+INFO:root:i18n routes registered successfully
+INFO:root:Auth routes registered successfully
+INFO:root:Calculator routes registered successfully
+INFO:root:Admin routes blueprint registered successfully
+INFO:root:托管功能模块已注册
+INFO:root:客户功能模块已注册
+INFO:compliance_service:ComplianceService initialized with real AML/KYC checks
+INFO:blockchain_integration:🛡️ 默认安全模式：使用Base Sepolia测试网
+WARNING:blockchain_integration:⚠️ 测试网模式：BLOCKCHAIN_PRIVATE_KEY未设置，区块链功能将受限
+ERROR:blockchain_integration:无法连接到Base L2网络
+WARNING:blockchain_integration:⚠️ 测试网模式：使用开发默认加密密码
+WARNING:blockchain_integration:⚠️ 测试网模式：使用开发默认盐值
+INFO:blockchain_integration:数据加密已初始化（测试网开发模式）
+ERROR:blockchain_integration:Pinata配置错误: PINATA_JWT环境变量必须设置。区块链透明度功能需要IPFS存储。请从Pinata.cloud获取JWT令牌并设置环境变量。如果确实不需要IPFS功能，请设置BLOCKCHAIN_DISABLE_IPFS=true
+WARNING:blockchain_integration:IPFS功能已禁用 (BLOCKCHAIN_DISABLE_IPFS=true)
+INFO:crypto_payment_service:CryptoPaymentService initialized
+ERROR:billing_routes:创建默认订阅计划失败: Working outside of application context.
+
+This typically means that you attempted to use functionality that needed
+the current application. To solve this, set up an application context
+with app.app_context(). See the documentation for more information.
+ERROR:billing_routes:初始化默认计划失败: Working outside of application context.
+
+This typically means that you attempted to use functionality that needed
+the current application. To solve this, set up an application context
+with app.app_context(). See the documentation for more information.
+INFO:root:Crypto billing routes registered successfully
+INFO:root:Batch calculator routes registered successfully
+INFO:root:Miner management routes registered successfully
+INFO:root:Advanced Deribit analysis routes registered successfully
+INFO:root:Deribit analysis routes registered successfully
+INFO:root:SLA NFT routes registered successfully
+INFO:root:Batch import routes registered successfully
+INFO:root:Miner import routes registered successfully
+INFO:root:Analytics routes registered successfully
+INFO:root:Trust routes registered successfully
+INFO:root:Intelligence Layer API blueprints registered successfully
+INFO:root:System Monitoring API blueprint registered successfully
+INFO:root:Standalone /performance-monitor route registered successfully
+INFO:root:Web3/CRM/Treasury Integration API blueprints registered successfully
+INFO:root:RBAC Permission Management API registered successfully
+INFO:root:Edge Collector API registered successfully
+INFO:root:Edge Device Management API, Miner Secrets API, Edge Secrets API, Audit API, IP Encryption API, and Sites API registered successfully
+INFO:root:IP Scan Job API registered successfully
+INFO:root:Remote Miner Control API registered successfully
+INFO:root:Collector Management Routes registered successfully
+INFO:root:Monitor Routes registered successfully
+INFO:root:Control Plane API registered successfully
+INFO:root:Portal Lite API registered successfully
+INFO:root:Legacy API Adapter registered (DEPRECATED - will be removed 2026-06-01)
+ERROR:modules.config:❌ 注册模块 挖矿计算器 失败: The name 'calculator' is already registered for a different blueprint. Use 'name=' to provide a unique name.
+INFO:modules.config:模块 CRM系统 已禁用
+INFO:modules.config:模块 批量计算器 已禁用
+INFO:modules.config:模块 数据分析 已禁用
+INFO:modules.config:模块 经纪人系统 已禁用
+INFO:modules.config:模块 托管服务 已禁用
+INFO:modules.config:模块 客户服务 已禁用
+INFO:modules.config:共注册 0 个模块: 
+INFO:root:Modular architecture initialized: 0 modules registered
+INFO:root:Architecture diagram route registered
+INFO:blockchain_integration:🛡️ 默认安全模式：使用Base Sepolia测试网
+WARNING:blockchain_integration:⚠️ 测试网模式：BLOCKCHAIN_PRIVATE_KEY未设置，区块链功能将受限
+ERROR:blockchain_integration:无法连接到Base L2网络
+WARNING:blockchain_integration:⚠️ 测试网模式：使用开发默认加密密码
+WARNING:blockchain_integration:⚠️ 测试网模式：使用开发默认盐值
+INFO:blockchain_integration:数据加密已初始化（测试网开发模式）
+ERROR:blockchain_integration:Pinata配置错误: PINATA_JWT环境变量必须设置。区块链透明度功能需要IPFS存储。请从Pinata.cloud获取JWT令牌并设置环境变量。如果确实不需要IPFS功能，请设置BLOCKCHAIN_DISABLE_IPFS=true
+WARNING:blockchain_integration:IPFS功能已禁用 (BLOCKCHAIN_DISABLE_IPFS=true)
+INFO:root:⏳ 锁被其他进程持有: <SchedulerLock payment_monitor_service: PID=28@localhost>
+INFO:payment_monitor_service:无法获取调度器锁，其他实例正在运行。PID=8331@cec0bd657d7e
+INFO:root:支付监控服务初始化完成 (SchedulerLock机制)
+INFO:services.cgminer_scheduler:CGMiner调度器绑定到Flask应用 (PID=8331, Host=cec0bd657d7e)
+INFO:root:⏳ 锁被其他进程持有: <SchedulerLock cgminer_scheduler_lock: PID=1116@cec0bd657d7e>
+INFO:services.cgminer_scheduler:⏳ CGMiner调度器锁被其他worker持有，跳过启动
+INFO:services.cgminer_scheduler:未获得调度器锁，跳过启动
+INFO:root:CGMiner数据采集调度器初始化完成 (SchedulerLock机制)
+INFO:services.curtailment_scheduler:限电调度器绑定到Flask应用 (PID=8331, Host=cec0bd657d7e)
+INFO:root:Database tables created successfully
+INFO:root:✅ Migration executed: 001_add_customer_mining_fields.sql
+INFO:root:⏳ 锁被其他进程持有: <SchedulerLock curtailment_scheduler_lock: PID=1116@cec0bd657d7e>
+INFO:services.curtailment_scheduler:⏳ 限电调度器锁被其他worker持有，跳过启动
+INFO:services.curtailment_scheduler:未获得调度器锁，跳过启动
+INFO:root:限电调度器初始化完成 (SchedulerLock机制)
+INFO:root:✅ Migration executed: 008_add_board_health_fields.sql
+INFO:root:✅ Migration executed: 009_add_e2ee_fields.sql
+INFO:root:✅ Migration executed: 010_add_encrypted_ip_mac_fields.sql
+INFO:root:✅ Migration executed: 011_add_owner_encryption.sql
+INFO:root:✅ Migration executed: 012_add_device_envelope_encryption.sql
+INFO:root:✅ Migration executed: 013_add_ip_encryption_mode.sql
+INFO:root:✅ Migration executed: 014_add_remote_control_tables.sql
+INFO:root:✅ Migration executed: 020_add_miner_command_remote_fields.sql
+INFO:billing_routes:默认订阅计划已创建
+INFO:root:Subscription plans initialized successfully
+INFO:intelligence.db_hooks:Intelligence database hooks registered successfully
+INFO:intelligence.db_hooks:Registered hooks:
+INFO:intelligence.db_hooks:  - UserMiner: after_insert, after_update, after_delete
+INFO:intelligence.db_hooks:  - Miner: after_insert (batch import)
+INFO:root:Intelligence database hooks initialized successfully
+INFO:root:✅ Database initialization: success
+INFO:root:✅ Database connection pool warmed up in 103ms
+INFO:services.telemetry_storage:Telemetry storage tables created/verified
+INFO:root:⏳ 锁被其他进程持有: <SchedulerLock telemetry_scheduler_lock: PID=1116@cec0bd657d7e>
+INFO:services.telemetry_scheduler:⏳ Telemetry scheduler lock held by another worker, skipping startup
+INFO:services.telemetry_scheduler:Telemetry scheduler not started (no lock)
+INFO:root:遥测存储调度器初始化完成 (4-layer storage)
+INFO:root:🔒 获取新锁: <SchedulerLock power_aggregation_scheduler_lock: PID=8331@cec0bd657d7e>
+INFO:services.power_aggregation_scheduler:🔒 Power aggregation scheduler acquired lock: Power Aggregation Scheduler - PID 8331 @ cec0bd657d7e
+INFO:services.power_aggregation_scheduler:Power aggregation scheduler acquired lock (PID=8331)
+INFO:apscheduler.scheduler:Adding job tentatively -- it will be properly scheduled when the scheduler starts
+INFO:apscheduler.scheduler:Adding job tentatively -- it will be properly scheduled when the scheduler starts
+INFO:apscheduler.scheduler:Adding job tentatively -- it will be properly scheduled when the scheduler starts
+INFO:apscheduler.scheduler:Adding job tentatively -- it will be properly scheduled when the scheduler starts
+INFO:apscheduler.scheduler:Added job "Aggregate hourly site energy" to job store "default"
+INFO:apscheduler.scheduler:Added job "Aggregate daily site energy" to job store "default"
+INFO:apscheduler.scheduler:Added job "Aggregate monthly site energy" to job store "default"
+INFO:apscheduler.scheduler:Added job "Scheduler heartbeat" to job store "default"
+INFO:apscheduler.scheduler:Scheduler started
+INFO:services.power_aggregation_scheduler:Power aggregation scheduler started successfully with 4 jobs
+INFO:root:电力聚合调度器初始化完成 (hourly/daily/monthly aggregation)
+INFO:root:Service discovery disabled for standalone mode
+INFO:root:ℹ️ Blockchain scheduler disabled (BLOCKCHAIN_ENABLED=false)
+INFO:root:Database initialized successfully
+INFO:root:Fast startup mode enabled - deferring background services
+INFO:root:Core application readiness signal created
+[2026-01-05 04:18:36 +0000] [8331] [INFO] Starting gunicorn 21.2.0
+[2026-01-05 04:18:36 +0000] [8331] [INFO] Listening at: http://0.0.0.0:5000 (8331)
+[2026-01-05 04:18:36 +0000] [8331] [INFO] Using worker: sync
+[2026-01-05 04:18:36 +0000] [8331] [INFO] BTC Mining Calculator server is ready. Worker pid: 8331
+[2026-01-05 04:18:36 +0000] [8331] [INFO] Deployment readiness signal created
+[2026-01-05 04:18:36 +0000] [8331] [INFO] Worker spawned (pid: [booting])
+[2026-01-05 04:18:36 +0000] [8349] [INFO] Booting worker with pid: 8349
+[2026-01-05 04:18:36 +0000] [8349] [INFO] Worker spawned (pid: 8349)
+INFO:data_collectors_manager:============================================================
+INFO:data_collectors_manager:🚀 启动所有数据收集器...
+INFO:data_collectors_manager:============================================================
+INFO:modules.analytics.engines.analytics_engine:数据表创建完成
+INFO:data_collectors_manager:✅ 市场数据分析引擎已启动
+INFO:multi_exchange_collector:增强数据表创建完成
+INFO:data_collectors_manager:✅ 多交易所数据收集器已启动
+INFO:scheduler:区块链调度器已初始化 Blockchain Scheduler initialized
+INFO:multi_exchange_collector:Bybit数据收集成功: 现货量=0
+INFO:multi_exchange_collector:币安数据收集成功: 现货量=0
+INFO:multi_exchange_collector:Deribit数据收集成功: 合约量=0
+INFO:multi_exchange_collector:OKX数据收集成功: 现货量=468,372,339
+INFO:multi_exchange_collector:数据聚合完成: 4个交易所, 总量=468,423,550, 完整性=100.0%
+INFO:multi_exchange_collector:增强数据已保存到数据库
+INFO:data_collectors_manager:✅ 多交易所数据收集完成: 4个交易所
+INFO:modules.analytics.engines.analytics_engine:数据表创建完成
+INFO:modules.analytics.engines.analytics_engine:分析引擎调度器已启动
+INFO:modules.analytics.engines.analytics_engine:数据收集频率: 每15分钟
+INFO:modules.analytics.engines.analytics_engine:报告生成: 每天8:00和20:00
+INFO:modules.analytics.engines.analytics_engine:开始数据收集和分析 - 2026-01-04 23:18
+INFO:modules.analytics.engines.analytics_engine:开始收集市场数据...
+INFO:bitcoin_rpc_client:Bitcoin RPC客户端初始化: https://go.getblock.io/mainnet
+INFO:bitcoin_rpc_client:Bitcoin RPC客户端初始化: https://go.getblock.io/mainnet
+ERROR:bitcoin_rpc_client:RPC请求失败: 404 Client Error: Not Found for url: https://go.getblock.io/mainnet
+ERROR:bitcoin_rpc_client:获取区块链信息失败: RPC Request Failed: 404 Client Error: Not Found for url: https://go.getblock.io/mainnet
+INFO:modules.analytics.engines.analytics_engine:✅ Blockchain.info主要算力数据: 1090.76 EH/s (hash_rate字段)
+INFO:modules.analytics.engines.analytics_engine:算力数据收集结果: {'network_hashrate': 1090.7550748297404, 'network_difficulty': 148258433855481.0, 'hashrate_timestamp': 1767586722, 'source': 'blockchain.info'}
+INFO:root:🔒 获取新锁: <SchedulerLock test_lock_8331: PID=8331@cec0bd657d7e>
+INFO:modules.analytics.engines.analytics_engine:使用Mempool数据: 难度=148258433855481, 奖励=3.13233964
+INFO:modules.analytics.engines.analytics_engine:使用备用算力源: 1090.76 EH/s
+INFO:modules.analytics.engines.analytics_engine:使用价格数据: $92,765.00, 量能=37,482,567,855
+INFO:modules.analytics.engines.analytics_engine:数据收集完成: BTC=$92,765.00, 算力=1090.76EH/s
+INFO:root:🔓 释放锁: <SchedulerLock test_lock_8331: PID=8331@cec0bd657d7e>
+INFO:scheduler:✅ SchedulerLock功能测试通过: {'lock_key': 'test_lock_8331', 'process_id': 8331, 'hostname': 'cec0bd657d7e', 'acquired_at': '2026-01-05T04:18:42.592848', 'expires_at': '2026-01-05T04:19:42.591863', 'last_heartbeat': '2026-01-05T04:18:42.592853', 'is_expired': False, 'lock_version': 1}
+INFO:scheduler:✅ SchedulerLock模型集成验证成功 SchedulerLock model integration verified
+INFO:data_collectors_manager:✅ 区块链调度器已启动
+INFO:data_collectors_manager:============================================================
+INFO:data_collectors_manager:📊 启动结果: 3/3 个收集器成功启动
+INFO:data_collectors_manager:============================================================
+INFO:data_collectors_manager:✅ analytics: 运行中
+INFO:data_collectors_manager:✅ multi_exchange: 运行中
+INFO:data_collectors_manager:✅ blockchain: 运行中
+INFO:root:✅ Data collectors started: {'analytics': True, 'multi_exchange': True, 'blockchain': True}
+INFO:modules.analytics.engines.analytics_engine:市场数据已保存: 2026-01-04 23:18:42.770182-05:00
+INFO:modules.analytics.engines.analytics_engine:市场数据已保存: BTC=$92,765, 算力=1090.76EH/s
+INFO:user_portfolio_management:用户投资组合表创建完成
+INFO:root:✅ Portfolio management initialized
+INFO:root:🎉 Deferred initialization complete!
+INFO:modules.analytics.engines.analytics_engine:技术指标已保存: 2026-01-04 23:18:43.212997-05:00
+INFO:modules.analytics.engines.analytics_engine:技术指标已更新
+INFO:modules.analytics.engines.analytics_engine:数据收集和分析完成 - 2026-01-04 23:18
+INFO:performance_monitor:Performance Monitor initialized
+127.0.0.1 - - [05/Jan/2026:04:18:44 +0000] "GET /api/v1/zones?site_id=2 HTTP/1.1" 401 41 "-" "curl/8.14.1" 8065

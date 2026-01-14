@@ -13,6 +13,7 @@ import logging
 import os
 import socket
 from datetime import datetime, timedelta
+from typing import Optional
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.cron import CronTrigger
@@ -162,7 +163,7 @@ class PowerAggregationScheduler:
         
         return True
     
-    def _get_carbon_factor(self, energy_source: str | None) -> float:
+    def _get_carbon_factor(self, energy_source: Optional[str]) -> float:
         """Get carbon emission factor for energy source"""
         if energy_source and energy_source.lower() in CARBON_EMISSION_FACTORS:
             return CARBON_EMISSION_FACTORS[energy_source.lower()]

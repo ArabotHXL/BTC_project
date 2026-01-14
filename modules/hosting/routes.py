@@ -15,7 +15,6 @@ from common.rbac import (
     rbac_manager, normalize_role
 )
 from models import db, HostingSite, HostingMiner, HostingTicket, HostingIncident, HostingUsageRecord, HostingUsageItem, MinerTelemetry, HostingBill, HostingBillItem, HostingMinerOperationLog, HostingOwnerEncryption, MinerModel, SiteElectricityRateHistory
-from api.collector_api import MinerTelemetryLive, MinerCommand, CollectorKey
 from models import CurtailmentPlan, CurtailmentStrategy, CurtailmentExecution
 from models import ExecutionMode, PlanStatus, ExecutionAction, ExecutionStatus
 from intelligence.curtailment_engine import calculate_curtailment_plan
@@ -24,7 +23,23 @@ import logging
 import json
 from datetime import datetime, timedelta
 
+# Initialize logger first, before any try/except blocks that use it
 logger = logging.getLogger(__name__)
+
+# Optional import for collector API - make it optional to allow hosting module to load without it
+try:
+    from api.collector_api import MinerTelemetryLive, MinerCommand, CollectorKey
+    COLLECTOR_API_AVAILABLE = True
+except ImportError:
+    # Create stub classes if collector_api is not available
+    class MinerTelemetryLive:
+        pass
+    class MinerCommand:
+        pass
+    class CollectorKey:
+        pass
+    COLLECTOR_API_AVAILABLE = False
+    logger.warning("api.collector_api not available - some collector features will be disabled")
 
 
 def get_miner_alerts(miner, lang='zh'):
@@ -1847,9 +1862,56 @@ def get_miners():
 def create_miner():
     """创建新矿机"""
     try:
-        data = request.get_json()
+        # Support both JSON and FormData
+        if request.is_json:
+            data = request.get_json()
+        else:
+            # Convert FormData to dict
+            data = request.form.to_dict()
+            # Convert string numbers to integers/floats
+            for key in ['site_id', 'customer_id', 'miner_model_id']:
+                if key in data and data[key]:
+                    try:
+                        data[key] = int(data[key])
+                    except (ValueError, TypeError):
+                        pass
+            for key in ['actual_hashrate', 'actual_power']:
+                if key in data and data[key]:
+                    try:
+                        data[key] = float(data[key])
+                    except (ValueError, TypeError):
+                        pass
+        
         user_id = session.get('user_id')
         user_role = session.get('role', 'guest')
+        
+        # If customer_email is provided instead of customer_id, look it up
+        if 'customer_email' in data and not data.get('customer_id'):
+            from models import UserAccess
+            customer = UserAccess.query.filter_by(email=data['customer_email']).first()
+            if customer:
+                data['customer_id'] = customer.id
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': f'客户邮箱不存在: {data["customer_email"]}'
+                }), 400
+        
+        # If miner_model (name) is provided instead of miner_model_id, look it up
+        if 'miner_model' in data and not data.get('miner_model_id'):
+            model = MinerModel.query.filter_by(model_name=data['miner_model']).first()
+            if model:
+                data['miner_model_id'] = model.id
+                # Use reference values if actual values not provided
+                if not data.get('actual_hashrate'):
+                    data['actual_hashrate'] = model.reference_hashrate or 110.0
+                if not data.get('actual_power'):
+                    data['actual_power'] = model.reference_power or 3250
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': f'矿机型号不存在: {data["miner_model"]}'
+                }), 400
         
         # 验证必填字段
         required_fields = ['site_id', 'customer_id', 'miner_model_id', 'serial_number', 'actual_hashrate', 'actual_power']

@@ -138,6 +138,25 @@ All documents have been:
 
 ---
 
+## 🎓 Knowledge Transfer Documentation
+
+**New Comprehensive Documentation Suite** - Located in `cursor_created_kt_documentation/`
+
+### For Different Audiences
+
+| Document | Audience | Purpose |
+|----------|----------|---------|
+| [Executive Summary](../cursor_created_kt_documentation/00_EXECUTIVE_SUMMARY.md) | C-Level Executives | Non-technical business overview |
+| [High-Level Architecture](../cursor_created_kt_documentation/01_HIGH_LEVEL_ARCHITECTURE.md) | Business Analysts | Business-focused architecture |
+| [Technical Architecture](../cursor_created_kt_documentation/03_TECHNICAL_ARCHITECTURE.md) | Developers | Developer-focused deep dive |
+| [Low-Level Implementation](../cursor_created_kt_documentation/04_LOW_LEVEL_IMPLEMENTATION.md) | Architects | Code-level implementation details |
+| [Route-to-Page Mapping](../cursor_created_kt_documentation/05_ROUTE_TO_PAGE_MAPPING.md) | Developers/QA | Complete URL structure |
+| [Dynamic Update Guide](../cursor_created_kt_documentation/06_DYNAMIC_UPDATE_GUIDE.md) | Maintainers | Documentation maintenance |
+
+**See [README](../cursor_created_kt_documentation/README.md) for complete documentation guide.**
+
+---
+
 ## 🔄 Document Update Policy
 
 - **Quarterly Review**: All technical content reviewed every 3 months

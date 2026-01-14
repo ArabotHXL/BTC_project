@@ -2,6 +2,7 @@
 from datetime import datetime, timedelta
 import enum
 import logging
+from typing import Optional
 
 # 本地模块导入
 from db import db
@@ -176,7 +177,7 @@ class SchedulerLock(db.Model):
         
     @classmethod
     def acquire_lock(cls, lock_key: str, process_id: int, hostname: str, 
-                    timeout_seconds: int = 300, worker_info: str | None = None) -> bool:
+                    timeout_seconds: int = 300, worker_info: Optional[str] = None) -> bool:
         """
         🔧 CRITICAL FIX: 原子性锁获取机制
         Atomic lock acquisition mechanism

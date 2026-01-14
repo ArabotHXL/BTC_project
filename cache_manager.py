@@ -349,14 +349,16 @@ class EnhancedCacheManager:
         
         elif backend_type == 'multi':
             # 多级缓存：内存(L1) + Redis(L2)
-            self.l1_cache = MemoryCacheBackend(**self.config['memory'])
+            memory_config = self.config.get('memory', {})
+            self.l1_cache = MemoryCacheBackend(default_ttl=memory_config.get('default_ttl', 300))
             self.l2_cache = RedisCacheBackend(**self.config['redis'])
             self.primary_backend = self.l1_cache
             logger.info("使用多级缓存：内存(L1) + Redis(L2)")
         
         else:
             # 默认使用内存缓存
-            self.l1_cache = MemoryCacheBackend(**self.config['memory'])
+            memory_config = self.config.get('memory', {})
+            self.l1_cache = MemoryCacheBackend(default_ttl=memory_config.get('default_ttl', 300))
             self.l2_cache = None
             self.primary_backend = self.l1_cache
             logger.info("使用内存缓存后端")

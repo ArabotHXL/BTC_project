@@ -720,9 +720,13 @@ def index():
         hashrate_value = market_data.get('network_hashrate', 965.14)
         network_hashrate = f"{hashrate_value:.2f} EH/s"
     
+    # Check if hosting blueprint is registered
+    hosting_available = 'hosting_service_bp' in app.blueprints
+    
     return render_template('dashboard_home.html', 
                          btc_price=btc_price,
-                         network_hashrate=network_hashrate)
+                         network_hashrate=network_hashrate,
+                         hosting_available=hosting_available)
 
 # 根路径显示介绍页面
 @app.route('/')
@@ -4565,8 +4569,10 @@ def legal_terms():
 try:
     from config import Config
     if getattr(Config, 'SUBSCRIPTION_ENABLED', False):
-        from billing_routes import billing_bp
+        from billing_routes import billing_bp, init_billing_plans
         app.register_blueprint(billing_bp, url_prefix="/billing")
+        # Initialize default plans with app context
+        init_billing_plans(app)
         logging.info("Crypto billing routes registered successfully")
 except Exception as e:
     logging.warning(f"Billing routes not available: {e}")

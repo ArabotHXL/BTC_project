@@ -1344,11 +1344,13 @@ function loadModelsForDropdown() {
         .then(response => response.json())
         .then(data => {
             const modelFilter = document.getElementById('model-filter');
+            const minerModelSelect = document.getElementById('miner_model');
             
-            if (data.success && data.models && modelFilter) {
+            if (data.success && data.models) {
                 data.models.forEach(model => {
-                    const option = `<option value="${model.id}">${model.model_name}</option>`;
-                    modelFilter.insertAdjacentHTML('beforeend', option);
+                    const option = `<option value="${model.model_name}" data-model-id="${model.id}">${model.model_name}</option>`;
+                    if (modelFilter) modelFilter.insertAdjacentHTML('beforeend', option);
+                    if (minerModelSelect) minerModelSelect.insertAdjacentHTML('beforeend', option);
                 });
             }
         })
@@ -1359,27 +1361,118 @@ function loadModelsForDropdown() {
 
 function addMiner() {
     const form = document.getElementById('addMinerForm');
-    const formData = new FormData(form);
     
-    fetch('/hosting/api/miners/create', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            bootstrap.Modal.getInstance(document.getElementById('addMinerModal')).hide();
-            form.reset();
-            refreshMiners();
-            showToast(getLanguage() === 'en' ? 'Miner added successfully' : '矿机添加成功', 'success');
-        } else {
-            showToast(data.message || (getLanguage() === 'en' ? 'Error adding miner' : '添加矿机失败'), 'error');
+    // Get form values
+    const serialNumber = document.getElementById('serial_number').value.trim();
+    const minerModelSelect = document.getElementById('miner_model');
+    const minerModelName = minerModelSelect.value;
+    const siteId = parseInt(document.getElementById('site_id').value);
+    const customerEmail = document.getElementById('customer_email').value.trim();
+    const ipAddress = document.getElementById('ip_address').value.trim();
+    const rackPosition = document.getElementById('rack_position').value.trim();
+    const notes = document.getElementById('notes').value.trim();
+    
+    // Validation
+    if (!serialNumber || !minerModelName || !siteId || !customerEmail) {
+        showToast(getLanguage() === 'en' ? 'Please fill in all required fields' : '请填写所有必填字段', 'error');
+        return;
+    }
+    
+    // Find miner_model_id from the select options
+    let minerModelId = null;
+    for (let option of minerModelSelect.options) {
+        if (option.value === minerModelName) {
+            // Try to get ID from data attribute or value
+            minerModelId = option.dataset.modelId || option.value;
+            break;
         }
-    })
-    .catch(error => {
-        console.error('Error adding miner:', error);
-        showToast(getLanguage() === 'en' ? 'Error adding miner' : '添加矿机失败', 'error');
-    });
+    }
+    
+    // If miner_model is a name string, we need to look it up
+    // First, try to get customer_id from email
+    fetch('/hosting/api/customers')
+        .then(response => response.json())
+        .then(customerData => {
+            let customerId = null;
+            if (customerData.success && customerData.customers) {
+                const customer = customerData.customers.find(c => c.email === customerEmail);
+                if (customer) {
+                    customerId = customer.id;
+                }
+            }
+            
+            // If customer not found by email, try to get miner model by name
+            return Promise.all([
+                Promise.resolve(customerId),
+                fetch('/hosting/api/miner-models').then(r => r.json())
+            ]);
+        })
+        .then(([customerId, modelData]) => {
+            // Find miner model ID
+            let foundModelId = null;
+            let actualHashrate = null;
+            let actualPower = null;
+            
+            if (modelData.success && modelData.models) {
+                const model = modelData.models.find(m => m.model_name === minerModelName);
+                if (model) {
+                    foundModelId = model.id;
+                    // Get reference values from model (we'll use these as actual values)
+                    actualHashrate = model.reference_hashrate || 110.0;
+                    actualPower = model.reference_power || 3250;
+                }
+            }
+            
+            if (!foundModelId) {
+                showToast(getLanguage() === 'en' ? 'Miner model not found' : '未找到矿机型号', 'error');
+                return;
+            }
+            
+            if (!customerId) {
+                showToast(getLanguage() === 'en' ? 'Customer not found. Please check the email address.' : '未找到客户，请检查邮箱地址', 'error');
+                return;
+            }
+            
+            // Prepare JSON data
+            const jsonData = {
+                site_id: siteId,
+                customer_id: customerId,
+                miner_model_id: foundModelId,
+                serial_number: serialNumber,
+                actual_hashrate: actualHashrate,
+                actual_power: actualPower,
+                ip_address: ipAddress || null,
+                rack_position: rackPosition || null,
+                notes: notes || null
+            };
+            
+            console.log('Sending miner data:', jsonData);
+            
+            // Send request
+            return fetch('/hosting/api/miners/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(jsonData)
+            });
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('addMinerModal')).hide();
+                form.reset();
+                refreshMiners();
+                showToast(data.message || (getLanguage() === 'en' ? 'Miner added successfully' : '矿机添加成功'), 'success');
+            } else {
+                console.error('Error response:', data);
+                showToast(data.error || data.message || (getLanguage() === 'en' ? 'Error adding miner' : '添加矿机失败'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error adding miner:', error);
+            showToast(getLanguage() === 'en' ? 'Error adding miner: ' + error.message : '添加矿机失败: ' + error.message, 'error');
+        });
 }
 
 function getStatusColor(status) {

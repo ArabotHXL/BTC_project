@@ -1,0 +1,101 @@
+# Core Flask Dependencies
+flask>=2.3.0,<3.1.0
+flask-login>=0.6.3
+flask-wtf>=1.2.2
+flask-sqlalchemy>=3.1.1
+flask-dance>=7.1.0
+flask-caching>=2.3.1
+werkzeug>=2.3.0,<3.1.0
+gunicorn>=21.0.0
+
+# Database
+sqlalchemy>=2.0.0,<3.0.0
+psycopg2-binary>=2.9.10
+
+# HTTP and API
+requests>=2.32.3
+aiohttp>=3.12.15
+
+# Data Processing
+pandas>=2.0.0,<3.0.0
+numpy>=1.24.0,<2.0.0
+scikit-learn>=1.3.0,<2.0.0
+statsmodels>=0.14.0,<1.0.0
+xgboost>=2.0.0,<3.0.0
+
+# Scheduling and Background Tasks
+schedule>=1.2.2
+apscheduler>=3.10.0,<4.0.0
+rq>=2.6.0
+
+# Date and Time
+pytz>=2024.1
+python-dateutil>=2.9.0
+
+# Authentication and Security
+pyjwt>=2.8.0
+oauthlib>=3.3.1
+cryptography>=41.0.0
+pynacl>=1.6.1
+
+# Blockchain and Web3
+web3>=6.0.0,<8.0.0
+eth-account>=0.8.0
+eth-abi>=4.0.0
+eth-typing>=3.0.0
+bitcoinlib>=0.7.3
+
+# Redis
+redis>=3.5.0,<4.0.0
+redis-py-cluster>=2.1.3
+
+# Data Visualization
+matplotlib>=3.7.0,<4.0.0
+plotly>=5.15.0,<6.0.0
+
+# Document Generation
+reportlab>=4.0.0,<5.0.0
+openpyxl>=3.1.0,<4.0.0
+xlsxwriter>=3.1.0
+python-pptx>=1.0.0
+weasyprint>=60.0,<67.0.0
+markdown>=3.9
+markdown-pdf>=1.10
+
+# Image Processing
+pillow>=10.0.0,<12.0.0
+qrcode>=8.2
+
+# Email and Communication
+sendgrid>=6.12.4
+slack-sdk>=3.35.0
+
+# Google APIs
+google-api-python-client>=2.100.0
+google-auth>=2.23.0
+google-auth-oauthlib>=1.1.0
+
+# Web Scraping
+trafilatura>=2.0.0
+user-agents>=2.2.0
+
+# Utilities
+psutil>=5.9.0
+gitpython>=3.1.44
+pulp>=2.7.0,<4.0.0
+notion-client>=2.3.0
+websocket-client>=1.6.0
+websocket>=0.2.1
+
+# Development
+pytest>=7.4.0,<9.0.0
+flake8>=6.0.0,<8.0.0
+python-dotenv>=1.0.0
+
+# FastAPI (if needed)
+fastapi>=0.100.0,<1.0.0
+uvicorn>=0.23.0,<1.0.0
+aiofiles>=23.0.0
+
+# Jinja2 (usually comes with Flask, but explicit)
+jinja2>=3.1.0
