@@ -8,9 +8,18 @@ import os
 import time
 from typing import Tuple, Optional, Dict, Any
 
-import redis
+try:
+    import redis
+    REDIS_AVAILABLE = True
+except ImportError:
+    redis = None
+    REDIS_AVAILABLE = False
+    # Note: logging not yet configured, will use warning later
 
 logger = logging.getLogger(__name__)
+
+if not REDIS_AVAILABLE:
+    logger.warning("Redis library not available - rate limiting disabled")
 
 # Rate limit configuration at module level
 RATE_LIMITS = {
@@ -31,6 +40,10 @@ def get_redis_client() -> Optional[redis.Redis]:
         redis.Redis client instance or None if Redis is unavailable
     """
     global _redis_client
+    
+    if not REDIS_AVAILABLE:
+        logger.warning("Redis library not available, rate limiting disabled")
+        return None
     
     if _redis_client is not None:
         return _redis_client
@@ -90,6 +103,10 @@ def check_rate_limit(site_id: int, command_type: str) -> Tuple[bool, Dict[str, A
     Returns:
         Tuple of (allowed: bool, info_dict: dict)
         
+        When REDIS_AVAILABLE is False:
+        - Returns (True, {'rate_limit_disabled': True})
+        
+        When Redis is available:
         info_dict contains:
         - allowed (bool): Whether the command is allowed
         - current_count (int): Current number of commands in the window
@@ -98,6 +115,13 @@ def check_rate_limit(site_id: int, command_type: str) -> Tuple[bool, Dict[str, A
         - reset_at (float or None): Unix timestamp when the oldest command exits the window
         - error (str or None): Error message if any
     """
+    # If Redis library is not available, return early
+    if not REDIS_AVAILABLE:
+        logger.warning(
+            f"Rate limiting disabled - Redis library not available for site {site_id} command_type={command_type}"
+        )
+        return True, {'rate_limit_disabled': True}
+    
     redis_client = get_redis_client()
     config = _get_rate_limit_config(command_type)
     key = _get_rate_limit_key(site_id, command_type)
@@ -177,9 +201,7 @@ def record_command_dispatch(site_id: int, command_type: str) -> Dict[str, Any]:
         - limit (int): Rate limit threshold
         - error (str or None): Error message if any
     """
-    redis_client = get_redis_client()
     config = _get_rate_limit_config(command_type)
-    key = _get_rate_limit_key(site_id, command_type)
     
     result = {
         'recorded': False,
@@ -187,6 +209,17 @@ def record_command_dispatch(site_id: int, command_type: str) -> Dict[str, Any]:
         'limit': config['limit'],
         'error': None
     }
+    
+    # If Redis library is not available, skip recording
+    if not REDIS_AVAILABLE:
+        logger.debug(
+            f"Redis library not available, skipping record for site {site_id} command_type={command_type}"
+        )
+        result['recorded'] = True  # Consider it recorded if Redis unavailable
+        return result
+    
+    redis_client = get_redis_client()
+    key = _get_rate_limit_key(site_id, command_type)
     
     if redis_client is None:
         logger.debug(
@@ -245,9 +278,7 @@ def get_rate_limit_status(site_id: int, command_type: str) -> Dict[str, Any]:
         - reset_at (float or None): Unix timestamp when the oldest command exits the window
         - error (str or None): Error message if any
     """
-    redis_client = get_redis_client()
     config = _get_rate_limit_config(command_type)
-    key = _get_rate_limit_key(site_id, command_type)
     
     status = {
         'command_type': command_type.lower(),
@@ -259,6 +290,15 @@ def get_rate_limit_status(site_id: int, command_type: str) -> Dict[str, Any]:
         'reset_at': None,
         'error': None
     }
+    
+    # If Redis library is not available, return status with error
+    if not REDIS_AVAILABLE:
+        logger.warning(f"Rate limiting disabled - Redis library not available for site {site_id}")
+        status['error'] = 'Redis library not available'
+        return status
+    
+    redis_client = get_redis_client()
+    key = _get_rate_limit_key(site_id, command_type)
     
     if redis_client is None:
         status['error'] = 'Redis unavailable'

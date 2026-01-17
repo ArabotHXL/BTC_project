@@ -201,6 +201,9 @@ class MinerCommand(db.Model):
     
     ack_hash = db.Column(db.String(64), nullable=True)
     
+    dispatch_nonce = db.Column(db.String(36), nullable=True)
+    signature = db.Column(db.String(64), nullable=True)
+    
     __table_args__ = (
         db.Index('ix_miner_commands_site_status', 'site_id', 'status'),
         db.Index('ix_miner_commands_miner_status', 'miner_id', 'status'),

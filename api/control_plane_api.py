@@ -174,6 +174,9 @@ def edge_register():
 def edge_poll_commands():
     """Poll for queued commands - production-grade with atomic lease dispatch
     
+    Returns both MinerCommand (newer, single-miner) and RemoteCommand (legacy, multi-miner).
+    Each command is clearly labeled with command_source: 'miner' or 'remote'.
+    
     Zone binding: Device token is bound to (site_id, zone_id).
     If zone_id param provided, it must match device's zone_id (validation only).
     
@@ -182,6 +185,7 @@ def edge_poll_commands():
     - Rate limiting integration
     - Optional HMAC signature for command integrity
     - Idempotent ACK support via ack_nonce
+    - Backward compatibility with both RemoteCommand and MinerCommand
     """
     site_id = g.site_id
     device_zone_id = g.zone_id
@@ -207,8 +211,11 @@ def edge_poll_commands():
     result = []
     dispatched_count = 0
     rate_limited_count = 0
+    miner_command_count = 0
+    remote_command_count = 0
     
-    query = MinerCommand.query.filter(
+    # Section 1: Poll MinerCommand objects (newer, single-miner commands)
+    miner_query = MinerCommand.query.filter(
         MinerCommand.site_id == site_id,
         MinerCommand.status == 'pending',
         MinerCommand.next_attempt_at <= now,
@@ -218,9 +225,9 @@ def edge_poll_commands():
         MinerCommand.created_at.asc()
     ).with_for_update(skip_locked=True).limit(limit * 2)
     
-    commands = query.all()
+    miner_commands = miner_query.all()
     
-    for cmd in commands:
+    for cmd in miner_commands:
         if dispatched_count >= limit:
             break
         
@@ -243,16 +250,18 @@ def edge_poll_commands():
             rate_limited_count += 1
             continue
         
-        ack_nonce = str(uuid.uuid4())
+        dispatch_nonce = str(uuid.uuid4())
         
         cmd.status = 'dispatched'
         cmd.lease_owner = device_id
         cmd.lease_until = lease_until
         cmd.sent_at = now
+        cmd.dispatch_nonce = dispatch_nonce
         
         record_command_dispatch(site_id, cmd.command_type)
         
         command_data = {
+            'command_source': 'miner',
             'command_id': cmd.id,
             'miner_id': cmd.miner_id,
             'command_type': cmd.command_type,
@@ -260,7 +269,7 @@ def edge_poll_commands():
             'priority': cmd.priority,
             'created_at': cmd.created_at.isoformat() + 'Z',
             'expires_at': cmd.expires_at.isoformat() + 'Z' if cmd.expires_at else None,
-            'ack_nonce': ack_nonce,
+            'ack_nonce': dispatch_nonce,
             'lease_expires_at': lease_until.isoformat() + 'Z',
             'retry_count': cmd.retry_count,
             'max_retries': cmd.max_retries,
@@ -269,21 +278,37 @@ def edge_poll_commands():
         if cmd.remote_command_id:
             command_data['remote_command_id'] = cmd.remote_command_id
         
+        signature = None
         if enable_signature:
             device = g.device
-            secret_key = device.device_token if device.device_token else str(device.id)
-            sig_payload = f"{cmd.id}:{cmd.command_type}:{now.isoformat()}"
+            if device.token_hash:
+                signing_key = hmac.new(
+                    device.token_hash.encode('utf-8'),
+                    b'command-signing-v1',
+                    hashlib.sha256
+                ).digest()
+            else:
+                signing_key = hashlib.sha256(str(device.id).encode()).digest()
+            
+            payload_hash = hashlib.sha256(
+                json.dumps(cmd.parameters or {}, sort_keys=True).encode()
+            ).hexdigest()
+            
+            sig_payload = f"{cmd.id}:{dispatch_nonce}:{cmd.expires_at.isoformat()}:{payload_hash}"
             signature = hmac.new(
-                secret_key.encode('utf-8'),
+                signing_key,
                 sig_payload.encode('utf-8'),
                 hashlib.sha256
             ).hexdigest()
+            
+            cmd.signature = signature
             command_data['cloud_signature'] = signature
-            command_data['sig_version'] = 'v1'
+            command_data['sig_version'] = 'v2'
             command_data['signed_at'] = now.isoformat() + 'Z'
         
         result.append(command_data)
         dispatched_count += 1
+        miner_command_count += 1
         
         log_audit_event(
             event_type='command.dispatched',
@@ -295,12 +320,112 @@ def edge_poll_commands():
             payload={
                 'command_type': cmd.command_type,
                 'miner_id': cmd.miner_id,
-                'ack_nonce': ack_nonce,
+                'dispatch_nonce': dispatch_nonce,
                 'lease_until': lease_until.isoformat()
             }
         )
         
         inc_commands_dispatched(site_id, cmd.command_type)
+    
+    # Section 2: Poll RemoteCommand objects (legacy, multi-miner commands) for backward compatibility
+    remaining_limit = limit - dispatched_count
+    if remaining_limit > 0:
+        remote_query = RemoteCommand.query.filter(
+            RemoteCommand.site_id == site_id,
+            RemoteCommand.status == 'QUEUED',
+            RemoteCommand.expires_at > now
+        ).order_by(
+            RemoteCommand.created_at.asc()
+        ).with_for_update(skip_locked=True).limit(remaining_limit)
+        
+        remote_commands = remote_query.all()
+        
+        for cmd in remote_commands:
+            if dispatched_count >= limit:
+                break
+            
+            allowed, rate_info = check_rate_limit(site_id, cmd.command_type)
+            if not allowed:
+                log_audit_event(
+                    event_type='command.rate_limited_dispatch',
+                    actor_type='device',
+                    actor_id=device_id,
+                    site_id=site_id,
+                    ref_type='remote_command',
+                    ref_id=cmd.id,
+                    payload={
+                        'command_type': cmd.command_type,
+                        'rate_limit': rate_info.get('limit'),
+                        'current_count': rate_info.get('current_count'),
+                        'reset_at': rate_info.get('reset_at')
+                    }
+                )
+                rate_limited_count += 1
+                continue
+            
+            dispatch_nonce = str(uuid.uuid4())
+            
+            cmd.status = 'RUNNING'
+            cmd.updated_at = now
+            
+            record_command_dispatch(site_id, cmd.command_type)
+            
+            command_data = {
+                'command_source': 'remote',
+                'command_id': cmd.id,
+                'command_type': cmd.command_type,
+                'target_ids': cmd.target_ids,
+                'payload': cmd.payload_json or {},
+                'created_at': cmd.created_at.isoformat() + 'Z',
+                'expires_at': cmd.expires_at.isoformat() + 'Z' if cmd.expires_at else None,
+                'ack_nonce': dispatch_nonce,
+            }
+            
+            if enable_signature:
+                device = g.device
+                if device.token_hash:
+                    signing_key = hmac.new(
+                        device.token_hash.encode('utf-8'),
+                        b'command-signing-v1',
+                        hashlib.sha256
+                    ).digest()
+                else:
+                    signing_key = hashlib.sha256(str(device.id).encode()).digest()
+                
+                payload_hash = hashlib.sha256(
+                    json.dumps(cmd.payload_json or {}, sort_keys=True).encode()
+                ).hexdigest()
+                
+                sig_payload = f"{cmd.id}:{dispatch_nonce}:{cmd.expires_at.isoformat()}:{payload_hash}"
+                signature = hmac.new(
+                    signing_key,
+                    sig_payload.encode('utf-8'),
+                    hashlib.sha256
+                ).hexdigest()
+                
+                command_data['cloud_signature'] = signature
+                command_data['sig_version'] = 'v2'
+                command_data['signed_at'] = now.isoformat() + 'Z'
+            
+            result.append(command_data)
+            dispatched_count += 1
+            remote_command_count += 1
+            
+            log_audit_event(
+                event_type='command.dispatched',
+                actor_type='device',
+                actor_id=device_id,
+                site_id=site_id,
+                ref_type='remote_command',
+                ref_id=cmd.id,
+                payload={
+                    'command_type': cmd.command_type,
+                    'target_count': len(cmd.target_ids) if cmd.target_ids else 0,
+                    'dispatch_nonce': dispatch_nonce,
+                }
+            )
+            
+            inc_commands_dispatched(site_id, cmd.command_type)
     
     db.session.commit()
     
@@ -308,9 +433,92 @@ def edge_poll_commands():
         'commands': result,
         'server_time': now.isoformat() + 'Z',
         'dispatched_count': dispatched_count,
+        'miner_command_count': miner_command_count,
+        'remote_command_count': remote_command_count,
         'rate_limited_count': rate_limited_count,
         'lease_duration_sec': lease_duration_sec,
     })
+
+
+def _sync_remote_command_status(remote_command_id):
+    """Synchronize RemoteCommand status based on child MinerCommands
+    
+    This function checks if all MinerCommands linked to a RemoteCommand have reached
+    terminal state. If so, it updates the RemoteCommand status to:
+    - SUCCEEDED: if all MinerCommands succeeded
+    - FAILED: if any MinerCommand failed
+    
+    Terminal states for MinerCommand: 'completed', 'failed', 'expired', 'cancelled', 'superseded'
+    
+    Args:
+        remote_command_id: The RemoteCommand ID to synchronize
+    """
+    try:
+        remote_cmd = RemoteCommand.query.get(remote_command_id)
+        if not remote_cmd:
+            logger.warning(f"RemoteCommand {remote_command_id} not found for sync")
+            return
+        
+        MINER_TERMINAL_STATES = {'completed', 'failed', 'expired', 'cancelled', 'superseded'}
+        now = datetime.utcnow()
+        
+        # Query all MinerCommands linked to this RemoteCommand
+        child_commands = MinerCommand.query.filter_by(remote_command_id=remote_command_id).all()
+        
+        if not child_commands:
+            logger.debug(f"No MinerCommands found for RemoteCommand {remote_command_id}")
+            return
+        
+        # Count commands in terminal state
+        terminal_count = sum(1 for cmd in child_commands if cmd.status in MINER_TERMINAL_STATES)
+        total_count = len(child_commands)
+        
+        # If not all are terminal, don't update RemoteCommand yet
+        if terminal_count < total_count:
+            logger.debug(
+                f"RemoteCommand {remote_command_id}: {terminal_count}/{total_count} children terminal"
+            )
+            return
+        
+        # All child commands are terminal - determine final status
+        failed_count = sum(1 for cmd in child_commands if cmd.status in {'failed', 'expired', 'cancelled'})
+        final_status = 'FAILED' if failed_count > 0 else 'SUCCEEDED'
+        
+        # Check if status needs updating
+        if remote_cmd.status in ('SUCCEEDED', 'FAILED', 'CANCELLED', 'EXPIRED'):
+            logger.debug(f"RemoteCommand {remote_command_id} already in terminal state: {remote_cmd.status}")
+            return
+        
+        # Update RemoteCommand status
+        old_status = remote_cmd.status
+        remote_cmd.status = final_status
+        remote_cmd.updated_at = now
+        db.session.commit()
+        
+        # Log audit event
+        log_audit_event(
+            event_type='remote_command.completed',
+            actor_type='system',
+            actor_id='sync_worker',
+            site_id=remote_cmd.site_id,
+            ref_type='remote_command',
+            ref_id=remote_command_id,
+            payload={
+                'old_status': old_status,
+                'new_status': final_status,
+                'total_children': total_count,
+                'failed_children': failed_count,
+                'succeeded_children': total_count - failed_count
+            }
+        )
+        
+        logger.info(
+            f"RemoteCommand {remote_command_id} synced: {old_status} -> {final_status} "
+            f"({total_count} children: {total_count - failed_count} succeeded, {failed_count} failed)"
+        )
+        
+    except Exception as e:
+        logger.error(f"Error syncing RemoteCommand {remote_command_id}: {e}", exc_info=True)
 
 
 @control_plane_bp.route('/api/edge/v1/commands/<command_id>/ack', methods=['POST'])
@@ -341,6 +549,8 @@ def edge_ack_command(command_id):
             'error_code': 'COMMAND_NOT_FOUND'
         }), 404
     
+    command_source = 'miner'
+    
     if command.site_id != site_id:
         return jsonify({
             'error': 'Access denied',
@@ -350,9 +560,55 @@ def edge_ack_command(command_id):
     data = request.get_json() or {}
     ack_status = data.get('status', 'completed')
     ack_nonce = data.get('ack_nonce')
+    client_signature = data.get('signature')
     result_code = data.get('result_code')
     result_message = data.get('result_message')
     execution_time_ms = data.get('execution_time_ms')
+    enable_signature = os.environ.get('ENABLE_COMMAND_SIGNATURE', '').lower() == 'true'
+    
+    # Verify nonce matches dispatch_nonce (replay detection) - only if client sent it
+    # This is optional for backward compatibility with legacy edge collectors
+    if ack_nonce and command.dispatch_nonce and ack_nonce != command.dispatch_nonce:
+        log_audit_event(
+            event_type='command.ack_nonce_mismatch',
+            actor_type='device',
+            actor_id=device_id,
+            site_id=site_id,
+            ref_type='miner_command',
+            ref_id=command_id,
+            payload={
+                'expected_nonce': command.dispatch_nonce,
+                'received_nonce': ack_nonce
+            }
+        )
+        return jsonify({
+            'error': 'Nonce mismatch - possible replay attack',
+            'error_code': 'NONCE_MISMATCH'
+        }), 401
+    
+    # Verify signature if enabled and provided - only if client sent it
+    # This is optional for backward compatibility with legacy edge collectors
+    if enable_signature and client_signature and command.signature:
+        if client_signature != command.signature:
+            log_audit_event(
+                event_type='command.ack_signature_invalid',
+                actor_type='device',
+                actor_id=device_id,
+                site_id=site_id,
+                ref_type='miner_command',
+                ref_id=command_id,
+                payload={
+                    'signature_mismatch': True
+                }
+            )
+            return jsonify({
+                'error': 'Signature verification failed',
+                'error_code': 'SIGNATURE_INVALID'
+            }), 401
+    
+    # Log when legacy client doesn't send nonce or signature
+    if not ack_nonce and not client_signature:
+        logger.info(f"ACK accepted without signature/nonce verification (legacy client) for command {command_id} from device {device_id}")
     
     ack_payload = json.dumps({
         'command_id': command_id,
@@ -378,6 +634,7 @@ def edge_ack_command(command_id):
         )
         return jsonify({
             'acknowledged': True,
+            'command_source': command_source,
             'command_status': command.status,
             'replayed': True,
             'terminal_at': command.terminal_at.isoformat() + 'Z' if command.terminal_at else None,
@@ -419,6 +676,10 @@ def edge_ack_command(command_id):
             ref_id=command_id,
             payload={'expired_at': command.expires_at.isoformat()}
         )
+        
+        # Synchronize RemoteCommand status if this MinerCommand is linked to one
+        if command.remote_command_id:
+            _sync_remote_command_status(command.remote_command_id)
         
         return jsonify({
             'error': 'Command has expired',
@@ -517,8 +778,14 @@ def edge_ack_command(command_id):
     
     db.session.commit()
     
+    # Synchronize RemoteCommand status if this MinerCommand is linked to one
+    MINER_TERMINAL_STATES = {'completed', 'failed', 'expired', 'cancelled', 'superseded'}
+    if command.remote_command_id and command.status in MINER_TERMINAL_STATES:
+        _sync_remote_command_status(command.remote_command_id)
+    
     response = {
         'acknowledged': True,
+        'command_source': command_source,
         'command_id': command_id,
         'command_status': command.status,
         'final_status': final_status,
@@ -598,6 +865,7 @@ def _handle_remote_command_ack(command, command_id):
     
     return jsonify({
         'acknowledged': True,
+        'command_source': 'remote',
         'command_status': command.status,
     })
 

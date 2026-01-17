@@ -3,6 +3,24 @@
 ## Overview
 HashInsight Enterprise is an enterprise-grade web application for Bitcoin mining farm owners and clients. It provides real-time Bitcoin mining profitability analysis, integrates real-time data, offers dual-algorithm verification, and supports multiple languages. The system delivers comprehensive operational management, CRM, Web3 integration, technical analysis, professional reporting, and an AI-powered intelligence layer to optimize Bitcoin mining investments and enhance transparency.
 
+## Recent Changes
+
+### 2026-01-17: HMAC Signature/Nonce Backward Compatibility Fix
+**File**: `api/control_plane_api.py`, function `edge_ack_command()`
+
+**Problem**: When `ENABLE_COMMAND_SIGNATURE=true`, the server required nonce/signature verification on ACK, causing HTTP 401 errors for legacy edge collectors that don't send these fields.
+
+**Solution**: Made nonce/signature verification OPTIONAL by checking if client sent the fields before validating:
+1. **Nonce verification** (line 571): Changed from `if enable_signature and command.dispatch_nonce and ack_nonce != command.dispatch_nonce:` to `if ack_nonce and command.dispatch_nonce and ack_nonce != command.dispatch_nonce:` - Only verifies if client sent the nonce
+2. **Signature verification** (line 591): Kept condition `if enable_signature and client_signature and command.signature:` - Only verifies if client sent the signature
+3. **Legacy client logging** (line 611): Added `logger.info()` to log when both nonce and signature are missing for backward compatibility tracking
+
+**Impact**: 
+- New collectors can send nonce/signature for enhanced security
+- Legacy collectors continue working without these fields
+- Allows gradual migration without downtime
+- Maintains security verification for clients that support it
+
 ## User Preferences
 - **Communication style**: Simple, everyday language (中文/English)
 - **Technical preferences**: Native Flask implementation, avoid over-complication
