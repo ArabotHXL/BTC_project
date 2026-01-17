@@ -60,6 +60,16 @@ The system is built on a Flask backend using Blueprints. It features custom emai
   - **Legacy API Compatibility**: /api/remote/* adapter with deprecation warnings for gradual migration
   - **Zone-Bound Device Security**: Edge devices have zone_id and token_hash for strict access control
   - **Remote Command Flow**: Full state machine (PENDING → PENDING_APPROVAL → APPROVED → DISPATCHED → COMPLETED)
+  - **Production-Grade Command Reliability (NEW)**: Enterprise-grade command dispatch for 100MW+ operations:
+    - **Atomic Lease Dispatch**: SELECT FOR UPDATE SKIP LOCKED ensures single collector acquires command; 60-second lease timeout
+    - **Idempotent ACK**: ack_hash-based replay detection; duplicate ACKs return {replayed: true} without status change
+    - **Retry with Exponential Backoff**: retry_backoff_sec * 2^attempt formula; configurable max_retries with automatic lease recovery
+    - **Rate Limiting**: Redis sliding window per-site+command_type; reboot: 5/300s, default: 20/60s; graceful fallback when Redis unavailable
+    - **Dedupe Key**: SHA-256 hash prevents duplicate automation-triggered commands within cooldown window
+    - **HMAC Signatures**: Optional per-dispatch nonce + derived signing key for command integrity; backward compatible with legacy collectors
+    - **RemoteCommand↔MinerCommand Sync**: Automatic status propagation ensures approval workflows complete correctly
+    - **Prometheus Metrics**: /metrics endpoint with commands_dispatched_total, commands_acked_total, telemetry_ingest_lag_seconds, and more
+    - **REST API**: GET /api/edge/v1/commands/poll, POST /api/edge/v1/commands/{id}/ack
   - **Credential Protection (NEW)**: Three-tier IP/credential protection with anti-rollback validation:
     - **Mode 1 (UI Masking)**: Plaintext storage with RBAC-based display masking for IP and sensitive fields
     - **Mode 2 (Server Envelope)**: Two-layer key management (MASTER_KEY → Site DEK) using PBKDF2 + Fernet encryption
