@@ -828,6 +828,11 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // 先初始化checkbox事件监听器（只需要初始化一次）
+    if (typeof initCheckboxes === 'function') {
+        initCheckboxes();
+    }
+    
     loadMiners();
     loadSitesForDropdown();
     loadCustomersForDropdown();
@@ -1973,18 +1978,44 @@ async function loadKPIStats() {
     }
 }
 
-// 初始化复选框事件
+// 初始化复选框事件 - 使用事件委托处理动态加载的checkbox
+// 标记是否已初始化，防止重复绑定事件监听器
+let checkboxesInitialized = false;
+
 function initCheckboxes() {
-    document.getElementById('selectAll').addEventListener('change', function() {
-        document.querySelectorAll('.miner-checkbox').forEach(cb => {
-            cb.checked = this.checked;
-        });
+    if (checkboxesInitialized) {
+        // 已初始化，只需重置选中状态
+        document.getElementById('selectAll').checked = false;
+        selectedMiners = [];
         updateSelectedMiners();
-    });
+        return;
+    }
     
-    document.querySelectorAll('.miner-checkbox').forEach(cb => {
-        cb.addEventListener('change', updateSelectedMiners);
-    });
+    // selectAll checkbox直接绑定
+    const selectAllCheckbox = document.getElementById('selectAll');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            const isChecked = this.checked;
+            const checkboxes = document.querySelectorAll('#miners-table tbody .miner-checkbox');
+            console.log('SelectAll clicked, found', checkboxes.length, 'checkboxes, setting to:', isChecked);
+            checkboxes.forEach(cb => {
+                cb.checked = isChecked;
+            });
+            updateSelectedMiners();
+        });
+    }
+    
+    // 使用事件委托：在表格上监听，处理动态加载的checkbox
+    const minersTable = document.getElementById('miners-table');
+    if (minersTable) {
+        minersTable.addEventListener('change', function(e) {
+            if (e.target && e.target.classList.contains('miner-checkbox')) {
+                updateSelectedMiners();
+            }
+        });
+    }
+    
+    checkboxesInitialized = true;
 }
 
 // 更新选中的矿机列表
