@@ -100,6 +100,22 @@ class PriceMode(enum.Enum):
     API_REALTIME = "api_realtime"  # API实时电价
     MONTHLY_CONTRACT = "monthly_contract"  # 月度合约电价
 
+class AutomationRuleTriggerType(enum.Enum):
+    """自动化规则触发类型"""
+    TEMPERATURE_HIGH = "temperature_high"  # 温度过高
+    TEMPERATURE_LOW = "temperature_low"    # 温度过低
+    HASHRATE_LOW = "hashrate_low"          # 算力过低
+    OFFLINE_DURATION = "offline_duration"  # 离线时长
+    POWER_HIGH = "power_high"              # 功耗过高
+
+class AutomationRuleActionType(enum.Enum):
+    """自动化规则动作类型"""
+    POWER_MODE_LOW = "power_mode_low"      # 切换低功耗模式
+    POWER_MODE_NORMAL = "power_mode_normal" # 恢复正常模式
+    REBOOT = "reboot"                      # 重启
+    SEND_ALERT = "send_alert"              # 发送告警
+    DISABLE = "disable"                    # 禁用矿机
+
 class SchedulerLock(db.Model):
     """
     🔧 CRITICAL FIX: 调度器领导者锁模型
@@ -3795,5 +3811,135 @@ class SiteElectricityRateHistory(db.Model):
     def __repr__(self):
         status = 'current' if self.is_current else 'historical'
         return f"<SiteElectricityRateHistory site={self.site_id} rate=${self.rate_usd_per_kwh}/kWh {status}>"
+
+
+# ============================================================================
+# 自动化规则系统数据模型
+# Automation Rule System Data Models
+# ============================================================================
+
+class AutomationRule(db.Model):
+    """自动化规则 - 温度/性能触发器"""
+    __tablename__ = 'automation_rules'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    
+    # 规则范围
+    site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=True)  # 可选，限定站点
+    miner_ids = db.Column(db.JSON)  # 可选，限定特定矿机ID列表；null表示适用所有
+    
+    # 触发条件
+    trigger_type = db.Column(db.String(50), nullable=False)  # temperature_high, etc.
+    trigger_metric = db.Column(db.String(50), nullable=False, default='temp_max')  # temp_max, temp_avg, hashrate, power
+    trigger_operator = db.Column(db.String(10), nullable=False, default='>')  # >, <, >=, <=, ==
+    trigger_value = db.Column(db.Float, nullable=False)  # 阈值
+    trigger_duration_seconds = db.Column(db.Integer, default=0)  # 持续时间（秒），0表示立即触发
+    
+    # 动作配置
+    action_type = db.Column(db.String(50), nullable=False)  # power_mode_low, reboot, etc.
+    action_parameters = db.Column(db.JSON, default={})  # 动作参数
+    
+    # 恢复条件（可选）
+    recovery_enabled = db.Column(db.Boolean, default=False)
+    recovery_trigger_value = db.Column(db.Float)  # 恢复阈值
+    recovery_action_type = db.Column(db.String(50))  # 恢复动作
+    
+    # 冷却期
+    cooldown_seconds = db.Column(db.Integer, default=1800)  # 默认30分钟
+    
+    # 状态
+    is_enabled = db.Column(db.Boolean, default=True)
+    priority = db.Column(db.Integer, default=5)  # 1-10，数字越大优先级越高
+    
+    # 创建信息
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # 关系
+    creator = db.relationship('User', backref=db.backref('automation_rules', lazy='dynamic'))
+    site = db.relationship('HostingSite', backref=db.backref('automation_rules', lazy='dynamic'))
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'site_id': self.site_id,
+            'miner_ids': self.miner_ids,
+            'trigger_type': self.trigger_type,
+            'trigger_metric': self.trigger_metric,
+            'trigger_operator': self.trigger_operator,
+            'trigger_value': self.trigger_value,
+            'trigger_duration_seconds': self.trigger_duration_seconds,
+            'action_type': self.action_type,
+            'action_parameters': self.action_parameters,
+            'recovery_enabled': self.recovery_enabled,
+            'recovery_trigger_value': self.recovery_trigger_value,
+            'recovery_action_type': self.recovery_action_type,
+            'cooldown_seconds': self.cooldown_seconds,
+            'is_enabled': self.is_enabled,
+            'priority': self.priority,
+            'created_by': self.created_by,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+
+class AutomationRuleLog(db.Model):
+    """自动化规则执行日志"""
+    __tablename__ = 'automation_rule_logs'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    rule_id = db.Column(db.Integer, db.ForeignKey('automation_rules.id'), nullable=False)
+    miner_id = db.Column(db.Integer, db.ForeignKey('hosting_miners.id'), nullable=False)
+    
+    # 触发信息
+    trigger_value_actual = db.Column(db.Float)  # 实际触发值
+    triggered_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # 动作执行
+    action_type = db.Column(db.String(50))
+    action_status = db.Column(db.String(20), default='pending')  # pending, executed, failed
+    command_id = db.Column(db.Integer)  # 关联的MinerCommand ID
+    
+    # 结果
+    executed_at = db.Column(db.DateTime)
+    result_message = db.Column(db.Text)
+    
+    # 关系
+    rule = db.relationship('AutomationRule', backref=db.backref('logs', lazy='dynamic'))
+    miner = db.relationship('HostingMiner', backref=db.backref('automation_logs', lazy='dynamic'))
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'rule_id': self.rule_id,
+            'miner_id': self.miner_id,
+            'trigger_value_actual': self.trigger_value_actual,
+            'triggered_at': self.triggered_at.isoformat() if self.triggered_at else None,
+            'action_type': self.action_type,
+            'action_status': self.action_status,
+            'command_id': self.command_id,
+            'executed_at': self.executed_at.isoformat() if self.executed_at else None,
+            'result_message': self.result_message
+        }
+
+
+class AutomationRuleCooldown(db.Model):
+    """自动化规则冷却记录 - 防止规则反复触发"""
+    __tablename__ = 'automation_rule_cooldowns'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    rule_id = db.Column(db.Integer, db.ForeignKey('automation_rules.id'), nullable=False)
+    miner_id = db.Column(db.Integer, db.ForeignKey('hosting_miners.id'), nullable=False)
+    last_triggered_at = db.Column(db.DateTime, default=datetime.utcnow)
+    cooldown_until = db.Column(db.DateTime, nullable=False)
+    
+    __table_args__ = (
+        db.UniqueConstraint('rule_id', 'miner_id', name='uq_rule_miner_cooldown'),
+    )
 
 
