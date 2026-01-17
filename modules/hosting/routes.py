@@ -5176,25 +5176,105 @@ def batch_remote_command():
 
 @hosting_bp.route('/api/miners/<int:miner_id>/command', methods=['POST'])
 @login_required
-@requires_module_access(Module.HOSTING_STATUS_MONITOR, require_full=True)
+@requires_module_access(Module.HOSTING_SITE_MGMT, require_full=True)
 def single_remote_command(miner_id):
-    """单个矿机远程命令"""
+    """单个矿机远程命令 - 使用与批量命令相同的权限级别"""
     try:
-        data = request.get_json()
+        data = request.get_json() or {}
         command_type = data.get('command_type')
         parameters = data.get('parameters', {})
+        confirmed = data.get('confirmed', False)
         
         if not command_type:
             return jsonify({'success': False, 'error': 'Command type is required'}), 400
         
-        # 重用批量命令逻辑
-        data['miner_ids'] = [miner_id]
+        # 验证命令类型
+        valid_commands = [
+            'reboot', 'change_pools', 'fetch_logs', 'factory_reset',
+            'power_mode', 'power_target', 'overclock', 'fan_mode',
+            'static_ip', 'change_password', 'blink_led', 'disable', 'enable'
+        ]
+        if command_type not in valid_commands:
+            return jsonify({'success': False, 'error': f'Invalid command type: {command_type}'}), 400
         
-        # 内部调用批量命令处理
-        with current_app.test_request_context(json=data):
-            return batch_remote_command()
+        # 高危操作需要额外确认
+        high_risk_commands = ['factory_reset', 'overclock', 'change_password']
+        if command_type in high_risk_commands and not confirmed:
+            return jsonify({
+                'success': False,
+                'error': 'High-risk command requires confirmation',
+                'requires_confirmation': True,
+                'command_type': command_type
+            }), 400
+        
+        operator_id = session.get('user_id')
+        current_lang = session.get('language', 'zh')
+        
+        # 获取矿机
+        miner = HostingMiner.query.get_or_404(miner_id)
+        
+        # 检查边缘采集器
+        has_collector = False
+        if miner.site_id:
+            collector_key = CollectorKey.query.filter_by(
+                site_id=miner.site_id,
+                is_active=True
+            ).first()
+            has_collector = collector_key is not None
+        
+        if not has_collector:
+            return jsonify({
+                'success': False,
+                'error': 'No edge collector available for this miner',
+                'skipped_no_collector': 1
+            }), 400
+        
+        # 命令优先级映射
+        priority_map = {
+            'factory_reset': 10, 'reboot': 9, 'change_password': 8,
+            'overclock': 8, 'power_mode': 7, 'power_target': 7,
+            'fan_mode': 6, 'static_ip': 6, 'change_pools': 5,
+            'disable': 5, 'enable': 5, 'fetch_logs': 3, 'blink_led': 2
+        }
+        
+        # 创建命令记录
+        command = MinerCommand(
+            miner_id=miner.miner_id or str(miner.id),
+            site_id=miner.site_id,
+            ip_address=miner.ip_address,
+            command_type=command_type,
+            parameters=parameters,
+            status='pending',
+            priority=priority_map.get(command_type, 5),
+            expires_at=datetime.utcnow() + timedelta(minutes=10),
+            operator_id=operator_id
+        )
+        db.session.add(command)
+        
+        # 记录操作日志
+        log = HostingMinerOperationLog(
+            miner_id=miner.id,
+            operation_type=f'remote_{command_type}',
+            old_status=miner.status,
+            new_status=miner.status,
+            operator_id=operator_id,
+            notes=f'Remote command: {command_type}' + (f' params: {parameters}' if parameters else '')
+        )
+        db.session.add(log)
+        db.session.commit()
+        
+        message = f'Command "{command_type}" queued for miner {miner.serial_number}' if current_lang == 'en' else f'命令 "{command_type}" 已为矿机 {miner.serial_number} 加入队列'
+        
+        return jsonify({
+            'success': True,
+            'message': message,
+            'commands_queued': 1,
+            'miner_id': miner.id,
+            'serial_number': miner.serial_number
+        })
         
     except Exception as e:
+        db.session.rollback()
         logger.error(f"单个矿机远程命令失败: {e}", exc_info=True)
         return jsonify({'success': False, 'error': str(e)}), 500
 
