@@ -5011,6 +5011,194 @@ def batch_shutdown_miners():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@hosting_bp.route('/api/miners/batch-command', methods=['POST'])
+@login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT, require_full=True)
+def batch_remote_command():
+    """批量远程命令 - 发送控制命令到边缘采集器
+    
+    支持的命令类型:
+    - reboot: 重启矿机
+    - change_pools: 更换矿池
+    - fetch_logs: 获取日志
+    - factory_reset: 恢复出厂设置 (高危)
+    - power_mode: 更改电源模式
+    - power_target: 设置功率目标
+    - overclock: 超频设置 (高危)
+    - fan_mode: 风扇模式
+    - static_ip: 分配静态IP
+    - change_password: 更改密码
+    - blink_led: 闪烁LED
+    - disable: 禁用矿机
+    - enable: 启用矿机
+    """
+    try:
+        data = request.get_json()
+        miner_ids = data.get('miner_ids', [])
+        command_type = data.get('command_type')
+        parameters = data.get('parameters', {})
+        
+        if not miner_ids:
+            return jsonify({'success': False, 'error': 'No miners selected'}), 400
+        
+        if not command_type:
+            return jsonify({'success': False, 'error': 'Command type is required'}), 400
+        
+        # 验证命令类型
+        valid_commands = [
+            'reboot', 'change_pools', 'fetch_logs', 'factory_reset',
+            'power_mode', 'power_target', 'overclock', 'fan_mode',
+            'static_ip', 'change_password', 'blink_led', 'disable', 'enable'
+        ]
+        if command_type not in valid_commands:
+            return jsonify({'success': False, 'error': f'Invalid command type: {command_type}'}), 400
+        
+        # 高危操作需要额外确认
+        high_risk_commands = ['factory_reset', 'overclock', 'change_password']
+        if command_type in high_risk_commands:
+            confirmed = data.get('confirmed', False)
+            if not confirmed:
+                return jsonify({
+                    'success': False,
+                    'error': 'High-risk command requires confirmation',
+                    'requires_confirmation': True,
+                    'command_type': command_type
+                }), 400
+        
+        operator_id = session.get('user_id')
+        current_lang = session.get('language', 'zh')
+        
+        # 获取矿机列表
+        miners = HostingMiner.query.filter(HostingMiner.id.in_(miner_ids)).all()
+        
+        if not miners:
+            return jsonify({'success': False, 'error': 'No valid miners found'}), 404
+        
+        # 命令优先级映射
+        priority_map = {
+            'factory_reset': 10,  # 最高优先级
+            'reboot': 9,
+            'change_password': 8,
+            'overclock': 8,
+            'power_mode': 7,
+            'power_target': 7,
+            'fan_mode': 6,
+            'static_ip': 6,
+            'change_pools': 5,
+            'disable': 5,
+            'enable': 5,
+            'fetch_logs': 3,
+            'blink_led': 2
+        }
+        
+        commands_created = 0
+        skipped_no_collector = 0
+        results = []
+        
+        for miner in miners:
+            # 检查是否有边缘采集器
+            has_collector = False
+            if miner.site_id:
+                collector_key = CollectorKey.query.filter_by(
+                    site_id=miner.site_id,
+                    is_active=True
+                ).first()
+                has_collector = collector_key is not None
+            
+            if not has_collector:
+                skipped_no_collector += 1
+                results.append({
+                    'miner_id': miner.id,
+                    'serial_number': miner.serial_number,
+                    'status': 'skipped',
+                    'reason': 'No edge collector'
+                })
+                continue
+            
+            # 创建命令记录
+            command = MinerCommand(
+                miner_id=miner.miner_id or str(miner.id),
+                site_id=miner.site_id,
+                ip_address=miner.ip_address,
+                command_type=command_type,
+                parameters=parameters,
+                status='pending',
+                priority=priority_map.get(command_type, 5),
+                expires_at=datetime.utcnow() + timedelta(minutes=10),
+                operator_id=operator_id
+            )
+            db.session.add(command)
+            
+            # 记录操作日志
+            log = HostingMinerOperationLog(
+                miner_id=miner.id,
+                operation_type=f'remote_{command_type}',
+                old_status=miner.status,
+                new_status=miner.status,
+                operator_id=operator_id,
+                notes=f'Remote command: {command_type}' + (f' params: {parameters}' if parameters else '')
+            )
+            db.session.add(log)
+            
+            commands_created += 1
+            results.append({
+                'miner_id': miner.id,
+                'serial_number': miner.serial_number,
+                'status': 'queued',
+                'command_id': command.id if hasattr(command, 'id') else None
+            })
+        
+        db.session.commit()
+        
+        # 构建响应消息
+        if current_lang == 'en':
+            message = f'Command "{command_type}" queued for {commands_created} miners'
+            if skipped_no_collector > 0:
+                message += f'. {skipped_no_collector} miners skipped (no collector)'
+        else:
+            message = f'命令 "{command_type}" 已为 {commands_created} 台矿机加入队列'
+            if skipped_no_collector > 0:
+                message += f'。{skipped_no_collector} 台矿机已跳过（无采集器）'
+        
+        return jsonify({
+            'success': True,
+            'message': message,
+            'commands_queued': commands_created,
+            'skipped_no_collector': skipped_no_collector,
+            'results': results
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"批量远程命令失败: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/miners/<int:miner_id>/command', methods=['POST'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR, require_full=True)
+def single_remote_command(miner_id):
+    """单个矿机远程命令"""
+    try:
+        data = request.get_json()
+        command_type = data.get('command_type')
+        parameters = data.get('parameters', {})
+        
+        if not command_type:
+            return jsonify({'success': False, 'error': 'Command type is required'}), 400
+        
+        # 重用批量命令逻辑
+        data['miner_ids'] = [miner_id]
+        
+        # 内部调用批量命令处理
+        with current_app.test_request_context(json=data):
+            return batch_remote_command()
+        
+    except Exception as e:
+        logger.error(f"单个矿机远程命令失败: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @hosting_bp.route('/api/miners/<int:miner_id>/start', methods=['POST'])
 @login_required
 @requires_module_access(Module.HOSTING_STATUS_MONITOR, require_full=True)
