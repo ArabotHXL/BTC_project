@@ -5694,6 +5694,21 @@ try:
 except Exception as e:
     logging.error(f"电力聚合调度器初始化异常: {e}")
 
+# 🔧 初始化自动化规则调度器 - 温度触发器
+def init_automation_scheduler():
+    """安全初始化自动化规则调度器 - 管理温度触发等自动化规则"""
+    try:
+        from services.automation_scheduler import automation_scheduler
+        automation_scheduler.init_app(app)
+        logging.info("自动化规则调度器初始化完成 (temperature triggers)")
+    except Exception as e:
+        logging.warning(f"自动化规则调度器初始化失败: {e}")
+
+try:
+    init_automation_scheduler()
+except Exception as e:
+    logging.error(f"自动化规则调度器初始化异常: {e}")
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
 # 支付监控管理API路由
