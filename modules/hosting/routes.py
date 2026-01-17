@@ -18,6 +18,7 @@ from models import db, HostingSite, HostingMiner, HostingTicket, HostingIncident
 from api.collector_api import MinerTelemetryLive, MinerCommand, CollectorKey
 from models import CurtailmentPlan, CurtailmentStrategy, CurtailmentExecution
 from models import ExecutionMode, PlanStatus, ExecutionAction, ExecutionStatus
+from models import AutomationRule, AutomationRuleLog, AutomationRuleCooldown
 from intelligence.curtailment_engine import calculate_curtailment_plan
 from intelligence.curtailment_predictor import predict_optimal_curtailment
 import logging
@@ -5171,6 +5172,274 @@ def batch_remote_command():
     except Exception as e:
         db.session.rollback()
         logger.error(f"批量远程命令失败: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ==================== 自动化规则管理 Automation Rules Management ====================
+
+@hosting_bp.route('/host/automation')
+@login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT)
+def automation_rules_page():
+    """自动化规则管理页面 / Automation Rules Management Page"""
+    try:
+        sites = HostingSite.query.all()
+        return render_template('hosting/automation_rules.html', sites=sites)
+    except Exception as e:
+        logger.error(f"自动化规则页面错误: {e}")
+        flash('Failed to load automation rules page', 'error')
+        return redirect(url_for('hosting_service_bp.host_view', subpath='dashboard'))
+
+
+@hosting_bp.route('/api/automation-rules', methods=['GET'])
+@login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT)
+def get_automation_rules():
+    """获取自动化规则列表 / Get automation rules list"""
+    try:
+        user_role = session.get('role', 'guest')
+        user_email = session.get('email', '')
+        
+        query = AutomationRule.query
+        
+        if user_role not in ['admin', 'owner']:
+            if user_role == 'mining_site_owner':
+                site_ids = [s.id for s in HostingSite.query.filter_by(contact_email=user_email).all()]
+                query = query.filter(
+                    db.or_(
+                        AutomationRule.site_id.in_(site_ids),
+                        AutomationRule.site_id.is_(None)
+                    )
+                )
+        
+        rules = query.order_by(AutomationRule.priority.desc(), AutomationRule.created_at.desc()).all()
+        
+        rules_data = []
+        for rule in rules:
+            rule_dict = rule.to_dict()
+            last_log = AutomationRuleLog.query.filter_by(rule_id=rule.id).order_by(
+                AutomationRuleLog.triggered_at.desc()
+            ).first()
+            rule_dict['last_triggered'] = last_log.triggered_at.isoformat() if last_log else None
+            rule_dict['site_name'] = rule.site.name if rule.site else None
+            rules_data.append(rule_dict)
+        
+        return jsonify({
+            'success': True,
+            'rules': rules_data,
+            'count': len(rules_data)
+        })
+    except Exception as e:
+        logger.error(f"获取自动化规则失败: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/automation-rules', methods=['POST'])
+@login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT, require_full=True)
+def create_automation_rule():
+    """创建自动化规则 / Create automation rule"""
+    try:
+        data = request.get_json()
+        
+        name = data.get('name')
+        if not name:
+            return jsonify({'success': False, 'error': 'Rule name is required'}), 400
+        
+        trigger_type = data.get('trigger_type')
+        trigger_value = data.get('trigger_value')
+        action_type = data.get('action_type')
+        
+        if not all([trigger_type, trigger_value is not None, action_type]):
+            return jsonify({'success': False, 'error': 'Trigger type, value and action type are required'}), 400
+        
+        rule = AutomationRule(
+            name=name,
+            description=data.get('description'),
+            site_id=data.get('site_id') or None,
+            miner_ids=data.get('miner_ids'),
+            trigger_type=trigger_type,
+            trigger_metric=data.get('trigger_metric', 'temp_max'),
+            trigger_operator=data.get('trigger_operator', '>'),
+            trigger_value=float(trigger_value),
+            trigger_duration_seconds=int(data.get('trigger_duration_seconds', 0)),
+            action_type=action_type,
+            action_parameters=data.get('action_parameters', {}),
+            recovery_enabled=data.get('recovery_enabled', False),
+            recovery_trigger_value=data.get('recovery_trigger_value'),
+            recovery_action_type=data.get('recovery_action_type'),
+            cooldown_seconds=int(data.get('cooldown_seconds', 1800)),
+            is_enabled=data.get('is_enabled', True),
+            priority=int(data.get('priority', 5)),
+            created_by=session.get('user_id')
+        )
+        
+        db.session.add(rule)
+        db.session.commit()
+        
+        logger.info(f"创建自动化规则: {rule.name} (ID: {rule.id})")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Rule created successfully',
+            'rule': rule.to_dict()
+        })
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"创建自动化规则失败: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/automation-rules/<int:rule_id>', methods=['PUT'])
+@login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT, require_full=True)
+def update_automation_rule(rule_id):
+    """更新自动化规则 / Update automation rule"""
+    try:
+        rule = AutomationRule.query.get_or_404(rule_id)
+        data = request.get_json()
+        
+        if 'name' in data:
+            rule.name = data['name']
+        if 'description' in data:
+            rule.description = data['description']
+        if 'site_id' in data:
+            rule.site_id = data['site_id'] or None
+        if 'miner_ids' in data:
+            rule.miner_ids = data['miner_ids']
+        if 'trigger_type' in data:
+            rule.trigger_type = data['trigger_type']
+        if 'trigger_metric' in data:
+            rule.trigger_metric = data['trigger_metric']
+        if 'trigger_operator' in data:
+            rule.trigger_operator = data['trigger_operator']
+        if 'trigger_value' in data:
+            rule.trigger_value = float(data['trigger_value'])
+        if 'trigger_duration_seconds' in data:
+            rule.trigger_duration_seconds = int(data['trigger_duration_seconds'])
+        if 'action_type' in data:
+            rule.action_type = data['action_type']
+        if 'action_parameters' in data:
+            rule.action_parameters = data['action_parameters']
+        if 'recovery_enabled' in data:
+            rule.recovery_enabled = data['recovery_enabled']
+        if 'recovery_trigger_value' in data:
+            rule.recovery_trigger_value = data['recovery_trigger_value']
+        if 'recovery_action_type' in data:
+            rule.recovery_action_type = data['recovery_action_type']
+        if 'cooldown_seconds' in data:
+            rule.cooldown_seconds = int(data['cooldown_seconds'])
+        if 'is_enabled' in data:
+            rule.is_enabled = data['is_enabled']
+        if 'priority' in data:
+            rule.priority = int(data['priority'])
+        
+        rule.updated_at = datetime.utcnow()
+        db.session.commit()
+        
+        logger.info(f"更新自动化规则: {rule.name} (ID: {rule.id})")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Rule updated successfully',
+            'rule': rule.to_dict()
+        })
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"更新自动化规则失败: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/automation-rules/<int:rule_id>', methods=['DELETE'])
+@login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT, require_full=True)
+def delete_automation_rule(rule_id):
+    """删除自动化规则 / Delete automation rule"""
+    try:
+        rule = AutomationRule.query.get_or_404(rule_id)
+        rule_name = rule.name
+        
+        AutomationRuleLog.query.filter_by(rule_id=rule_id).delete()
+        AutomationRuleCooldown.query.filter_by(rule_id=rule_id).delete()
+        
+        db.session.delete(rule)
+        db.session.commit()
+        
+        logger.info(f"删除自动化规则: {rule_name} (ID: {rule_id})")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Rule deleted successfully'
+        })
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"删除自动化规则失败: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/automation-rules/<int:rule_id>/toggle', methods=['POST'])
+@login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT, require_full=True)
+def toggle_automation_rule(rule_id):
+    """启用/禁用自动化规则 / Toggle automation rule"""
+    try:
+        rule = AutomationRule.query.get_or_404(rule_id)
+        
+        rule.is_enabled = not rule.is_enabled
+        rule.updated_at = datetime.utcnow()
+        db.session.commit()
+        
+        status = 'enabled' if rule.is_enabled else 'disabled'
+        logger.info(f"切换自动化规则状态: {rule.name} -> {status}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Rule {status} successfully',
+            'is_enabled': rule.is_enabled
+        })
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"切换自动化规则状态失败: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/automation-rules/<int:rule_id>/logs', methods=['GET'])
+@login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT)
+def get_automation_rule_logs(rule_id):
+    """获取规则执行日志 / Get automation rule execution logs"""
+    try:
+        rule = AutomationRule.query.get_or_404(rule_id)
+        
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 50, type=int)
+        
+        logs_query = AutomationRuleLog.query.filter_by(rule_id=rule_id).order_by(
+            AutomationRuleLog.triggered_at.desc()
+        )
+        
+        total = logs_query.count()
+        logs = logs_query.offset((page - 1) * per_page).limit(per_page).all()
+        
+        logs_data = []
+        for log in logs:
+            log_dict = log.to_dict()
+            if log.miner:
+                log_dict['miner_serial'] = log.miner.serial_number
+                log_dict['miner_model'] = log.miner.miner_model.name if log.miner.miner_model else None
+            logs_data.append(log_dict)
+        
+        return jsonify({
+            'success': True,
+            'rule_name': rule.name,
+            'logs': logs_data,
+            'total': total,
+            'page': page,
+            'per_page': per_page,
+            'pages': (total + per_page - 1) // per_page
+        })
+    except Exception as e:
+        logger.error(f"获取规则执行日志失败: {e}", exc_info=True)
         return jsonify({'success': False, 'error': str(e)}), 500
 
 

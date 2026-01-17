@@ -3853,13 +3853,12 @@ class AutomationRule(db.Model):
     is_enabled = db.Column(db.Boolean, default=True)
     priority = db.Column(db.Integer, default=5)  # 1-10，数字越大优先级越高
     
-    # 创建信息
-    created_by = db.Column(db.Integer, db.ForeignKey('users.id'))
+    # 创建信息 (不使用外键约束，因为用户可能在user_access表或users表中)
+    created_by = db.Column(db.String)  # 存储用户ID或操作员ID，不强制外键
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # 关系
-    creator = db.relationship('User', backref=db.backref('automation_rules', lazy='dynamic'))
     site = db.relationship('HostingSite', backref=db.backref('automation_rules', lazy='dynamic'))
     
     def to_dict(self):

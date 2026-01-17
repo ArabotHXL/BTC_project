@@ -1,0 +1,705 @@
+{% extends "hosting/hosting_base.html" %}
+
+{% block page_title %}{% if current_lang == 'en' %}Automation Rules{% else %}自动化规则{% endif %}{% endblock %}
+{% block page_subtitle %}{% if current_lang == 'en' %}Configure automatic actions based on miner metrics{% else %}根据矿机指标配置自动执行动作{% endif %}{% endblock %}
+
+{% block header_actions %}
+{{ super() }}
+<div class="btn-group ms-3" role="group">
+    <button class="btn btn-hosting-primary btn-sm" onclick="showCreateModal()">
+        <i class="bi bi-plus-circle me-1"></i>{% if current_lang == 'en' %}Create Rule{% else %}创建规则{% endif %}
+    </button>
+    <button class="btn btn-hosting-secondary btn-sm" onclick="loadRules()">
+        <i class="bi bi-arrow-clockwise me-1"></i>{% if current_lang == 'en' %}Refresh{% else %}刷新{% endif %}
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<!-- KPI Summary Cards -->
+<div class="row mb-4" id="kpi-cards">
+    <div class="col-md-3 mb-3">
+        <div class="kpi-card">
+            <div class="kpi-icon">
+                <i class="bi bi-lightning-charge"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-label">{% if current_lang == 'en' %}Total Rules{% else %}规则总数{% endif %}</div>
+                <div class="kpi-value" id="kpi-total-rules">-</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background: linear-gradient(135deg, #4ECDC4, #44A08D);">
+                <i class="bi bi-check-circle"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-label">{% if current_lang == 'en' %}Active Rules{% else %}启用规则{% endif %}</div>
+                <div class="kpi-value" id="kpi-active-rules">-</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background: linear-gradient(135deg, #F7971E, #FFD200);">
+                <i class="bi bi-pause-circle"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-label">{% if current_lang == 'en' %}Disabled Rules{% else %}禁用规则{% endif %}</div>
+                <div class="kpi-value" id="kpi-disabled-rules">-</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                <i class="bi bi-clock-history"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-label">{% if current_lang == 'en' %}Triggered Today{% else %}今日触发{% endif %}</div>
+                <div class="kpi-value" id="kpi-triggered-today">-</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rules Table -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h6 class="hosting-card-title mb-0">
+            <i class="bi bi-list-ul me-2"></i>{% if current_lang == 'en' %}Rules List{% else %}规则列表{% endif %}
+        </h6>
+    </div>
+    <div class="hosting-card-body">
+        <div class="table-responsive">
+            <table class="table table-dark table-hover" id="rules-table">
+                <thead>
+                    <tr>
+                        <th>{% if current_lang == 'en' %}Name{% else %}名称{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Site{% else %}站点{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Trigger{% else %}触发条件{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Threshold{% else %}阈值{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Action{% else %}动作{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Priority{% else %}优先级{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Last Triggered{% else %}上次触发{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
+                    </tr>
+                </thead>
+                <tbody id="rules-tbody">
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-4">
+                            <i class="bi bi-hourglass-split me-2"></i>{% if current_lang == 'en' %}Loading...{% else %}加载中...{% endif %}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Create/Edit Rule Modal -->
+<div class="modal fade" id="ruleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="background: #1a1d2e; border: 1px solid #333;">
+            <div class="modal-header" style="border-bottom-color: #333;">
+                <h5 class="modal-title" id="ruleModalTitle">
+                    <i class="bi bi-lightning-charge me-2" style="color: #f7931a;"></i>
+                    <span id="modal-title-text">{% if current_lang == 'en' %}Create Rule{% else %}创建规则{% endif %}</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="rule-form">
+                    <input type="hidden" id="rule-id">
+                    
+                    <!-- Basic Info -->
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label">{% if current_lang == 'en' %}Rule Name{% else %}规则名称{% endif %} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control bg-dark text-light border-secondary" id="rule-name" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">{% if current_lang == 'en' %}Priority (1-10){% else %}优先级 (1-10){% endif %}</label>
+                            <input type="number" class="form-control bg-dark text-light border-secondary" id="rule-priority" min="1" max="10" value="5">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">{% if current_lang == 'en' %}Description{% else %}描述{% endif %}</label>
+                        <textarea class="form-control bg-dark text-light border-secondary" id="rule-description" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">{% if current_lang == 'en' %}Site (Optional){% else %}站点（可选）{% endif %}</label>
+                        <select class="form-select bg-dark text-light border-secondary" id="rule-site">
+                            <option value="">{% if current_lang == 'en' %}All Sites{% else %}所有站点{% endif %}</option>
+                            {% for site in sites %}
+                            <option value="{{ site.id }}">{{ site.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <hr style="border-color: #333;">
+                    
+                    <!-- Trigger Conditions -->
+                    <h6 class="mb-3" style="color: #f7931a;">
+                        <i class="bi bi-bullseye me-2"></i>{% if current_lang == 'en' %}Trigger Conditions{% else %}触发条件{% endif %}
+                    </h6>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">{% if current_lang == 'en' %}Trigger Type{% else %}触发类型{% endif %} <span class="text-danger">*</span></label>
+                            <select class="form-select bg-dark text-light border-secondary" id="rule-trigger-type" required>
+                                <option value="temperature_high">{% if current_lang == 'en' %}Temperature High{% else %}温度过高{% endif %}</option>
+                                <option value="temperature_low">{% if current_lang == 'en' %}Temperature Low{% else %}温度过低{% endif %}</option>
+                                <option value="hashrate_low">{% if current_lang == 'en' %}Hashrate Low{% else %}算力过低{% endif %}</option>
+                                <option value="power_high">{% if current_lang == 'en' %}Power High{% else %}功耗过高{% endif %}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">{% if current_lang == 'en' %}Trigger Metric{% else %}触发指标{% endif %}</label>
+                            <select class="form-select bg-dark text-light border-secondary" id="rule-trigger-metric">
+                                <option value="temp_max">{% if current_lang == 'en' %}Max Temperature{% else %}最高温度{% endif %}</option>
+                                <option value="temp_avg">{% if current_lang == 'en' %}Avg Temperature{% else %}平均温度{% endif %}</option>
+                                <option value="hashrate">{% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}</option>
+                                <option value="power">{% if current_lang == 'en' %}Power{% else %}功耗{% endif %}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">{% if current_lang == 'en' %}Operator{% else %}运算符{% endif %}</label>
+                            <select class="form-select bg-dark text-light border-secondary" id="rule-trigger-operator">
+                                <option value=">">&gt; {% if current_lang == 'en' %}Greater than{% else %}大于{% endif %}</option>
+                                <option value=">=">&gt;= {% if current_lang == 'en' %}Greater or equal{% else %}大于等于{% endif %}</option>
+                                <option value="<">&lt; {% if current_lang == 'en' %}Less than{% else %}小于{% endif %}</option>
+                                <option value="<=">&lt;= {% if current_lang == 'en' %}Less or equal{% else %}小于等于{% endif %}</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">{% if current_lang == 'en' %}Threshold Value{% else %}阈值{% endif %} <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control bg-dark text-light border-secondary" id="rule-trigger-value" step="0.1" required>
+                            <small class="text-muted">{% if current_lang == 'en' %}e.g., 85 for 85°C or 100 for 100 TH/s{% else %}如：85 表示 85°C 或 100 表示 100 TH/s{% endif %}</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% if current_lang == 'en' %}Duration (seconds){% else %}持续时间（秒）{% endif %}</label>
+                            <input type="number" class="form-control bg-dark text-light border-secondary" id="rule-trigger-duration" value="0" min="0">
+                            <small class="text-muted">{% if current_lang == 'en' %}0 = trigger immediately{% else %}0 = 立即触发{% endif %}</small>
+                        </div>
+                    </div>
+                    
+                    <hr style="border-color: #333;">
+                    
+                    <!-- Action Settings -->
+                    <h6 class="mb-3" style="color: #f7931a;">
+                        <i class="bi bi-gear me-2"></i>{% if current_lang == 'en' %}Action Settings{% else %}动作设置{% endif %}
+                    </h6>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">{% if current_lang == 'en' %}Action Type{% else %}动作类型{% endif %} <span class="text-danger">*</span></label>
+                            <select class="form-select bg-dark text-light border-secondary" id="rule-action-type" required>
+                                <option value="power_mode_low">{% if current_lang == 'en' %}Power Mode Low{% else %}低功耗模式{% endif %}</option>
+                                <option value="power_mode_normal">{% if current_lang == 'en' %}Power Mode Normal{% else %}正常功耗模式{% endif %}</option>
+                                <option value="reboot">{% if current_lang == 'en' %}Reboot{% else %}重启{% endif %}</option>
+                                <option value="disable">{% if current_lang == 'en' %}Disable Miner{% else %}禁用矿机{% endif %}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% if current_lang == 'en' %}Cooldown (minutes){% else %}冷却时间（分钟）{% endif %}</label>
+                            <input type="number" class="form-control bg-dark text-light border-secondary" id="rule-cooldown" value="30" min="1">
+                            <small class="text-muted">{% if current_lang == 'en' %}Prevent repeated triggers{% else %}防止重复触发{% endif %}</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="rule-enabled" checked>
+                        <label class="form-check-label" for="rule-enabled">{% if current_lang == 'en' %}Enable Rule{% else %}启用规则{% endif %}</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer" style="border-top-color: #333;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    {% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}
+                </button>
+                <button type="button" class="btn btn-hosting-primary" onclick="saveRule()">
+                    <i class="bi bi-check-lg me-1"></i>{% if current_lang == 'en' %}Save Rule{% else %}保存规则{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rule Logs Modal -->
+<div class="modal fade" id="logsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content" style="background: #1a1d2e; border: 1px solid #333;">
+            <div class="modal-header" style="border-bottom-color: #333;">
+                <h5 class="modal-title">
+                    <i class="bi bi-clock-history me-2" style="color: #f7931a;"></i>
+                    <span id="logs-modal-title">{% if current_lang == 'en' %}Execution Logs{% else %}执行日志{% endif %}</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover table-sm">
+                        <thead>
+                            <tr>
+                                <th>{% if current_lang == 'en' %}Time{% else %}时间{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Miner{% else %}矿机{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Trigger Value{% else %}触发值{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Action{% else %}动作{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Result{% else %}结果{% endif %}</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-tbody">
+                        </tbody>
+                    </table>
+                </div>
+                <div id="logs-pagination" class="d-flex justify-content-center mt-3"></div>
+            </div>
+            <div class="modal-footer" style="border-top-color: #333;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    {% if current_lang == 'en' %}Close{% else %}关闭{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.kpi-card {
+    background: linear-gradient(135deg, rgba(247, 147, 26, 0.1), rgba(255, 193, 7, 0.05));
+    border: 1px solid rgba(247, 147, 26, 0.3);
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+}
+.kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(247, 147, 26, 0.15);
+}
+.kpi-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #f7931a, #ffc107);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #000;
+}
+.kpi-content {
+    flex: 1;
+}
+.kpi-label {
+    font-size: 0.85rem;
+    color: #adb5bd;
+    margin-bottom: 0.25rem;
+}
+.kpi-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #fff;
+}
+.btn-hosting-primary {
+    background: linear-gradient(135deg, #f7931a 0%, #ffc107 100%);
+    border: none;
+    color: #000;
+    font-weight: 600;
+}
+.btn-hosting-primary:hover {
+    background: linear-gradient(135deg, #d47f15 0%, #e5ac05 100%);
+    color: #000;
+}
+.btn-hosting-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+.btn-hosting-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+.status-enabled {
+    color: #4ECDC4;
+}
+.status-disabled {
+    color: #6c757d;
+}
+.action-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    margin-right: 0.25rem;
+}
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+const currentLang = '{{ current_lang }}';
+let rulesData = [];
+
+const triggerTypeLabels = {
+    'temperature_high': currentLang === 'en' ? 'Temp High' : '温度过高',
+    'temperature_low': currentLang === 'en' ? 'Temp Low' : '温度过低',
+    'hashrate_low': currentLang === 'en' ? 'Hashrate Low' : '算力过低',
+    'power_high': currentLang === 'en' ? 'Power High' : '功耗过高'
+};
+
+const actionTypeLabels = {
+    'power_mode_low': currentLang === 'en' ? 'Low Power' : '低功耗',
+    'power_mode_normal': currentLang === 'en' ? 'Normal Power' : '正常功耗',
+    'reboot': currentLang === 'en' ? 'Reboot' : '重启',
+    'disable': currentLang === 'en' ? 'Disable' : '禁用'
+};
+
+const metricLabels = {
+    'temp_max': currentLang === 'en' ? 'Max Temp' : '最高温度',
+    'temp_avg': currentLang === 'en' ? 'Avg Temp' : '平均温度',
+    'hashrate': currentLang === 'en' ? 'Hashrate' : '算力',
+    'power': currentLang === 'en' ? 'Power' : '功耗'
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadRules();
+});
+
+function loadRules() {
+    fetch('/hosting/api/automation-rules')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                rulesData = data.rules;
+                renderRulesTable(data.rules);
+                updateKPIs(data.rules);
+            } else {
+                showToast(currentLang === 'en' ? 'Failed to load rules' : '加载规则失败', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading rules:', error);
+            showToast(currentLang === 'en' ? 'Failed to load rules' : '加载规则失败', 'error');
+        });
+}
+
+function renderRulesTable(rules) {
+    const tbody = document.getElementById('rules-tbody');
+    
+    if (!rules || rules.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">
+            <i class="bi bi-inbox me-2"></i>${currentLang === 'en' ? 'No automation rules found' : '暂无自动化规则'}
+        </td></tr>`;
+        return;
+    }
+    
+    tbody.innerHTML = rules.map(rule => `
+        <tr>
+            <td>
+                <strong>${escapeHtml(rule.name)}</strong>
+                ${rule.description ? `<br><small class="text-muted">${escapeHtml(rule.description)}</small>` : ''}
+            </td>
+            <td>${rule.site_name || (currentLang === 'en' ? 'All Sites' : '所有站点')}</td>
+            <td>
+                <span class="badge bg-info">${triggerTypeLabels[rule.trigger_type] || rule.trigger_type}</span>
+                <br><small class="text-muted">${metricLabels[rule.trigger_metric] || rule.trigger_metric}</small>
+            </td>
+            <td>
+                <code>${rule.trigger_operator} ${rule.trigger_value}</code>
+            </td>
+            <td>
+                <span class="badge bg-warning text-dark">${actionTypeLabels[rule.action_type] || rule.action_type}</span>
+            </td>
+            <td>
+                ${rule.is_enabled 
+                    ? `<span class="status-enabled"><i class="bi bi-check-circle-fill me-1"></i>${currentLang === 'en' ? 'Enabled' : '已启用'}</span>`
+                    : `<span class="status-disabled"><i class="bi bi-pause-circle-fill me-1"></i>${currentLang === 'en' ? 'Disabled' : '已禁用'}</span>`
+                }
+            </td>
+            <td>
+                <span class="badge ${getPriorityBadgeClass(rule.priority)}">${rule.priority}</span>
+            </td>
+            <td>
+                ${rule.last_triggered 
+                    ? formatDateTime(rule.last_triggered)
+                    : `<span class="text-muted">${currentLang === 'en' ? 'Never' : '从未'}</span>`
+                }
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-info action-btn" onclick="showEditModal(${rule.id})" title="${currentLang === 'en' ? 'Edit' : '编辑'}">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm ${rule.is_enabled ? 'btn-outline-warning' : 'btn-outline-success'} action-btn" onclick="toggleRule(${rule.id})" title="${rule.is_enabled ? (currentLang === 'en' ? 'Disable' : '禁用') : (currentLang === 'en' ? 'Enable' : '启用')}">
+                    <i class="bi ${rule.is_enabled ? 'bi-pause' : 'bi-play'}"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-secondary action-btn" onclick="showLogs(${rule.id})" title="${currentLang === 'en' ? 'Logs' : '日志'}">
+                    <i class="bi bi-clock-history"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger action-btn" onclick="deleteRule(${rule.id})" title="${currentLang === 'en' ? 'Delete' : '删除'}">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function updateKPIs(rules) {
+    document.getElementById('kpi-total-rules').textContent = rules.length;
+    document.getElementById('kpi-active-rules').textContent = rules.filter(r => r.is_enabled).length;
+    document.getElementById('kpi-disabled-rules').textContent = rules.filter(r => !r.is_enabled).length;
+    
+    const today = new Date().toISOString().split('T')[0];
+    const triggeredToday = rules.filter(r => r.last_triggered && r.last_triggered.startsWith(today)).length;
+    document.getElementById('kpi-triggered-today').textContent = triggeredToday;
+}
+
+function getPriorityBadgeClass(priority) {
+    if (priority >= 8) return 'bg-danger';
+    if (priority >= 5) return 'bg-warning text-dark';
+    return 'bg-secondary';
+}
+
+function showCreateModal() {
+    document.getElementById('modal-title-text').textContent = currentLang === 'en' ? 'Create Rule' : '创建规则';
+    document.getElementById('rule-form').reset();
+    document.getElementById('rule-id').value = '';
+    document.getElementById('rule-enabled').checked = true;
+    document.getElementById('rule-priority').value = '5';
+    document.getElementById('rule-cooldown').value = '30';
+    new bootstrap.Modal(document.getElementById('ruleModal')).show();
+}
+
+function showEditModal(ruleId) {
+    const rule = rulesData.find(r => r.id === ruleId);
+    if (!rule) return;
+    
+    document.getElementById('modal-title-text').textContent = currentLang === 'en' ? 'Edit Rule' : '编辑规则';
+    document.getElementById('rule-id').value = rule.id;
+    document.getElementById('rule-name').value = rule.name;
+    document.getElementById('rule-description').value = rule.description || '';
+    document.getElementById('rule-site').value = rule.site_id || '';
+    document.getElementById('rule-priority').value = rule.priority;
+    document.getElementById('rule-trigger-type').value = rule.trigger_type;
+    document.getElementById('rule-trigger-metric').value = rule.trigger_metric;
+    document.getElementById('rule-trigger-operator').value = rule.trigger_operator;
+    document.getElementById('rule-trigger-value').value = rule.trigger_value;
+    document.getElementById('rule-trigger-duration').value = rule.trigger_duration_seconds || 0;
+    document.getElementById('rule-action-type').value = rule.action_type;
+    document.getElementById('rule-cooldown').value = Math.floor((rule.cooldown_seconds || 1800) / 60);
+    document.getElementById('rule-enabled').checked = rule.is_enabled;
+    
+    new bootstrap.Modal(document.getElementById('ruleModal')).show();
+}
+
+function saveRule() {
+    const ruleId = document.getElementById('rule-id').value;
+    const isEdit = !!ruleId;
+    
+    const data = {
+        name: document.getElementById('rule-name').value,
+        description: document.getElementById('rule-description').value,
+        site_id: document.getElementById('rule-site').value || null,
+        priority: parseInt(document.getElementById('rule-priority').value),
+        trigger_type: document.getElementById('rule-trigger-type').value,
+        trigger_metric: document.getElementById('rule-trigger-metric').value,
+        trigger_operator: document.getElementById('rule-trigger-operator').value,
+        trigger_value: parseFloat(document.getElementById('rule-trigger-value').value),
+        trigger_duration_seconds: parseInt(document.getElementById('rule-trigger-duration').value),
+        action_type: document.getElementById('rule-action-type').value,
+        cooldown_seconds: parseInt(document.getElementById('rule-cooldown').value) * 60,
+        is_enabled: document.getElementById('rule-enabled').checked
+    };
+    
+    if (!data.name) {
+        showToast(currentLang === 'en' ? 'Rule name is required' : '规则名称必填', 'error');
+        return;
+    }
+    
+    const url = isEdit ? `/hosting/api/automation-rules/${ruleId}` : '/hosting/api/automation-rules';
+    const method = isEdit ? 'PUT' : 'POST';
+    
+    fetch(url, {
+        method: method,
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            bootstrap.Modal.getInstance(document.getElementById('ruleModal')).hide();
+            showToast(currentLang === 'en' ? 'Rule saved successfully' : '规则保存成功', 'success');
+            loadRules();
+        } else {
+            showToast(result.error || (currentLang === 'en' ? 'Failed to save rule' : '保存规则失败'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error saving rule:', error);
+        showToast(currentLang === 'en' ? 'Failed to save rule' : '保存规则失败', 'error');
+    });
+}
+
+function toggleRule(ruleId) {
+    fetch(`/hosting/api/automation-rules/${ruleId}/toggle`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showToast(result.message, 'success');
+            loadRules();
+        } else {
+            showToast(result.error || (currentLang === 'en' ? 'Failed to toggle rule' : '切换规则状态失败'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error toggling rule:', error);
+        showToast(currentLang === 'en' ? 'Failed to toggle rule' : '切换规则状态失败', 'error');
+    });
+}
+
+function deleteRule(ruleId) {
+    const confirmMsg = currentLang === 'en' 
+        ? 'Are you sure you want to delete this rule? All related logs will also be deleted.' 
+        : '确定要删除此规则吗？所有相关日志也将被删除。';
+    
+    if (!confirm(confirmMsg)) return;
+    
+    fetch(`/hosting/api/automation-rules/${ruleId}`, {
+        method: 'DELETE',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showToast(currentLang === 'en' ? 'Rule deleted successfully' : '规则删除成功', 'success');
+            loadRules();
+        } else {
+            showToast(result.error || (currentLang === 'en' ? 'Failed to delete rule' : '删除规则失败'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error deleting rule:', error);
+        showToast(currentLang === 'en' ? 'Failed to delete rule' : '删除规则失败', 'error');
+    });
+}
+
+function showLogs(ruleId, page = 1) {
+    const rule = rulesData.find(r => r.id === ruleId);
+    document.getElementById('logs-modal-title').textContent = 
+        (currentLang === 'en' ? 'Execution Logs - ' : '执行日志 - ') + (rule ? rule.name : '');
+    
+    fetch(`/hosting/api/automation-rules/${ruleId}/logs?page=${page}&per_page=20`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderLogsTable(data.logs, ruleId, data.page, data.pages);
+                new bootstrap.Modal(document.getElementById('logsModal')).show();
+            } else {
+                showToast(currentLang === 'en' ? 'Failed to load logs' : '加载日志失败', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading logs:', error);
+            showToast(currentLang === 'en' ? 'Failed to load logs' : '加载日志失败', 'error');
+        });
+}
+
+function renderLogsTable(logs, ruleId, currentPage, totalPages) {
+    const tbody = document.getElementById('logs-tbody');
+    
+    if (!logs || logs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">
+            <i class="bi bi-inbox me-2"></i>${currentLang === 'en' ? 'No logs found' : '暂无日志'}
+        </td></tr>`;
+        document.getElementById('logs-pagination').innerHTML = '';
+        return;
+    }
+    
+    const statusLabels = {
+        'pending': { text: currentLang === 'en' ? 'Pending' : '待执行', class: 'bg-secondary' },
+        'executed': { text: currentLang === 'en' ? 'Executed' : '已执行', class: 'bg-success' },
+        'failed': { text: currentLang === 'en' ? 'Failed' : '失败', class: 'bg-danger' }
+    };
+    
+    tbody.innerHTML = logs.map(log => {
+        const status = statusLabels[log.action_status] || { text: log.action_status, class: 'bg-secondary' };
+        return `
+            <tr>
+                <td>${formatDateTime(log.triggered_at)}</td>
+                <td>${log.miner_serial || '-'}</td>
+                <td><code>${log.trigger_value_actual}</code></td>
+                <td><span class="badge bg-warning text-dark">${actionTypeLabels[log.action_type] || log.action_type}</span></td>
+                <td><span class="badge ${status.class}">${status.text}</span></td>
+                <td>${log.result_message || '-'}</td>
+            </tr>
+        `;
+    }).join('');
+    
+    // Pagination
+    if (totalPages > 1) {
+        let paginationHtml = '<nav><ul class="pagination pagination-sm mb-0">';
+        for (let i = 1; i <= totalPages; i++) {
+            paginationHtml += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+                <a class="page-link" href="#" onclick="showLogs(${ruleId}, ${i}); return false;">${i}</a>
+            </li>`;
+        }
+        paginationHtml += '</ul></nav>';
+        document.getElementById('logs-pagination').innerHTML = paginationHtml;
+    } else {
+        document.getElementById('logs-pagination').innerHTML = '';
+    }
+}
+
+function formatDateTime(isoString) {
+    if (!isoString) return '-';
+    const date = new Date(isoString);
+    return date.toLocaleString(currentLang === 'en' ? 'en-US' : 'zh-CN');
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function showToast(message, type = 'info') {
+    const toastContainer = document.getElementById('toast-container') || createToastContainer();
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    toastContainer.appendChild(toast);
+    new bootstrap.Toast(toast, { delay: 3000 }).show();
+    toast.addEventListener('hidden.bs.toast', () => toast.remove());
+}
+
+function createToastContainer() {
+    const container = document.createElement('div');
+    container.id = 'toast-container';
+    container.className = 'toast-container position-fixed top-0 end-0 p-3';
+    container.style.zIndex = '1100';
+    document.body.appendChild(container);
+    return container;
+}
+</script>
+{% endblock %}
