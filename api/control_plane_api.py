@@ -24,6 +24,7 @@ import os
 import csv
 import json
 import uuid
+import hmac
 import logging
 import hashlib
 from io import StringIO
@@ -41,6 +42,9 @@ from models_control_plane import (
     CommandApproval, CommandTarget, RetentionPolicy, AuditEvent,
     ApprovalPolicy, get_approval_requirement
 )
+from api.collector_api import MinerCommand
+from services.rate_limiter import check_rate_limit, record_command_dispatch
+from services.metrics_service import inc_commands_dispatched, inc_commands_acked, inc_commands_failed
 
 logger = logging.getLogger(__name__)
 
@@ -168,13 +172,20 @@ def edge_register():
 @control_plane_bp.route('/api/edge/v1/commands/poll', methods=['GET'])
 @require_device_auth
 def edge_poll_commands():
-    """Poll for queued commands - only returns approved commands
+    """Poll for queued commands - production-grade with atomic lease dispatch
     
     Zone binding: Device token is bound to (site_id, zone_id).
     If zone_id param provided, it must match device's zone_id (validation only).
+    
+    Features:
+    - Atomic lease dispatch using SELECT FOR UPDATE SKIP LOCKED
+    - Rate limiting integration
+    - Optional HMAC signature for command integrity
+    - Idempotent ACK support via ack_nonce
     """
     site_id = g.site_id
     device_zone_id = g.zone_id
+    device_id = str(g.device_id)
     requested_zone_id = request.args.get('zone_id', type=int)
     limit = min(request.args.get('limit', 10, type=int), 50)
     
@@ -182,53 +193,353 @@ def edge_poll_commands():
         log_audit_event(
             event_type='security.zone_access_denied',
             actor_type='device',
-            actor_id=g.device_id,
+            actor_id=device_id,
             site_id=site_id,
             payload={'requested_zone': requested_zone_id, 'bound_zone': device_zone_id}
         )
         return jsonify({'error': 'Zone access denied - device bound to different zone'}), 403
     
-    zone_id = device_zone_id or requested_zone_id
-    
-    query = RemoteCommand.query.filter(
-        RemoteCommand.site_id == site_id,
-        RemoteCommand.status == 'QUEUED',
-        RemoteCommand.expires_at > datetime.utcnow()
-    )
-    
-    if zone_id:
-        query = query.filter(RemoteCommand.zone_id == zone_id)
-    
-    commands = query.order_by(RemoteCommand.created_at.asc()).limit(limit).all()
+    now = datetime.utcnow()
+    lease_duration_sec = 60
+    lease_until = now + timedelta(seconds=lease_duration_sec)
+    enable_signature = os.environ.get('ENABLE_COMMAND_SIGNATURE', '').lower() == 'true'
     
     result = []
+    dispatched_count = 0
+    rate_limited_count = 0
+    
+    query = MinerCommand.query.filter(
+        MinerCommand.site_id == site_id,
+        MinerCommand.status == 'pending',
+        MinerCommand.next_attempt_at <= now,
+        MinerCommand.expires_at > now
+    ).order_by(
+        MinerCommand.priority.desc(),
+        MinerCommand.created_at.asc()
+    ).with_for_update(skip_locked=True).limit(limit * 2)
+    
+    commands = query.all()
+    
     for cmd in commands:
-        targets = CommandTarget.query.filter_by(command_id=cmd.id).all()
-        result.append({
+        if dispatched_count >= limit:
+            break
+        
+        allowed, rate_info = check_rate_limit(site_id, cmd.command_type)
+        if not allowed:
+            log_audit_event(
+                event_type='command.rate_limited_dispatch',
+                actor_type='device',
+                actor_id=device_id,
+                site_id=site_id,
+                ref_type='miner_command',
+                ref_id=cmd.id,
+                payload={
+                    'command_type': cmd.command_type,
+                    'rate_limit': rate_info.get('limit'),
+                    'current_count': rate_info.get('current_count'),
+                    'reset_at': rate_info.get('reset_at')
+                }
+            )
+            rate_limited_count += 1
+            continue
+        
+        ack_nonce = str(uuid.uuid4())
+        
+        cmd.status = 'dispatched'
+        cmd.lease_owner = device_id
+        cmd.lease_until = lease_until
+        cmd.sent_at = now
+        
+        record_command_dispatch(site_id, cmd.command_type)
+        
+        command_data = {
             'command_id': cmd.id,
+            'miner_id': cmd.miner_id,
             'command_type': cmd.command_type,
-            'payload': cmd.payload_json,
-            'target_asset_ids': [t.asset_id for t in targets] if targets else cmd.target_ids,
+            'parameters': cmd.parameters or {},
+            'priority': cmd.priority,
             'created_at': cmd.created_at.isoformat() + 'Z',
             'expires_at': cmd.expires_at.isoformat() + 'Z' if cmd.expires_at else None,
-        })
+            'ack_nonce': ack_nonce,
+            'lease_expires_at': lease_until.isoformat() + 'Z',
+            'retry_count': cmd.retry_count,
+            'max_retries': cmd.max_retries,
+        }
+        
+        if cmd.remote_command_id:
+            command_data['remote_command_id'] = cmd.remote_command_id
+        
+        if enable_signature:
+            device = g.device
+            secret_key = device.device_token if device.device_token else str(device.id)
+            sig_payload = f"{cmd.id}:{cmd.command_type}:{now.isoformat()}"
+            signature = hmac.new(
+                secret_key.encode('utf-8'),
+                sig_payload.encode('utf-8'),
+                hashlib.sha256
+            ).hexdigest()
+            command_data['cloud_signature'] = signature
+            command_data['sig_version'] = 'v1'
+            command_data['signed_at'] = now.isoformat() + 'Z'
+        
+        result.append(command_data)
+        dispatched_count += 1
+        
+        log_audit_event(
+            event_type='command.dispatched',
+            actor_type='device',
+            actor_id=device_id,
+            site_id=site_id,
+            ref_type='miner_command',
+            ref_id=cmd.id,
+            payload={
+                'command_type': cmd.command_type,
+                'miner_id': cmd.miner_id,
+                'ack_nonce': ack_nonce,
+                'lease_until': lease_until.isoformat()
+            }
+        )
+        
+        inc_commands_dispatched(site_id, cmd.command_type)
+    
+    db.session.commit()
     
     return jsonify({
         'commands': result,
-        'server_time': datetime.utcnow().isoformat() + 'Z',
+        'server_time': now.isoformat() + 'Z',
+        'dispatched_count': dispatched_count,
+        'rate_limited_count': rate_limited_count,
+        'lease_duration_sec': lease_duration_sec,
     })
 
 
 @control_plane_bp.route('/api/edge/v1/commands/<command_id>/ack', methods=['POST'])
 @require_device_auth
 def edge_ack_command(command_id):
-    """Acknowledge command completion - idempotent"""
-    command = RemoteCommand.query.get(command_id)
-    if not command:
-        return jsonify({'error': 'Command not found'}), 404
+    """Acknowledge command completion - production-grade with idempotency and retry logic
     
+    Features:
+    - Idempotent ACK with replay protection via ack_hash
+    - Lease owner verification
+    - Automatic retry scheduling on failure
+    - Terminal state tracking
+    - Structured error codes
+    """
+    device_id = str(g.device_id)
+    site_id = g.site_id
+    now = datetime.utcnow()
+    
+    TERMINAL_STATES = {'completed', 'failed', 'expired', 'cancelled', 'superseded'}
+    
+    command = MinerCommand.query.get(command_id)
+    if not command:
+        remote_cmd = RemoteCommand.query.get(command_id)
+        if remote_cmd:
+            return _handle_remote_command_ack(remote_cmd, command_id)
+        return jsonify({
+            'error': 'Command not found',
+            'error_code': 'COMMAND_NOT_FOUND'
+        }), 404
+    
+    if command.site_id != site_id:
+        return jsonify({
+            'error': 'Access denied',
+            'error_code': 'ACCESS_DENIED'
+        }), 403
+    
+    data = request.get_json() or {}
+    ack_status = data.get('status', 'completed')
+    ack_nonce = data.get('ack_nonce')
+    result_code = data.get('result_code')
+    result_message = data.get('result_message')
+    execution_time_ms = data.get('execution_time_ms')
+    
+    ack_payload = json.dumps({
+        'command_id': command_id,
+        'device_id': device_id,
+        'status': ack_status,
+        'nonce': ack_nonce
+    }, sort_keys=True)
+    computed_ack_hash = hashlib.sha256(ack_payload.encode()).hexdigest()
+    
+    if command.status in TERMINAL_STATES:
+        log_audit_event(
+            event_type='command.ack_replayed',
+            actor_type='device',
+            actor_id=device_id,
+            site_id=site_id,
+            ref_type='miner_command',
+            ref_id=command_id,
+            payload={
+                'current_status': command.status,
+                'ack_status': ack_status,
+                'existing_ack_hash': command.ack_hash
+            }
+        )
+        return jsonify({
+            'acknowledged': True,
+            'command_status': command.status,
+            'replayed': True,
+            'terminal_at': command.terminal_at.isoformat() + 'Z' if command.terminal_at else None,
+            'info': 'Command already in terminal state'
+        })
+    
+    if command.lease_owner and command.lease_owner != device_id:
+        log_audit_event(
+            event_type='command.ack_not_lease_owner',
+            actor_type='device',
+            actor_id=device_id,
+            site_id=site_id,
+            ref_type='miner_command',
+            ref_id=command_id,
+            payload={
+                'actual_lease_owner': command.lease_owner,
+                'requesting_device': device_id
+            }
+        )
+        return jsonify({
+            'error': 'Not the lease owner for this command',
+            'error_code': 'ACK_NOT_LEASE_OWNER',
+            'lease_owner': command.lease_owner
+        }), 409
+    
+    if command.expires_at and command.expires_at < now:
+        command.status = 'expired'
+        command.terminal_at = now
+        command.lease_owner = None
+        command.lease_until = None
+        db.session.commit()
+        
+        log_audit_event(
+            event_type='command.expired',
+            actor_type='device',
+            actor_id=device_id,
+            site_id=site_id,
+            ref_type='miner_command',
+            ref_id=command_id,
+            payload={'expired_at': command.expires_at.isoformat()}
+        )
+        
+        return jsonify({
+            'error': 'Command has expired',
+            'error_code': 'COMMAND_EXPIRED',
+            'command_status': 'expired',
+            'expired_at': command.expires_at.isoformat() + 'Z'
+        }), 410
+    
+    command.executed_at = now
+    command.result_code = result_code
+    command.result_message = result_message
+    command.edge_device_id = device_id
+    command.ack_hash = computed_ack_hash
+    if execution_time_ms:
+        command.execution_time_ms = execution_time_ms
+    
+    command.lease_owner = None
+    command.lease_until = None
+    
+    final_status = None
+    should_retry = False
+    
+    if ack_status == 'completed' or ack_status == 'succeeded':
+        command.status = 'completed'
+        command.terminal_at = now
+        final_status = 'completed'
+        
+        log_audit_event(
+            event_type='command.completed',
+            actor_type='device',
+            actor_id=device_id,
+            site_id=site_id,
+            ref_type='miner_command',
+            ref_id=command_id,
+            payload={
+                'execution_time_ms': execution_time_ms,
+                'result_code': result_code
+            }
+        )
+        
+        inc_commands_acked(site_id, command.command_type, 'succeeded')
+        
+    elif ack_status == 'failed':
+        if command.retry_count < command.max_retries:
+            command.retry_count += 1
+            backoff = command.retry_backoff_sec * (2 ** command.retry_count)
+            command.next_attempt_at = now + timedelta(seconds=backoff)
+            command.status = 'pending'
+            should_retry = True
+            final_status = 'pending_retry'
+            
+            log_audit_event(
+                event_type='command.retried',
+                actor_type='device',
+                actor_id=device_id,
+                site_id=site_id,
+                ref_type='miner_command',
+                ref_id=command_id,
+                payload={
+                    'retry_count': command.retry_count,
+                    'max_retries': command.max_retries,
+                    'next_attempt_at': command.next_attempt_at.isoformat(),
+                    'backoff_seconds': backoff,
+                    'error_code': result_code,
+                    'error_message': result_message
+                }
+            )
+        else:
+            command.status = 'failed'
+            command.terminal_at = now
+            final_status = 'failed'
+            
+            log_audit_event(
+                event_type='command.failed',
+                actor_type='device',
+                actor_id=device_id,
+                site_id=site_id,
+                ref_type='miner_command',
+                ref_id=command_id,
+                payload={
+                    'retry_count': command.retry_count,
+                    'max_retries': command.max_retries,
+                    'error_code': result_code,
+                    'error_message': result_message
+                }
+            )
+            
+            inc_commands_failed(site_id, command.command_type, result_code or 'UNKNOWN')
+        
+        inc_commands_acked(site_id, command.command_type, 'failed')
+    else:
+        command.status = ack_status
+        if ack_status in TERMINAL_STATES:
+            command.terminal_at = now
+        final_status = ack_status
+    
+    db.session.commit()
+    
+    response = {
+        'acknowledged': True,
+        'command_id': command_id,
+        'command_status': command.status,
+        'final_status': final_status,
+    }
+    
+    if should_retry:
+        response['will_retry'] = True
+        response['retry_count'] = command.retry_count
+        response['max_retries'] = command.max_retries
+        response['next_attempt_at'] = command.next_attempt_at.isoformat() + 'Z'
+    
+    if command.terminal_at:
+        response['terminal_at'] = command.terminal_at.isoformat() + 'Z'
+    
+    return jsonify(response)
+
+
+def _handle_remote_command_ack(command, command_id):
+    """Handle ACK for RemoteCommand (legacy compatibility)"""
     if command.site_id != g.site_id:
-        return jsonify({'error': 'Access denied'}), 403
+        return jsonify({'error': 'Access denied', 'error_code': 'ACCESS_DENIED'}), 403
     
     data = request.get_json() or {}
     results = data.get('results', [])

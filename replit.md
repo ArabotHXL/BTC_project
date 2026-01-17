@@ -92,6 +92,38 @@ The architecture emphasizes modularity with page-isolated components and databas
 - **Python 3.9+**: Runtime.
 - **Replit Platform**: Deployment and hosting.
 
+## Configuration & Environment Variables
+
+### Core Environment Variables (Required)
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `SESSION_SECRET` | Flask session secret key (REQUIRED - must be set in production) | `your-secure-random-string` |
+| `DATABASE_URL` | PostgreSQL database connection string | `postgresql://user:pass@host/db` |
+| `REDIS_URL` | Redis connection URL for caching and rate limiting | `redis://localhost:6379/0` |
+
+### Prometheus Metrics Configuration
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `ENABLE_COMMAND_SIGNATURE` | Enable command signature verification for secure remote commands | `False` | `true` or `false` |
+
+The Prometheus metrics endpoint is exposed at `GET /metrics` and provides:
+- **Commands Dispatched**: Track total commands sent to edge collectors
+- **Commands Acknowledged**: Monitor acknowledgment status (succeeded/failed)
+- **Commands Failed**: Track failed commands with specific error codes
+- **Rule Evaluations**: Monitor automation/control rules evaluation
+- **Telemetry Ingest Lag**: Measure data ingestion delay in seconds
+- **Command Dispatch Duration**: Histogram of dispatch timing (percentiles)
+- **Active Leases**: Current count of active equipment leases per site
+
+### Optional Deployment Configuration
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `FLASK_ENV` | Flask environment (development/production) | `development` |
+| `BLOCKCHAIN_ENABLED` | Enable blockchain integration and scheduler | `false` |
+| `ENABLE_BACKGROUND_SERVICES` | Enable background analytics and data collectors | `1` |
+| `FAST_STARTUP` | Enable deferred initialization for faster deployment | `1` |
+| `SKIP_DATABASE_HEALTH_CHECK` | Skip database health check on startup | `1` |
+
 ## Documentation
 
 ### Documentation Practices

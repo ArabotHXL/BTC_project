@@ -1,0 +1,82 @@
+你是 Replit AI Agent（高级后端工程师 + SRE），你将对现有 HashInsight Cloud 代码库做“增量改造”，补齐生产级缺口。你必须在不破坏现有功能（命令队列、规则引擎、审批、审计 hash chain、Collector v1 API）的前提下，完成以下功能，并提供 migrations、测试与文档更新。
+
+现状（已存在的模型/模块，按仓库实际为准）
+- MinerCommand 命令队列 + expires_at + priority
+- AutomationRule / AutomationRuleCooldown / AutomationRuleLog 规则引擎（已能创建命令）
+- CommandApproval + ApprovalPolicy（含双人审批）
+- AuditEvent（prev_hash + event_hash hash chain）
+- Collector APIs：GET /api/edge/v1/commands/poll, POST /api/edge/v1/commands/{id}/ack
+- Telemetry ingest：/api/collector/telemetry/batch
+- require_device_auth（Bearer token）+ EdgeDevice zone_id 绑定
+
+你必须实现的缺口（逐条落地，不要写 TODO）
+A3 幂等 ACK（完善重放保护）
+A4 退避重试（attempt/max_retries/retry_backoff_sec/next_attempt_at）
+A5 速率限制（per-site + command_type）
+A6 Lease 原子派发（SELECT FOR UPDATE SKIP LOCKED）
+A7 dedupe_key（规则创建命令时去重 + DB 约束）
+H3 HMAC 命令签名（可配置开关）
+H4 Prometheus /metrics endpoint
+并补全：B 冲突仲裁的 superseded 链路追踪（superseded_by / supersedes 字段 + 审计）
+
+实施要求（必须严格遵守）
+1) DB：使用 Alembic migrations 添加/修改字段与索引
+2) Lease：poll 必须使用数据库事务 + SELECT FOR UPDATE SKIP LOCKED 原子领取命令
+3) 幂等：ACK 重放不得改变终态；非 lease_owner 的 ACK 必须拒绝并返回 error_code
+4) Retry：failed 且可重试的命令按指数退避重新入队，poll 必须过滤 next_attempt_at<=now
+5) Rate limit：使用 Redis（推荐）实现 token bucket/滑窗；超限则不派发（保持 pending），写审计
+6) Dedupe：生成 dedupe_key，创建命令时若 dedupe 冲突则跳过并记录 RULE_DEDUPED 审计
+7) HMAC：对 poll 返回的每条命令计算 cloud_signature；用 collector 的 shared secret 校验（如启用）
+8) Metrics：提供 /metrics，暴露 commands/acks/rules/telemetry 关键指标
+9) 审计：所有关键事件必须写入 AuditEvent（append-only）
+10) API：所有错误返回包含明确 error_code（例如 COMMAND_EXPIRED, NOT_APPROVED, MINER_LOCKED, RATE_LIMITED, ACK_REPLAYED, ACK_NOT_LEASE_OWNER, SIGNATURE_INVALID）
+11) 时间：全部 UTC ISO8601
+12) 文档：更新 README，给出 curl 示例与故障排查
+
+需要新增/修改的 schema（若已有则补齐）
+MinerCommand 新增字段：
+- attempt INT default 0
+- max_retries INT default (按命令类型配置)
+- retry_backoff_sec INT default 30
+- next_attempt_at TIMESTAMP default now()
+- lease_owner VARCHAR nullable
+- lease_until TIMESTAMP nullable
+- dedupe_key VARCHAR nullable
+- superseded_by_command_id UUID nullable
+- supersedes_command_id UUID nullable
+- terminal_at TIMESTAMP nullable
+- terminal_status VARCHAR nullable
+- ack_hash VARCHAR nullable (可选)
+并创建索引/约束：
+- partial unique index: unique(dedupe_key) where state in ('pending','dispatched','running')
+- index on (state, site_id, zone_id, expires_at, next_attempt_at, priority)
+
+实现步骤（按顺序交付）
+Step 1: migrations
+- 添加字段 + 索引 + partial unique index
+Step 2: poll 端原子领取
+- 用 SELECT FOR UPDATE SKIP LOCKED 实现 lease
+- 派发时写审计 COMMAND_DISPATCHED
+- 增加 lease 回收 job（RQ/Celery 任选仓库现有方式）
+Step 3: ACK 幂等
+- 终态不可变；ACK 重放返回 200 + 当前状态；写审计 ACK_REPLAYED
+Step 4: retry/backoff
+- failed -> retry 或终态 failed；写审计 COMMAND_RETRIED / COMMAND_FAILED
+Step 5: rate limiting
+- Redis 实现 per-site+command_type 限流；超限不派发，写审计 RATE_LIMITED_DISPATCH
+Step 6: dedupe_key
+- 规则引擎创建命令时生成 dedupe_key；冲突则跳过并写 RULE_DEDUPED
+Step 7: HMAC signature
+- 可配置开关 ENABLE_COMMAND_SIGNATURE
+- poll 返回每条命令带 cloud_signature/sig_version/signed_at
+Step 8: /metrics
+- prometheus_client 集成，至少提供 counters/gauges/histograms
+Step 9: tests（至少 4 个）
+- test_poll_lease_atomicity：并发 poll 不会重复派发
+- test_ack_idempotent：重复 ack 不改终态
+- test_retry_backoff：失败后 next_attempt_at 推迟，poll 过滤生效
+- test_rule_dedupe：相同规则在 cooldown 内不重复创建命令
+Step 10: README 更新
+- 环境变量、运行方式、curl 示例、常见错误码表、故障排查
+
+现在开始执行：先输出本次改造的文件清单与改动点，然后逐步落地代码、migrations、tests、文档。

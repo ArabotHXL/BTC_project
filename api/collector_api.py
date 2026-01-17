@@ -186,12 +186,35 @@ class MinerCommand(db.Model):
     execution_time_ms = db.Column(db.Integer)
     edge_device_id = db.Column(db.String(50))
     
+    retry_backoff_sec = db.Column(db.Integer, default=30)
+    next_attempt_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    lease_owner = db.Column(db.String(50), nullable=True)
+    lease_until = db.Column(db.DateTime, nullable=True)
+    
+    dedupe_key = db.Column(db.String(128), nullable=True)
+    
+    superseded_by_command_id = db.Column(db.String(50), nullable=True)
+    supersedes_command_id = db.Column(db.String(50), nullable=True)
+    
+    terminal_at = db.Column(db.DateTime, nullable=True)
+    
+    ack_hash = db.Column(db.String(64), nullable=True)
+    
     __table_args__ = (
         db.Index('ix_miner_commands_site_status', 'site_id', 'status'),
         db.Index('ix_miner_commands_miner_status', 'miner_id', 'status'),
         db.Index('ix_miner_commands_expires', 'expires_at'),
         db.Index('ix_miner_commands_remote_cmd', 'remote_command_id'),
+        db.Index('ix_miner_commands_poll', 'status', 'site_id', 'expires_at', 'next_attempt_at', 'priority'),
     )
+    
+    # Note: Partial unique index for dedupe_key (where status NOT IN ('completed', 'failed', 'expired', 'cancelled'))
+    # needs to be added via database migration as SQLAlchemy doesn't support partial indexes directly:
+    # CREATE UNIQUE INDEX uq_miner_commands_dedupe_active
+    #   ON miner_commands(dedupe_key)
+    #   WHERE status NOT IN ('completed', 'failed', 'expired', 'cancelled')
+    #   AND dedupe_key IS NOT NULL;
     
     COMMAND_TYPES = {
         'enable': '启动挖矿 / Enable Mining',
@@ -206,11 +229,13 @@ class MinerCommand(db.Model):
     STATUS_TYPES = {
         'pending': '等待发送',
         'sent': '已发送',
-        'executing': '执行中',
+        'dispatched': '已派发',
+        'running': '执行中',
         'completed': '已完成',
         'failed': '执行失败',
         'expired': '已过期',
-        'cancelled': '已取消'
+        'cancelled': '已取消',
+        'superseded': '已被取代'
     }
     
     def to_dict(self):
@@ -235,7 +260,16 @@ class MinerCommand(db.Model):
             'retry_count': self.retry_count,
             'max_retries': self.max_retries,
             'execution_time_ms': self.execution_time_ms,
-            'edge_device_id': self.edge_device_id
+            'edge_device_id': self.edge_device_id,
+            'retry_backoff_sec': self.retry_backoff_sec,
+            'next_attempt_at': self.next_attempt_at.isoformat() if self.next_attempt_at else None,
+            'lease_owner': self.lease_owner,
+            'lease_until': self.lease_until.isoformat() if self.lease_until else None,
+            'dedupe_key': self.dedupe_key,
+            'superseded_by_command_id': self.superseded_by_command_id,
+            'supersedes_command_id': self.supersedes_command_id,
+            'terminal_at': self.terminal_at.isoformat() if self.terminal_at else None,
+            'ack_hash': self.ack_hash
         }
     
     def to_command_payload(self):

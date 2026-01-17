@@ -7,12 +7,15 @@ Scheduled jobs for:
 """
 
 import atexit
+import hashlib
 import logging
 import os
 import socket
 from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+from models_control_plane import AuditEvent
+from services.metrics_service import inc_rule_evals
 
 logger = logging.getLogger(__name__)
 
@@ -166,9 +169,12 @@ class AutomationSchedulerService:
                 
                 for rule in enabled_rules:
                     try:
-                        actions_taken += self._process_rule(rule, db)
+                        actions_for_rule = self._process_rule(rule, db)
+                        actions_taken += actions_for_rule
+                        inc_rule_evals(rule.id, triggered=(actions_for_rule > 0))
                     except Exception as e:
                         logger.error(f"[AutomationScheduler] Error processing rule {rule.id} ({rule.name}): {e}", exc_info=True)
+                        inc_rule_evals(rule.id, triggered=False)
                 
                 if actions_taken > 0:
                     logger.info(f"[AutomationScheduler] Completed: {actions_taken} actions taken")
@@ -266,8 +272,33 @@ class AutomationSchedulerService:
             return True
         return False
     
+    def _create_audit_event(self, site_id, event_type, rule_id, miner_id, payload=None):
+        """Create an audit event for rule actions"""
+        try:
+            payload = payload or {}
+            
+            audit_event = AuditEvent(
+                site_id=site_id,
+                actor_type='system',
+                actor_id='automation_scheduler',
+                event_type=event_type,
+                ref_type='automation_rule',
+                ref_id=str(rule_id),
+                payload_json=payload
+            )
+            
+            audit_event.event_hash = audit_event.compute_hash()
+            
+            from db import db as database
+            database.session.add(audit_event)
+            database.session.commit()
+            
+            logger.debug(f"[AutomationScheduler] Audit event created: {event_type} for rule {rule_id}, miner {miner_id}")
+        except Exception as e:
+            logger.error(f"[AutomationScheduler] Failed to create audit event: {e}")
+    
     def _create_command(self, rule, telemetry, db):
-        """Create a MinerCommand record for the action"""
+        """Create a MinerCommand record for the action with dedupe_key"""
         from api.collector_api import MinerCommand
         
         action_config = ACTION_TYPE_MAPPING.get(rule.action_type)
@@ -277,6 +308,30 @@ class AutomationSchedulerService:
         
         command_type, default_params = action_config
         parameters = {**default_params, **(rule.action_parameters or {})}
+        
+        dedupe_key = hashlib.sha256(
+            f"{rule.id}:{telemetry.miner_id}:{rule.action_type}:{rule.trigger_metric}".encode()
+        ).hexdigest()[:32]
+        
+        existing_command = MinerCommand.query.filter_by(dedupe_key=dedupe_key).filter(
+            MinerCommand.status.in_(['pending', 'dispatched', 'running'])
+        ).first()
+        
+        if existing_command:
+            self._create_audit_event(
+                site_id=telemetry.site_id,
+                event_type='rule.deduped',
+                rule_id=rule.id,
+                miner_id=telemetry.miner_id,
+                payload={
+                    'dedupe_key': dedupe_key,
+                    'existing_command_id': existing_command.id,
+                    'trigger_metric': rule.trigger_metric,
+                    'action_type': rule.action_type
+                }
+            )
+            logger.info(f"[AutomationScheduler] Duplicate command detected for rule {rule.id}, miner {telemetry.miner_id}: dedupe_key={dedupe_key}")
+            return None
         
         command = MinerCommand(
             miner_id=telemetry.miner_id,
@@ -288,11 +343,26 @@ class AutomationSchedulerService:
             priority=rule.priority,
             expires_at=datetime.utcnow() + timedelta(hours=1),
             retry_count=0,
-            max_retries=3
+            max_retries=3,
+            dedupe_key=dedupe_key
         )
         
         db.session.add(command)
         db.session.commit()
+        
+        self._create_audit_event(
+            site_id=telemetry.site_id,
+            event_type='rule.command_created',
+            rule_id=rule.id,
+            miner_id=telemetry.miner_id,
+            payload={
+                'dedupe_key': dedupe_key,
+                'command_id': command.id,
+                'command_type': command_type,
+                'trigger_metric': rule.trigger_metric,
+                'action_type': rule.action_type
+            }
+        )
         
         return command
     

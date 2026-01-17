@@ -264,6 +264,8 @@ from mining_calculator import (
     calculate_monthly_curtailment_impact
 )
 from crm_routes import init_crm_routes
+# Prometheus metrics service
+from services.metrics_service import metrics_bp, init_metrics
 # Network analysis service temporarily disabled due to database query issues
 # from services.network_data_service import network_collector, network_analyzer
 # DISABLED: Gold flow module - from mining_broker_routes import init_broker_routes
@@ -1917,6 +1919,13 @@ try:
     logging.info("System health routes registered successfully")
 except ImportError as e:
     logging.warning(f"System health routes not available: {e}")
+
+# 注册Prometheus指标导出路由
+try:
+    app.register_blueprint(metrics_bp)
+    logging.info("Prometheus metrics blueprint registered successfully")
+except Exception as e:
+    logging.warning(f"Prometheus metrics blueprint registration failed: {e}")
 
 # 注册i18n国际化路由
 try:
@@ -5708,6 +5717,21 @@ try:
     init_automation_scheduler()
 except Exception as e:
     logging.error(f"自动化规则调度器初始化异常: {e}")
+
+# 🔧 初始化租约恢复调度器 - MinerCommand过期租约恢复
+def init_lease_recovery_scheduler():
+    """安全初始化租约恢复调度器 - 管理过期租约恢复和重试"""
+    try:
+        from services.lease_recovery import lease_recovery_scheduler
+        lease_recovery_scheduler.init_app(app)
+        logging.info("租约恢复调度器初始化完成 (expired lease recovery)")
+    except Exception as e:
+        logging.warning(f"租约恢复调度器初始化失败: {e}")
+
+try:
+    init_lease_recovery_scheduler()
+except Exception as e:
+    logging.error(f"租约恢复调度器初始化异常: {e}")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
