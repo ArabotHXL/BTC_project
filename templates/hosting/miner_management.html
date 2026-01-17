@@ -1118,6 +1118,13 @@
 .dropdown-submenu.show > .dropdown-menu {
     display: block;
 }
+/* Submenu opens left when near right edge */
+.dropdown-submenu.dropdown-submenu-left > .dropdown-menu {
+    left: auto;
+    right: 100%;
+    margin-left: 0;
+    margin-right: -1px;
+}
 .dropdown-submenu > .dropdown-toggle::after {
     display: inline-block;
     margin-left: 0.5em;
@@ -1128,14 +1135,38 @@
     border-bottom: 0.3em solid transparent;
     border-left: 0.3em solid;
 }
+/* Flip arrow for left-opening submenu */
+.dropdown-submenu.dropdown-submenu-left > .dropdown-toggle::after {
+    border-left: 0;
+    border-right: 0.3em solid;
+    margin-left: 0;
+    margin-right: 0.5em;
+    float: left;
+}
 .dropdown-submenu:hover > a.dropdown-item {
     background-color: rgba(247, 147, 26, 0.15);
 }
 /* Per-row actions dropdown styling */
 .miner-actions-dropdown .dropdown-menu {
     min-width: 200px;
+    max-height: 400px;
+    overflow-y: auto;
     background-color: #1a1a2e;
     border: 1px solid rgba(247, 147, 26, 0.3);
+}
+/* Auto-position dropdown to stay within viewport */
+.miner-actions-dropdown.dropstart .dropdown-menu {
+    right: 100%;
+    left: auto;
+}
+/* Ensure dropdown stays within table container */
+.hosting-table {
+    position: relative;
+    overflow-x: auto;
+}
+.hosting-table .dropdown-menu {
+    position: fixed;
+    z-index: 1050;
 }
 .miner-actions-dropdown .dropdown-item {
     color: #e0e0e0;
@@ -3276,13 +3307,93 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Initialize dropdown submenus for Bootstrap 5
+    // Initialize dropdown submenus for Bootstrap 5 with viewport detection
+    initDropdownSubmenus();
+});
+
+// Initialize dropdown submenus with viewport boundary detection
+function initDropdownSubmenus() {
     document.querySelectorAll('.dropdown-submenu').forEach(function(submenu) {
+        submenu.addEventListener('mouseenter', function(e) {
+            const rect = this.getBoundingClientRect();
+            const submenuEl = this.querySelector('.dropdown-menu');
+            if (submenuEl) {
+                const submenuWidth = 220; // Approximate submenu width
+                const rightSpace = window.innerWidth - rect.right;
+                
+                // If not enough space on right, open to left
+                if (rightSpace < submenuWidth) {
+                    this.classList.add('dropdown-submenu-left');
+                } else {
+                    this.classList.remove('dropdown-submenu-left');
+                }
+            }
+        });
+        
         submenu.addEventListener('click', function(e) {
             e.stopPropagation();
             this.classList.toggle('show');
         });
     });
+}
+
+// Position dropdown menu to stay within viewport
+function positionDropdownInViewport(dropdownEl, buttonEl) {
+    if (!dropdownEl || !buttonEl) return;
+    
+    const buttonRect = buttonEl.getBoundingClientRect();
+    const menuWidth = dropdownEl.offsetWidth || 200;
+    const menuHeight = dropdownEl.offsetHeight || 300;
+    
+    // Calculate available space
+    const rightSpace = window.innerWidth - buttonRect.right;
+    const bottomSpace = window.innerHeight - buttonRect.bottom;
+    
+    // Horizontal positioning
+    if (rightSpace < menuWidth) {
+        // Open to the left
+        dropdownEl.style.left = 'auto';
+        dropdownEl.style.right = '0';
+    } else {
+        dropdownEl.style.left = '0';
+        dropdownEl.style.right = 'auto';
+    }
+    
+    // Vertical positioning
+    if (bottomSpace < menuHeight && buttonRect.top > menuHeight) {
+        // Open upward
+        dropdownEl.style.top = 'auto';
+        dropdownEl.style.bottom = '100%';
+    } else {
+        dropdownEl.style.top = '100%';
+        dropdownEl.style.bottom = 'auto';
+    }
+}
+
+// Re-initialize submenus after table reload (event delegation for dynamic content)
+document.addEventListener('shown.bs.dropdown', function(e) {
+    const dropdown = e.target.closest('.dropdown, .btn-group');
+    if (dropdown) {
+        // Reinitialize submenus within this dropdown
+        dropdown.querySelectorAll('.dropdown-submenu').forEach(function(submenu) {
+            const rect = submenu.getBoundingClientRect();
+            const submenuWidth = 220;
+            const rightSpace = window.innerWidth - rect.right;
+            
+            if (rightSpace < submenuWidth) {
+                submenu.classList.add('dropdown-submenu-left');
+            } else {
+                submenu.classList.remove('dropdown-submenu-left');
+            }
+        });
+        
+        // Position the main dropdown menu
+        const menu = dropdown.querySelector('.dropdown-menu');
+        const button = dropdown.querySelector('[data-bs-toggle="dropdown"]');
+        if (menu && button) {
+            positionDropdownInViewport(menu, button);
+        }
+    }
 });
 
 // ============================================
