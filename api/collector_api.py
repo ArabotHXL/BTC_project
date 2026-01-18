@@ -289,6 +289,48 @@ class MinerCommand(db.Model):
         }
 
 
+class SafetyEvent(db.Model):
+    """边缘设备安全事件
+    
+    Edge device safety events from thermal protection, emergency stop, and other safety mechanisms
+    """
+    __tablename__ = 'safety_events'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    edge_device_id = db.Column(db.Integer, db.ForeignKey('edge_devices.id'), nullable=False)
+    site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=False)
+    miner_id = db.Column(db.Integer, db.ForeignKey('hosted_miners.id'), nullable=True)
+    
+    action = db.Column(db.String(50), nullable=False)
+    reason = db.Column(db.String(255), nullable=False)
+    
+    temp_max = db.Column(db.Float, nullable=True)
+    
+    ts = db.Column(db.DateTime, nullable=False)
+    snapshot_json = db.Column(db.Text, nullable=True)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    __table_args__ = (
+        db.Index('ix_safety_events_site_ts', 'site_id', 'ts'),
+        db.Index('ix_safety_events_edge_device', 'edge_device_id'),
+    )
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'edge_device_id': self.edge_device_id,
+            'site_id': self.site_id,
+            'miner_id': self.miner_id,
+            'action': self.action,
+            'reason': self.reason,
+            'temp_max': self.temp_max,
+            'ts': self.ts.isoformat() + 'Z' if self.ts else None,
+            'snapshot_json': self.snapshot_json,
+            'created_at': self.created_at.isoformat() + 'Z' if self.created_at else None,
+        }
+
+
 def verify_collector_key(f):
     """验证采集器API密钥"""
     @wraps(f)

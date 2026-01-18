@@ -38,6 +38,7 @@ class EdgeDevice(db.Model):
     last_seen_at = db.Column(db.DateTime, nullable=True)
     revoked_at = db.Column(db.DateTime, nullable=True)
     revoked_by = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True)
+    hmac_secret = db.Column(db.String(64), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     

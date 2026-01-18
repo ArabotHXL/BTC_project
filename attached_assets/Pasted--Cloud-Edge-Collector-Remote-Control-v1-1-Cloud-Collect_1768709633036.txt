@@ -1,0 +1,74 @@
+你是资深后端工程师。请在现有 Cloud 代码库中实现“Edge Collector Remote Control v1.1”的所有 Cloud 侧必需功能，确保与已完成的 Collector 兼容。
+
+背景与约束
+- Collector 端已实现：命令 poll/ack、离线 ACK 缓存、并发执行、per-miner lock、dedupe/rate-limit/nonce 防重放（Edge 兜底）、Hybrid Edge Safety Override（本地紧急保护）。
+- 你只能修改 Cloud 端：FastAPI + SQLAlchemy + Postgres（如不是该栈，请按仓库实际栈实现，但功能要求不变）。
+- 必须向后兼容：保留现有 API 路径/字段（如有旧字段 id/command，请同时支持并映射到新字段）。
+- 目标站点：20MW+，托管为主，要求命令派发原子化、可审计、可扩展。
+
+交付目标（P0 必须全部完成）
+1) 命令协议契约（Cloud → Collector poll）
+- poll 返回每条命令必须包含：
+  command_id, site_id, zone_id, miner_id,
+  command_type, params, priority, expires_at,
+  dedupe_key, signed_at, nonce, signature, sig_version, sig_encoding
+- 时间格式统一 UTC ISO8601，signature 默认 hex。
+
+2) HMAC 签名生成（Cloud 生成，Collector 验证）
+- 为每个 EdgeDevice/Collector 存储 hmac_secret（DB 字段或安全存储引用）。
+- 采用 canonical JSON：
+  - 字段集合固定：
+    command_id, site_id, zone_id, miner_id, command_type, params,
+    priority, expires_at, dedupe_key, signed_at, nonce
+  - json.dumps(sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+- signature = HMAC_SHA256(secret, canonical_json).hexdigest()
+- 输出字段：sig_version="HMAC-SHA256-CANONICAL-JSON-V1", sig_encoding="hex"
+
+3) 命令派发 Lease 原子化（避免重复领取）
+- MinerCommand 增加字段：
+  status, lease_owner, lease_expires_at, dispatched_at
+- poll 时使用 SELECT ... FOR UPDATE SKIP LOCKED 获取 pending 命令并设置 lease（lease_owner=collector_id，lease_expires_at=now+N秒）
+- 超过 expires_at 的命令不下发（标记 expired）
+
+4) ACK 接收与幂等（Collector 会重复上报）
+- ack endpoint：POST /api/edge/v1/commands/{command_id}/ack
+- ACK payload 包含：status(succeeded/failed/deferred/rejected)、error_code、message、before/after snapshots（如有）
+- 幂等规则：
+  - 为每条命令存 last_ack_hash；同样 payload 重复提交返回 200 不改变最终态
+  - 若命令已终态（succeeded/failed/expired/canceled），重复 ACK 直接 200
+
+5) Cloud 端 dedupe_key 与 rate limit
+- AutomationRule 引擎/批量命令创建时必须写 dedupe_key
+- 下发前执行 per-site+command_type rate limit（高风险动作默认阈值写入配置表）
+- 如果超限：命令不进入 pending（或进入但标记 deferred），并记录审计事件
+
+6) 命令类型标准化
+- 明确区分：
+  MINER_RESTART vs DEVICE_REBOOT
+  HASHING_DISABLE / HASHING_ENABLE
+  POOL_SET
+  SET_FAN / SET_FREQUENCY
+  POWER_MODE（允许 LOW/NORMAL 等 params）
+- 兼容旧字段：如果旧命令是 "reboot" ，映射到 MINER_RESTART（除非显式声明是 DEVICE_REBOOT）
+
+7) Edge Safety Override 事件接收（P0 建议立即做）
+- 新增 endpoint：POST /api/edge/v1/events/safety/batch
+- 落库 SafetyEvent：
+  edge_device_id, site_id, miner_id, action, reason, temp_max, ts, snapshot_json
+- 可按站点/客户查询导出
+
+P1（强烈建议）
+- /metrics Prometheus：commands_pending, commands_dispatched, ack_latency, exec_success_rate, failures_by_reason
+- 批量命令 rollout + 熔断：batch_size, ramp, failure_threshold
+- 审计外部归档：每日导出 audit events 到对象存储（可先做本地导出接口）
+
+实施要求
+- 增加/更新 SQLAlchemy models + Alembic migrations
+- 增加单元测试（至少覆盖：签名生成稳定性、lease 不重复领取、ACK 幂等）
+- 输出一份 docs：REMOTE_CONTROL_CLOUD_SPEC.md，包含字段说明与示例 JSON
+
+最后请给出：
+- 改动文件列表
+- DB migration 列表
+- curl 示例：poll、ack、safety events batch
+- 关键默认阈值（rate limit / lease duration）

@@ -59,6 +59,28 @@ RISK_TIER_MAP = {
     'LED': 'LOW',
 }
 
+COMMAND_TYPE_MAP = {
+    'reboot': 'MINER_RESTART',
+    'restart': 'MINER_RESTART',
+    'device_reboot': 'DEVICE_REBOOT',
+    'stop': 'HASHING_DISABLE',
+    'start': 'HASHING_ENABLE',
+    'disable': 'HASHING_DISABLE',
+    'enable': 'HASHING_ENABLE',
+    'set_pool': 'POOL_SET',
+    'pool_set': 'POOL_SET',
+    'set_fan': 'SET_FAN',
+    'set_frequency': 'SET_FREQUENCY',
+    'power_mode': 'POWER_MODE',
+}
+
+
+def normalize_command_type(cmd_type: str) -> str:
+    """Normalize legacy command types to v1.1 standard."""
+    if not cmd_type:
+        return cmd_type
+    return COMMAND_TYPE_MAP.get(cmd_type.lower(), cmd_type.upper())
+
 
 def require_user_auth(f):
     """Require user authentication"""
@@ -118,6 +140,46 @@ def require_customer_access(f):
             g.customer_filter = False
         return f(*args, **kwargs)
     return decorated
+
+
+def generate_canonical_signature(command_data: dict, hmac_secret: str) -> tuple[str, str, str]:
+    """
+    Generate HMAC-SHA256 signature using canonical JSON format.
+    
+    Args:
+        command_data: dict with fields: command_id, site_id, zone_id, miner_id, 
+                     command_type, params, priority, expires_at, dedupe_key, signed_at, nonce
+        hmac_secret: the device's HMAC secret
+    
+    Returns:
+        tuple of (signature_hex, sig_version, sig_encoding)
+    """
+    # Fixed field set for canonical JSON
+    canonical_fields = {
+        'command_id': command_data.get('command_id'),
+        'site_id': command_data.get('site_id'),
+        'zone_id': command_data.get('zone_id'),
+        'miner_id': command_data.get('miner_id'),
+        'command_type': command_data.get('command_type'),
+        'params': command_data.get('params'),
+        'priority': command_data.get('priority'),
+        'expires_at': command_data.get('expires_at'),
+        'dedupe_key': command_data.get('dedupe_key'),
+        'signed_at': command_data.get('signed_at'),
+        'nonce': command_data.get('nonce')
+    }
+    
+    # Canonical JSON: sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    canonical_json = json.dumps(canonical_fields, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    
+    # HMAC-SHA256
+    signature = hmac.new(
+        hmac_secret.encode('utf-8'),
+        canonical_json.encode('utf-8'),
+        hashlib.sha256
+    ).hexdigest()
+    
+    return signature, "HMAC-SHA256-CANONICAL-JSON-V1", "hex"
 
 
 def log_audit_event(event_type, actor_type, actor_id, site_id=None, ref_type=None, ref_id=None, payload=None):
@@ -260,15 +322,20 @@ def edge_poll_commands():
         
         record_command_dispatch(site_id, cmd.command_type)
         
+        normalized_command_type = normalize_command_type(cmd.command_type)
+        
         command_data = {
             'command_source': 'miner',
             'command_id': cmd.id,
+            'site_id': site_id,
+            'zone_id': device_zone_id,
             'miner_id': cmd.miner_id,
-            'command_type': cmd.command_type,
-            'parameters': cmd.parameters or {},
-            'priority': cmd.priority,
-            'created_at': cmd.created_at.isoformat() + 'Z',
+            'command_type': normalized_command_type,
+            'params': cmd.parameters or {},
+            'priority': cmd.priority if cmd.priority is not None else 0,
             'expires_at': cmd.expires_at.isoformat() + 'Z' if cmd.expires_at else None,
+            'dedupe_key': cmd.dedupe_key,
+            'nonce': dispatch_nonce,
             'ack_nonce': dispatch_nonce,
             'lease_expires_at': lease_until.isoformat() + 'Z',
             'retry_count': cmd.retry_count,
@@ -278,32 +345,30 @@ def edge_poll_commands():
         if cmd.remote_command_id:
             command_data['remote_command_id'] = cmd.remote_command_id
         
-        signature = None
         if enable_signature:
             device = g.device
-            if device.token_hash:
-                signing_key = hmac.new(
-                    device.token_hash.encode('utf-8'),
-                    b'command-signing-v1',
-                    hashlib.sha256
-                ).digest()
-            else:
-                signing_key = hashlib.sha256(str(device.id).encode()).digest()
+            hmac_secret = device.device_token or device.token_hash
             
-            payload_hash = hashlib.sha256(
-                json.dumps(cmd.parameters or {}, sort_keys=True).encode()
-            ).hexdigest()
+            canonical_sig_data = {
+                'command_id': cmd.id,
+                'site_id': site_id,
+                'zone_id': device_zone_id,
+                'miner_id': cmd.miner_id,
+                'command_type': normalized_command_type,
+                'params': cmd.parameters or {},
+                'priority': cmd.priority if cmd.priority is not None else 0,
+                'expires_at': cmd.expires_at.isoformat() + 'Z' if cmd.expires_at else None,
+                'dedupe_key': cmd.dedupe_key,
+                'signed_at': now.isoformat() + 'Z',
+                'nonce': dispatch_nonce
+            }
             
-            sig_payload = f"{cmd.id}:{dispatch_nonce}:{cmd.expires_at.isoformat()}:{payload_hash}"
-            signature = hmac.new(
-                signing_key,
-                sig_payload.encode('utf-8'),
-                hashlib.sha256
-            ).hexdigest()
+            signature, sig_version, sig_encoding = generate_canonical_signature(canonical_sig_data, hmac_secret)
             
             cmd.signature = signature
-            command_data['cloud_signature'] = signature
-            command_data['sig_version'] = 'v2'
+            command_data['signature'] = signature
+            command_data['sig_version'] = sig_version
+            command_data['sig_encoding'] = sig_encoding
             command_data['signed_at'] = now.isoformat() + 'Z'
         
         result.append(command_data)
@@ -370,41 +435,48 @@ def edge_poll_commands():
             
             record_command_dispatch(site_id, cmd.command_type)
             
+            normalized_command_type = normalize_command_type(cmd.command_type)
+            
             command_data = {
                 'command_source': 'remote',
                 'command_id': cmd.id,
-                'command_type': cmd.command_type,
+                'site_id': site_id,
+                'zone_id': cmd.zone_id,
+                'miner_id': None,
+                'command_type': normalized_command_type,
+                'params': cmd.payload_json or {},
+                'priority': 0,
+                'expires_at': cmd.expires_at.isoformat() + 'Z' if cmd.expires_at else None,
+                'dedupe_key': None,
+                'nonce': dispatch_nonce,
+                'ack_nonce': dispatch_nonce,
                 'target_ids': cmd.target_ids,
                 'payload': cmd.payload_json or {},
-                'created_at': cmd.created_at.isoformat() + 'Z',
-                'expires_at': cmd.expires_at.isoformat() + 'Z' if cmd.expires_at else None,
-                'ack_nonce': dispatch_nonce,
             }
             
             if enable_signature:
                 device = g.device
-                if device.token_hash:
-                    signing_key = hmac.new(
-                        device.token_hash.encode('utf-8'),
-                        b'command-signing-v1',
-                        hashlib.sha256
-                    ).digest()
-                else:
-                    signing_key = hashlib.sha256(str(device.id).encode()).digest()
+                hmac_secret = device.device_token or device.token_hash
                 
-                payload_hash = hashlib.sha256(
-                    json.dumps(cmd.payload_json or {}, sort_keys=True).encode()
-                ).hexdigest()
+                canonical_sig_data = {
+                    'command_id': cmd.id,
+                    'site_id': site_id,
+                    'zone_id': cmd.zone_id,
+                    'miner_id': None,
+                    'command_type': normalized_command_type,
+                    'params': cmd.payload_json or {},
+                    'priority': 0,
+                    'expires_at': cmd.expires_at.isoformat() + 'Z' if cmd.expires_at else None,
+                    'dedupe_key': None,
+                    'signed_at': now.isoformat() + 'Z',
+                    'nonce': dispatch_nonce
+                }
                 
-                sig_payload = f"{cmd.id}:{dispatch_nonce}:{cmd.expires_at.isoformat()}:{payload_hash}"
-                signature = hmac.new(
-                    signing_key,
-                    sig_payload.encode('utf-8'),
-                    hashlib.sha256
-                ).hexdigest()
+                signature, sig_version, sig_encoding = generate_canonical_signature(canonical_sig_data, hmac_secret)
                 
-                command_data['cloud_signature'] = signature
-                command_data['sig_version'] = 'v2'
+                command_data['signature'] = signature
+                command_data['sig_version'] = sig_version
+                command_data['sig_encoding'] = sig_encoding
                 command_data['signed_at'] = now.isoformat() + 'Z'
             
             result.append(command_data)
@@ -900,6 +972,151 @@ def edge_ingest_telemetry():
         'received_at': received_at.isoformat() + 'Z',
         'is_delayed': is_delayed,
     })
+
+
+@control_plane_bp.route('/api/edge/v1/events/safety/batch', methods=['POST'])
+@require_device_auth
+def edge_safety_events_batch():
+    """
+    Receive batch of safety events from edge collector.
+    
+    POST body:
+    {
+        "events": [
+            {
+                "miner_id": 123,
+                "action": "THERMAL_SHUTDOWN",
+                "reason": "Temperature exceeded 95C threshold",
+                "temp_max": 98.5,
+                "ts": "2026-01-18T10:30:00Z",
+                "snapshot_json": {...}
+            }
+        ]
+    }
+    """
+    from api.collector_api import SafetyEvent
+    
+    data = request.get_json() or {}
+    events = data.get('events', [])
+    
+    if not events:
+        return jsonify({'error': 'No events provided'}), 400
+    
+    device_id = g.device_id
+    site_id = g.site_id
+    edge_device = g.device
+    
+    received_at = datetime.utcnow()
+    processed_count = 0
+    error_count = 0
+    errors = []
+    
+    for event_data in events:
+        try:
+            miner_id = event_data.get('miner_id')
+            action = event_data.get('action')
+            reason = event_data.get('reason')
+            temp_max = event_data.get('temp_max')
+            ts_str = event_data.get('ts')
+            snapshot_json = event_data.get('snapshot_json')
+            
+            # Validate required fields
+            if not action:
+                error_count += 1
+                errors.append({'miner_id': miner_id, 'error': 'action is required'})
+                continue
+            
+            if not reason:
+                error_count += 1
+                errors.append({'miner_id': miner_id, 'error': 'reason is required'})
+                continue
+            
+            if not ts_str:
+                error_count += 1
+                errors.append({'miner_id': miner_id, 'error': 'ts is required'})
+                continue
+            
+            # Parse timestamp
+            try:
+                event_ts = datetime.fromisoformat(ts_str.replace('Z', ''))
+            except (ValueError, AttributeError):
+                error_count += 1
+                errors.append({'miner_id': miner_id, 'error': f'Invalid timestamp format: {ts_str}'})
+                continue
+            
+            # Convert snapshot_json to string if it's a dict
+            snapshot_str = None
+            if snapshot_json:
+                if isinstance(snapshot_json, dict):
+                    snapshot_str = json.dumps(snapshot_json)
+                else:
+                    snapshot_str = str(snapshot_json)
+            
+            # Create safety event record
+            safety_event = SafetyEvent(
+                edge_device_id=device_id,
+                site_id=site_id,
+                miner_id=miner_id,
+                action=action,
+                reason=reason,
+                temp_max=temp_max,
+                ts=event_ts,
+                snapshot_json=snapshot_str
+            )
+            
+            db.session.add(safety_event)
+            processed_count += 1
+            
+            # Log audit event for each safety event
+            log_audit_event(
+                event_type=f'safety.event.{action.lower()}',
+                actor_type='edge_device',
+                actor_id=device_id,
+                site_id=site_id,
+                ref_type='safety_event',
+                ref_id=None,
+                payload={
+                    'miner_id': miner_id,
+                    'action': action,
+                    'reason': reason,
+                    'temp_max': temp_max,
+                    'event_ts': event_ts.isoformat()
+                }
+            )
+        
+        except Exception as e:
+            logger.error(f"Error processing safety event: {e}")
+            error_count += 1
+            errors.append({'miner_id': event_data.get('miner_id'), 'error': str(e)})
+            continue
+    
+    # Commit all valid events
+    if processed_count > 0:
+        try:
+            db.session.commit()
+            logger.info(f"Processed {processed_count} safety events from device {device_id}")
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Failed to commit safety events: {e}")
+            return jsonify({
+                'error': 'Failed to save events',
+                'processed': 0,
+                'failed': len(events)
+            }), 500
+    
+    response = {
+        'processed': processed_count,
+        'failed': error_count,
+        'received_at': received_at.isoformat() + 'Z',
+        'device_id': device_id,
+        'site_id': site_id,
+    }
+    
+    if errors:
+        response['errors'] = errors
+    
+    status_code = 200 if error_count == 0 else 207
+    return jsonify(response), status_code
 
 
 @control_plane_bp.route('/api/v1/commands/propose', methods=['POST'])
