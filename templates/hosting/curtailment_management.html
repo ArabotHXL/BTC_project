@@ -161,9 +161,14 @@
             <div class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label">{% if current_lang == 'en' %}Strategy{% else %}策略{% endif %}</label>
-                    <select class="form-select" id="strategy-select" required>
-                        <option value="">{% if current_lang == 'en' %}Select Strategy{% else %}选择策略{% endif %}</option>
-                    </select>
+                    <div class="input-group">
+                        <select class="form-select" id="strategy-select" required>
+                            <option value="">{% if current_lang == 'en' %}Select Strategy{% else %}选择策略{% endif %}</option>
+                        </select>
+                        <button type="button" class="btn btn-outline-warning" onclick="openStrategyModal()" title="{% if current_lang == 'en' %}Manage Strategies{% else %}管理策略{% endif %}">
+                            <i class="bi bi-gear"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">{% if current_lang == 'en' %}Target Power Reduction (kW){% else %}目标功率削减 (kW){% endif %}</label>
@@ -1200,6 +1205,289 @@ function getScheduleStatusBadge(status) {
     };
     return badges[status] || `<span class="badge bg-secondary">${status}</span>`;
 }
+
+let currentStrategies = [];
+let editingStrategyId = null;
+
+function openStrategyModal() {
+    const siteId = document.getElementById('site-select').value;
+    if (!siteId) {
+        alert(currentLang === 'en' ? 'Please select a site first' : '请先选择站点');
+        return;
+    }
+    loadStrategiesForManagement(siteId);
+    const modal = new bootstrap.Modal(document.getElementById('strategyManagementModal'));
+    modal.show();
+}
+
+function loadStrategiesForManagement(siteId) {
+    fetch(`/hosting/api/curtailment/strategies?site_id=${siteId}&include_inactive=true`)
+        .then(r => r.json())
+        .then(data => {
+            currentStrategies = data.strategies || [];
+            renderStrategyList();
+        });
+}
+
+function renderStrategyList() {
+    const container = document.getElementById('strategy-list-container');
+    if (!currentStrategies || currentStrategies.length === 0) {
+        container.innerHTML = `<div class="text-center text-muted py-4">
+            <i class="bi bi-inbox fs-1"></i>
+            <p class="mt-2">${currentLang === 'en' ? 'No strategies. Click "Add Strategy" to create one.' : '暂无策略，点击"添加策略"创建。'}</p>
+        </div>`;
+        return;
+    }
+    
+    let html = '<div class="list-group">';
+    currentStrategies.forEach(s => {
+        const typeBadge = getStrategyTypeBadge(s.strategy_type);
+        const activeClass = s.is_active ? '' : 'opacity-50';
+        html += `<div class="list-group-item d-flex justify-content-between align-items-center ${activeClass}">
+            <div>
+                <strong>${s.name}</strong>
+                ${typeBadge}
+                ${s.vip_protection ? '<span class="badge bg-info ms-1">VIP</span>' : ''}
+                ${!s.is_active ? '<span class="badge bg-secondary ms-1">' + (currentLang === 'en' ? 'Inactive' : '已禁用') + '</span>' : ''}
+            </div>
+            <div>
+                <button class="btn btn-sm btn-outline-warning me-1" onclick="editStrategy(${s.id})" title="${currentLang === 'en' ? 'Edit' : '编辑'}">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteStrategy(${s.id})" title="${currentLang === 'en' ? 'Delete' : '删除'}">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>`;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function getStrategyTypeBadge(type) {
+    const types = {
+        'performance_priority': { label: currentLang === 'en' ? 'Performance' : '性能优先', class: 'bg-success' },
+        'customer_priority': { label: currentLang === 'en' ? 'Customer' : '客户优先', class: 'bg-primary' },
+        'fair_distribution': { label: currentLang === 'en' ? 'Fair' : '公平分配', class: 'bg-warning text-dark' },
+        'custom': { label: currentLang === 'en' ? 'Custom' : '自定义', class: 'bg-secondary' }
+    };
+    const t = types[type] || { label: type, class: 'bg-secondary' };
+    return `<span class="badge ${t.class} ms-2">${t.label}</span>`;
+}
+
+function showAddStrategyForm() {
+    editingStrategyId = null;
+    document.getElementById('strategy-form-title').textContent = currentLang === 'en' ? 'Add Strategy' : '添加策略';
+    document.getElementById('strategy-name').value = '';
+    document.getElementById('strategy-type').value = 'performance_priority';
+    document.getElementById('performance-weight').value = 0.7;
+    document.getElementById('efficiency-weight').value = 0.2;
+    document.getElementById('uptime-weight').value = 0.1;
+    document.getElementById('vip-protection').checked = false;
+    document.getElementById('min-uptime').value = 0.8;
+    updateWeightDisplay();
+    document.getElementById('strategy-list-view').style.display = 'none';
+    document.getElementById('strategy-form-view').style.display = 'block';
+}
+
+function editStrategy(id) {
+    const strategy = currentStrategies.find(s => s.id === id);
+    if (!strategy) return;
+    
+    editingStrategyId = id;
+    document.getElementById('strategy-form-title').textContent = currentLang === 'en' ? 'Edit Strategy' : '编辑策略';
+    document.getElementById('strategy-name').value = strategy.name;
+    document.getElementById('strategy-type').value = strategy.strategy_type;
+    document.getElementById('performance-weight').value = strategy.performance_weight || 0.7;
+    document.getElementById('efficiency-weight').value = strategy.power_efficiency_weight || 0.2;
+    document.getElementById('uptime-weight').value = strategy.uptime_weight || 0.1;
+    document.getElementById('vip-protection').checked = strategy.vip_protection || false;
+    document.getElementById('min-uptime').value = strategy.min_uptime_threshold || 0.8;
+    updateWeightDisplay();
+    document.getElementById('strategy-list-view').style.display = 'none';
+    document.getElementById('strategy-form-view').style.display = 'block';
+}
+
+function cancelStrategyForm() {
+    document.getElementById('strategy-form-view').style.display = 'none';
+    document.getElementById('strategy-list-view').style.display = 'block';
+    editingStrategyId = null;
+}
+
+function updateWeightDisplay() {
+    const p = parseFloat(document.getElementById('performance-weight').value) || 0;
+    const e = parseFloat(document.getElementById('efficiency-weight').value) || 0;
+    const u = parseFloat(document.getElementById('uptime-weight').value) || 0;
+    const total = p + e + u;
+    document.getElementById('weight-total').textContent = total.toFixed(2);
+    document.getElementById('weight-total').className = Math.abs(total - 1.0) < 0.01 ? 'text-success fw-bold' : 'text-danger fw-bold';
+}
+
+function saveStrategy() {
+    const siteId = document.getElementById('site-select').value;
+    const name = document.getElementById('strategy-name').value.trim();
+    const strategyType = document.getElementById('strategy-type').value;
+    const performanceWeight = parseFloat(document.getElementById('performance-weight').value);
+    const efficiencyWeight = parseFloat(document.getElementById('efficiency-weight').value);
+    const uptimeWeight = parseFloat(document.getElementById('uptime-weight').value);
+    const vipProtection = document.getElementById('vip-protection').checked;
+    const minUptime = parseFloat(document.getElementById('min-uptime').value);
+    
+    if (!name) {
+        alert(currentLang === 'en' ? 'Please enter strategy name' : '请输入策略名称');
+        return;
+    }
+    
+    const total = performanceWeight + efficiencyWeight + uptimeWeight;
+    if (Math.abs(total - 1.0) > 0.01) {
+        alert(currentLang === 'en' ? 'Weights must sum to 1.0' : '权重之和必须等于1.0');
+        return;
+    }
+    
+    const payload = {
+        site_id: parseInt(siteId),
+        name: name,
+        strategy_type: strategyType,
+        performance_weight: performanceWeight,
+        power_efficiency_weight: efficiencyWeight,
+        uptime_weight: uptimeWeight,
+        vip_customer_protection: vipProtection,
+        min_uptime_threshold: minUptime
+    };
+    
+    const url = editingStrategyId 
+        ? `/hosting/api/curtailment/strategies/${editingStrategyId}`
+        : '/hosting/api/curtailment/strategies';
+    const method = editingStrategyId ? 'PUT' : 'POST';
+    
+    fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert(currentLang === 'en' ? 'Strategy saved successfully' : '策略保存成功');
+            cancelStrategyForm();
+            loadStrategiesForManagement(siteId);
+            loadStrategies(siteId);
+        } else {
+            alert((currentLang === 'en' ? 'Error: ' : '错误: ') + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(err => {
+        alert((currentLang === 'en' ? 'Error: ' : '错误: ') + err.message);
+    });
+}
+
+function deleteStrategy(id) {
+    const strategy = currentStrategies.find(s => s.id === id);
+    if (!strategy) return;
+    
+    if (!confirm((currentLang === 'en' ? 'Delete strategy "' : '确定删除策略 "') + strategy.name + '"?')) {
+        return;
+    }
+    
+    fetch(`/hosting/api/curtailment/strategies/${id}`, { method: 'DELETE' })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const siteId = document.getElementById('site-select').value;
+            loadStrategiesForManagement(siteId);
+            loadStrategies(siteId);
+        } else {
+            alert((currentLang === 'en' ? 'Error: ' : '错误: ') + (data.error || 'Unknown error'));
+        }
+    });
+}
 </script>
+
+<!-- Strategy Management Modal -->
+<div class="modal fade" id="strategyManagementModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">
+                    <i class="bi bi-gear-wide-connected me-2"></i>
+                    {% if current_lang == 'en' %}Manage Curtailment Strategies{% else %}管理限电策略{% endif %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Strategy List View -->
+                <div id="strategy-list-view">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted">{% if current_lang == 'en' %}Click a strategy to edit, or add a new one{% else %}点击策略编辑，或添加新策略{% endif %}</span>
+                        <button class="btn btn-warning btn-sm" onclick="showAddStrategyForm()">
+                            <i class="bi bi-plus-circle me-1"></i>{% if current_lang == 'en' %}Add Strategy{% else %}添加策略{% endif %}
+                        </button>
+                    </div>
+                    <div id="strategy-list-container"></div>
+                </div>
+                
+                <!-- Strategy Form View -->
+                <div id="strategy-form-view" style="display:none;">
+                    <h6 id="strategy-form-title" class="mb-3">{% if current_lang == 'en' %}Add Strategy{% else %}添加策略{% endif %}</h6>
+                    <form onsubmit="event.preventDefault(); saveStrategy();">
+                        <div class="mb-3">
+                            <label class="form-label">{% if current_lang == 'en' %}Strategy Name{% else %}策略名称{% endif %} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control bg-dark text-light border-secondary" id="strategy-name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{% if current_lang == 'en' %}Strategy Type{% else %}策略类型{% endif %}</label>
+                            <select class="form-select bg-dark text-light border-secondary" id="strategy-type">
+                                <option value="performance_priority">{% if current_lang == 'en' %}Performance Priority{% else %}性能优先{% endif %}</option>
+                                <option value="customer_priority">{% if current_lang == 'en' %}Customer Priority{% else %}客户优先{% endif %}</option>
+                                <option value="fair_distribution">{% if current_lang == 'en' %}Fair Distribution{% else %}公平分配{% endif %}</option>
+                                <option value="custom">{% if current_lang == 'en' %}Custom{% else %}自定义{% endif %}</option>
+                            </select>
+                        </div>
+                        <div class="card bg-secondary bg-opacity-25 mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">{% if current_lang == 'en' %}Weight Configuration{% else %}权重配置{% endif %}</h6>
+                                <p class="text-muted small mb-2">{% if current_lang == 'en' %}Weights must sum to 1.0{% else %}权重之和必须等于 1.0{% endif %} - {% if current_lang == 'en' %}Total{% else %}当前合计{% endif %}: <span id="weight-total">1.00</span></p>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label small">{% if current_lang == 'en' %}Performance{% else %}性能{% endif %}</label>
+                                        <input type="number" class="form-control bg-dark text-light border-secondary" id="performance-weight" min="0" max="1" step="0.1" value="0.7" onchange="updateWeightDisplay()">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small">{% if current_lang == 'en' %}Efficiency{% else %}能效{% endif %}</label>
+                                        <input type="number" class="form-control bg-dark text-light border-secondary" id="efficiency-weight" min="0" max="1" step="0.1" value="0.2" onchange="updateWeightDisplay()">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small">{% if current_lang == 'en' %}Uptime{% else %}运行时间{% endif %}</label>
+                                        <input type="number" class="form-control bg-dark text-light border-secondary" id="uptime-weight" min="0" max="1" step="0.1" value="0.1" onchange="updateWeightDisplay()">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="vip-protection">
+                                    <label class="form-check-label">{% if current_lang == 'en' %}VIP Customer Protection{% else %}VIP 客户保护{% endif %}</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small">{% if current_lang == 'en' %}Min Uptime Threshold{% else %}最低在线阈值{% endif %}</label>
+                                <input type="number" class="form-control bg-dark text-light border-secondary" id="min-uptime" min="0" max="1" step="0.1" value="0.8">
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-circle me-1"></i>{% if current_lang == 'en' %}Save{% else %}保存{% endif %}
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="cancelStrategyForm()">
+                                {% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 {% endblock %}

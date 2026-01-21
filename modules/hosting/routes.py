@@ -17,7 +17,7 @@ from common.rbac import (
 from models import db, HostingSite, HostingMiner, HostingTicket, HostingIncident, HostingUsageRecord, HostingUsageItem, MinerTelemetry, HostingBill, HostingBillItem, HostingMinerOperationLog, HostingOwnerEncryption, MinerModel, SiteElectricityRateHistory
 from api.collector_api import MinerTelemetryLive, MinerCommand, CollectorKey
 from models import CurtailmentPlan, CurtailmentStrategy, CurtailmentExecution
-from models import ExecutionMode, PlanStatus, ExecutionAction, ExecutionStatus
+from models import ExecutionMode, PlanStatus, ExecutionAction, ExecutionStatus, StrategyType
 from models import AutomationRule, AutomationRuleLog, AutomationRuleCooldown
 from intelligence.curtailment_engine import calculate_curtailment_plan
 from intelligence.curtailment_predictor import predict_optimal_curtailment
@@ -3856,10 +3856,13 @@ def get_curtailment_strategies():
     """获取限电策略列表"""
     try:
         site_id = request.args.get('site_id', type=int)
+        include_inactive = request.args.get('include_inactive', 'false').lower() == 'true'
         
         query = CurtailmentStrategy.query
         if site_id:
             query = query.filter_by(site_id=site_id)
+        if not include_inactive:
+            query = query.filter_by(is_active=True)
         
         strategies = query.all()
         
@@ -3871,6 +3874,10 @@ def get_curtailment_strategies():
                 'strategy_type': s.strategy_type.value,
                 'site_id': s.site_id,
                 'vip_protection': s.vip_customer_protection,
+                'performance_weight': float(s.performance_weight) if s.performance_weight else 0.7,
+                'power_efficiency_weight': float(s.power_efficiency_weight) if s.power_efficiency_weight else 0.2,
+                'uptime_weight': float(s.uptime_weight) if s.uptime_weight else 0.1,
+                'min_uptime_threshold': float(s.min_uptime_threshold) if s.min_uptime_threshold else 0.8,
                 'is_active': s.is_active,
                 'created_at': s.created_at.isoformat() if s.created_at else None
             })
@@ -3879,6 +3886,176 @@ def get_curtailment_strategies():
     except Exception as e:
         logger.error(f"获取策略列表失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/curtailment/strategies', methods=['POST'])
+@login_required
+@requires_module_access(Module.CURTAILMENT_STRATEGY)
+def create_curtailment_strategy():
+    """
+    创建限电策略 Create curtailment strategy
+    """
+    try:
+        data = request.get_json() if request.is_json else request.form
+        user_id = session.get('user_id')
+        
+        site_id = data.get('site_id')
+        name = data.get('name')
+        strategy_type = data.get('strategy_type', 'performance_priority')
+        
+        if not site_id or not name:
+            return jsonify({'success': False, 'error': '缺少必需参数 site_id 和 name'}), 400
+        
+        site = HostingSite.query.get(int(site_id))
+        if not site:
+            return jsonify({'success': False, 'error': '站点不存在'}), 404
+        
+        try:
+            strategy_type_enum = StrategyType(strategy_type)
+        except ValueError:
+            strategy_type_enum = StrategyType.PERFORMANCE_PRIORITY
+        
+        performance_weight = float(data.get('performance_weight', 0.7))
+        power_efficiency_weight = float(data.get('power_efficiency_weight', 0.2))
+        uptime_weight = float(data.get('uptime_weight', 0.1))
+        vip_customer_protection = data.get('vip_customer_protection', False)
+        if isinstance(vip_customer_protection, str):
+            vip_customer_protection = vip_customer_protection.lower() in ('true', '1', 'yes')
+        min_uptime_threshold = float(data.get('min_uptime_threshold', 0.8))
+        
+        new_strategy = CurtailmentStrategy(
+            site_id=int(site_id),
+            name=name,
+            strategy_type=strategy_type_enum,
+            performance_weight=performance_weight,
+            power_efficiency_weight=power_efficiency_weight,
+            uptime_weight=uptime_weight,
+            vip_customer_protection=vip_customer_protection,
+            min_uptime_threshold=min_uptime_threshold,
+            is_active=True,
+            created_by_id=user_id
+        )
+        
+        db.session.add(new_strategy)
+        db.session.commit()
+        
+        logger.info(f"创建限电策略成功: id={new_strategy.id}, name={name}, site_id={site_id}, user_id={user_id}")
+        
+        return jsonify({
+            'success': True,
+            'message': '策略创建成功',
+            'strategy': {
+                'id': new_strategy.id,
+                'name': new_strategy.name,
+                'strategy_type': new_strategy.strategy_type.value,
+                'performance_weight': float(new_strategy.performance_weight),
+                'power_efficiency_weight': float(new_strategy.power_efficiency_weight),
+                'uptime_weight': float(new_strategy.uptime_weight),
+                'vip_customer_protection': new_strategy.vip_customer_protection,
+                'min_uptime_threshold': float(new_strategy.min_uptime_threshold),
+                'is_active': new_strategy.is_active
+            }
+        })
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"创建限电策略失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/curtailment/strategies/<int:strategy_id>', methods=['PUT'])
+@login_required
+@requires_module_access(Module.CURTAILMENT_STRATEGY)
+def update_curtailment_strategy(strategy_id):
+    """
+    更新限电策略 Update curtailment strategy
+    """
+    try:
+        data = request.get_json() if request.is_json else request.form
+        user_id = session.get('user_id')
+        
+        strategy = CurtailmentStrategy.query.get(strategy_id)
+        if not strategy:
+            return jsonify({'success': False, 'error': '策略不存在'}), 404
+        
+        if 'name' in data:
+            strategy.name = data['name']
+        if 'strategy_type' in data:
+            try:
+                strategy.strategy_type = StrategyType(data['strategy_type'])
+            except ValueError:
+                pass
+        if 'performance_weight' in data:
+            strategy.performance_weight = float(data['performance_weight'])
+        if 'power_efficiency_weight' in data:
+            strategy.power_efficiency_weight = float(data['power_efficiency_weight'])
+        if 'uptime_weight' in data:
+            strategy.uptime_weight = float(data['uptime_weight'])
+        if 'vip_customer_protection' in data:
+            vip = data['vip_customer_protection']
+            if isinstance(vip, str):
+                vip = vip.lower() in ('true', '1', 'yes')
+            strategy.vip_customer_protection = vip
+        if 'min_uptime_threshold' in data:
+            strategy.min_uptime_threshold = float(data['min_uptime_threshold'])
+        if 'is_active' in data:
+            active = data['is_active']
+            if isinstance(active, str):
+                active = active.lower() in ('true', '1', 'yes')
+            strategy.is_active = active
+        
+        db.session.commit()
+        
+        logger.info(f"更新限电策略成功: id={strategy_id}, user_id={user_id}")
+        
+        return jsonify({
+            'success': True,
+            'message': '策略更新成功',
+            'strategy': {
+                'id': strategy.id,
+                'name': strategy.name,
+                'strategy_type': strategy.strategy_type.value,
+                'performance_weight': float(strategy.performance_weight),
+                'power_efficiency_weight': float(strategy.power_efficiency_weight),
+                'uptime_weight': float(strategy.uptime_weight),
+                'vip_customer_protection': strategy.vip_customer_protection,
+                'min_uptime_threshold': float(strategy.min_uptime_threshold),
+                'is_active': strategy.is_active
+            }
+        })
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"更新限电策略失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/curtailment/strategies/<int:strategy_id>', methods=['DELETE'])
+@login_required
+@requires_module_access(Module.CURTAILMENT_STRATEGY)
+def delete_curtailment_strategy(strategy_id):
+    """
+    删除限电策略 Delete curtailment strategy
+    """
+    try:
+        user_id = session.get('user_id')
+        
+        strategy = CurtailmentStrategy.query.get(strategy_id)
+        if not strategy:
+            return jsonify({'success': False, 'error': '策略不存在'}), 404
+        
+        strategy.is_active = False
+        db.session.commit()
+        
+        logger.info(f"删除限电策略成功: id={strategy_id}, user_id={user_id}")
+        
+        return jsonify({
+            'success': True,
+            'message': '策略已删除'
+        })
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"删除限电策略失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @hosting_bp.route('/api/curtailment/kpis', methods=['GET'])
 @login_required
