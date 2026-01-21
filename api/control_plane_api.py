@@ -943,9 +943,10 @@ def _handle_remote_command_ack(command, command_id):
 
 
 @control_plane_bp.route('/api/edge/v1/telemetry/ingest', methods=['POST'])
+@control_plane_bp.route('/api/edge/v1/telemetry/batch', methods=['POST'])  # Alias for HashInsight Remote compatibility
 @require_device_auth
 def edge_ingest_telemetry():
-    """Ingest telemetry batch from edge"""
+    """Ingest telemetry batch from edge (also available as /batch for Remote compatibility)"""
     data = request.get_json() or {}
     telemetry_batch = data.get('telemetry', [])
     client_timestamp = data.get('client_timestamp')
