@@ -78,6 +78,14 @@ The system is built on a Flask backend using Blueprints. It features custom emai
     - **Credential Fingerprint**: SHA-256 truncated hash for integrity verification
     - **REST API**: /api/v1/sites/{id}/security-settings, /api/v1/miners/{id}/credential, /api/v1/miners/{id}/reveal, /api/v1/sites/{id}/batch-migrate, /api/v1/edge/decrypt, /api/v1/audit/verify
   - **Test Coverage**: 63+ tests covering security, ABAC, approval workflow, command states, credential protection, and audit chain verification
+- **SOC2 Security Compliance Module** (security_soc2.py): Enterprise security features for SOC2 Type II compliance:
+  - **Log Retention Policy**: Automatic audit log cleanup with configurable retention period (AUDIT_LOG_RETENTION_DAYS, default 365 days), daily scheduled cleanup at 2:00 AM
+  - **Login Security Enhancement**: Account lockout after 5 failed attempts in 15 minutes (30-minute lock), suspicious login detection (new IP/device), risk scoring
+  - **Password Policy**: Minimum 8 characters, requires uppercase, lowercase, number, special character; 90-day password expiry enforcement
+  - **Session Security**: 8-hour session timeout (PERMANENT_SESSION_LIFETIME)
+  - **Security Alerts**: Admin notifications for brute force attacks, suspicious logins, password expiry batch alerts, data export events
+  - **Data Access Logging**: Track all sensitive data access (credentials, customer_data, financial_data, audit_logs)
+  - **PII Data Masking**: Automatic masking of emails, phone numbers, SSNs, credit cards, API keys, JWT tokens, passwords in audit logs
 
 ### System Design Choices
 The architecture emphasizes modularity with page-isolated components and database-centric communication. Authentication is custom email-based with session management and RBAC. API integrations follow a strategy of intelligent fallback, Stale-While-Revalidate (SWR) caching, batch API calls, and robust error handling. The system is optimized for deployment on the Replit platform using Gunicorn.
