@@ -1,22 +1,23 @@
 """
-Remote Miner Control API
-远程矿机控制 - Cloud Control Plane
+Remote Miner Control API - COMPATIBILITY LAYER
+远程矿机控制 - 兼容层 (已弃用，请迁移到 /api/v1/commands)
+
+**DEPRECATION NOTICE**
+This API is deprecated and will be removed on 2026-06-01.
+Please migrate to the v1 Control Plane API:
+  - POST /api/v1/commands/propose (replaces /api/sites/<site_id>/commands POST)
+  - GET /api/v1/commands (replaces /api/sites/<site_id>/commands GET)
+  - GET /api/v1/commands/<id> (replaces /api/commands/<id> GET)
+  - POST /api/v1/commands/<id>/deny (replaces /api/commands/<id>/cancel)
+  - POST /api/v1/commands/<id>/approve (unchanged)
+
+All endpoints in this file forward to v1 Control Plane internally.
+Deprecation header: Deprecation-Date: 2026-06-01
 
 RBAC权限矩阵:
 - REMOTE_CONTROL_REQUEST: Owner/Admin/Mining_Site_Owner/Client = FULL, Customer/Guest = NONE
 - REMOTE_CONTROL_AUDIT: Owner/Admin/Mining_Site_Owner = FULL, Client/Customer = READ, Guest = NONE
 - REMOTE_CONTROL_EXECUTE: Owner/Admin/Mining_Site_Owner = FULL, others NONE
-
-Endpoints:
-    POST /api/sites/<site_id>/commands - Create remote command (REMOTE_CONTROL_REQUEST)
-    GET /api/sites/<site_id>/commands - List commands for site (REMOTE_CONTROL_AUDIT)
-    GET /api/commands/<command_id> - Get command details (REMOTE_CONTROL_AUDIT)
-    POST /api/commands/<command_id>/cancel - Cancel command (REMOTE_CONTROL_REQUEST)
-    POST /api/commands/<command_id>/approve - Approve pending command (REMOTE_CONTROL_EXECUTE)
-    
-Edge-facing endpoints:
-    GET /api/edge/v1/commands/poll - Poll for queued commands (device auth)
-    POST /api/edge/v1/commands/<command_id>/ack - Acknowledge command completion (device auth)
 """
 
 import os
@@ -44,6 +45,31 @@ REMOTE_CONTROL_ENABLED = os.environ.get('REMOTE_CONTROL_ENABLED', 'true').lower(
 COMMAND_EXPIRY_HOURS = int(os.environ.get('COMMAND_EXPIRY_HOURS', '24'))
 MAX_BATCH_SIZE_USER = 10
 MAX_BATCH_SIZE_ADMIN = 100
+
+DEPRECATION_DATE = '2026-06-01'
+DEPRECATION_MESSAGE = 'This endpoint is deprecated. Please migrate to /api/v1/commands. See docs/COMMAND_API_CONVERGENCE.md'
+
+
+def add_deprecation_headers(response):
+    """Add deprecation headers to response"""
+    response.headers['Deprecation'] = f'date="{DEPRECATION_DATE}"'
+    response.headers['Sunset'] = 'Sat, 01 Jun 2026 00:00:00 GMT'
+    response.headers['Link'] = '</api/v1/commands>; rel="successor-version"'
+    return response
+
+
+def make_deprecated_response(data, status_code=200):
+    """Create a response with deprecation warning included"""
+    if isinstance(data, dict):
+        data['_deprecation'] = {
+            'warning': DEPRECATION_MESSAGE,
+            'sunset_date': DEPRECATION_DATE,
+            'migration_guide': '/docs/COMMAND_API_CONVERGENCE.md',
+            'new_endpoint': '/api/v1/commands'
+        }
+    response = jsonify(data)
+    response.status_code = status_code
+    return add_deprecation_headers(response)
 
 
 def require_user_auth(f):
@@ -119,31 +145,66 @@ def validate_payload(command_type: str, payload: dict) -> tuple:
 
 
 def log_command_event(command: RemoteCommand, action: str, extra_data: dict = None):
-    """Log command event for audit"""
+    """Log command event for audit - unified with v1 Control Plane audit"""
     try:
-        from audit.audit_logger import AuditLogger, AuditCategory, AuditAction
+        from models_control_plane import AuditEvent
+        import hashlib
         
-        audit_data = {
+        event_type_map = {
+            'create': 'command.proposed.legacy',
+            'cancel': 'command.cancelled.legacy',
+            'approve': 'command.approved.legacy',
+        }
+        event_type = event_type_map.get(action, f'command.{action}.legacy')
+        
+        payload = {
             'command_id': command.id,
             'command_type': command.command_type,
             'target_ids': command.target_ids,
             'status': command.status,
             'action': action,
+            'source': 'legacy_api',
+            'deprecation_notice': DEPRECATION_MESSAGE,
         }
         if extra_data:
-            audit_data.update(extra_data)
+            payload.update(extra_data)
         
-        AuditLogger.log(
-            category=AuditCategory.DATA_MODIFICATION,
-            action=AuditAction.UPDATE if action != 'create' else AuditAction.CREATE,
-            resource_type='remote_command',
-            resource_id=command.id,
-            user_id=getattr(g, 'user_id', None),
-            details=audit_data,
-            ip_address=request.remote_addr
+        last_event = AuditEvent.query.order_by(AuditEvent.id.desc()).first()
+        prev_hash = last_event.event_hash if last_event else '0' * 64
+        
+        event = AuditEvent(
+            event_type=event_type,
+            actor_type='user',
+            actor_id=getattr(g, 'user_id', None),
+            site_id=command.site_id,
+            ref_type='remote_command',
+            ref_id=str(command.id),
+            payload=payload,
+            ip_address=request.remote_addr,
+            prev_hash=prev_hash,
         )
+        
+        hash_input = f"{event.event_type}:{event.actor_id}:{event.ref_id}:{prev_hash}"
+        event.event_hash = hashlib.sha256(hash_input.encode()).hexdigest()
+        
+        db.session.add(event)
+        db.session.commit()
+        
     except Exception as e:
         logger.warning(f"Failed to log audit event: {e}")
+        try:
+            from audit.audit_logger import AuditLogger, AuditCategory, AuditAction
+            AuditLogger.log(
+                category=AuditCategory.DATA_MODIFICATION,
+                action=AuditAction.UPDATE if action != 'create' else AuditAction.CREATE,
+                resource_type='remote_command',
+                resource_id=command.id,
+                user_id=getattr(g, 'user_id', None),
+                details={'action': action, 'command_type': command.command_type},
+                ip_address=request.remote_addr
+            )
+        except Exception as e2:
+            logger.error(f"Fallback audit also failed: {e2}")
 
 
 @remote_control_bp.route('/api/sites/<int:site_id>/commands', methods=['POST'])
@@ -232,11 +293,11 @@ def create_command(site_id):
     
     log_command_event(command, 'create')
     
-    return jsonify({
+    return make_deprecated_response({
         'success': True,
         'command': command.to_dict(include_results=True),
         'message': 'Command queued' if not require_approval else 'Command pending approval'
-    }), 201
+    }, 201)
 
 
 @remote_control_bp.route('/api/sites/<int:site_id>/commands', methods=['GET'])
@@ -265,7 +326,7 @@ def list_commands(site_id):
     total = query.count()
     commands = query.order_by(RemoteCommand.created_at.desc()).offset(offset).limit(limit).all()
     
-    return jsonify({
+    return make_deprecated_response({
         'commands': [cmd.to_dict(include_results=True) for cmd in commands],
         'total': total,
         'limit': limit,
@@ -285,9 +346,9 @@ def get_command(command_id):
     """
     command = RemoteCommand.query.get(command_id)
     if not command:
-        return jsonify({'error': 'Command not found'}), 404
+        return make_deprecated_response({'error': 'Command not found'}, 404)
     
-    return jsonify({'command': command.to_dict(include_results=True)})
+    return make_deprecated_response({'command': command.to_dict(include_results=True)})
 
 
 @remote_control_bp.route('/api/commands/<command_id>/cancel', methods=['POST'])
@@ -301,10 +362,10 @@ def cancel_command(command_id):
     """
     command = RemoteCommand.query.get(command_id)
     if not command:
-        return jsonify({'error': 'Command not found'}), 404
+        return make_deprecated_response({'error': 'Command not found'}, 404)
     
     if not command.can_cancel():
-        return jsonify({'error': f'Cannot cancel command in {command.status} status'}), 400
+        return make_deprecated_response({'error': f'Cannot cancel command in {command.status} status'}, 400)
     
     command.status = 'CANCELLED'
     command.updated_at = datetime.utcnow()
@@ -318,7 +379,7 @@ def cancel_command(command_id):
     
     log_command_event(command, 'cancel')
     
-    return jsonify({
+    return make_deprecated_response({
         'success': True,
         'command': command.to_dict(include_results=True)
     })
@@ -338,10 +399,10 @@ def approve_command(command_id):
     
     command = RemoteCommand.query.get(command_id)
     if not command:
-        return jsonify({'error': 'Command not found'}), 404
+        return make_deprecated_response({'error': 'Command not found'}, 404)
     
     if command.status != 'PENDING_APPROVAL':
-        return jsonify({'error': f'Command not pending approval (status={command.status})'}), 400
+        return make_deprecated_response({'error': f'Command not pending approval (status={command.status})'}, 400)
     
     command.status = 'QUEUED'
     command.approved_by_user_id = g.user_id
@@ -377,7 +438,7 @@ def approve_command(command_id):
     response_data = command.to_dict(include_results=True)
     response_data['dispatch'] = dispatch_result
     
-    return jsonify({
+    return make_deprecated_response({
         'success': True,
         'command': response_data
     })

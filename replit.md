@@ -5,21 +5,31 @@ HashInsight Enterprise is an enterprise-grade web application for Bitcoin mining
 
 ## Recent Changes
 
-### 2026-01-17: HMAC Signature/Nonce Backward Compatibility Fix
-**File**: `api/control_plane_api.py`, function `edge_ack_command()`
+### 2026-01-26: Architecture Convergence & AI Closed-Loop
 
-**Problem**: When `ENABLE_COMMAND_SIGNATURE=true`, the server required nonce/signature verification on ACK, causing HTTP 401 errors for legacy edge collectors that don't send these fields.
+**1. Command System Convergence**
+- `api/remote_control_api.py` converted to compatibility layer with deprecation headers (Sunset: 2026-06-01)
+- All command operations route through `api/control_plane_api.py` v1 as single source of truth
+- Unified audit logging to `AuditEvent` table with blockchain-style hash chain
+- See: `docs/COMMAND_API_CONVERGENCE.md`
 
-**Solution**: Made nonce/signature verification OPTIONAL by checking if client sent the fields before validating:
-1. **Nonce verification** (line 571): Changed from `if enable_signature and command.dispatch_nonce and ack_nonce != command.dispatch_nonce:` to `if ack_nonce and command.dispatch_nonce and ack_nonce != command.dispatch_nonce:` - Only verifies if client sent the nonce
-2. **Signature verification** (line 591): Kept condition `if enable_signature and client_signature and command.signature:` - Only verifies if client sent the signature
-3. **Legacy client logging** (line 611): Added `logger.info()` to log when both nonce and signature are missing for backward compatibility tracking
+**2. Telemetry Single Source of Truth**
+- Created `services/telemetry_service.py` for unified telemetry operations
+- New unified API: `api/telemetry_api.py` at `/api/v1/telemetry/*`
+- Data contract documented in `docs/TELEMETRY_DATA_CONTRACT.md`
+- Four-layer architecture: raw_24h → live → history_5min → daily
 
-**Impact**: 
-- New collectors can send nonce/signature for enhanced security
-- Legacy collectors continue working without these fields
-- Allows gradual migration without downtime
-- Maintains security verification for clients that support it
+**3. Coming Soon Feature Gates**
+- Created `common/feature_gates.py` for unified feature flag handling
+- `@require_feature('feature_key')` decorator prevents mock data leakage
+- Standardized `feature_disabled` response with requirements and waitlist
+
+**4. AI Closed-Loop System**
+- Created `models_ai_closedloop.py`: AIRecommendation, AIRecommendationFeedback, AutoApproveRule
+- Created `services/ai_closedloop_service.py` for complete closed-loop workflow
+- Created `api/ai_closedloop_api.py` at `/api/v1/ai/recommendations/*`
+- Full flow: Detect → Diagnose → Recommend → Approve → Act → Audit → Learn
+- Integration with Control Plane v1 via RemoteCommand model
 
 ## User Preferences
 - **Communication style**: Simple, everyday language (中文/English)
@@ -32,60 +42,37 @@ HashInsight Enterprise is an enterprise-grade web application for Bitcoin mining
 The front-end uses Jinja2 with Bootstrap 5 for a mobile-first, responsive, BTC-themed dark design. Chart.js and CountUp.js are used for data visualization and animations. Dynamic English and Chinese language switching is supported with client-side i18n.js.
 
 ### Technical Implementations
-The system is built on a Flask backend using Blueprints. It features custom email authentication, session management, an enterprise RBAC v2.0 system, and SQLAlchemy with PostgreSQL for data persistence. Redis is used for caching and task queuing. Performance-critical routes use SQL aggregation. Device Envelope Encryption provides zero-knowledge E2EE for miner credentials. A 4-layer telemetry storage system (raw_24h, live, history_5min, daily) with APScheduler jobs manages high-volume mining data.
+The system is built on a Flask backend using Blueprints, featuring custom email authentication, session management, an enterprise RBAC v2.0 system, and SQLAlchemy with PostgreSQL for data persistence. Redis is used for caching and task queuing. Performance-critical routes use SQL aggregation. Device Envelope Encryption provides zero-knowledge E2EE for miner credentials. A 4-layer telemetry storage system (raw_24h, live, history_5min, daily) with APScheduler jobs manages high-volume mining data. Command operations are routed through a single control plane API. A unified telemetry service and API are implemented, along with a feature gating system. An AI closed-loop system is integrated for recommendations and feedback.
 
 ### Feature Specifications
-- **Calculator Module**: Dual-algorithm profitability analysis for 19+ ASIC models, real-time BTC price/difficulty integration, ROI analysis, and batch calculation.
-- **CRM System**: Flask-native CRM with deep integration to hosting services, providing lead management, deal pipeline, invoice generation, and asset management.
+- **Calculator Module**: Dual-algorithm profitability analysis, real-time BTC price/difficulty integration, ROI analysis, batch calculation.
+- **CRM System**: Flask-native CRM with lead management, deal pipeline, invoice generation, and asset management.
 - **System Monitoring**: Unified dashboard for real-time health checks, performance metrics, cache analysis, and alerts.
 - **Technical Analysis Platform**: Server-side calculation of 10+ technical indicators and historical BTC price analysis.
-- **Intelligence Layer**: Event-driven system with ARIMA forecasting for BTC price/difficulty, anomaly detection, power optimization, and intelligent ROI explanations.
+- **Intelligence Layer**: Event-driven system with ARIMA forecasting, anomaly detection, power optimization, and intelligent ROI explanations.
 - **User Management**: Admin backend for user creation, role assignment, RBAC, and access period management.
 - **Web3 Configuration Wizard**: Secure interface for blockchain credential setup.
-- **Hosting Services Module**: Real-time miner monitoring, single/batch miner creation APIs, operational ticketing, hosting management, KPI dashboard, and quick search. Supports White Label Branding.
-- **Smart Power Curtailment Module**: Bilingual platform with automated scheduler for smart energy management, supporting manual curtailment and automatic miner recovery based on a Performance Priority strategy, integrated with AI forecasting.
+- **Hosting Services Module**: Real-time miner monitoring, miner creation APIs, operational ticketing, hosting management, KPI dashboard, and White Label Branding.
+- **Smart Power Curtailment Module**: Bilingual platform with automated scheduler for energy management, supporting manual curtailment and automatic miner recovery based on Performance Priority.
 - **Treasury Management**: BTC inventory tracking, cost basis analysis, cash coverage monitoring, sell strategy templates, and a backtesting engine.
 - **Multi-Format Reporting**: Professional report generation in PDF, Excel, and PowerPoint, with role-specific dashboards.
 - **Landing Page**: Enterprise-focused homepage with dynamic real-time statistics.
-- **Edge Collector Architecture**: Enables real-time miner telemetry collection from on-premises farms to cloud infrastructure via a Python-based edge collector, cloud receiver API, and management UI. Features an alert rules engine and bidirectional command control.
+- **Edge Collector Architecture**: Real-time miner telemetry collection via Python-based edge collector, cloud receiver API, and management UI, including an alert rules engine and bidirectional command control.
 - **IP Scanner & Miner Discovery**: Automatic network scanning to discover Bitcoin miners via CGMiner API.
 - **Control Plane System**: Enterprise-grade system for 100MW+ mining operations with:
-  - **Zone Partitioning**: Site-level operational boundaries for multi-tenant isolation (models_control_plane.py: Zone, ZoneMembership)
-  - **ABAC (Attribute-Based Access Control)**: Customer isolation ensuring users only access their own data (api/portal_lite_api.py)
-  - **Dual-Approval Workflow**: High-risk operations require both customer and owner approval with configurable risk levels and approver roles
-  - **Price Plan Versioning**: Audit-safe pricing with immutable version history (models_control_plane.py: PricePlan, PricePlanVersion)
-  - **15-Minute Demand Calculation**: Interval-based power metering with DemandLedger for billing accuracy
-  - **Audit Event Hash Chain**: SHA-256 blockchain-style immutable audit trail (AuditEvent, AuditChainService)
-  - **Portal Lite API**: Customer-facing REST API at /api/v1/portal/* for miners, approvals, and zone status
-  - **Legacy API Compatibility**: /api/remote/* adapter with deprecation warnings for gradual migration
-  - **Zone-Bound Device Security**: Edge devices have zone_id and token_hash for strict access control
-  - **Remote Command Flow**: Full state machine (PENDING → PENDING_APPROVAL → APPROVED → DISPATCHED → COMPLETED)
-  - **Production-Grade Command Reliability (NEW)**: Enterprise-grade command dispatch for 100MW+ operations:
-    - **Atomic Lease Dispatch**: SELECT FOR UPDATE SKIP LOCKED ensures single collector acquires command; 60-second lease timeout
-    - **Idempotent ACK**: ack_hash-based replay detection; duplicate ACKs return {replayed: true} without status change
-    - **Retry with Exponential Backoff**: retry_backoff_sec * 2^attempt formula; configurable max_retries with automatic lease recovery
-    - **Rate Limiting**: Redis sliding window per-site+command_type; reboot: 5/300s, default: 20/60s; graceful fallback when Redis unavailable
-    - **Dedupe Key**: SHA-256 hash prevents duplicate automation-triggered commands within cooldown window
-    - **HMAC Signatures**: Optional per-dispatch nonce + derived signing key for command integrity; backward compatible with legacy collectors
-    - **RemoteCommand↔MinerCommand Sync**: Automatic status propagation ensures approval workflows complete correctly
-    - **Prometheus Metrics**: /metrics endpoint with commands_dispatched_total, commands_acked_total, telemetry_ingest_lag_seconds, and more
-    - **REST API**: GET /api/edge/v1/commands/poll, POST /api/edge/v1/commands/{id}/ack
-  - **Credential Protection (NEW)**: Three-tier IP/credential protection with anti-rollback validation:
-    - **Mode 1 (UI Masking)**: Plaintext storage with RBAC-based display masking for IP and sensitive fields
-    - **Mode 2 (Server Envelope)**: Two-layer key management (MASTER_KEY → Site DEK) using PBKDF2 + Fernet encryption
-    - **Mode 3 (Device E2EE)**: End-to-end encryption where server only stores ciphertext, Edge device decrypts locally
-    - **Anti-Rollback Counter**: Monotonic counter validation prevents replay attacks (ANTI_ROLLBACK_REJECT audit events)
-    - **Credential Fingerprint**: SHA-256 truncated hash for integrity verification
-    - **REST API**: /api/v1/sites/{id}/security-settings, /api/v1/miners/{id}/credential, /api/v1/miners/{id}/reveal, /api/v1/sites/{id}/batch-migrate, /api/v1/edge/decrypt, /api/v1/audit/verify
-  - **Test Coverage**: 63+ tests covering security, ABAC, approval workflow, command states, credential protection, and audit chain verification
-- **SOC2 Security Compliance Module** (security_soc2.py): Enterprise security features for SOC2 Type II compliance:
-  - **Log Retention Policy**: Automatic audit log cleanup with configurable retention period (AUDIT_LOG_RETENTION_DAYS, default 365 days), daily scheduled cleanup at 2:00 AM
-  - **Login Security Enhancement**: Account lockout after 5 failed attempts in 15 minutes (30-minute lock), suspicious login detection (new IP/device), risk scoring
-  - **Password Policy**: Minimum 8 characters, requires uppercase, lowercase, number, special character; 90-day password expiry enforcement
-  - **Session Security**: 8-hour session timeout (PERMANENT_SESSION_LIFETIME)
-  - **Security Alerts**: Admin notifications for brute force attacks, suspicious logins, password expiry batch alerts, data export events
-  - **Data Access Logging**: Track all sensitive data access (credentials, customer_data, financial_data, audit_logs)
-  - **PII Data Masking**: Automatic masking of emails, phone numbers, SSNs, credit cards, API keys, JWT tokens, passwords in audit logs
+  - **Zone Partitioning**: Site-level operational boundaries for multi-tenant isolation.
+  - **ABAC (Attribute-Based Access Control)**: Customer isolation.
+  - **Dual-Approval Workflow**: Configurable risk levels and approver roles for high-risk operations.
+  - **Price Plan Versioning**: Audit-safe pricing with immutable version history.
+  - **15-Minute Demand Calculation**: Interval-based power metering with DemandLedger.
+  - **Audit Event Hash Chain**: SHA-256 blockchain-style immutable audit trail.
+  - **Portal Lite API**: Customer-facing REST API for miners, approvals, and zone status.
+  - **Zone-Bound Device Security**: Edge devices with zone_id and token_hash for strict access control.
+  - **Remote Command Flow**: Full state machine for command dispatch.
+  - **Production-Grade Command Reliability**: Atomic lease dispatch, idempotent ACK, retry with exponential backoff, rate limiting, dedupe key, HMAC signatures, and Prometheus metrics.
+  - **Credential Protection**: Three-tier IP/credential protection with anti-rollback validation and credential fingerprinting.
+  - **Test Coverage**: Extensive test suite covering security, ABAC, approval workflow, command states, credential protection, and audit chain verification.
+- **SOC2 Security Compliance Module**: Enterprise security features for SOC2 Type II compliance including log retention, login security enhancements, password policy, session security, security alerts, data access logging, and PII data masking.
 
 ### System Design Choices
 The architecture emphasizes modularity with page-isolated components and database-centric communication. Authentication is custom email-based with session management and RBAC. API integrations follow a strategy of intelligent fallback, Stale-While-Revalidate (SWR) caching, batch API calls, and robust error handling. The system is optimized for deployment on the Replit platform using Gunicorn.
@@ -123,54 +110,7 @@ The architecture emphasizes modularity with page-isolated components and databas
 - **CountUp.js**: Number animation.
 
 ### Infrastructure
-- **PostgreSQL**: Relational database (Replit hosted).
+- **PostgreSQL**: Relational database.
 - **Redis**: In-memory data store (cache + task queue).
 - **Python 3.9+**: Runtime.
 - **Replit Platform**: Deployment and hosting.
-
-## Configuration & Environment Variables
-
-### Core Environment Variables (Required)
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `SESSION_SECRET` | Flask session secret key (REQUIRED - must be set in production) | `your-secure-random-string` |
-| `DATABASE_URL` | PostgreSQL database connection string | `postgresql://user:pass@host/db` |
-| `REDIS_URL` | Redis connection URL for caching and rate limiting | `redis://localhost:6379/0` |
-
-### Prometheus Metrics Configuration
-| Variable | Description | Default | Example |
-|----------|-------------|---------|---------|
-| `ENABLE_COMMAND_SIGNATURE` | Enable command signature verification for secure remote commands | `False` | `true` or `false` |
-
-The Prometheus metrics endpoint is exposed at `GET /metrics` and provides:
-- **Commands Dispatched**: Track total commands sent to edge collectors
-- **Commands Acknowledged**: Monitor acknowledgment status (succeeded/failed)
-- **Commands Failed**: Track failed commands with specific error codes
-- **Rule Evaluations**: Monitor automation/control rules evaluation
-- **Telemetry Ingest Lag**: Measure data ingestion delay in seconds
-- **Command Dispatch Duration**: Histogram of dispatch timing (percentiles)
-- **Active Leases**: Current count of active equipment leases per site
-
-### Optional Deployment Configuration
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `FLASK_ENV` | Flask environment (development/production) | `development` |
-| `BLOCKCHAIN_ENABLED` | Enable blockchain integration and scheduler | `false` |
-| `ENABLE_BACKGROUND_SERVICES` | Enable background analytics and data collectors | `1` |
-| `FAST_STARTUP` | Enable deferred initialization for faster deployment | `1` |
-| `SKIP_DATABASE_HEALTH_CHECK` | Skip database health check on startup | `1` |
-
-## Documentation
-
-### Documentation Practices
-- **Update docs when making changes**: Always update relevant documentation when modifying modules, APIs, or system logic
-- **Keep docs/ folder current**: Technical architecture documents should reflect the current system state
-- **Include flowcharts for complex flows**: Use ASCII diagrams for data flow and system architecture
-
-### Key Documentation Files
-| File | Description |
-|------|-------------|
-| `docs/COLLECTOR_REMOTE_CONTROL_FLOWCHART.md` | Edge collector and remote control system architecture, endpoints, and database tables |
-| `SYSTEM_ARCHITECTURE_COMPLETE.md` | Complete system architecture overview |
-| `OPERATIONS_MANUAL_EN.md` | Operations and deployment guide |
-| `replit.md` | Project summary and user preferences (this file) |

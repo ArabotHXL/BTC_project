@@ -513,6 +513,7 @@ import models_subscription  # noqa: F401
 import models_device_encryption  # noqa: F401
 import models_remote_control  # noqa: F401
 import models_control_plane  # noqa: F401 - Zone/Customer/PricePlan/DemandLedger/CommandApproval/AuditEvent
+import models_ai_closedloop  # noqa: F401 - AIRecommendation/AIRecommendationFeedback/AutoApproveRule
 logging.info("Models imported successfully at module level")
 
 # Helper functions that use database models - defined AFTER model imports
@@ -4748,6 +4749,26 @@ except ImportError as e:
     logging.warning(f"Edge Collector API not available: {e}")
 except Exception as e:
     logging.error(f"Failed to register Edge Collector API: {e}")
+
+# Unified Telemetry API (统一遥测数据 - 单一数据真相)
+try:
+    from api.telemetry_api import telemetry_bp
+    app.register_blueprint(telemetry_bp)
+    logging.info("Unified Telemetry API registered successfully")
+except ImportError as e:
+    logging.warning(f"Unified Telemetry API not available: {e}")
+except Exception as e:
+    logging.error(f"Failed to register Unified Telemetry API: {e}")
+
+# AI Closed-Loop API (AI 闭环流程)
+try:
+    from api.ai_closedloop_api import ai_closedloop_bp
+    app.register_blueprint(ai_closedloop_bp)
+    logging.info("AI Closed-Loop API registered successfully")
+except ImportError as e:
+    logging.warning(f"AI Closed-Loop API not available: {e}")
+except Exception as e:
+    logging.error(f"Failed to register AI Closed-Loop API: {e}")
 
 # Edge Device Management API (设备信封加密)
 try:
