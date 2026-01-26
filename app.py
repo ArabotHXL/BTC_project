@@ -62,6 +62,9 @@ app.config['SECRET_KEY'] = app.secret_key  # Ensure SECRET_KEY is set for Flask-
 # Force template reloading to avoid Jinja2 cache issues
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
+# SOC2 Compliance: Session timeout configuration (8 hour session lifetime)
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=8)
+
 # Force disable Flask-WTF global CSRF protection that may auto-activate
 try:
     from flask_wtf.csrf import CSRFProtect

@@ -31,6 +31,12 @@ from models import UserAccess, LoginRecord, User, PasswordResetToken
 from auth import verify_email, verify_password_login, generate_wallet_login_message, verify_wallet_login
 from security_enhancements import SecurityManager
 from rate_limiting import rate_limit
+from security_soc2 import (
+    login_security_manager,
+    password_policy_manager,
+    data_access_logger,
+    SensitiveResourceType
+)
 
 logger = logging.getLogger(__name__)
 
@@ -175,6 +181,14 @@ def login():
         email_or_username = request.form.get('email', '').strip()
         password = request.form.get('password', '')
         
+        # Check if account is locked due to failed login attempts
+        client_ip = get_client_ip()
+        lock_result = login_security_manager.check_account_locked(email_or_username)
+        if lock_result['is_locked']:
+            error_msg = lock_result['message_zh'] if g.language != 'en' else lock_result['message_en']
+            flash(error_msg, 'danger')
+            return render_template('login.html')
+        
         user = None
         login_successful = False
         
@@ -184,6 +198,12 @@ def login():
                 if user:
                     login_successful = True
                     email = user.email
+                    
+                    # Check password expiry (SOC2 compliance)
+                    expiry_result = password_policy_manager.check_password_expiry(user.id if user else None)
+                    if expiry_result.get('is_expired'):
+                        flash('Your password has expired. Please reset your password. / 您的密码已过期，请重置密码。', 'warning')
+                        return redirect(url_for('auth.forgot_password'))
                 else:
                     email = email_or_username
             except Exception as db_error:
@@ -244,6 +264,18 @@ def login():
             
             logger.info(f"用户成功登录: {email}, ID: {session.get('user_id')}, 角色: {user_role}")
             
+            # Record successful login and detect suspicious activity
+            login_security_manager.record_successful_login(email, client_ip or '')
+            user_agent = request.headers.get('User-Agent', '')
+            suspicious_result = login_security_manager.detect_suspicious_login(
+                user_id=str(session.get('user_id', '')),
+                ip=client_ip or '',
+                user_agent=user_agent,
+                email=email
+            )
+            if suspicious_result['is_suspicious']:
+                logger.warning(f"Suspicious login detected for {email}: {suspicious_result}")
+            
             if g.language == 'en':
                 flash('Login successful! Welcome to BTC Mining Calculator', 'success')
             else:
@@ -253,6 +285,9 @@ def login():
             return redirect(next_url)
         else:
             logger.warning(f"用户登录失败: {email}")
+            
+            # Record failed login for brute force protection
+            login_security_manager.record_failed_login(email, client_ip or '')
             
             if g.language == 'en':
                 flash('Login failed! You do not have access permission', 'danger')
@@ -335,11 +370,11 @@ def reset_password(token):
         password = request.form.get('password', '')
         confirm_password = request.form.get('confirm_password', '')
         
-        if len(password) < 8:
-            if g.language == 'en':
-                flash('Password must be at least 8 characters long', 'danger')
-            else:
-                flash('密码长度至少为8个字符', 'danger')
+        # Validate password strength using SOC2 password policy
+        validation = password_policy_manager.validate_password_strength(password)
+        if not validation.is_valid:
+            errors = validation.get_errors(g.language)
+            flash(' '.join(errors), 'danger')
             return render_template('reset_password.html', valid_token=True, token=token)
         
         if password != confirm_password:
@@ -533,8 +568,11 @@ def register():
             flash('邮箱和密码为必填项', 'error')
             return render_template('register.html')
         
-        if len(password) < 6:
-            flash('密码长度至少6位', 'error')
+        # Validate password strength using SOC2 password policy
+        validation = password_policy_manager.validate_password_strength(password)
+        if not validation.is_valid:
+            errors = validation.get_errors(g.language)
+            flash(' '.join(errors), 'danger')
             return render_template('register.html')
         
         email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'

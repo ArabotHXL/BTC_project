@@ -141,6 +141,14 @@ def create_app():
     # 数据库已在app模块中初始化
     logging.info("Database initialized successfully")
 
+    # SOC2 Compliance: Setup audit log cleanup scheduler
+    try:
+        from security_soc2 import setup_audit_log_cleanup_scheduler
+        setup_audit_log_cleanup_scheduler()
+        logging.info("Audit log cleanup scheduler initialized")
+    except Exception as e:
+        logging.warning(f"Failed to setup audit log cleanup scheduler: {e}")
+
     # 分阶段启动优化 - 延迟加载非关键组件
     fast_startup = os.environ.get("FAST_STARTUP", "1").lower() in ("1", "true", "yes")
     

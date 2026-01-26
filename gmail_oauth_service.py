@@ -251,6 +251,20 @@ def send_verification_email_smtp(to_email, verification_url, language='zh'):
     service = GmailSMTPService()
     return service.send_verification_email(to_email, verification_url, language)
 
+def send_email_smtp(to_email, subject, body):
+    """发送通用邮件的便捷函数 (用于安全告警等)
+    
+    Args:
+        to_email: 接收邮箱
+        subject: 邮件主题
+        body: 邮件正文 (纯文本)
+    
+    Returns:
+        bool: 发送成功返回True，失败返回False
+    """
+    service = GmailSMTPService()
+    return service.send_email(to_email, subject, body, f"<pre>{body}</pre>")
+
 def send_curtailment_notification_email(to_email, plan, time_until_start, language='zh'):
     """
     发送限电计划提醒邮件
