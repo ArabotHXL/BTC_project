@@ -731,13 +731,20 @@ class PasswordPolicyManager:
                 from models import User
                 from db import db
                 user = User.query.get(user_id)
-                if user and hasattr(user, 'password_changed_at'):
-                    password_changed_at = user.password_changed_at
+                if user:
+                    if hasattr(user, 'password_changed_at') and user.password_changed_at:
+                        password_changed_at = user.password_changed_at
+                    elif hasattr(user, 'updated_at') and user.updated_at:
+                        password_changed_at = user.updated_at
+                    elif hasattr(user, 'created_at') and user.created_at:
+                        password_changed_at = user.created_at
+                    else:
+                        password_changed_at = datetime.utcnow()
                 else:
-                    password_changed_at = datetime.utcnow() - timedelta(days=expiry_days + 1)
+                    password_changed_at = datetime.utcnow()
             except Exception as e:
                 logger.error(f"查询用户密码修改时间失败: {e}")
-                password_changed_at = datetime.utcnow() - timedelta(days=expiry_days + 1)
+                password_changed_at = datetime.utcnow()
         
         days_since_change = (datetime.utcnow() - password_changed_at).days
         days_until_expiry = expiry_days - days_since_change
