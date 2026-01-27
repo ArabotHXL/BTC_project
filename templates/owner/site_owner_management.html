@@ -1,0 +1,639 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if current_lang == 'en' %}Site Owner Management{% else %}站点负责人管理{% endif %} - BTC Mining Calculator
+{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --primary-btc: #f7931a;
+    --bg-dark: #1a1d2e;
+    --bg-gradient: linear-gradient(135deg, #0a0a0a 0%, #1a1d2e 50%, #16213e 100%);
+    --card-bg: rgba(255, 255, 255, 0.05);
+    --card-border: rgba(255, 255, 255, 0.1);
+}
+
+body {
+    background: var(--bg-gradient);
+    min-height: 100vh;
+}
+
+.management-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #f7931a, #ffc107);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1rem;
+}
+
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+    backdrop-filter: blur(10px);
+}
+
+.stat-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: var(--primary-btc);
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #b8b8b8;
+}
+
+.actions-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.btn-create {
+    background: linear-gradient(135deg, #f7931a 0%, #ffc107 100%);
+    color: #000;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-create:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(247, 147, 26, 0.4);
+    color: #000;
+}
+
+.owners-table-container {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+    overflow-x: auto;
+}
+
+.owners-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.owners-table th {
+    background: rgba(247, 147, 26, 0.1);
+    color: var(--primary-btc);
+    font-weight: 600;
+    text-align: left;
+    padding: 1rem;
+    border-bottom: 2px solid var(--primary-btc);
+}
+
+.owners-table td {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: #e0e0e0;
+    vertical-align: middle;
+}
+
+.owners-table tr:hover {
+    background: rgba(247, 147, 26, 0.05);
+}
+
+.owner-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f7931a, #ffc107);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #000;
+    font-size: 1.1rem;
+}
+
+.owner-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.owner-name {
+    font-weight: 600;
+    color: #fff;
+}
+
+.owner-email {
+    font-size: 0.85rem;
+    color: #adb5bd;
+}
+
+.status-badge {
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.status-active {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+}
+
+.status-inactive {
+    background: linear-gradient(135deg, #dc3545, #fd7e14);
+    color: white;
+}
+
+.sites-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.site-badge {
+    background: rgba(23, 162, 184, 0.2);
+    color: #17a2b8;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    border: 1px solid rgba(23, 162, 184, 0.3);
+}
+
+.action-btns {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.btn-action {
+    padding: 0.4rem 0.75rem;
+    border-radius: 8px;
+    border: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.btn-view {
+    background: rgba(23, 162, 184, 0.2);
+    color: #17a2b8;
+}
+
+.btn-view:hover {
+    background: rgba(23, 162, 184, 0.3);
+    color: #17a2b8;
+}
+
+.btn-assign {
+    background: rgba(111, 66, 193, 0.2);
+    color: #6f42c1;
+}
+
+.btn-assign:hover {
+    background: rgba(111, 66, 193, 0.3);
+    color: #6f42c1;
+}
+
+.btn-toggle-active {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+}
+
+.btn-toggle-active:hover {
+    background: rgba(220, 53, 69, 0.3);
+}
+
+.btn-toggle-inactive {
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+}
+
+.btn-toggle-inactive:hover {
+    background: rgba(40, 167, 69, 0.3);
+}
+
+.modal-content {
+    background: #1a1d2e;
+    border: 1px solid rgba(247, 147, 26, 0.3);
+    border-radius: 16px;
+}
+
+.modal-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(247, 147, 26, 0.1);
+    border-radius: 16px 16px 0 0;
+}
+
+.modal-title {
+    color: var(--primary-btc);
+    font-weight: 600;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.form-label {
+    color: #e0e0e0;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.form-control, .form-select {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+}
+
+.form-control:focus, .form-select:focus {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--primary-btc);
+    box-shadow: 0 0 0 0.2rem rgba(247, 147, 26, 0.25);
+    color: #fff;
+}
+
+.form-control::placeholder {
+    color: #6c757d;
+}
+
+.modal-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-submit {
+    background: linear-gradient(135deg, #f7931a 0%, #ffc107 100%);
+    color: #000;
+    border: none;
+    font-weight: 600;
+}
+
+.btn-submit:hover {
+    background: linear-gradient(135deg, #ffc107 0%, #f7931a 100%);
+    color: #000;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #adb5bd;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    color: #6c757d;
+}
+
+.back-link {
+    color: #adb5bd;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    transition: color 0.2s ease;
+}
+
+.back-link:hover {
+    color: var(--primary-btc);
+}
+
+@media (max-width: 768px) {
+    .management-container {
+        padding: 1rem;
+    }
+    
+    .page-title {
+        font-size: 1.8rem;
+    }
+    
+    .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .owners-table th, .owners-table td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.85rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="management-container">
+    <a href="{{ url_for('index') }}" class="back-link">
+        <i class="bi bi-arrow-left"></i>
+        {% if current_lang == 'en' %}Back to Dashboard{% else %}返回仪表盘{% endif %}
+    </a>
+
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="bi bi-people-fill me-2"></i>
+            {% if current_lang == 'en' %}Site Owner Management{% else %}站点负责人管理{% endif %}
+        </h1>
+        <p class="text-light">
+            {% if current_lang == 'en' %}Manage mining site owners and their assigned sites{% else %}管理矿场站点负责人及其分配的站点{% endif %}
+        </p>
+    </div>
+
+    <div class="stats-row">
+        <div class="stat-card">
+            <i class="bi bi-person-badge stat-icon"></i>
+            <span class="stat-value">{{ owners_data|length }}</span>
+            <div class="stat-label">{% if current_lang == 'en' %}Total Site Owners{% else %}站点负责人总数{% endif %}</div>
+        </div>
+        <div class="stat-card">
+            <i class="bi bi-check-circle stat-icon"></i>
+            <span class="stat-value">{{ owners_data|selectattr('owner.is_active')|list|length }}</span>
+            <div class="stat-label">{% if current_lang == 'en' %}Active Owners{% else %}活跃负责人{% endif %}</div>
+        </div>
+        <div class="stat-card">
+            <i class="bi bi-building stat-icon"></i>
+            <span class="stat-value">{{ owners_data|sum(attribute='sites_count') }}</span>
+            <div class="stat-label">{% if current_lang == 'en' %}Assigned Sites{% else %}已分配站点{% endif %}</div>
+        </div>
+        <div class="stat-card">
+            <i class="bi bi-people stat-icon"></i>
+            <span class="stat-value">{{ owners_data|sum(attribute='customer_count') }}</span>
+            <div class="stat-label">{% if current_lang == 'en' %}Total Customers{% else %}客户总数{% endif %}</div>
+        </div>
+    </div>
+
+    <div class="actions-bar">
+        <div>
+            <span class="text-muted">
+                {% if current_lang == 'en' %}
+                    {{ unassigned_sites|length }} unassigned site(s) available
+                {% else %}
+                    {{ unassigned_sites|length }} 个未分配站点可用
+                {% endif %}
+            </span>
+        </div>
+        <button class="btn-create" data-bs-toggle="modal" data-bs-target="#createOwnerModal">
+            <i class="bi bi-plus-lg"></i>
+            {% if current_lang == 'en' %}Create Site Owner{% else %}创建站点负责人{% endif %}
+        </button>
+    </div>
+
+    <div class="owners-table-container">
+        {% if owners_data %}
+        <table class="owners-table">
+            <thead>
+                <tr>
+                    <th>{% if current_lang == 'en' %}Owner{% else %}负责人{% endif %}</th>
+                    <th>{% if current_lang == 'en' %}Company{% else %}公司{% endif %}</th>
+                    <th>{% if current_lang == 'en' %}Sites Owned{% else %}管理站点{% endif %}</th>
+                    <th>{% if current_lang == 'en' %}Customers{% else %}客户数{% endif %}</th>
+                    <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                    <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in owners_data %}
+                <tr>
+                    <td>
+                        <div class="owner-info">
+                            <div class="owner-avatar">
+                                {{ data.owner.name[0]|upper if data.owner.name else '?' }}
+                            </div>
+                            <div>
+                                <div class="owner-name">{{ data.owner.name }}</div>
+                                <div class="owner-email">{{ data.owner.email }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ data.owner.company or '-' }}</td>
+                    <td>
+                        <div class="sites-badges">
+                            {% if data.sites_owned %}
+                                {% for site in data.sites_owned[:3] %}
+                                    <span class="site-badge">{{ site.name }}</span>
+                                {% endfor %}
+                                {% if data.sites_owned|length > 3 %}
+                                    <span class="site-badge">+{{ data.sites_owned|length - 3 }}</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">{% if current_lang == 'en' %}None{% else %}无{% endif %}</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        <strong>{{ data.customer_count }}</strong>
+                    </td>
+                    <td>
+                        {% if data.owner.is_active %}
+                            <span class="status-badge status-active">
+                                {% if current_lang == 'en' %}Active{% else %}活跃{% endif %}
+                            </span>
+                        {% else %}
+                            <span class="status-badge status-inactive">
+                                {% if current_lang == 'en' %}Disabled{% else %}已禁用{% endif %}
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="action-btns">
+                            <a href="{{ url_for('admin.view_site_owner_details', owner_id=data.owner.id) }}" class="btn-action btn-view">
+                                <i class="bi bi-eye"></i>
+                                {% if current_lang == 'en' %}View{% else %}查看{% endif %}
+                            </a>
+                            <button type="button" class="btn-action btn-assign" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#assignSiteModal"
+                                    data-owner-id="{{ data.owner.id }}"
+                                    data-owner-name="{{ data.owner.name }}">
+                                <i class="bi bi-building-add"></i>
+                                {% if current_lang == 'en' %}Assign{% else %}分配{% endif %}
+                            </button>
+                            <form action="{{ url_for('admin.toggle_site_owner_status', owner_id=data.owner.id) }}" method="POST" style="display: inline;">
+                                {% if data.owner.is_active %}
+                                    <button type="submit" class="btn-action btn-toggle-active" onclick="return confirm('{% if current_lang == 'en' %}Disable this site owner?{% else %}确定要禁用该站点负责人吗?{% endif %}')">
+                                        <i class="bi bi-pause-circle"></i>
+                                        {% if current_lang == 'en' %}Disable{% else %}禁用{% endif %}
+                                    </button>
+                                {% else %}
+                                    <button type="submit" class="btn-action btn-toggle-inactive">
+                                        <i class="bi bi-play-circle"></i>
+                                        {% if current_lang == 'en' %}Enable{% else %}启用{% endif %}
+                                    </button>
+                                {% endif %}
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-person-x"></i>
+            <h4>{% if current_lang == 'en' %}No Site Owners Found{% else %}未找到站点负责人{% endif %}</h4>
+            <p>{% if current_lang == 'en' %}Create your first site owner to get started{% else %}创建您的第一个站点负责人以开始使用{% endif %}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="modal fade" id="createOwnerModal" tabindex="-1" aria-labelledby="createOwnerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createOwnerModalLabel">
+                    <i class="bi bi-person-plus me-2"></i>
+                    {% if current_lang == 'en' %}Create Site Owner{% else %}创建站点负责人{% endif %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('admin.create_site_owner') }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="ownerName" class="form-label">
+                            {% if current_lang == 'en' %}Full Name{% else %}姓名{% endif %} *
+                        </label>
+                        <input type="text" class="form-control" id="ownerName" name="name" required 
+                               placeholder="{% if current_lang == 'en' %}Enter full name{% else %}输入姓名{% endif %}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="ownerEmail" class="form-label">
+                            {% if current_lang == 'en' %}Email{% else %}邮箱{% endif %} *
+                        </label>
+                        <input type="email" class="form-control" id="ownerEmail" name="email" required
+                               placeholder="{% if current_lang == 'en' %}Enter email address{% else %}输入邮箱地址{% endif %}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="ownerCompany" class="form-label">
+                            {% if current_lang == 'en' %}Company{% else %}公司{% endif %}
+                        </label>
+                        <input type="text" class="form-control" id="ownerCompany" name="company"
+                               placeholder="{% if current_lang == 'en' %}Enter company name{% else %}输入公司名称{% endif %}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="ownerPassword" class="form-label">
+                            {% if current_lang == 'en' %}Password{% else %}密码{% endif %}
+                        </label>
+                        <input type="password" class="form-control" id="ownerPassword" name="password"
+                               placeholder="{% if current_lang == 'en' %}Enter password (optional){% else %}输入密码（可选）{% endif %}">
+                        <small class="text-muted">
+                            {% if current_lang == 'en' %}Leave empty to send invitation email{% else %}留空则发送邀请邮件{% endif %}
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        {% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}
+                    </button>
+                    <button type="submit" class="btn btn-submit">
+                        <i class="bi bi-check-lg me-1"></i>
+                        {% if current_lang == 'en' %}Create{% else %}创建{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="assignSiteModal" tabindex="-1" aria-labelledby="assignSiteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="assignSiteModalLabel">
+                    <i class="bi bi-building-add me-2"></i>
+                    {% if current_lang == 'en' %}Assign Site{% else %}分配站点{% endif %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="assignSiteForm" method="POST">
+                <div class="modal-body">
+                    <p class="text-light mb-3">
+                        {% if current_lang == 'en' %}Assign a site to{% else %}分配站点给{% endif %}
+                        <strong id="assignOwnerName"></strong>
+                    </p>
+                    <div class="mb-3">
+                        <label for="siteSelect" class="form-label">
+                            {% if current_lang == 'en' %}Select Site{% else %}选择站点{% endif %} *
+                        </label>
+                        <select class="form-select" id="siteSelect" name="site_id" required>
+                            <option value="">{% if current_lang == 'en' %}Choose a site...{% else %}选择一个站点...{% endif %}</option>
+                            {% for site in unassigned_sites %}
+                                <option value="{{ site.id }}">{{ site.name }} ({{ site.location }})</option>
+                            {% endfor %}
+                        </select>
+                        {% if not unassigned_sites %}
+                            <small class="text-warning">
+                                {% if current_lang == 'en' %}No unassigned sites available{% else %}没有可分配的站点{% endif %}
+                            </small>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        {% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}
+                    </button>
+                    <button type="submit" class="btn btn-submit" {% if not unassigned_sites %}disabled{% endif %}>
+                        <i class="bi bi-check-lg me-1"></i>
+                        {% if current_lang == 'en' %}Assign{% else %}分配{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const assignModal = document.getElementById('assignSiteModal');
+    if (assignModal) {
+        assignModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const ownerId = button.getAttribute('data-owner-id');
+            const ownerName = button.getAttribute('data-owner-name');
+            
+            document.getElementById('assignOwnerName').textContent = ownerName;
+            document.getElementById('assignSiteForm').action = '/admin/site-owners/' + ownerId + '/assign-site';
+        });
+    }
+});
+</script>
+{% endblock %}

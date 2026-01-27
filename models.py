@@ -974,6 +974,13 @@ class UserAccess(db.Model):
     # 创建者关联（矿场主可以创建客户）
     created_by_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True)
     created_by = db.relationship('UserAccess', foreign_keys=[created_by_id], backref='managed_users', remote_side=[id])
+    
+    # 多租户：用户所属站点（客户只能访问自己站点的数据）
+    managed_by_site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=True, index=True)
+    managed_site = db.relationship('HostingSite', foreign_keys=[managed_by_site_id], backref='site_users')
+    
+    # 账户状态
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
 
     def __init__(self, name, email, access_days=30, company=None, position=None, notes=None, role="guest", 
                  username=None, password_hash=None, subscription_plan="free", wallet_address=None):
@@ -1529,6 +1536,10 @@ class HostingSite(db.Model):
     
     # 站点描述
     description = db.Column(db.Text, nullable=True)
+    
+    # 多租户：站点归属的矿场主
+    owner_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True, index=True)
+    owner = db.relationship('UserAccess', foreign_keys=[owner_id], backref='owned_sites')
     
     # 时间戳
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)

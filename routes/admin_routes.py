@@ -22,6 +22,13 @@ HashInsight Enterprise - Admin Routes Blueprint
 - /admin/verify-user/<int:user_id> - 验证用户邮箱 (USER_EDIT)
 - /admin/extend-access/<int:user_id> - 延长用户访问时间 (USER_EDIT)
 
+Site Owner Management:
+- /admin/site-owners - 站点负责人列表 (USER_LIST_VIEW)
+- /admin/site-owners/create - 创建站点负责人 (USER_CREATE)
+- /admin/site-owners/<id>/toggle-status - 启用/禁用站点负责人 (USER_DISABLE)
+- /admin/site-owners/<id>/assign-site - 分配站点给负责人 (USER_EDIT)
+- /admin/site-owners/<id> - 查看站点负责人详情 (USER_LIST_VIEW)
+
 RBAC Permission Matrix Applied (via @requires_module_access decorator):
 - SYSTEM_HEALTH: Owner/Admin = FULL, others = NONE (database-admin, security-center, backup-recovery, migrate_to_crm)
 - SYSTEM_PERFORMANCE: Owner/Admin = FULL, others = NONE (api-management)
@@ -1005,3 +1012,203 @@ def admin_extend_access(user_id):
     
     
     return jsonify({'success': True})
+
+
+# ==================== Site Owner Management ====================
+
+def get_hosting_site_model():
+    """Lazy load HostingSite model"""
+    from models import HostingSite
+    return HostingSite
+
+
+@admin_bp.route('/admin/site-owners')
+@login_required
+@requires_module_access(Module.USER_LIST_VIEW, require_full=True)
+def site_owner_list():
+    """List all site owners (mining_site_owner role) - USER_LIST_VIEW permission"""
+    try:
+        db = get_db()
+        UserAccess = get_user_access_model()
+        HostingSite = get_hosting_site_model()
+        
+        site_owners = UserAccess.query.filter_by(role='mining_site_owner').order_by(UserAccess.created_at.desc()).all()
+        
+        owners_data = []
+        for owner in site_owners:
+            sites_owned = HostingSite.query.filter_by(owner_id=owner.id).all()
+            customer_count = 0
+            for site in sites_owned:
+                customer_count += UserAccess.query.filter_by(managed_by_site_id=site.id).count()
+            
+            owners_data.append({
+                'owner': owner,
+                'sites_owned': sites_owned,
+                'sites_count': len(sites_owned),
+                'customer_count': customer_count
+            })
+        
+        all_sites = HostingSite.query.filter(HostingSite.owner_id == None).all()
+        
+        return render_template('owner/site_owner_management.html',
+                             owners_data=owners_data,
+                             unassigned_sites=all_sites,
+                             current_lang=session.get('language', 'en'))
+    except Exception as e:
+        logger.error(f"Site owner list error: {e}")
+        flash(f'Error loading site owners: {str(e)}', 'danger')
+        return redirect(url_for('index'))
+
+
+@admin_bp.route('/admin/site-owners/create', methods=['POST'])
+@login_required
+@requires_module_access(Module.USER_CREATE, require_full=True)
+@SecurityManager.csrf_protect
+def create_site_owner():
+    """Create a new site owner account - USER_CREATE permission"""
+    db = get_db()
+    UserAccess = get_user_access_model()
+    
+    try:
+        name = request.form.get('name', '').strip()
+        email = request.form.get('email', '').strip()
+        company = request.form.get('company', '').strip()
+        password = request.form.get('password', '').strip()
+        
+        if not name or not email:
+            flash('Name and email are required', 'danger')
+            return redirect(url_for('admin.site_owner_list'))
+        
+        existing_user = UserAccess.query.filter_by(email=email).first()
+        if existing_user:
+            flash(f'Email {email} already exists', 'warning')
+            return redirect(url_for('admin.site_owner_list'))
+        
+        new_owner = UserAccess(
+            name=name,
+            email=email,
+            company=company,
+            role='mining_site_owner',
+            access_days=365
+        )
+        
+        if password:
+            new_owner.set_password(password)
+        
+        db.session.add(new_owner)
+        db.session.commit()
+        
+        flash(f'Site owner {name} created successfully', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Create site owner error: {e}")
+        flash(f'Failed to create site owner: {str(e)}', 'danger')
+    
+    return redirect(url_for('admin.site_owner_list'))
+
+
+@admin_bp.route('/admin/site-owners/<int:owner_id>/toggle-status', methods=['POST'])
+@login_required
+@requires_module_access(Module.USER_DISABLE, require_full=True)
+def toggle_site_owner_status(owner_id):
+    """Enable/disable site owner - USER_DISABLE permission"""
+    db = get_db()
+    UserAccess = get_user_access_model()
+    
+    try:
+        owner = UserAccess.query.get_or_404(owner_id)
+        
+        if owner.role != 'mining_site_owner':
+            flash('Invalid site owner', 'danger')
+            return redirect(url_for('admin.site_owner_list'))
+        
+        owner.is_active = not owner.is_active
+        db.session.commit()
+        
+        status = 'enabled' if owner.is_active else 'disabled'
+        flash(f'Site owner {owner.name} has been {status}', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Toggle site owner status error: {e}")
+        flash(f'Failed to toggle status: {str(e)}', 'danger')
+    
+    return redirect(url_for('admin.site_owner_list'))
+
+
+@admin_bp.route('/admin/site-owners/<int:owner_id>/assign-site', methods=['POST'])
+@login_required
+@requires_module_access(Module.USER_EDIT, require_full=True)
+def assign_site_to_owner(owner_id):
+    """Assign a site to a site owner - USER_EDIT permission"""
+    db = get_db()
+    UserAccess = get_user_access_model()
+    HostingSite = get_hosting_site_model()
+    
+    try:
+        owner = UserAccess.query.get_or_404(owner_id)
+        
+        if owner.role != 'mining_site_owner':
+            flash('Invalid site owner', 'danger')
+            return redirect(url_for('admin.site_owner_list'))
+        
+        site_id = request.form.get('site_id')
+        if not site_id:
+            flash('Please select a site', 'warning')
+            return redirect(url_for('admin.site_owner_list'))
+        
+        site = HostingSite.query.get_or_404(int(site_id))
+        site.owner_id = owner.id
+        db.session.commit()
+        
+        flash(f'Site "{site.name}" assigned to {owner.name}', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Assign site to owner error: {e}")
+        flash(f'Failed to assign site: {str(e)}', 'danger')
+    
+    return redirect(url_for('admin.site_owner_list'))
+
+
+@admin_bp.route('/admin/site-owners/<int:owner_id>')
+@login_required
+@requires_module_access(Module.USER_LIST_VIEW, require_full=True)
+def view_site_owner_details(owner_id):
+    """View site owner details with their customers and sites - USER_LIST_VIEW permission"""
+    try:
+        UserAccess = get_user_access_model()
+        HostingSite = get_hosting_site_model()
+        
+        owner = UserAccess.query.get_or_404(owner_id)
+        
+        if owner.role != 'mining_site_owner':
+            flash('Invalid site owner', 'danger')
+            return redirect(url_for('admin.site_owner_list'))
+        
+        sites_owned = HostingSite.query.filter_by(owner_id=owner.id).all()
+        
+        sites_data = []
+        total_customers = 0
+        for site in sites_owned:
+            customers = UserAccess.query.filter_by(managed_by_site_id=site.id).all()
+            total_customers += len(customers)
+            sites_data.append({
+                'site': site,
+                'customers': customers,
+                'customer_count': len(customers)
+            })
+        
+        unassigned_sites = HostingSite.query.filter(HostingSite.owner_id == None).all()
+        
+        return render_template('owner/site_owner_detail.html',
+                             owner=owner,
+                             sites_data=sites_data,
+                             total_customers=total_customers,
+                             unassigned_sites=unassigned_sites,
+                             current_lang=session.get('language', 'en'))
+    except Exception as e:
+        logger.error(f"View site owner details error: {e}")
+        flash(f'Error loading site owner details: {str(e)}', 'danger')
+        return redirect(url_for('admin.site_owner_list'))
