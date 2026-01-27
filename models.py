@@ -1143,6 +1143,14 @@ class Customer(db.Model):
     # 关联到矿场主
     created_by_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True)
     created_by = db.relationship('UserAccess', foreign_keys=[created_by_id], backref='managed_customers')
+    
+    # 关联到托管站点（多租户）
+    site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=True)
+    site = db.relationship('HostingSite', foreign_keys=[site_id], backref='customers')
+    
+    # 关联到系统登录账号（当客户需要登录时）
+    user_account_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True)
+    user_account = db.relationship('UserAccess', foreign_keys=[user_account_id], backref='crm_customer')
 
     # 关联关系
     contacts = db.relationship('Contact', backref='customer', lazy=True, cascade="all, delete-orphan")
