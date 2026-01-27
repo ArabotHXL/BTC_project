@@ -281,8 +281,20 @@ def login():
             else:
                 flash('登录成功！欢迎使用BTC挖矿计算器', 'success')
             
-            next_url = session.pop('next_url', url_for('index'))
-            return redirect(next_url)
+            # Role-based redirect after login
+            next_url = session.pop('next_url', None)
+            if next_url:
+                return redirect(next_url)
+            
+            # Default redirect based on role
+            if user_role in ['owner', 'admin']:
+                return redirect(url_for('admin.site_owners'))
+            elif user_role == 'mining_site_owner':
+                return redirect(url_for('hosting.my_customers'))
+            elif user_role == 'client':
+                return redirect(url_for('hosting.dashboard'))
+            else:
+                return redirect(url_for('index'))
         else:
             logger.warning(f"用户登录失败: {email}")
             

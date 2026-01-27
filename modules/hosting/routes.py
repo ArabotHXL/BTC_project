@@ -8752,6 +8752,282 @@ def get_carbon_emissions():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+# ==================== 矿场主客户管理 / Site Owner Customer Management ====================
+
+@hosting_bp.route('/host/my-customers')
+@login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT, require_full=False)
+def my_customers_page():
+    """Site owner's customer management page"""
+    user_role = session.get('role', 'guest')
+    if user_role not in ['mining_site_owner', 'admin', 'owner']:
+        current_lang = session.get('language', 'zh')
+        if current_lang == 'en':
+            flash('Access denied. Site owner role required.', 'error')
+        else:
+            flash('访问被拒绝。需要矿场主角色。', 'error')
+        return redirect(url_for('hosting_service_bp.dashboard'))
+    return render_template('hosting/my_customers.html')
+
+
+@hosting_bp.route('/api/my-customers', methods=['GET'])
+@login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT, require_full=False)
+def get_my_customers():
+    """Get customers managed by current site owner"""
+    from models import UserAccess
+    
+    try:
+        user_id = session.get('user_id')
+        user_role = session.get('role', 'guest')
+        site_filter = request.args.get('site_id', type=int)
+        
+        # Get sites owned by current user
+        if user_role in ['admin', 'owner']:
+            owned_sites = HostingSite.query.all()
+        else:
+            owned_sites = HostingSite.query.filter_by(owner_id=user_id).all()
+        
+        owned_site_ids = [s.id for s in owned_sites]
+        
+        if not owned_site_ids:
+            return jsonify({
+                'success': True,
+                'customers': [],
+                'sites': []
+            })
+        
+        # Build customer query
+        query = UserAccess.query.filter(
+            UserAccess.managed_by_site_id.in_(owned_site_ids),
+            UserAccess.role == 'client'
+        )
+        
+        # Apply site filter
+        if site_filter and site_filter in owned_site_ids:
+            query = query.filter(UserAccess.managed_by_site_id == site_filter)
+        
+        customers = query.order_by(UserAccess.created_at.desc()).all()
+        
+        # Get miner counts for each customer
+        customer_miner_counts = {}
+        for customer in customers:
+            count = HostingMiner.query.filter_by(customer_id=customer.id).count()
+            customer_miner_counts[customer.id] = count
+        
+        customers_data = [{
+            'id': c.id,
+            'name': c.name,
+            'email': c.email,
+            'company': c.company,
+            'site_id': c.managed_by_site_id,
+            'site_name': c.managed_site.name if c.managed_site else 'N/A',
+            'miners_count': customer_miner_counts.get(c.id, 0),
+            'is_active': c.is_active,
+            'created_at': c.created_at.isoformat() if c.created_at else None,
+            'last_login': c.last_login.isoformat() if c.last_login else None
+        } for c in customers]
+        
+        sites_data = [{
+            'id': s.id,
+            'name': s.name
+        } for s in owned_sites]
+        
+        return jsonify({
+            'success': True,
+            'customers': customers_data,
+            'sites': sites_data
+        })
+    except Exception as e:
+        logger.error(f"获取客户列表失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/host/my-customers/create', methods=['POST'])
+@login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT, require_full=True)
+def create_my_customer():
+    """Create a new customer for site owner's site"""
+    from models import UserAccess
+    from werkzeug.security import generate_password_hash
+    import secrets
+    
+    try:
+        user_id = session.get('user_id')
+        user_role = session.get('role', 'guest')
+        current_lang = session.get('language', 'zh')
+        
+        data = request.get_json() if request.is_json else request.form
+        
+        name = data.get('name', '').strip()
+        email = data.get('email', '').strip().lower()
+        company = data.get('company', '').strip()
+        site_id = data.get('site_id', type=int) if request.is_json else int(data.get('site_id', 0))
+        
+        # Validation
+        if not name or not email or not site_id:
+            return jsonify({
+                'success': False,
+                'error': 'Name, email and site are required' if current_lang == 'en' else '姓名、邮箱和站点为必填项'
+            }), 400
+        
+        # Check if email already exists
+        existing = UserAccess.query.filter_by(email=email).first()
+        if existing:
+            return jsonify({
+                'success': False,
+                'error': 'Email already exists' if current_lang == 'en' else '邮箱已存在'
+            }), 400
+        
+        # Verify site ownership
+        if user_role in ['admin', 'owner']:
+            site = HostingSite.query.get(site_id)
+        else:
+            site = HostingSite.query.filter_by(id=site_id, owner_id=user_id).first()
+        
+        if not site:
+            return jsonify({
+                'success': False,
+                'error': 'Site not found or access denied' if current_lang == 'en' else '站点未找到或无权访问'
+            }), 404
+        
+        # Generate temporary password
+        temp_password = secrets.token_urlsafe(12)
+        
+        # Create customer
+        customer = UserAccess(
+            name=name,
+            email=email,
+            company=company,
+            role='client',
+            access_days=365
+        )
+        customer.password_hash = generate_password_hash(temp_password)
+        customer.managed_by_site_id = site_id
+        customer.created_by_id = user_id
+        customer.is_active = True
+        
+        db.session.add(customer)
+        db.session.commit()
+        
+        logger.info(f"Site owner {user_id} created customer {customer.id} for site {site_id}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Customer created successfully' if current_lang == 'en' else '客户创建成功',
+            'customer': {
+                'id': customer.id,
+                'name': customer.name,
+                'email': customer.email,
+                'temp_password': temp_password
+            }
+        })
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"创建客户失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/host/my-customers/<int:customer_id>/edit', methods=['POST'])
+@login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT, require_full=True)
+def edit_my_customer(customer_id):
+    """Edit customer info"""
+    from models import UserAccess
+    
+    try:
+        user_id = session.get('user_id')
+        user_role = session.get('role', 'guest')
+        current_lang = session.get('language', 'zh')
+        
+        # Get owned site IDs
+        if user_role in ['admin', 'owner']:
+            owned_site_ids = [s.id for s in HostingSite.query.all()]
+        else:
+            owned_site_ids = [s.id for s in HostingSite.query.filter_by(owner_id=user_id).all()]
+        
+        # Verify customer belongs to one of owner's sites
+        customer = UserAccess.query.filter(
+            UserAccess.id == customer_id,
+            UserAccess.managed_by_site_id.in_(owned_site_ids)
+        ).first()
+        
+        if not customer:
+            return jsonify({
+                'success': False,
+                'error': 'Customer not found or access denied' if current_lang == 'en' else '客户未找到或无权访问'
+            }), 404
+        
+        data = request.get_json() if request.is_json else request.form
+        
+        # Update allowed fields
+        if 'name' in data:
+            customer.name = data['name'].strip()
+        if 'company' in data:
+            customer.company = data['company'].strip() if data['company'] else None
+        if 'site_id' in data:
+            new_site_id = int(data['site_id'])
+            if new_site_id in owned_site_ids:
+                customer.managed_by_site_id = new_site_id
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Customer updated successfully' if current_lang == 'en' else '客户更新成功'
+        })
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"更新客户失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/host/my-customers/<int:customer_id>/toggle-status', methods=['POST'])
+@login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT, require_full=True)
+def toggle_customer_status(customer_id):
+    """Toggle customer active status"""
+    from models import UserAccess
+    
+    try:
+        user_id = session.get('user_id')
+        user_role = session.get('role', 'guest')
+        current_lang = session.get('language', 'zh')
+        
+        # Get owned site IDs
+        if user_role in ['admin', 'owner']:
+            owned_site_ids = [s.id for s in HostingSite.query.all()]
+        else:
+            owned_site_ids = [s.id for s in HostingSite.query.filter_by(owner_id=user_id).all()]
+        
+        # Verify customer belongs to one of owner's sites
+        customer = UserAccess.query.filter(
+            UserAccess.id == customer_id,
+            UserAccess.managed_by_site_id.in_(owned_site_ids)
+        ).first()
+        
+        if not customer:
+            return jsonify({
+                'success': False,
+                'error': 'Customer not found or access denied' if current_lang == 'en' else '客户未找到或无权访问'
+            }), 404
+        
+        customer.is_active = not customer.is_active
+        db.session.commit()
+        
+        status_text = ('enabled' if customer.is_active else 'disabled') if current_lang == 'en' else ('已启用' if customer.is_active else '已禁用')
+        
+        return jsonify({
+            'success': True,
+            'message': f'Customer {status_text}' if current_lang == 'en' else f'客户{status_text}',
+            'is_active': customer.is_active
+        })
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"切换客户状态失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @hosting_bp.route('/api/power/comparison', methods=['GET'])
 @login_required
 @requires_module_access(Module.HOSTING_STATUS_MONITOR)

@@ -1209,6 +1209,104 @@ def require_permission(
     return decorator
 
 
+# ==================== 多租户数据隔离 ====================
+
+def get_accessible_site_ids() -> List[int]:
+    """获取当前用户可访问的站点ID列表
+    
+    Returns:
+        List[int]: 用户可访问的站点ID列表
+        - Owner/Admin: 返回所有站点（空列表表示无限制）
+        - Mining_Site_Owner: 返回其拥有的站点
+        - Client: 返回其所属的站点
+        - 其他: 返回空列表
+    """
+    from flask import session
+    
+    role_str = session.get('role', 'guest')
+    user_role = normalize_role(role_str)
+    email = session.get('email')
+    
+    if not email:
+        return []
+    
+    # Owner/Admin has access to all sites (empty list means no restriction)
+    if user_role in [Role.OWNER, Role.ADMIN]:
+        return []  # Empty means unrestricted
+    
+    try:
+        from models import UserAccess, HostingSite
+        
+        user = UserAccess.query.filter_by(email=email).first()
+        if not user:
+            return []
+        
+        if user_role == Role.MINING_SITE_OWNER:
+            # Site owner sees sites they own
+            sites = HostingSite.query.filter_by(owner_id=user.id).all()
+            return [site.id for site in sites]
+        
+        elif user_role == Role.CLIENT:
+            # Client sees only their assigned site
+            if user.managed_by_site_id:
+                return [user.managed_by_site_id]
+            return []
+        
+        else:
+            return []
+            
+    except Exception as e:
+        logger.error(f"Error getting accessible sites: {e}")
+        return []
+
+
+def filter_by_site_access(query, site_id_column):
+    """根据用户权限过滤查询结果
+    
+    Args:
+        query: SQLAlchemy 查询对象
+        site_id_column: 站点ID列（如 HostingMiner.site_id）
+    
+    Returns:
+        过滤后的查询对象
+    """
+    site_ids = get_accessible_site_ids()
+    
+    # Empty list means unrestricted (Owner/Admin)
+    if site_ids == []:
+        from flask import session
+        role_str = session.get('role', 'guest')
+        if normalize_role(role_str) in [Role.OWNER, Role.ADMIN]:
+            return query
+    
+    if not site_ids:
+        # No access - return empty query
+        return query.filter(site_id_column == -1)
+    
+    return query.filter(site_id_column.in_(site_ids))
+
+
+def check_site_access(site_id: int) -> bool:
+    """检查当前用户是否有权访问指定站点
+    
+    Args:
+        site_id: 站点ID
+        
+    Returns:
+        bool: 是否有权限访问
+    """
+    site_ids = get_accessible_site_ids()
+    
+    # Empty list means unrestricted for Owner/Admin
+    if site_ids == []:
+        from flask import session
+        role_str = session.get('role', 'guest')
+        if normalize_role(role_str) in [Role.OWNER, Role.ADMIN]:
+            return True
+    
+    return site_id in site_ids
+
+
 # 导出
 __all__ = [
     'AccessLevel',
@@ -1226,5 +1324,8 @@ __all__ = [
     'requires_role',
     'require_permission',  # 向后兼容
     'get_user_permissions',
-    'PERMISSION_TO_MODULE_MAP'
+    'PERMISSION_TO_MODULE_MAP',
+    'get_accessible_site_ids',
+    'filter_by_site_access',
+    'check_site_access',
 ]

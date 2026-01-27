@@ -1,0 +1,585 @@
+{% extends "hosting/hosting_base.html" %}
+
+{% block page_title %}{% if current_lang == 'en' %}Customer Management{% else %}客户管理{% endif %}{% endblock %}
+{% block page_subtitle %}{% if current_lang == 'en' %}Manage customers for your hosting sites{% else %}管理托管站点的客户{% endif %}{% endblock %}
+
+{% block header_actions %}
+{{ super() }}
+<div class="btn-group ms-3" role="group">
+    <button class="btn btn-hosting-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createCustomerModal">
+        <i class="bi bi-person-plus me-1"></i>{% if current_lang == 'en' %}New Customer{% else %}新建客户{% endif %}
+    </button>
+    <button class="btn btn-hosting-secondary btn-sm" onclick="refreshCustomers()">
+        <i class="bi bi-arrow-clockwise me-1"></i>{% if current_lang == 'en' %}Refresh{% else %}刷新{% endif %}
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<!-- Customer Stats -->
+<div class="hosting-stats-grid">
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="total-customers">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Total Customers{% else %}总客户数{% endif %}</div>
+        <i class="bi bi-people hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="active-customers">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Active Customers{% else %}活跃客户{% endif %}</div>
+        <i class="bi bi-person-check hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="total-miners">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Total Miners{% else %}总矿机数{% endif %}</div>
+        <i class="bi bi-cpu hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="total-sites">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}My Sites{% else %}我的站点{% endif %}</div>
+        <i class="bi bi-building hosting-stat-icon"></i>
+    </div>
+</div>
+
+<!-- Customer List -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-people me-2"></i>{% if current_lang == 'en' %}My Customers{% else %}我的客户{% endif %}
+        </h5>
+        <div class="d-flex gap-2 align-items-center">
+            <select class="form-select form-select-sm" id="site-filter" style="width: 200px;" onchange="filterBySite()">
+                <option value="">{% if current_lang == 'en' %}All Sites{% else %}全部站点{% endif %}</option>
+            </select>
+        </div>
+    </div>
+    <div class="hosting-card-body">
+        <!-- Search -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <input type="text" class="form-control" id="search-customers" placeholder="{% if current_lang == 'en' %}Search by name or email...{% else %}按姓名或邮箱搜索...{% endif %}" onkeyup="searchCustomers()">
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" id="status-filter" onchange="filterByStatus()">
+                    <option value="">{% if current_lang == 'en' %}All Status{% else %}全部状态{% endif %}</option>
+                    <option value="active">{% if current_lang == 'en' %}Active{% else %}活跃{% endif %}</option>
+                    <option value="inactive">{% if current_lang == 'en' %}Inactive{% else %}已禁用{% endif %}</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Table -->
+        <div class="hosting-table">
+            <table class="table table-hover" id="customers-table">
+                <thead>
+                    <tr>
+                        <th>{% if current_lang == 'en' %}Name{% else %}姓名{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Email{% else %}邮箱{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Company{% else %}公司{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Site{% else %}站点{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Miners{% else %}矿机数{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
+                    </tr>
+                </thead>
+                <tbody id="customers-table-body">
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            <i class="bi bi-hourglass-split me-2"></i>{% if current_lang == 'en' %}Loading...{% else %}加载中...{% endif %}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="text-center py-5" style="display: none;">
+            <i class="bi bi-people fs-1 text-muted mb-3 d-block"></i>
+            <h5 class="text-muted">{% if current_lang == 'en' %}No customers found{% else %}暂无客户{% endif %}</h5>
+            <p class="text-muted">{% if current_lang == 'en' %}Click "New Customer" to add your first customer{% else %}点击"新建客户"添加您的第一个客户{% endif %}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Create Customer Modal -->
+<div class="modal fade" id="createCustomerModal" tabindex="-1" aria-labelledby="createCustomerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f7931a, #ffc107); color: #000;">
+                <h5 class="modal-title" id="createCustomerModalLabel">
+                    <i class="bi bi-person-plus me-2"></i>
+                    {% if current_lang == 'en' %}Create New Customer{% else %}创建新客户{% endif %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createCustomerForm">
+                    <div class="mb-3">
+                        <label for="customer-name" class="form-label">
+                            {% if current_lang == 'en' %}Name{% else %}姓名{% endif %} <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="customer-name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="customer-email" class="form-label">
+                            {% if current_lang == 'en' %}Email{% else %}邮箱{% endif %} <span class="text-danger">*</span>
+                        </label>
+                        <input type="email" class="form-control" id="customer-email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="customer-company" class="form-label">
+                            {% if current_lang == 'en' %}Company{% else %}公司{% endif %}
+                        </label>
+                        <input type="text" class="form-control" id="customer-company" name="company">
+                    </div>
+                    <div class="mb-3">
+                        <label for="customer-site" class="form-label">
+                            {% if current_lang == 'en' %}Assign to Site{% else %}分配站点{% endif %} <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="customer-site" name="site_id" required>
+                            <option value="">{% if current_lang == 'en' %}Select a site...{% else %}选择站点...{% endif %}</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-hosting-secondary" data-bs-dismiss="modal">
+                    {% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}
+                </button>
+                <button type="button" class="btn btn-hosting-primary" onclick="createCustomer()">
+                    {% if current_lang == 'en' %}Create Customer{% else %}创建客户{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Customer Modal -->
+<div class="modal fade" id="editCustomerModal" tabindex="-1" aria-labelledby="editCustomerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f7931a, #ffc107); color: #000;">
+                <h5 class="modal-title" id="editCustomerModalLabel">
+                    <i class="bi bi-pencil me-2"></i>
+                    {% if current_lang == 'en' %}Edit Customer{% else %}编辑客户{% endif %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editCustomerForm">
+                    <input type="hidden" id="edit-customer-id" name="id">
+                    <div class="mb-3">
+                        <label for="edit-customer-name" class="form-label">
+                            {% if current_lang == 'en' %}Name{% else %}姓名{% endif %} <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="edit-customer-name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-customer-email" class="form-label">
+                            {% if current_lang == 'en' %}Email{% else %}邮箱{% endif %}
+                        </label>
+                        <input type="email" class="form-control" id="edit-customer-email" name="email" readonly disabled>
+                        <small class="text-muted">{% if current_lang == 'en' %}Email cannot be changed{% else %}邮箱不可修改{% endif %}</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-customer-company" class="form-label">
+                            {% if current_lang == 'en' %}Company{% else %}公司{% endif %}
+                        </label>
+                        <input type="text" class="form-control" id="edit-customer-company" name="company">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-customer-site" class="form-label">
+                            {% if current_lang == 'en' %}Assigned Site{% else %}分配站点{% endif %} <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="edit-customer-site" name="site_id" required>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-hosting-secondary" data-bs-dismiss="modal">
+                    {% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}
+                </button>
+                <button type="button" class="btn btn-hosting-primary" onclick="updateCustomer()">
+                    {% if current_lang == 'en' %}Save Changes{% else %}保存修改{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Customer Created Success Modal -->
+<div class="modal fade" id="customerCreatedModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-success" style="background: linear-gradient(135deg, #28a745, #20c997); color: #fff;">
+                <h5 class="modal-title">
+                    <i class="bi bi-check-circle me-2"></i>
+                    {% if current_lang == 'en' %}Customer Created{% else %}客户创建成功{% endif %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    {% if current_lang == 'en' %}Please share the following temporary password with the customer:{% else %}请将以下临时密码分享给客户：{% endif %}
+                </div>
+                <div class="bg-dark border rounded p-3 mb-3">
+                    <div class="mb-2">
+                        <strong>{% if current_lang == 'en' %}Email:{% else %}邮箱：{% endif %}</strong>
+                        <span id="created-customer-email"></span>
+                    </div>
+                    <div>
+                        <strong>{% if current_lang == 'en' %}Temporary Password:{% else %}临时密码：{% endif %}</strong>
+                        <code id="created-customer-password" class="fs-5 text-warning"></code>
+                        <button class="btn btn-sm btn-outline-light ms-2" onclick="copyPassword()">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                </div>
+                <small class="text-muted">
+                    {% if current_lang == 'en' %}The customer should change this password after first login.{% else %}客户应在首次登录后更改此密码。{% endif %}
+                </small>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-hosting-primary" data-bs-dismiss="modal">
+                    {% if current_lang == 'en' %}Done{% else %}完成{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+let allCustomers = [];
+let allSites = [];
+const currentLang = '{{ current_lang }}';
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadCustomersData();
+});
+
+function loadCustomersData() {
+    const siteFilter = document.getElementById('site-filter').value;
+    let url = '/hosting/api/my-customers';
+    if (siteFilter) {
+        url += '?site_id=' + siteFilter;
+    }
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                allCustomers = data.customers;
+                allSites = data.sites;
+                updateStats();
+                displayCustomers(allCustomers);
+                populateSiteDropdowns();
+            } else {
+                console.error('Error loading customers:', data.error);
+                showToast(data.error || 'Failed to load customers', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Failed to load customers', 'error');
+        });
+}
+
+function updateStats() {
+    document.getElementById('total-customers').textContent = allCustomers.length;
+    document.getElementById('active-customers').textContent = allCustomers.filter(c => c.is_active).length;
+    document.getElementById('total-miners').textContent = allCustomers.reduce((sum, c) => sum + (c.miners_count || 0), 0);
+    document.getElementById('total-sites').textContent = allSites.length;
+}
+
+function populateSiteDropdowns() {
+    const filterSelect = document.getElementById('site-filter');
+    const createSelect = document.getElementById('customer-site');
+    const editSelect = document.getElementById('edit-customer-site');
+    
+    const currentFilterValue = filterSelect.value;
+    
+    filterSelect.innerHTML = `<option value="">${currentLang === 'en' ? 'All Sites' : '全部站点'}</option>`;
+    createSelect.innerHTML = `<option value="">${currentLang === 'en' ? 'Select a site...' : '选择站点...'}</option>`;
+    editSelect.innerHTML = '';
+    
+    allSites.forEach(site => {
+        const option1 = new Option(site.name, site.id);
+        const option2 = new Option(site.name, site.id);
+        const option3 = new Option(site.name, site.id);
+        filterSelect.add(option1);
+        createSelect.add(option2);
+        editSelect.add(option3);
+    });
+    
+    filterSelect.value = currentFilterValue;
+}
+
+function displayCustomers(customers) {
+    const tbody = document.getElementById('customers-table-body');
+    const emptyState = document.getElementById('empty-state');
+    const table = document.getElementById('customers-table');
+    
+    if (customers.length === 0) {
+        tbody.innerHTML = '';
+        table.style.display = 'none';
+        emptyState.style.display = 'block';
+        return;
+    }
+    
+    table.style.display = 'table';
+    emptyState.style.display = 'none';
+    
+    tbody.innerHTML = customers.map(customer => `
+        <tr data-customer-id="${customer.id}">
+            <td>
+                <div class="d-flex align-items-center">
+                    <div class="avatar-circle me-2" style="width: 36px; height: 36px; background: linear-gradient(135deg, #f7931a, #ffc107); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #000; font-weight: bold;">
+                        ${customer.name.charAt(0).toUpperCase()}
+                    </div>
+                    <span>${escapeHtml(customer.name)}</span>
+                </div>
+            </td>
+            <td>${escapeHtml(customer.email)}</td>
+            <td>${customer.company ? escapeHtml(customer.company) : '<span class="text-muted">-</span>'}</td>
+            <td><span class="badge bg-secondary">${escapeHtml(customer.site_name)}</span></td>
+            <td>
+                <span class="badge ${customer.miners_count > 0 ? 'bg-info' : 'bg-secondary'}">
+                    <i class="bi bi-cpu me-1"></i>${customer.miners_count}
+                </span>
+            </td>
+            <td>
+                ${customer.is_active 
+                    ? '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>' + (currentLang === 'en' ? 'Active' : '活跃') + '</span>'
+                    : '<span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>' + (currentLang === 'en' ? 'Inactive' : '已禁用') + '</span>'
+                }
+            </td>
+            <td>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-light" onclick="editCustomer(${customer.id})" title="${currentLang === 'en' ? 'Edit' : '编辑'}">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn ${customer.is_active ? 'btn-outline-warning' : 'btn-outline-success'}" 
+                            onclick="toggleStatus(${customer.id})" 
+                            title="${customer.is_active ? (currentLang === 'en' ? 'Disable' : '禁用') : (currentLang === 'en' ? 'Enable' : '启用')}">
+                        <i class="bi ${customer.is_active ? 'bi-pause-circle' : 'bi-play-circle'}"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function filterBySite() {
+    loadCustomersData();
+}
+
+function filterByStatus() {
+    const status = document.getElementById('status-filter').value;
+    let filtered = allCustomers;
+    
+    if (status === 'active') {
+        filtered = allCustomers.filter(c => c.is_active);
+    } else if (status === 'inactive') {
+        filtered = allCustomers.filter(c => !c.is_active);
+    }
+    
+    displayCustomers(filtered);
+}
+
+function searchCustomers() {
+    const search = document.getElementById('search-customers').value.toLowerCase();
+    const statusFilter = document.getElementById('status-filter').value;
+    
+    let filtered = allCustomers.filter(c => 
+        c.name.toLowerCase().includes(search) || 
+        c.email.toLowerCase().includes(search) ||
+        (c.company && c.company.toLowerCase().includes(search))
+    );
+    
+    if (statusFilter === 'active') {
+        filtered = filtered.filter(c => c.is_active);
+    } else if (statusFilter === 'inactive') {
+        filtered = filtered.filter(c => !c.is_active);
+    }
+    
+    displayCustomers(filtered);
+}
+
+function refreshCustomers() {
+    loadCustomersData();
+    showToast(currentLang === 'en' ? 'Refreshed' : '已刷新', 'success');
+}
+
+function createCustomer() {
+    const name = document.getElementById('customer-name').value.trim();
+    const email = document.getElementById('customer-email').value.trim();
+    const company = document.getElementById('customer-company').value.trim();
+    const siteId = document.getElementById('customer-site').value;
+    
+    if (!name || !email || !siteId) {
+        showToast(currentLang === 'en' ? 'Please fill in all required fields' : '请填写所有必填项', 'error');
+        return;
+    }
+    
+    fetch('/hosting/host/my-customers/create', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name, email, company, site_id: parseInt(siteId) })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('createCustomerModal')).hide();
+            document.getElementById('createCustomerForm').reset();
+            
+            document.getElementById('created-customer-email').textContent = data.customer.email;
+            document.getElementById('created-customer-password').textContent = data.customer.temp_password;
+            new bootstrap.Modal(document.getElementById('customerCreatedModal')).show();
+            
+            loadCustomersData();
+        } else {
+            showToast(data.error || 'Failed to create customer', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Failed to create customer', 'error');
+    });
+}
+
+function editCustomer(customerId) {
+    const customer = allCustomers.find(c => c.id === customerId);
+    if (!customer) return;
+    
+    document.getElementById('edit-customer-id').value = customer.id;
+    document.getElementById('edit-customer-name').value = customer.name;
+    document.getElementById('edit-customer-email').value = customer.email;
+    document.getElementById('edit-customer-company').value = customer.company || '';
+    document.getElementById('edit-customer-site').value = customer.site_id;
+    
+    new bootstrap.Modal(document.getElementById('editCustomerModal')).show();
+}
+
+function updateCustomer() {
+    const customerId = document.getElementById('edit-customer-id').value;
+    const name = document.getElementById('edit-customer-name').value.trim();
+    const company = document.getElementById('edit-customer-company').value.trim();
+    const siteId = document.getElementById('edit-customer-site').value;
+    
+    if (!name || !siteId) {
+        showToast(currentLang === 'en' ? 'Please fill in all required fields' : '请填写所有必填项', 'error');
+        return;
+    }
+    
+    fetch(`/hosting/host/my-customers/${customerId}/edit`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name, company, site_id: parseInt(siteId) })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('editCustomerModal')).hide();
+            loadCustomersData();
+            showToast(data.message || (currentLang === 'en' ? 'Customer updated' : '客户已更新'), 'success');
+        } else {
+            showToast(data.error || 'Failed to update customer', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Failed to update customer', 'error');
+    });
+}
+
+function toggleStatus(customerId) {
+    const customer = allCustomers.find(c => c.id === customerId);
+    if (!customer) return;
+    
+    const action = customer.is_active 
+        ? (currentLang === 'en' ? 'disable' : '禁用')
+        : (currentLang === 'en' ? 'enable' : '启用');
+    
+    if (!confirm(currentLang === 'en' 
+        ? `Are you sure you want to ${action} this customer?` 
+        : `确定要${action}此客户吗？`)) {
+        return;
+    }
+    
+    fetch(`/hosting/host/my-customers/${customerId}/toggle-status`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loadCustomersData();
+            showToast(data.message || (currentLang === 'en' ? 'Status updated' : '状态已更新'), 'success');
+        } else {
+            showToast(data.error || 'Failed to update status', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Failed to update status', 'error');
+    });
+}
+
+function copyPassword() {
+    const password = document.getElementById('created-customer-password').textContent;
+    navigator.clipboard.writeText(password).then(() => {
+        showToast(currentLang === 'en' ? 'Password copied!' : '密码已复制！', 'success');
+    });
+}
+
+function showToast(message, type = 'info') {
+    const toastContainer = document.querySelector('.toast-container') || createToastContainer();
+    const toastId = 'toast-' + Date.now();
+    const bgClass = type === 'success' ? 'bg-success' : type === 'error' ? 'bg-danger' : 'bg-info';
+    const icon = type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'info-circle';
+    
+    const toastHtml = `
+        <div id="${toastId}" class="toast ${bgClass} text-white" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-body d-flex align-items-center">
+                <i class="bi bi-${icon} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `;
+    
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+    const toastEl = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+    toast.show();
+    
+    toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+}
+
+function createToastContainer() {
+    const container = document.createElement('div');
+    container.className = 'toast-container position-fixed top-0 end-0 p-3';
+    container.style.zIndex = '9999';
+    document.body.appendChild(container);
+    return container;
+}
+</script>
+{% endblock %}
