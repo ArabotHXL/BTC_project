@@ -157,6 +157,13 @@
                         <textarea class="form-control" id="ticketDescription" rows="5" placeholder="{% if current_lang == 'en' %}Please provide detailed information about your issue...{% else %}请详细描述您遇到的问题...{% endif %}" style="background: var(--hosting-bg-primary); border-color: var(--hosting-border); color: var(--hosting-text);"></textarea>
                     </div>
                     <div class="mb-3">
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="generateAIDraft()">
+                            <i class="bi bi-robot me-1"></i>
+                            <span data-i18n="ai_generate">{% if current_lang == 'en' %}AI Generate Draft{% else %}AI生成草稿{% endif %}</span>
+                        </button>
+                        <small class="text-muted ms-2" data-i18n="ai_generate_hint">{% if current_lang == 'en' %}Auto-fill based on selected device alerts{% else %}基于所选设备告警自动填充{% endif %}</small>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label" data-i18n="related_device">{% if current_lang == 'en' %}Related Device (Optional){% else %}关联设备（可选）{% endif %}</label>
                         <select class="form-select" id="relatedDevice" style="background: var(--hosting-bg-primary); border-color: var(--hosting-border); color: var(--hosting-text);">
                             <option value="">{% if current_lang == 'en' %}-- Select Device --{% else %}-- 选择设备 --{% endif %}</option>
@@ -308,6 +315,9 @@ function loadUserDevices() {
                     const option = document.createElement('option');
                     option.value = miner.id;
                     option.textContent = `${miner.serial_number} - ${miner.model}`;
+                    if (miner.site_id) {
+                        option.setAttribute('data-site-id', miner.site_id);
+                    }
                     select.appendChild(option);
                 });
             }
@@ -367,6 +377,77 @@ function submitTicket() {
 function viewTicket(ticketId) {
     const lang = document.querySelector('meta[name="language"]')?.content || 'zh';
     alert(lang === 'en' ? 'Ticket detail view coming soon' : '工单详情功能即将上线');
+}
+
+function generateAIDraft() {
+    const deviceId = document.getElementById('relatedDevice').value;
+    const ticketType = document.getElementById('ticketType').value;
+    const deviceOption = document.getElementById('relatedDevice').selectedOptions[0];
+    const siteId = deviceOption ? deviceOption.getAttribute('data-site-id') : null;
+    
+    if (!deviceId) {
+        showTicketToast(getLanguage() === 'en' ? 'Please select a related device first' : '请先选择关联设备', 'warning');
+        return;
+    }
+    
+    const finalSiteId = siteId || (window.currentSiteId || null);
+    if (!finalSiteId) {
+        showTicketToast(getLanguage() === 'en' ? 'Site information not available. Please try again later.' : '站点信息不可用，请稍后再试。', 'warning');
+        return;
+    }
+    
+    const btn = event.target.closest('button');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>' + (getLanguage() === 'en' ? 'Generating...' : '生成中...');
+    
+    fetch('/api/v1/ai/ticket/draft', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            site_id: parseInt(finalSiteId),
+            miner_ids: [deviceId],
+            alert_type: ticketType === 'hardware' ? 'hashrate_drop' : (ticketType === 'network' ? 'offline' : 'temperature_high')
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-robot me-1"></i>' + (getLanguage() === 'en' ? 'AI Generate Draft' : 'AI生成草稿');
+        
+        if (data.success && data.ticket_draft) {
+            const lang = getLanguage();
+            const draft = data.ticket_draft;
+            
+            document.getElementById('ticketTitle').value = lang === 'en' ? draft.title : draft.title_zh;
+            
+            let desc = lang === 'en' ? draft.problem_description : draft.problem_description_zh;
+            desc += '\n\n' + (lang === 'en' ? '--- Impact Scope ---\n' : '--- 影响范围 ---\n');
+            desc += lang === 'en' ? draft.impact_scope : draft.impact_scope_zh;
+            desc += '\n\n' + (lang === 'en' ? '--- Troubleshooting Steps ---\n' : '--- 排查步骤 ---\n');
+            desc += lang === 'en' ? draft.troubleshooting_steps : draft.troubleshooting_steps_zh;
+            
+            document.getElementById('ticketDescription').value = desc;
+            
+            showTicketToast(lang === 'en' ? 'Draft generated successfully' : '草稿生成成功', 'success');
+        } else {
+            showTicketToast(data.error || (getLanguage() === 'en' ? 'Generation failed' : '生成失败'), 'error');
+        }
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-robot me-1"></i>' + (getLanguage() === 'en' ? 'AI Generate Draft' : 'AI生成草稿');
+        showTicketToast('Error: ' + err.message, 'error');
+    });
+}
+
+function showTicketToast(message, type) {
+    console.log('[' + type.toUpperCase() + '] ' + message);
+    alert(message);
+}
+
+function getLanguage() {
+    const langMeta = document.querySelector('meta[name="language"]');
+    return langMeta ? langMeta.content : 'en';
 }
 </script>
 {% endblock %}

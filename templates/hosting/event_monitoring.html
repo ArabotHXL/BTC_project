@@ -309,6 +309,21 @@
     </div>
 </div>
 
+<!-- AI 诊断结果模态框 -->
+<div class="modal fade" id="aiDiagnosisModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content bg-dark">
+            <div class="modal-header" style="background: linear-gradient(135deg, #17a2b8, #138496); color: #fff;">
+                <h5 class="modal-title"><i class="bi bi-robot me-2"></i>AI Diagnosis / AI诊断</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="ai-diagnosis-content">
+                <div class="text-center py-5"><div class="spinner-border text-info"></div><p class="mt-2">Analyzing... / 分析中...</p></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -377,9 +392,15 @@ function updateAlertsGrid(alerts) {
                         <p class="text-muted mb-2">${alert.description}</p>
                         <div class="d-flex justify-content-between">
                             <small class="text-muted">${alert.site_name || 'Global'}</small>
-                            <button class="btn btn-hosting-outline btn-sm" onclick="acknowledgeAlert(${alert.id})">
-                                <i class="bi bi-check"></i> ${getLanguage() === 'en' ? 'Ack' : '确认'}
-                            </button>
+                            <div>
+                                <button class="btn btn-hosting-outline btn-sm" onclick="acknowledgeAlert(${alert.id})">
+                                    <i class="bi bi-check"></i> ${getLanguage() === 'en' ? 'Ack' : '确认'}
+                                </button>
+                                ${(alert.miner_id && alert.site_id) ? 
+                                    `<button class="btn btn-outline-info btn-sm ms-1" onclick="openAIDiagnosis('${alert.id}', '${alert.type || 'offline'}', '${alert.miner_id}', ${alert.site_id})">
+                                        <i class="bi bi-robot"></i> ${getLanguage() === 'en' ? 'AI' : 'AI诊断'}
+                                    </button>` : ''}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -633,5 +654,66 @@ function getIncidentFilters() { return {}; /* 获取事件过滤器 */ }
 function updatePagination(pagination) { /* 更新分页 */ }
 function exportIncidents() { /* 导出事件 */ }
 function updateIncidentStatus() { /* 更新事件状态 */ }
+
+function openAIDiagnosis(alertId, alertType, minerId, siteId) {
+    if (!minerId || !siteId) {
+        alert(getLanguage() === 'en' ? 'AI diagnosis requires miner and site information' : 'AI诊断需要矿机和站点信息');
+        return;
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('aiDiagnosisModal'));
+    modal.show();
+    document.getElementById('ai-diagnosis-content').innerHTML = '<div class="text-center py-5"><div class="spinner-border text-info"></div><p class="mt-2">' + (getLanguage() === 'en' ? 'Analyzing...' : '分析中...') + '</p></div>';
+    
+    fetch('/api/v1/ai/diagnose/alert', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            site_id: siteId,
+            miner_id: minerId,
+            alert_type: alertType
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            renderAIDiagnosis(data.diagnosis);
+        } else {
+            document.getElementById('ai-diagnosis-content').innerHTML = '<div class="alert alert-danger">' + (data.error || 'Diagnosis failed') + '</div>';
+        }
+    })
+    .catch(err => {
+        document.getElementById('ai-diagnosis-content').innerHTML = '<div class="alert alert-danger">Network error: ' + err.message + '</div>';
+    });
+}
+
+function renderAIDiagnosis(diagnosis) {
+    const lang = getLanguage();
+    let html = '<div class="mb-3"><strong>' + (lang === 'en' ? 'Alert' : '告警') + ':</strong> ' + (diagnosis.alert_type || '-') + '</div>';
+    html += '<h6 class="text-info mb-3"><i class="bi bi-lightbulb me-2"></i>' + (lang === 'en' ? 'Top 3 Hypotheses' : 'Top3 根因假设') + '</h6>';
+    
+    if (diagnosis.hypotheses && diagnosis.hypotheses.length > 0) {
+        diagnosis.hypotheses.forEach((h, i) => {
+            html += '<div class="card bg-secondary mb-3"><div class="card-body">';
+            html += '<div class="d-flex justify-content-between"><h6 class="text-warning">#' + (i+1) + ' ' + (lang === 'en' ? h.cause : h.cause_zh) + '</h6><span class="badge bg-' + (h.confidence > 0.7 ? 'success' : h.confidence > 0.4 ? 'warning' : 'secondary') + '">' + Math.round(h.confidence * 100) + '%</span></div>';
+            html += '<p class="mb-2">' + (lang === 'en' ? h.explanation : h.explanation_zh) + '</p>';
+            if (h.evidence && h.evidence.length > 0) {
+                html += '<div class="mb-2"><small class="text-muted">' + (lang === 'en' ? 'Evidence:' : '证据:') + '</small><ul class="mb-0">';
+                h.evidence.forEach(e => { html += '<li><small>' + (lang === 'en' ? e.observation : e.observation_zh) + '</small></li>'; });
+                html += '</ul></div>';
+            }
+            if (h.suggested_actions && h.suggested_actions.length > 0) {
+                html += '<div><small class="text-muted">' + (lang === 'en' ? 'Suggested Actions:' : '建议动作:') + '</small><ul class="mb-0">';
+                h.suggested_actions.forEach(a => { html += '<li><small class="text-success">' + (lang === 'en' ? a.action : a.action_zh) + '</small></li>'; });
+                html += '</ul></div>';
+            }
+            html += '</div></div>';
+        });
+    } else {
+        html += '<div class="alert alert-secondary">' + (lang === 'en' ? 'No hypotheses generated' : '未生成假设') + '</div>';
+    }
+    
+    document.getElementById('ai-diagnosis-content').innerHTML = html;
+}
 </script>
 {% endblock %}

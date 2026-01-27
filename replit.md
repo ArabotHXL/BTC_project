@@ -43,6 +43,20 @@ HashInsight Enterprise is an enterprise-grade web application for Bitcoin mining
   - Outputs: Curtailment ratio, shutdown order, revenue loss estimate, risk points
 - Created `api/ai_feature_api.py` at `/api/v1/ai/diagnose/*`, `/api/v1/ai/ticket/*`, `/api/v1/ai/curtailment/*`
 
+**6. AI Feature UI Integration (Phase 2: AI Copilot)**
+- Event Monitoring (`templates/hosting/event_monitoring.html`):
+  - Added "AI" button on each alert card triggering AI diagnosis modal
+  - Modal displays Top3 hypotheses with confidence scores, evidence, and suggested actions
+  - Calls `/api/v1/ai/diagnose/alert` with site_id, miner_id, alert_type
+- Client Tickets (`templates/hosting/client_tickets.html`):
+  - Added "AI Generate Draft" button in new ticket modal
+  - Auto-fills title and description from AI-generated draft
+  - Calls `/api/v1/ai/ticket/draft` with site_id, miner_ids array, alert_type
+- Curtailment Management (`templates/hosting/curtailment_management.html`):
+  - Added "Compare Strategies" button next to existing AI prediction button
+  - Displays recommended strategy card with shutdown order and risk points
+  - Calls `/api/v1/ai/curtailment/plan` with site_id, electricity_price, target_reduction
+
 ## User Preferences
 - **Communication style**: Simple, everyday language (中文/English)
 - **Technical preferences**: Native Flask implementation, avoid over-complication
