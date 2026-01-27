@@ -646,8 +646,176 @@ function filterAlerts(filter) { /* 实现告警过滤 */ }
 function filterIncidents() { /* 实现事件过滤 */ }
 function searchIncidents() { /* 实现事件搜索 */ }
 function switchTimeRange(range) { /* 切换时间范围 */ }
-function viewIncident(id) { /* 查看事件详情 */ }
-function editIncident(id) { /* 编辑事件 */ }
+function viewIncident(id) {
+    const lang = getLanguage();
+    const modal = new bootstrap.Modal(document.getElementById('incidentDetailModal'));
+    const content = document.getElementById('incident-detail-content');
+    
+    content.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-warning"></div><p class="mt-2">' + (lang === 'en' ? 'Loading...' : '加载中...') + '</p></div>';
+    modal.show();
+    
+    fetch('/hosting/api/monitoring/incidents/' + id)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const inc = data.incident;
+                const severityColors = {critical: 'danger', high: 'warning', medium: 'info', low: 'secondary'};
+                const statusColors = {open: 'danger', investigating: 'warning', resolved: 'success', closed: 'secondary'};
+                const severityLabels = {critical: lang === 'en' ? 'Critical' : '严重', high: lang === 'en' ? 'High' : '高', medium: lang === 'en' ? 'Medium' : '中等', low: lang === 'en' ? 'Low' : '低'};
+                const statusLabels = {open: lang === 'en' ? 'Open' : '开放', investigating: lang === 'en' ? 'Investigating' : '调查中', resolved: lang === 'en' ? 'Resolved' : '已解决', closed: lang === 'en' ? 'Closed' : '已关闭'};
+                
+                content.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h5 class="text-warning mb-3">${inc.title}</h5>
+                            <p class="text-muted">${inc.description || (lang === 'en' ? 'No description' : '无描述')}</p>
+                            <hr class="border-secondary">
+                            <div class="row">
+                                <div class="col-6 mb-3">
+                                    <small class="text-muted">${lang === 'en' ? 'Severity' : '严重程度'}</small>
+                                    <div><span class="badge bg-${severityColors[inc.severity] || 'secondary'}">${severityLabels[inc.severity] || inc.severity}</span></div>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <small class="text-muted">${lang === 'en' ? 'Status' : '状态'}</small>
+                                    <div><span class="badge bg-${statusColors[inc.status] || 'secondary'}">${statusLabels[inc.status] || inc.status}</span></div>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <small class="text-muted">${lang === 'en' ? 'Site' : '站点'}</small>
+                                    <div>${inc.site_name || 'Global'}</div>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <small class="text-muted">${lang === 'en' ? 'Assigned To' : '指派给'}</small>
+                                    <div>${inc.assigned_to_name || (lang === 'en' ? 'Unassigned' : '未指派')}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-secondary">
+                                <div class="card-body">
+                                    <h6 class="text-info mb-3">${lang === 'en' ? 'Timeline' : '时间线'}</h6>
+                                    <div class="mb-2">
+                                        <small class="text-muted">${lang === 'en' ? 'Created' : '创建时间'}</small>
+                                        <div>${inc.created_at || '-'}</div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <small class="text-muted">${lang === 'en' ? 'First Response' : '首次响应'}</small>
+                                        <div>${inc.first_response_at || '-'}</div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <small class="text-muted">${lang === 'en' ? 'Resolved' : '解决时间'}</small>
+                                        <div>${inc.resolved_at || '-'}</div>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted">${lang === 'en' ? 'Duration' : '持续时间'}</small>
+                                        <div>${inc.duration || '-'}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                currentIncidentId = id;
+            } else {
+                content.innerHTML = '<div class="alert alert-danger">' + (data.error || (lang === 'en' ? 'Failed to load' : '加载失败')) + '</div>';
+            }
+        })
+        .catch(err => {
+            content.innerHTML = '<div class="alert alert-danger">' + (lang === 'en' ? 'Network error' : '网络错误') + ': ' + err.message + '</div>';
+        });
+}
+
+function editIncident(id) {
+    const lang = getLanguage();
+    fetch('/hosting/api/monitoring/incidents/' + id)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const inc = data.incident;
+                currentIncidentId = id;
+                
+                const statusOptions = [
+                    {value: 'open', label: lang === 'en' ? 'Open' : '开放'},
+                    {value: 'investigating', label: lang === 'en' ? 'Investigating' : '调查中'},
+                    {value: 'resolved', label: lang === 'en' ? 'Resolved' : '已解决'},
+                    {value: 'closed', label: lang === 'en' ? 'Closed' : '已关闭'}
+                ];
+                
+                const modalHtml = `
+                    <div class="modal fade" id="editIncidentModal" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content bg-dark">
+                                <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
+                                    <h5 class="modal-title">${lang === 'en' ? 'Edit Incident' : '编辑事件'}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form id="editIncidentForm">
+                                        <div class="mb-3">
+                                            <label class="form-label">${lang === 'en' ? 'Title' : '标题'}</label>
+                                            <input type="text" class="form-control bg-secondary text-white border-0" name="title" value="${inc.title}">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">${lang === 'en' ? 'Status' : '状态'}</label>
+                                            <select class="form-select bg-secondary text-white border-0" name="status">
+                                                ${statusOptions.map(opt => `<option value="${opt.value}" ${opt.value === inc.status ? 'selected' : ''}>${opt.label}</option>`).join('')}
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">${lang === 'en' ? 'Description' : '描述'}</label>
+                                            <textarea class="form-control bg-secondary text-white border-0" name="description" rows="3">${inc.description || ''}</textarea>
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${lang === 'en' ? 'Cancel' : '取消'}</button>
+                                    <button type="button" class="btn btn-warning" onclick="saveIncident()">${lang === 'en' ? 'Save' : '保存'}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                let existingModal = document.getElementById('editIncidentModal');
+                if (existingModal) existingModal.remove();
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+                
+                const modal = new bootstrap.Modal(document.getElementById('editIncidentModal'));
+                modal.show();
+            } else {
+                showToast(data.error || (lang === 'en' ? 'Failed to load' : '加载失败'), 'error');
+            }
+        })
+        .catch(err => {
+            showToast((lang === 'en' ? 'Network error' : '网络错误') + ': ' + err.message, 'error');
+        });
+}
+
+function saveIncident() {
+    const lang = getLanguage();
+    const form = document.getElementById('editIncidentForm');
+    const formData = new FormData(form);
+    const data = {};
+    formData.forEach((value, key) => data[key] = value);
+    
+    fetch('/hosting/api/monitoring/incidents/' + currentIncidentId, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.success) {
+            bootstrap.Modal.getInstance(document.getElementById('editIncidentModal')).hide();
+            loadIncidents();
+            showToast(lang === 'en' ? 'Incident updated successfully' : '事件更新成功', 'success');
+        } else {
+            showToast(result.error || (lang === 'en' ? 'Update failed' : '更新失败'), 'error');
+        }
+    })
+    .catch(err => {
+        showToast((lang === 'en' ? 'Network error' : '网络错误') + ': ' + err.message, 'error');
+    });
+}
 function acknowledgeAlert(id) { /* 确认告警 */ }
 function loadPerformanceData(range) { /* 加载性能数据 */ }
 function getIncidentFilters() { return {}; /* 获取事件过滤器 */ }

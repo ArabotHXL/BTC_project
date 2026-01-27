@@ -3334,6 +3334,89 @@ def create_monitoring_incident():
         logger.error(f"创建监控事件失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
+@hosting_bp.route('/api/monitoring/incidents/<int:incident_id>', methods=['GET'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
+def get_incident_detail(incident_id):
+    """获取单个事件详情"""
+    try:
+        incident = HostingIncident.query.get_or_404(incident_id)
+        
+        duration = None
+        if incident.resolved_at:
+            duration_delta = incident.resolved_at - incident.created_at
+            hours = int(duration_delta.total_seconds() // 3600)
+            minutes = int((duration_delta.total_seconds() % 3600) // 60)
+            duration = f"{hours}h {minutes}m" if hours > 0 else f"{minutes}m"
+        
+        site_name = incident.site.name if incident.site else 'Global'
+        assigned_to_name = incident.assigned_to.email if incident.assigned_to else None
+        
+        return jsonify({
+            'success': True,
+            'incident': {
+                'id': incident.id,
+                'title': incident.title,
+                'description': incident.description,
+                'severity': incident.severity,
+                'status': incident.status,
+                'site_id': incident.site_id,
+                'site_name': site_name,
+                'affected_miners': incident.affected_miners,
+                'estimated_loss': incident.estimated_loss,
+                'assigned_to_id': incident.assigned_to_id,
+                'assigned_to_name': assigned_to_name,
+                'created_at': incident.created_at.strftime('%Y-%m-%d %H:%M') if incident.created_at else None,
+                'first_response_at': incident.first_response_at.strftime('%Y-%m-%d %H:%M') if incident.first_response_at else None,
+                'resolved_at': incident.resolved_at.strftime('%Y-%m-%d %H:%M') if incident.resolved_at else None,
+                'duration': duration,
+            }
+        })
+    except Exception as e:
+        logger.error(f"获取事件详情失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/monitoring/incidents/<int:incident_id>', methods=['PUT'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR, require_full=True)
+def update_incident(incident_id):
+    """更新事件"""
+    try:
+        incident = HostingIncident.query.get_or_404(incident_id)
+        data = request.get_json() if request.is_json else request.form
+        
+        if 'status' in data:
+            old_status = incident.status
+            incident.status = data['status']
+            if data['status'] == 'resolved' and not incident.resolved_at:
+                incident.resolved_at = datetime.now()
+            if data['status'] == 'investigating' and not incident.first_response_at:
+                incident.first_response_at = datetime.now()
+        
+        if 'severity' in data:
+            incident.severity = data['severity']
+        if 'title' in data:
+            incident.title = data['title']
+        if 'description' in data:
+            incident.description = data['description']
+        if 'assigned_to_id' in data:
+            incident.assigned_to_id = data['assigned_to_id'] if data['assigned_to_id'] else None
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Incident updated successfully',
+            'incident_id': incident.id
+        })
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"更新事件失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 # ==================== 限电管理API Curtailment Management API ====================
 
 @hosting_bp.route('/api/curtailment/calculate', methods=['POST'])
