@@ -22,12 +22,19 @@ HashInsight Enterprise is an enterprise-grade web application for Bitcoin mining
   - `GET /admin/site-owners/<id>` - View site owner details
 - Templates: `templates/owner/site_owner_management.html`, `site_owner_detail.html`
 
-**3. Site Owner Customer Management**
+**3. Site Owner Customer Management (CRM Integrated)**
+- Customers are sourced from CRM `Customer` table, not created separately
+- `Customer.site_id` links CRM customer to hosting site
+- `Customer.user_account_id` links CRM customer to login account (when needed)
+- Migration: `migrations/025_add_customer_site_link.sql`
 - New routes in `modules/hosting/routes.py`:
-  - `GET /hosting/host/my-customers` - List owner's customers
-  - `POST /hosting/host/my-customers/create` - Create customer
+  - `GET /hosting/host/my-customers` - List owner's customers (from CRM)
+  - `GET /api/my-customers/unassigned` - Get unassigned CRM customers (owned by user)
+  - `POST /hosting/host/my-customers/assign` - Assign CRM customer to site
+  - `POST /hosting/host/my-customers/<id>/create-account` - Create login for customer
   - `POST /hosting/host/my-customers/<id>/edit` - Edit customer
   - `POST /hosting/host/my-customers/<id>/toggle-status` - Enable/disable
+- Security: Site owners can only see/assign customers they created (created_by_id)
 - Template: `templates/hosting/my_customers.html`
 
 **4. RBAC Data Isolation**
