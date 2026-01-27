@@ -664,35 +664,139 @@ function viewIncident(id) {
                 const severityLabels = {critical: lang === 'en' ? 'Critical' : '严重', high: lang === 'en' ? 'High' : '高', medium: lang === 'en' ? 'Medium' : '中等', low: lang === 'en' ? 'Low' : '低'};
                 const statusLabels = {open: lang === 'en' ? 'Open' : '开放', investigating: lang === 'en' ? 'Investigating' : '调查中', resolved: lang === 'en' ? 'Resolved' : '已解决', closed: lang === 'en' ? 'Closed' : '已关闭'};
                 
+                let minersHtml = '';
+                if (inc.affected_miners_details && inc.affected_miners_details.length > 0) {
+                    minersHtml = inc.affected_miners_details.map(m => {
+                        const onlineStatus = m.cgminer_online ? 
+                            `<span class="badge bg-success">${lang === 'en' ? 'Online' : '在线'}</span>` : 
+                            `<span class="badge bg-danger">${lang === 'en' ? 'Offline' : '离线'}</span>`;
+                        const hashratePercent = m.expected_hashrate ? Math.round((m.actual_hashrate / m.expected_hashrate) * 100) : 100;
+                        const hashrateColor = hashratePercent >= 90 ? 'success' : hashratePercent >= 70 ? 'warning' : 'danger';
+                        const tempColor = m.temperature_max > 90 ? 'danger' : m.temperature_max > 80 ? 'warning' : 'success';
+                        
+                        return `
+                            <div class="card bg-dark border-secondary mb-2">
+                                <div class="card-body p-2">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <strong class="text-warning">${m.serial_number}</strong>
+                                        ${onlineStatus}
+                                    </div>
+                                    <div class="row small">
+                                        <div class="col-6 mb-1">
+                                            <span class="text-muted">${lang === 'en' ? 'Model' : '型号'}:</span> ${m.model_name}
+                                        </div>
+                                        <div class="col-6 mb-1">
+                                            <span class="text-muted">IP:</span> ${m.ip_address || '-'}
+                                        </div>
+                                        <div class="col-6 mb-1">
+                                            <span class="text-muted">${lang === 'en' ? 'Rack' : '机架'}:</span> ${m.rack_position || '-'}
+                                        </div>
+                                        <div class="col-6 mb-1">
+                                            <span class="text-muted">${lang === 'en' ? 'Health' : '健康度'}:</span> 
+                                            <span class="text-${m.health_score >= 80 ? 'success' : m.health_score >= 50 ? 'warning' : 'danger'}">${m.health_score}%</span>
+                                        </div>
+                                    </div>
+                                    <hr class="border-secondary my-2">
+                                    <div class="row small">
+                                        <div class="col-4 text-center">
+                                            <div class="text-muted">${lang === 'en' ? 'Hashrate' : '算力'}</div>
+                                            <div class="text-${hashrateColor}">${m.actual_hashrate} <small>TH/s</small></div>
+                                            ${m.expected_hashrate ? `<small class="text-muted">/ ${m.expected_hashrate}</small>` : ''}
+                                        </div>
+                                        <div class="col-4 text-center">
+                                            <div class="text-muted">${lang === 'en' ? 'Temp' : '温度'}</div>
+                                            <div class="text-${tempColor}">${m.temperature_max || '-'}°C</div>
+                                            <small class="text-muted">${lang === 'en' ? 'avg' : '均'}: ${m.temperature_avg || '-'}°C</small>
+                                        </div>
+                                        <div class="col-4 text-center">
+                                            <div class="text-muted">${lang === 'en' ? 'Power' : '功率'}</div>
+                                            <div>${m.actual_power}W</div>
+                                            <small class="text-muted">${lang === 'en' ? 'Uptime' : '运行'}: ${m.uptime || '-'}</small>
+                                        </div>
+                                    </div>
+                                    <div class="row small mt-2">
+                                        <div class="col-6">
+                                            <span class="text-muted">${lang === 'en' ? 'Fan' : '风扇'}:</span> ${m.fan_avg || '-'} RPM
+                                        </div>
+                                        <div class="col-6">
+                                            <span class="text-muted">${lang === 'en' ? 'Reject' : '拒绝率'}:</span> ${m.reject_rate}%
+                                        </div>
+                                    </div>
+                                    ${m.last_seen ? `<div class="small text-muted mt-1">${lang === 'en' ? 'Last seen' : '最后在线'}: ${m.last_seen}</div>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    minersHtml = `<div class="text-muted small">${lang === 'en' ? 'No miner data available' : '无矿机数据'}</div>`;
+                }
+                
+                let commandsHtml = '';
+                if (inc.recent_commands && inc.recent_commands.length > 0) {
+                    commandsHtml = inc.recent_commands.map(cmd => `
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span>${cmd.command_type}</span>
+                            <span class="badge bg-${cmd.status === 'completed' ? 'success' : cmd.status === 'failed' ? 'danger' : 'secondary'}">${cmd.status}</span>
+                            <span class="text-muted">${cmd.created_at}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    commandsHtml = `<div class="text-muted small">${lang === 'en' ? 'No recent commands' : '无最近命令'}</div>`;
+                }
+                
+                let alertsHtml = '';
+                if (inc.recent_site_alerts && inc.recent_site_alerts.length > 0) {
+                    alertsHtml = inc.recent_site_alerts.map(a => `
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span class="text-truncate" style="max-width: 150px;">${a.title}</span>
+                            <span class="badge bg-${severityColors[a.severity] || 'secondary'}">${a.severity}</span>
+                            <span class="text-muted">${a.created_at}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    alertsHtml = `<div class="text-muted small">${lang === 'en' ? 'No other alerts' : '无其他告警'}</div>`;
+                }
+                
                 content.innerHTML = `
                     <div class="row">
                         <div class="col-md-8">
-                            <h5 class="text-warning mb-3">${inc.title}</h5>
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <h5 class="text-warning mb-0">${inc.title}</h5>
+                                <button class="btn btn-sm btn-outline-info" onclick="triggerAIDiagnosis(${inc.site_id}, ${inc.affected_miners_details && inc.affected_miners_details[0] ? inc.affected_miners_details[0].id : 'null'}, '${inc.title}')">
+                                    🤖 ${lang === 'en' ? 'AI Diagnose' : 'AI诊断'}
+                                </button>
+                            </div>
                             <p class="text-muted">${inc.description || (lang === 'en' ? 'No description' : '无描述')}</p>
                             <hr class="border-secondary">
-                            <div class="row">
-                                <div class="col-6 mb-3">
+                            <div class="row mb-3">
+                                <div class="col-3">
                                     <small class="text-muted">${lang === 'en' ? 'Severity' : '严重程度'}</small>
                                     <div><span class="badge bg-${severityColors[inc.severity] || 'secondary'}">${severityLabels[inc.severity] || inc.severity}</span></div>
                                 </div>
-                                <div class="col-6 mb-3">
+                                <div class="col-3">
                                     <small class="text-muted">${lang === 'en' ? 'Status' : '状态'}</small>
                                     <div><span class="badge bg-${statusColors[inc.status] || 'secondary'}">${statusLabels[inc.status] || inc.status}</span></div>
                                 </div>
-                                <div class="col-6 mb-3">
+                                <div class="col-3">
                                     <small class="text-muted">${lang === 'en' ? 'Site' : '站点'}</small>
                                     <div>${inc.site_name || 'Global'}</div>
+                                    ${inc.site_location ? `<small class="text-muted">${inc.site_location}</small>` : ''}
                                 </div>
-                                <div class="col-6 mb-3">
+                                <div class="col-3">
                                     <small class="text-muted">${lang === 'en' ? 'Assigned To' : '指派给'}</small>
                                     <div>${inc.assigned_to_name || (lang === 'en' ? 'Unassigned' : '未指派')}</div>
                                 </div>
                             </div>
+                            
+                            <h6 class="text-info mt-4 mb-2">🔧 ${lang === 'en' ? 'Affected Miners' : '受影响矿机'}</h6>
+                            <div style="max-height: 300px; overflow-y: auto;">
+                                ${minersHtml}
+                            </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="card bg-secondary">
+                            <div class="card bg-secondary mb-3">
                                 <div class="card-body">
-                                    <h6 class="text-info mb-3">${lang === 'en' ? 'Timeline' : '时间线'}</h6>
+                                    <h6 class="text-info mb-3">⏱️ ${lang === 'en' ? 'Timeline' : '时间线'}</h6>
                                     <div class="mb-2">
                                         <small class="text-muted">${lang === 'en' ? 'Created' : '创建时间'}</small>
                                         <div>${inc.created_at || '-'}</div>
@@ -709,6 +813,20 @@ function viewIncident(id) {
                                         <small class="text-muted">${lang === 'en' ? 'Duration' : '持续时间'}</small>
                                         <div>${inc.duration || '-'}</div>
                                     </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card bg-secondary mb-3">
+                                <div class="card-body">
+                                    <h6 class="text-info mb-2">📡 ${lang === 'en' ? 'Recent Commands' : '最近命令'}</h6>
+                                    ${commandsHtml}
+                                </div>
+                            </div>
+                            
+                            <div class="card bg-secondary">
+                                <div class="card-body">
+                                    <h6 class="text-info mb-2">⚠️ ${lang === 'en' ? 'Site Alerts' : '站点告警'}</h6>
+                                    ${alertsHtml}
                                 </div>
                             </div>
                         </div>
@@ -822,6 +940,21 @@ function getIncidentFilters() { return {}; /* 获取事件过滤器 */ }
 function updatePagination(pagination) { /* 更新分页 */ }
 function exportIncidents() { /* 导出事件 */ }
 function updateIncidentStatus() { /* 更新事件状态 */ }
+
+function triggerAIDiagnosis(siteId, minerId, incidentTitle) {
+    let alertType = 'offline';
+    const title = (incidentTitle || '').toLowerCase();
+    if (title.includes('temp') || title.includes('temperature') || title.includes('热') || title.includes('温度')) {
+        alertType = 'temperature';
+    } else if (title.includes('hash') || title.includes('算力')) {
+        alertType = 'hashrate';
+    } else if (title.includes('offline') || title.includes('离线')) {
+        alertType = 'offline';
+    } else if (title.includes('power') || title.includes('功率') || title.includes('电')) {
+        alertType = 'power';
+    }
+    openAIDiagnosis(null, alertType, minerId, siteId);
+}
 
 function openAIDiagnosis(alertId, alertType, minerId, siteId) {
     if (!minerId || !siteId) {

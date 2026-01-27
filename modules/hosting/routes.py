@@ -3339,7 +3339,7 @@ def create_monitoring_incident():
 @login_required
 @requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def get_incident_detail(incident_id):
-    """获取单个事件详情"""
+    """获取单个事件详情 - 包含矿机信息、运行状态、历史记录"""
     try:
         incident = HostingIncident.query.get_or_404(incident_id)
         
@@ -3350,8 +3350,89 @@ def get_incident_detail(incident_id):
             minutes = int((duration_delta.total_seconds() % 3600) // 60)
             duration = f"{hours}h {minutes}m" if hours > 0 else f"{minutes}m"
         
-        site_name = incident.site.name if incident.site else 'Global'
+        site = incident.site
+        site_name = site.name if site else 'Global'
+        site_location = site.location if site else None
         assigned_to_name = incident.assigned_to.email if incident.assigned_to else None
+        
+        affected_miners_details = []
+        miner_serial_list = []
+        if incident.affected_miners:
+            try:
+                miner_serial_list = json.loads(incident.affected_miners) if isinstance(incident.affected_miners, str) else incident.affected_miners
+            except:
+                miner_serial_list = []
+        
+        for serial in miner_serial_list:
+            miner = HostingMiner.query.filter_by(serial_number=serial).first()
+            if miner:
+                model_name = miner.miner_model.model_name if miner.miner_model else 'Unknown'
+                expected_hashrate = None
+                if miner.miner_model:
+                    expected_hashrate = getattr(miner.miner_model, 'hashrate', None) or getattr(miner.miner_model, 'reference_hashrate', None)
+                
+                uptime_str = None
+                if miner.uptime_seconds:
+                    hours = miner.uptime_seconds // 3600
+                    minutes = (miner.uptime_seconds % 3600) // 60
+                    uptime_str = f"{hours}h {minutes}m"
+                
+                ip_display = miner.ip_address
+                if ip_display:
+                    parts = ip_display.split('.')
+                    if len(parts) == 4:
+                        ip_display = f"{parts[0]}.{parts[1]}.xxx.{parts[3]}"
+                
+                affected_miners_details.append({
+                    'id': miner.id,
+                    'serial_number': miner.serial_number,
+                    'model_name': model_name,
+                    'ip_address': ip_display,
+                    'rack_position': miner.rack_position,
+                    'status': miner.status,
+                    'cgminer_online': miner.cgminer_online,
+                    'last_seen': miner.last_seen.strftime('%Y-%m-%d %H:%M:%S') if miner.last_seen else None,
+                    'uptime': uptime_str,
+                    'actual_hashrate': round(miner.actual_hashrate, 2) if miner.actual_hashrate else 0,
+                    'expected_hashrate': round(expected_hashrate, 2) if expected_hashrate else None,
+                    'actual_power': round(miner.actual_power, 0) if miner.actual_power else 0,
+                    'temperature_avg': round(miner.temperature_avg, 1) if miner.temperature_avg else None,
+                    'temperature_max': round(miner.temperature_max, 1) if miner.temperature_max else None,
+                    'fan_avg': miner.fan_avg,
+                    'reject_rate': round(miner.reject_rate, 2) if miner.reject_rate else 0,
+                    'hardware_errors': miner.hardware_errors or 0,
+                    'health_score': miner.health_score,
+                    'pool_url': miner.pool_url,
+                    'pool_worker': miner.pool_worker,
+                })
+        
+        recent_commands = []
+        if miner_serial_list:
+            commands = MinerCommand.query.filter(
+                MinerCommand.miner_id.in_(miner_serial_list)
+            ).order_by(MinerCommand.created_at.desc()).limit(5).all()
+            for cmd in commands:
+                recent_commands.append({
+                    'id': cmd.id,
+                    'command_type': cmd.command_type,
+                    'status': cmd.status,
+                    'created_at': cmd.created_at.strftime('%Y-%m-%d %H:%M') if cmd.created_at else None,
+                    'executed_at': cmd.executed_at.strftime('%Y-%m-%d %H:%M') if cmd.executed_at else None,
+                })
+        
+        recent_alerts = []
+        site_incidents = HostingIncident.query.filter(
+            HostingIncident.site_id == incident.site_id,
+            HostingIncident.id != incident.id
+        ).order_by(HostingIncident.created_at.desc()).limit(3).all()
+        for inc in site_incidents:
+            recent_alerts.append({
+                'id': inc.id,
+                'title': inc.title,
+                'severity': inc.severity,
+                'status': inc.status,
+                'created_at': inc.created_at.strftime('%Y-%m-%d %H:%M') if inc.created_at else None,
+            })
         
         return jsonify({
             'success': True,
@@ -3363,7 +3444,9 @@ def get_incident_detail(incident_id):
                 'status': incident.status,
                 'site_id': incident.site_id,
                 'site_name': site_name,
+                'site_location': site_location,
                 'affected_miners': incident.affected_miners,
+                'affected_miners_details': affected_miners_details,
                 'estimated_loss': incident.estimated_loss,
                 'assigned_to_id': incident.assigned_to_id,
                 'assigned_to_name': assigned_to_name,
@@ -3371,6 +3454,8 @@ def get_incident_detail(incident_id):
                 'first_response_at': incident.first_response_at.strftime('%Y-%m-%d %H:%M') if incident.first_response_at else None,
                 'resolved_at': incident.resolved_at.strftime('%Y-%m-%d %H:%M') if incident.resolved_at else None,
                 'duration': duration,
+                'recent_commands': recent_commands,
+                'recent_site_alerts': recent_alerts,
             }
         })
     except Exception as e:
