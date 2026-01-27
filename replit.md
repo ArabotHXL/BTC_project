@@ -5,6 +5,43 @@ HashInsight Enterprise is an enterprise-grade web application for Bitcoin mining
 
 ## Recent Changes
 
+### 2026-01-27: Multi-Tenant Customer Management
+
+**1. Database Model Extension**
+- `HostingSite.owner_id` - Links site to site owner (mining_site_owner)
+- `UserAccess.managed_by_site_id` - Links customer to their assigned site
+- `UserAccess.is_active` - Account active/disabled status
+- Migration: `migrations/024_add_multi_tenant_fields.sql`
+
+**2. Platform Admin Interface**
+- New routes in `routes/admin_routes.py`:
+  - `GET /admin/site-owners` - List all site owners
+  - `POST /admin/site-owners/create` - Create new site owner
+  - `POST /admin/site-owners/<id>/toggle-status` - Enable/disable
+  - `POST /admin/site-owners/<id>/assign-site` - Assign sites
+  - `GET /admin/site-owners/<id>` - View site owner details
+- Templates: `templates/owner/site_owner_management.html`, `site_owner_detail.html`
+
+**3. Site Owner Customer Management**
+- New routes in `modules/hosting/routes.py`:
+  - `GET /hosting/host/my-customers` - List owner's customers
+  - `POST /hosting/host/my-customers/create` - Create customer
+  - `POST /hosting/host/my-customers/<id>/edit` - Edit customer
+  - `POST /hosting/host/my-customers/<id>/toggle-status` - Enable/disable
+- Template: `templates/hosting/my_customers.html`
+
+**4. RBAC Data Isolation**
+- New helpers in `common/rbac.py`:
+  - `get_accessible_site_ids()` - Returns site IDs user can access
+  - `filter_by_site_access(query, column)` - Filter queries by site
+  - `check_site_access(site_id)` - Verify access to specific site
+- Applied to all hosting endpoints: sites, miners, tickets, incidents
+
+**5. Role-Based Login Redirect**
+- Owner/Admin → `/admin/site-owners`
+- Mining_Site_Owner → `/hosting/host/my-customers`
+- Client → `/hosting/` (dashboard)
+
 ### 2026-01-26: Architecture Convergence & AI Closed-Loop
 
 **1. Command System Convergence**
