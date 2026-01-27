@@ -288,11 +288,11 @@ def login():
             
             # Default redirect based on role
             if user_role in ['owner', 'admin']:
-                return redirect(url_for('admin.site_owners'))
+                return redirect('/admin/site-owners')
             elif user_role == 'mining_site_owner':
-                return redirect(url_for('hosting.my_customers'))
+                return redirect('/hosting/host/my-customers')
             elif user_role == 'client':
-                return redirect(url_for('hosting.dashboard'))
+                return redirect('/hosting/')
             else:
                 return redirect(url_for('index'))
         else:

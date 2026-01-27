@@ -12,7 +12,7 @@ from auth import login_required
 from decorators import requires_role
 from common.rbac import (
     Module, Role, requires_module_access, requires_role as rbac_requires_role,
-    rbac_manager, normalize_role
+    rbac_manager, normalize_role, get_accessible_site_ids, filter_by_site_access, check_site_access
 )
 from models import db, HostingSite, HostingMiner, HostingTicket, HostingIncident, HostingUsageRecord, HostingUsageItem, MinerTelemetry, HostingBill, HostingBillItem, HostingMinerOperationLog, HostingOwnerEncryption, MinerModel, SiteElectricityRateHistory
 from api.collector_api import MinerTelemetryLive, MinerCommand, CollectorKey
@@ -139,6 +139,15 @@ def site_detail(site_id):
     """站点详情页面"""
     try:
         site = HostingSite.query.get_or_404(site_id)
+        
+        if not check_site_access(site_id):
+            current_lang = session.get('language', 'zh')
+            if current_lang == 'en':
+                flash('Access denied', 'error')
+            else:
+                flash('访问被拒绝', 'error')
+            return redirect(url_for('hosting_service_bp.client_view'))
+        
         return render_template('hosting/site_detail.html', site=site)
     except Exception as e:
         logger.error(f"站点详情页面错误: {e}")
@@ -362,25 +371,13 @@ def get_hosting_overview():
 def get_incidents():
     """获取最近事件/告警列表"""
     try:
-        user_role = session.get('role', 'guest')
-        user_email = session.get('email', '')
         limit = request.args.get('limit', 10, type=int)
         
-        # 构建查询
         query = HostingIncident.query.filter(
             HostingIncident.created_at >= datetime.now() - timedelta(days=7)
         )
         
-        # 权限过滤
-        if user_role == 'mining_site_owner':
-            managed_sites = HostingSite.query.filter_by(contact_email=user_email).all()
-            managed_site_ids = [s.id for s in managed_sites]
-            if managed_site_ids:
-                query = query.filter(HostingIncident.site_id.in_(managed_site_ids))
-            else:
-                return jsonify({'success': True, 'incidents': []})
-        elif user_role not in ['owner', 'admin']:
-            return jsonify({'success': True, 'incidents': []})
+        query = filter_by_site_access(query, HostingIncident.site_id)
         
         incidents = query.order_by(HostingIncident.created_at.desc()).limit(limit).all()
         
@@ -407,46 +404,31 @@ def get_sites():
     """获取托管站点列表（性能优化版 + 权限过滤）
     
     性能优化：使用单一聚合查询同时获取站点列表和矿机统计
+    RBAC: 使用 get_accessible_site_ids() 进行站点级别过滤
     """
     try:
-        user_id = session.get('user_id')
-        user_role = session.get('role', 'guest')
-        user_email = session.get('email', '')
+        accessible_site_ids = get_accessible_site_ids()
         
-        # 权限控制 + 聚合查询合并为单一高效查询
-        if user_role == 'admin':
-            # 管理员：直接查询所有站点及其矿机统计
-            results = db.session.query(
-                HostingSite,
-                db.func.count(HostingMiner.id).label('total'),
-                db.func.sum(db.case((HostingMiner.status == 'active', 1), else_=0)).label('active')
-            ).outerjoin(
-                HostingMiner, HostingMiner.site_id == HostingSite.id
+        base_query = db.session.query(
+            HostingSite,
+            db.func.count(HostingMiner.id).label('total'),
+            db.func.sum(db.case((HostingMiner.status == 'active', 1), else_=0)).label('active')
+        ).outerjoin(
+            HostingMiner, HostingMiner.site_id == HostingSite.id
+        )
+        
+        if accessible_site_ids == []:
+            user_role = session.get('role', 'guest')
+            if normalize_role(user_role) in [Role.OWNER, Role.ADMIN]:
+                results = base_query.group_by(HostingSite.id).all()
+            else:
+                results = []
+        elif accessible_site_ids:
+            results = base_query.filter(
+                HostingSite.id.in_(accessible_site_ids)
             ).group_by(HostingSite.id).all()
-            
-        elif user_role == 'mining_site_owner':
-            # 矿场运营方：只看管理站点
-            results = db.session.query(
-                HostingSite,
-                db.func.count(HostingMiner.id).label('total'),
-                db.func.sum(db.case((HostingMiner.status == 'active', 1), else_=0)).label('active')
-            ).outerjoin(
-                HostingMiner, HostingMiner.site_id == HostingSite.id
-            ).filter(
-                HostingSite.contact_email == user_email
-            ).group_by(HostingSite.id).all()
-            
         else:
-            # owner/customer：只看有自己矿机的站点，使用JOIN避免子查询
-            results = db.session.query(
-                HostingSite,
-                db.func.count(HostingMiner.id).label('total'),
-                db.func.sum(db.case((HostingMiner.status == 'active', 1), else_=0)).label('active')
-            ).join(
-                HostingMiner, HostingMiner.site_id == HostingSite.id
-            ).filter(
-                HostingMiner.customer_id == user_id
-            ).group_by(HostingSite.id).all()
+            results = []
         
         # 构建响应数据
         sites_data = []
@@ -613,6 +595,9 @@ def get_site_detail(site_id):
     try:
         site = HostingSite.query.get_or_404(site_id)
         
+        if not check_site_access(site_id):
+            return jsonify({'success': False, 'error': 'Access denied'}), 403
+        
         # 获取站点矿机统计
         miners_stats = db.session.query(
             HostingMiner.status,
@@ -664,6 +649,8 @@ def get_tickets():
         limit = int(request.args.get('limit', 50))
         
         query = HostingTicket.query
+        
+        query = filter_by_site_access(query, HostingTicket.site_id)
         
         if status:
             query = query.filter_by(status=status)
@@ -1592,23 +1579,7 @@ def get_miners():
             joinedload(HostingMiner.miner_model)
         )
         
-        # 权限控制 - 角色级别数据隔离
-        if user_role == 'admin':
-            # 管理员可以查看所有矿机
-            pass
-        elif user_role == 'mining_site_owner':
-            # 矿场运营方只能查看自己管理站点的矿机
-            user_email = session.get('email', '')
-            managed_sites = HostingSite.query.filter_by(contact_email=user_email).all()
-            managed_site_ids = [s.id for s in managed_sites]
-            if managed_site_ids:
-                query = query.filter(HostingMiner.site_id.in_(managed_site_ids))
-            else:
-                # 没有管理任何站点，返回空结果
-                query = query.filter(HostingMiner.id == -1)
-        else:
-            # owner/customer 只能查看自己名下的矿机
-            query = query.filter_by(customer_id=user_id)
+        query = filter_by_site_access(query, HostingMiner.site_id)
         
         # 应用筛选条件
         if status:
@@ -2090,16 +2061,12 @@ def reject_miner(miner_id):
 def get_miner_detail(miner_id):
     """获取单个矿机详情"""
     try:
-        user_id = session.get('user_id')
-        user_role = session.get('role', 'guest')
-        
         miner = HostingMiner.query.get_or_404(miner_id)
         
-        # 权限检查：托管商可以查看所有，客户只能查看自己的
-        if user_role not in ['owner', 'admin', 'mining_site_owner'] and miner.customer_id != user_id:
+        if miner.site_id and not check_site_access(miner.site_id):
             return jsonify({
                 'success': False,
-                'error': '无权限查看此矿机'
+                'error': 'Access denied'
             }), 403
         
         # 构建详细信息
@@ -2189,14 +2156,10 @@ def miner_detail_page(miner_id):
     """矿机详情页面"""
     try:
         miner = HostingMiner.query.get_or_404(miner_id)
-        user_role = session.get('role', 'guest')
-        user_id = session.get('user_id')
         
-        # 权限检查：防御性检查确保session完整性
-        if user_role not in ['owner', 'admin', 'mining_site_owner']:
-            if not user_id or miner.customer_id != user_id:
-                flash('无权限访问' if session.get('language', 'zh') == 'zh' else 'Access denied', 'error')
-                return redirect(url_for('hosting_service_bp.host_view', view_type='devices'))
+        if miner.site_id and not check_site_access(miner.site_id):
+            flash('无权限访问' if session.get('language', 'zh') == 'zh' else 'Access denied', 'error')
+            return redirect(url_for('hosting_service_bp.host_view', view_type='devices'))
         
         return render_template('hosting/miner_detail.html', miner=miner, current_lang=session.get('language', 'zh'))
     except Exception as e:
@@ -8778,17 +8741,15 @@ def get_my_customers():
     from models import UserAccess
     
     try:
-        user_id = session.get('user_id')
-        user_role = session.get('role', 'guest')
         site_filter = request.args.get('site_id', type=int)
         
-        # Get sites owned by current user
-        if user_role in ['admin', 'owner']:
-            owned_sites = HostingSite.query.all()
-        else:
-            owned_sites = HostingSite.query.filter_by(owner_id=user_id).all()
+        owned_site_ids = get_accessible_site_ids()
         
-        owned_site_ids = [s.id for s in owned_sites]
+        if owned_site_ids == []:
+            owned_sites = HostingSite.query.all()
+            owned_site_ids = [s.id for s in owned_sites]
+        else:
+            owned_sites = HostingSite.query.filter(HostingSite.id.in_(owned_site_ids)).all() if owned_site_ids else []
         
         if not owned_site_ids:
             return jsonify({
