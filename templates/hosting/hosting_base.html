@@ -649,12 +649,12 @@
                     
                     <!-- 设备与监控 (可折叠) -->
                     <div class="hosting-nav-item hosting-nav-parent">
-                        <a href="javascript:void(0)" class="hosting-nav-link hosting-nav-toggle" data-bs-toggle="collapse" data-bs-target="#submenu-devices" aria-expanded="{{ 'true' if request.path.startswith('/hosting/host/devices') or request.path.startswith('/hosting/host/power_consumption') or request.path.startswith('/hosting/host/automation') else 'false' }}" aria-controls="submenu-devices">
+                        <a href="javascript:void(0)" class="hosting-nav-link hosting-nav-toggle" data-bs-toggle="collapse" data-bs-target="#submenu-devices" aria-expanded="{{ 'true' if request.path.startswith('/hosting/host/devices') or request.path.startswith('/hosting/host/power_consumption') or request.path.startswith('/hosting/host/automation') or request.path.startswith('/hosting/host/event_monitoring') else 'false' }}" aria-controls="submenu-devices">
                             <i class="bi bi-cpu hosting-nav-icon"></i>
                             <span class="hosting-nav-text" data-i18n="devices_monitoring">{% if current_lang == 'en' %}Devices & Monitoring{% else %}设备与监控{% endif %}</span>
                             <i class="bi bi-chevron-down hosting-nav-arrow"></i>
                         </a>
-                        <div class="collapse hosting-submenu {{ 'show' if request.path.startswith('/hosting/host/devices') or request.path.startswith('/hosting/host/power_consumption') or request.path.startswith('/hosting/host/automation') }}" id="submenu-devices">
+                        <div class="collapse hosting-submenu {{ 'show' if request.path.startswith('/hosting/host/devices') or request.path.startswith('/hosting/host/power_consumption') or request.path.startswith('/hosting/host/automation') or request.path.startswith('/hosting/host/event_monitoring') }}" id="submenu-devices">
                             <a href="/hosting/host/devices" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path.startswith('/hosting/host/devices') }}">
                                 <span class="hosting-nav-text" data-i18n="device_management">{% if current_lang == 'en' %}Device Management{% else %}设备管理{% endif %}</span>
                             </a>
@@ -663,6 +663,9 @@
                             </a>
                             <a href="/hosting/host/automation" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path.startswith('/hosting/host/automation') }}">
                                 <span class="hosting-nav-text" data-i18n="automation_rules">{% if current_lang == 'en' %}Automation Rules{% else %}自动化规则{% endif %}</span>
+                            </a>
+                            <a href="/hosting/host/event_monitoring" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path.startswith('/hosting/host/event_monitoring') }}">
+                                <span class="hosting-nav-text" data-i18n="event_monitoring">{% if current_lang == 'en' %}Event Monitoring{% else %}事件监控{% endif %}</span>
                             </a>
                         </div>
                     </div>

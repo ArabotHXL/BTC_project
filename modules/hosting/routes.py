@@ -5352,6 +5352,22 @@ def batch_remote_command():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+# ==================== 事件监控 Event Monitoring ====================
+
+@hosting_bp.route('/host/event_monitoring')
+@login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT)
+def event_monitoring_page():
+    """事件监控页面 / Event Monitoring Page - AI 智能诊断入口"""
+    try:
+        sites = HostingSite.query.all()
+        return render_template('hosting/event_monitoring.html', sites=sites)
+    except Exception as e:
+        logger.error(f"事件监控页面错误: {e}")
+        flash('Failed to load event monitoring page', 'error')
+        return redirect(url_for('hosting_service_bp.host_view', subpath='dashboard'))
+
+
 # ==================== 自动化规则管理 Automation Rules Management ====================
 
 @hosting_bp.route('/host/automation')
