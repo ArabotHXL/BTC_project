@@ -231,18 +231,22 @@ class AIAlertDiagnosisService:
     ) -> List[RootCauseHypothesis]:
         """生成根因假设"""
         hypotheses = []
+        alert_lower = alert_type.lower() if alert_type else ''
         
-        if alert_type in ('miner_offline', 'offline'):
+        if alert_lower in ('miner_offline', 'offline', 'disconnect', 'unreachable'):
             hypotheses.extend(self._diagnose_offline(live_data, history_data, recent_commands))
         
-        elif alert_type in ('hashrate_low', 'hashrate_drop'):
+        elif 'hashrate' in alert_lower or 'hash' in alert_lower:
             hypotheses.extend(self._diagnose_hashrate_issue(live_data, history_data, recent_commands))
         
-        elif alert_type in ('temperature_high', 'temperature_critical'):
+        elif 'temp' in alert_lower or 'overheat' in alert_lower or 'thermal' in alert_lower:
             hypotheses.extend(self._diagnose_temperature_issue(live_data, history_data))
         
-        elif alert_type == 'hardware_error':
+        elif 'hardware' in alert_lower or 'board' in alert_lower:
             hypotheses.extend(self._diagnose_hardware_issue(live_data, history_data))
+        
+        elif 'power' in alert_lower or 'psu' in alert_lower:
+            hypotheses.extend(self._diagnose_offline(live_data, history_data, recent_commands))
         
         else:
             hypotheses.extend(self._diagnose_generic(alert_type, live_data, history_data))
@@ -727,6 +731,70 @@ class AIAlertDiagnosisService:
                         priority=2,
                         reason='Clean heatsinks improve heat dissipation',
                         reason_zh='干净的散热片散热更好',
+                    ),
+                ],
+            ))
+        else:
+            hypotheses.append(RootCauseHypothesis(
+                hypothesis_id='fan_failure',
+                cause='Fan failure or reduced fan speed',
+                cause_zh='风扇故障或转速下降',
+                confidence=0.70,
+                risk_level='high',
+                evidence=[
+                    Evidence(
+                        metric='temperature',
+                        description='High temperature alert triggered',
+                        description_zh='触发高温告警',
+                        value='high',
+                    ),
+                ],
+                suggested_actions=[
+                    SuggestedAction(
+                        action='Check all fan speeds in miner dashboard',
+                        action_zh='在矿机仪表板检查所有风扇转速',
+                        priority=1,
+                        reason='Identify failed or slow fans',
+                        reason_zh='找出故障或慢转风扇',
+                    ),
+                    SuggestedAction(
+                        action='Replace failed fans immediately',
+                        action_zh='立即更换故障风扇',
+                        priority=2,
+                        reason='Prevent thermal damage to chips',
+                        reason_zh='防止芯片热损坏',
+                    ),
+                ],
+            ))
+            
+            hypotheses.append(RootCauseHypothesis(
+                hypothesis_id='environmental',
+                cause='High ambient temperature or poor ventilation',
+                cause_zh='环境温度高或通风不良',
+                confidence=0.60,
+                risk_level='medium',
+                evidence=[
+                    Evidence(
+                        metric='temperature',
+                        description='Temperature alert without live telemetry',
+                        description_zh='温度告警（无实时遥测数据）',
+                        value='unknown',
+                    ),
+                ],
+                suggested_actions=[
+                    SuggestedAction(
+                        action='Check room ambient temperature',
+                        action_zh='检查机房环境温度',
+                        priority=1,
+                        reason='High ambient affects all miners',
+                        reason_zh='高环境温度影响所有矿机',
+                    ),
+                    SuggestedAction(
+                        action='Improve air circulation in the area',
+                        action_zh='改善该区域空气流通',
+                        priority=2,
+                        reason='Better airflow reduces operating temp',
+                        reason_zh='更好的气流降低运行温度',
                     ),
                 ],
             ))

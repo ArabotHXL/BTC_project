@@ -397,7 +397,7 @@ function updateAlertsGrid(alerts) {
                                     <i class="bi bi-check"></i> ${getLanguage() === 'en' ? 'Ack' : '确认'}
                                 </button>
                                 ${(alert.miner_id && alert.site_id) ? 
-                                    `<button class="btn btn-outline-info btn-sm ms-1" onclick="openAIDiagnosis('${alert.id}', '${alert.type || 'offline'}', '${alert.miner_id}', ${alert.site_id})">
+                                    `<button class="btn btn-outline-info btn-sm ms-1" onclick="openAIDiagnosis('${alert.id}', '${alert.alert_type || 'offline'}', '${alert.miner_id}', ${alert.site_id})">
                                         <i class="bi bi-robot"></i> ${getLanguage() === 'en' ? 'AI' : 'AI诊断'}
                                     </button>` : ''}
                             </div>
@@ -694,23 +694,40 @@ function renderAIDiagnosis(diagnosis) {
     
     if (diagnosis.hypotheses && diagnosis.hypotheses.length > 0) {
         diagnosis.hypotheses.forEach((h, i) => {
+            const riskBadge = h.risk_level === 'high' ? 'danger' : (h.risk_level === 'medium' ? 'warning' : 'info');
             html += '<div class="card bg-secondary mb-3"><div class="card-body">';
-            html += '<div class="d-flex justify-content-between"><h6 class="text-warning">#' + (i+1) + ' ' + (lang === 'en' ? h.cause : h.cause_zh) + '</h6><span class="badge bg-' + (h.confidence > 0.7 ? 'success' : h.confidence > 0.4 ? 'warning' : 'secondary') + '">' + Math.round(h.confidence * 100) + '%</span></div>';
-            html += '<p class="mb-2">' + (lang === 'en' ? h.explanation : h.explanation_zh) + '</p>';
+            html += '<div class="d-flex justify-content-between align-items-center mb-2">';
+            html += '<h6 class="text-warning mb-0">#' + (i+1) + ' ' + (lang === 'en' ? h.cause : h.cause_zh) + '</h6>';
+            html += '<span class="badge bg-' + (h.confidence > 0.7 ? 'success' : h.confidence > 0.4 ? 'warning' : 'secondary') + '">' + Math.round(h.confidence * 100) + '%</span>';
+            html += '</div>';
             if (h.evidence && h.evidence.length > 0) {
                 html += '<div class="mb-2"><small class="text-muted">' + (lang === 'en' ? 'Evidence:' : '证据:') + '</small><ul class="mb-0">';
-                h.evidence.forEach(e => { html += '<li><small>' + (lang === 'en' ? e.observation : e.observation_zh) + '</small></li>'; });
+                h.evidence.forEach(e => {
+                    const desc = lang === 'en' ? e.description : e.description_zh;
+                    const valueInfo = e.value !== null && e.value !== undefined ? ' (' + e.metric + ': ' + e.value + (e.threshold ? ' / ' + (lang === 'en' ? 'threshold' : '阈值') + ': ' + e.threshold : '') + ')' : '';
+                    html += '<li><small>' + desc + valueInfo + '</small></li>';
+                });
                 html += '</ul></div>';
             }
             if (h.suggested_actions && h.suggested_actions.length > 0) {
                 html += '<div><small class="text-muted">' + (lang === 'en' ? 'Suggested Actions:' : '建议动作:') + '</small><ul class="mb-0">';
-                h.suggested_actions.forEach(a => { html += '<li><small class="text-success">' + (lang === 'en' ? a.action : a.action_zh) + '</small></li>'; });
+                h.suggested_actions.forEach(a => {
+                    const actionText = lang === 'en' ? a.action : a.action_zh;
+                    const reasonText = lang === 'en' ? a.reason : a.reason_zh;
+                    html += '<li><small class="text-success">' + actionText + '</small>';
+                    if (reasonText) html += ' <small class="text-muted">- ' + reasonText + '</small>';
+                    html += '</li>';
+                });
                 html += '</ul></div>';
             }
             html += '</div></div>';
         });
     } else {
         html += '<div class="alert alert-secondary">' + (lang === 'en' ? 'No hypotheses generated' : '未生成假设') + '</div>';
+    }
+    
+    if (diagnosis.summary_zh || diagnosis.summary) {
+        html += '<div class="alert alert-info mt-3"><strong>' + (lang === 'en' ? 'Summary:' : '总结:') + '</strong> ' + (lang === 'en' ? diagnosis.summary : diagnosis.summary_zh) + '</div>';
     }
     
     document.getElementById('ai-diagnosis-content').innerHTML = html;
