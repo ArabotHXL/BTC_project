@@ -163,6 +163,63 @@
                 <ul class="list-unstyled" id="risk-list"></ul>
             </div>
         </div>
+        
+        <!-- AI 自动执行设置 -->
+        <div id="ai-auto-execute-section" class="mt-4" style="display:none;">
+            <div class="card bg-dark border-info">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-info mb-1"><i class="bi bi-gear-wide-connected me-2"></i>
+                                <span data-lang="en">Auto-Execution</span><span data-lang="zh">自动执行</span>
+                            </h6>
+                            <small class="text-muted" id="auto-exec-status">
+                                <span data-lang="en">Low-risk actions can be auto-executed</span>
+                                <span data-lang="zh">低风险操作可自动执行</span>
+                            </small>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="auto-execute-toggle" onchange="toggleAutoExecute(this.checked)">
+                            <label class="form-check-label" for="auto-execute-toggle">
+                                <span data-lang="en">Enable</span><span data-lang="zh">启用</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div id="risk-assessment-display" class="mt-3" style="display:none;">
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <div class="p-2 rounded bg-secondary text-center">
+                                    <small class="text-muted"><span data-lang="en">Risk Level</span><span data-lang="zh">风险等级</span></small>
+                                    <div id="risk-level-badge" class="mt-1">--</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-2 rounded bg-secondary text-center">
+                                    <small class="text-muted"><span data-lang="en">Auto-Approve</span><span data-lang="zh">自动审批</span></small>
+                                    <div id="auto-approve-status" class="mt-1">--</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-2 rounded bg-secondary text-center">
+                                    <small class="text-muted"><span data-lang="en">Approval Level</span><span data-lang="zh">审批级别</span></small>
+                                    <div id="approval-level" class="mt-1">--</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-success btn-sm" id="create-recommendation-btn" onclick="createCurtailmentRecommendation()" style="display:none;">
+                            <i class="bi bi-send me-1"></i>
+                            <span data-lang="en">Submit for Approval</span><span data-lang="zh">提交审批</span>
+                        </button>
+                        <button class="btn btn-warning btn-sm ms-2" id="execute-auto-btn" onclick="executeAutoApproved()" style="display:none;">
+                            <i class="bi bi-play-circle me-1"></i>
+                            <span data-lang="en">Execute Auto-Approved</span><span data-lang="zh">执行已审批</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -382,6 +439,7 @@ let currentPlan = null;
 let currentLang = '{{ current_lang }}';
 let aiPredictionData = null;
 let predictionChart = null;
+let currentCurtailmentPlan = null;
 
 // 页面加载时初始化
 document.addEventListener('DOMContentLoaded', function() {
@@ -766,6 +824,8 @@ function getAIStrategyAdvice() {
 }
 
 function displayAIStrategyAdvice(plan) {
+    currentCurtailmentPlan = plan;
+    document.getElementById('ai-auto-execute-section').style.display = 'block';
     document.getElementById('ai-strategy-result').style.display = 'block';
     const cardsDiv = document.getElementById('strategy-cards');
     
@@ -808,6 +868,120 @@ function displayAIStrategyAdvice(plan) {
     } else {
         document.getElementById('ai-risk-points').style.display = 'none';
     }
+}
+
+// ========== AI自动执行相关函数 ==========
+
+function toggleAutoExecute(enabled) {
+    const section = document.getElementById('risk-assessment-display');
+    const createBtn = document.getElementById('create-recommendation-btn');
+    const executeBtn = document.getElementById('execute-auto-btn');
+    
+    if (enabled && currentCurtailmentPlan) {
+        section.style.display = 'block';
+        createBtn.style.display = 'inline-block';
+        executeBtn.style.display = 'inline-block';
+        assessCurrentPlanRisk();
+    } else {
+        section.style.display = 'none';
+        createBtn.style.display = 'none';
+        executeBtn.style.display = 'none';
+    }
+}
+
+function assessCurrentPlanRisk() {
+    if (!currentCurtailmentPlan) return;
+    
+    const targetIds = (currentCurtailmentPlan.shutdown_order || []).map(m => m.miner_id);
+    const powerImpact = currentCurtailmentPlan.actual_reduction_kw || 0;
+    const ecoImpact = currentCurtailmentPlan.economic_impact || {};
+    const revLoss = ecoImpact.revenue_lost_hourly || 0;
+    const total = revLoss + (ecoImpact.cost_saved_hourly || 0);
+    const revPct = total > 0 ? (revLoss / total * 100) : 0;
+    
+    fetch('/api/v1/ai/auto/assess-risk', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            action_type: 'curtail',
+            target_ids: targetIds,
+            power_impact_kw: powerImpact,
+            revenue_impact_pct: revPct,
+            confidence_score: 0.8
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            displayRiskAssessment(data.risk_assessment);
+        }
+    })
+    .catch(err => console.error('Risk assessment failed:', err));
+}
+
+function displayRiskAssessment(assessment) {
+    const levelBadge = document.getElementById('risk-level-badge');
+    const levelColors = {low: 'success', medium: 'warning', high: 'danger', critical: 'danger'};
+    const levelLabels = {low: 'Low/低', medium: 'Medium/中', high: 'High/高', critical: 'Critical/严重'};
+    levelBadge.innerHTML = '<span class="badge bg-' + (levelColors[assessment.level] || 'secondary') + '">' + (levelLabels[assessment.level] || assessment.level) + '</span>';
+    
+    const autoStatus = document.getElementById('auto-approve-status');
+    autoStatus.innerHTML = assessment.can_auto_execute ? 
+        '<span class="badge bg-success">' + (currentLang === 'en' ? 'Yes' : '是') + '</span>' :
+        '<span class="badge bg-secondary">' + (currentLang === 'en' ? 'No' : '否') + '</span>';
+    
+    const approvalLevel = document.getElementById('approval-level');
+    const levelMap = {operator: 'Operator/操作员', manager: 'Manager/经理', admin: 'Admin/管理员'};
+    approvalLevel.textContent = levelMap[assessment.approval_level] || assessment.approval_level;
+}
+
+function createCurtailmentRecommendation() {
+    const siteId = document.getElementById('site-select').value;
+    if (!siteId || !currentCurtailmentPlan) {
+        alert(currentLang === 'en' ? 'No plan available' : '没有可用的方案');
+        return;
+    }
+    
+    fetch('/api/v1/ai/auto/curtailment/create', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            site_id: parseInt(siteId),
+            curtailment_plan: currentCurtailmentPlan,
+            trigger_type: 'user_request'
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const msg = data.auto_approved ?
+                (currentLang === 'en' ? 'Recommendation auto-approved!' : '建议已自动审批！') :
+                (currentLang === 'en' ? 'Recommendation submitted for approval' : '建议已提交审批');
+            alert(msg);
+        } else {
+            alert(data.error || (currentLang === 'en' ? 'Failed to create recommendation' : '创建建议失败'));
+        }
+    })
+    .catch(err => alert('Error: ' + err.message));
+}
+
+function executeAutoApproved() {
+    const siteId = document.getElementById('site-select').value;
+    
+    fetch('/api/v1/ai/auto/execute-approved', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({site_id: siteId ? parseInt(siteId) : null})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert((currentLang === 'en' ? 'Executed ' : '已执行 ') + data.executed_count + (currentLang === 'en' ? ' recommendations' : ' 条建议'));
+        } else {
+            alert(data.error || (currentLang === 'en' ? 'Execution failed' : '执行失败'));
+        }
+    })
+    .catch(err => alert('Error: ' + err.message));
 }
 
 // 显示AI预测结果

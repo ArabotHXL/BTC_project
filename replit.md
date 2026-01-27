@@ -57,6 +57,25 @@ HashInsight Enterprise is an enterprise-grade web application for Bitcoin mining
   - Displays recommended strategy card with shutdown order and risk points
   - Calls `/api/v1/ai/curtailment/plan` with site_id, electricity_price, target_reduction
 
+**7. AI Auto-Execution System (Phase 3: AI Native)**
+- Created `services/ai_auto_execution_service.py`:
+  - Multi-dimensional risk assessment engine (action type, target count, power/revenue impact, AI confidence)
+  - Converts curtailment plans to AIRecommendation objects
+  - Integrates with AutoApproveRule for low-risk auto-execution
+  - Risk thresholds: LOW (<0.25), MEDIUM (<0.5), HIGH (<0.75), CRITICAL (<1.0)
+- Created `api/ai_auto_execution_api.py`:
+  - `POST /api/v1/ai/auto/assess-risk` - Risk assessment
+  - `GET /api/v1/ai/auto/recommendations` - Pending recommendations
+  - `POST /api/v1/ai/auto/recommendations/{id}/approve|reject|execute` - Workflow
+  - `GET|POST|PUT|DELETE /api/v1/ai/auto/rules` - AutoApproveRule management
+  - `POST /api/v1/ai/auto/curtailment/create` - Create recommendation from plan
+  - `POST /api/v1/ai/auto/execute-approved` - Execute auto-approved batch
+- Curtailment Management UI:
+  - Auto-execution toggle switch
+  - Real-time risk assessment display (level, auto-approve status, approval level)
+  - "Submit for Approval" and "Execute Auto-Approved" buttons
+- Safety boundaries: Risk-based approval levels (operator/manager/admin), audit logging via AuditEvent
+
 ## User Preferences
 - **Communication style**: Simple, everyday language (中文/English)
 - **Technical preferences**: Native Flask implementation, avoid over-complication
