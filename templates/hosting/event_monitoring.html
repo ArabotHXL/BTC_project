@@ -390,15 +390,15 @@ function updateAlertsGrid(alerts) {
                         </div>
                         <h6 class="fw-bold mb-2">${alert.title}</h6>
                         <p class="text-muted mb-2">${alert.description}</p>
-                        <div class="d-flex justify-content-between">
+                        <div class="d-flex justify-content-between align-items-center mt-2">
                             <small class="text-muted">${alert.site_name || 'Global'}</small>
-                            <div>
-                                <button class="btn btn-hosting-outline btn-sm" onclick="acknowledgeAlert(${alert.id})">
-                                    <i class="bi bi-check"></i> ${getLanguage() === 'en' ? 'Ack' : '确认'}
+                            <div class="btn-group">
+                                <button class="btn btn-outline-success btn-sm px-3" onclick="acknowledgeAlert(${alert.id})" title="${getLanguage() === 'en' ? 'Acknowledge Alert' : '确认告警'}">
+                                    <span style="font-size: 14px;">✓</span> ${getLanguage() === 'en' ? 'Ack' : '确认'}
                                 </button>
                                 ${(alert.miner_id && alert.site_id) ? 
-                                    `<button class="btn btn-outline-info btn-sm ms-1" onclick="openAIDiagnosis('${alert.id}', '${alert.alert_type || 'offline'}', '${alert.miner_id}', ${alert.site_id})">
-                                        <i class="bi bi-robot"></i> ${getLanguage() === 'en' ? 'AI' : 'AI诊断'}
+                                    `<button class="btn btn-outline-info btn-sm px-3" onclick="openAIDiagnosis('${alert.id}', '${alert.alert_type || 'offline'}', '${alert.miner_id}', ${alert.site_id})" title="${getLanguage() === 'en' ? 'AI Diagnosis' : 'AI智能诊断'}">
+                                        <span style="font-size: 14px;">🤖</span> AI
                                     </button>` : ''}
                             </div>
                         </div>
