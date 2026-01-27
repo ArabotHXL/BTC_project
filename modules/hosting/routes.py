@@ -3177,12 +3177,39 @@ def get_monitoring_overview():
         alerts_data = []
         for alert in recent_alerts:
             site_name = alert.site.name if alert.site else 'Global'
+            # Extract miner_ids from affected_miners JSON
+            miner_ids = []
+            if alert.affected_miners:
+                try:
+                    import json
+                    miners_list = json.loads(alert.affected_miners) if isinstance(alert.affected_miners, str) else alert.affected_miners
+                    if isinstance(miners_list, list):
+                        miner_ids = [str(m) for m in miners_list if m]
+                except (json.JSONDecodeError, TypeError) as e:
+                    logger.warning(f"Failed to parse affected_miners for incident {alert.id}: {e}")
+            
+            # Derive alert_type from title keywords
+            alert_type = 'unknown'
+            title_lower = alert.title.lower()
+            if 'offline' in title_lower or 'disconnect' in title_lower:
+                alert_type = 'offline'
+            elif 'temperature' in title_lower or 'temp' in title_lower or 'overheat' in title_lower:
+                alert_type = 'temperature'
+            elif 'hashrate' in title_lower or 'hash' in title_lower:
+                alert_type = 'hashrate'
+            elif 'power' in title_lower or 'energy' in title_lower:
+                alert_type = 'power'
+            
             alerts_data.append({
                 'id': alert.id,
                 'title': alert.title,
                 'description': alert.description[:100] + '...' if len(alert.description) > 100 else alert.description,
                 'severity': alert.severity,
+                'site_id': alert.site_id,
                 'site_name': site_name,
+                'miner_id': miner_ids[0] if miner_ids else None,
+                'miner_ids': miner_ids,
+                'alert_type': alert_type,
                 'created_at': alert.created_at.strftime('%H:%M')
             })
         
