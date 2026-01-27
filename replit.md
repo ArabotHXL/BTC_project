@@ -31,6 +31,18 @@ HashInsight Enterprise is an enterprise-grade web application for Bitcoin mining
 - Full flow: Detect → Diagnose → Recommend → Approve → Act → Audit → Learn
 - Integration with Control Plane v1 via RemoteCommand model
 
+**5. AI Feature Services (Phase 1: Explain & Advise)**
+- Created `services/ai_alert_diagnosis_service.py`: AlertDiagnosisService for Top3 root cause hypotheses
+  - Inputs: live + history telemetry, recent commands
+  - Outputs: Structured evidence package + suggested verification actions
+- Created `services/ai_ticket_draft_service.py`: TicketDraftService for automated ticket generation
+  - Inputs: Alert evidence + site/miner info
+  - Outputs: Problem description, impact scope, troubleshooting steps, customer confirmations
+- Created `services/ai_curtailment_advisor_service.py`: CurtailmentAdvisorService for power management
+  - Inputs: Electricity price, strategy, efficiency curves
+  - Outputs: Curtailment ratio, shutdown order, revenue loss estimate, risk points
+- Created `api/ai_feature_api.py` at `/api/v1/ai/diagnose/*`, `/api/v1/ai/ticket/*`, `/api/v1/ai/curtailment/*`
+
 ## User Preferences
 - **Communication style**: Simple, everyday language (中文/English)
 - **Technical preferences**: Native Flask implementation, avoid over-complication

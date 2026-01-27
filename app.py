@@ -4770,6 +4770,16 @@ except ImportError as e:
 except Exception as e:
     logging.error(f"Failed to register AI Closed-Loop API: {e}")
 
+# AI Feature API (AI 功能 - 告警诊断/工单草稿/限电建议)
+try:
+    from api.ai_feature_api import ai_feature_bp
+    app.register_blueprint(ai_feature_bp)
+    logging.info("AI Feature API registered successfully")
+except ImportError as e:
+    logging.warning(f"AI Feature API not available: {e}")
+except Exception as e:
+    logging.error(f"Failed to register AI Feature API: {e}")
+
 # Edge Device Management API (设备信封加密)
 try:
     from api.device_api import device_bp, miner_secrets_bp, edge_secrets_bp, audit_bp, ip_encryption_bp, sites_api_bp
