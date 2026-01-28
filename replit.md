@@ -1,124 +1,7 @@
 # BTC Mining Calculator System
 
 ## Overview
-HashInsight Enterprise is an enterprise-grade web application for Bitcoin mining farm owners and clients. It provides real-time Bitcoin mining profitability analysis, integrates real-time data, offers dual-algorithm verification, and supports multiple languages. The system delivers comprehensive operational management, CRM, Web3 integration, technical analysis, professional reporting, and an AI-powered intelligence layer to optimize Bitcoin mining investments and enhance transparency.
-
-## Recent Changes
-
-### 2026-01-27: Multi-Tenant Customer Management
-
-**1. Database Model Extension**
-- `HostingSite.owner_id` - Links site to site owner (mining_site_owner)
-- `UserAccess.managed_by_site_id` - Links customer to their assigned site
-- `UserAccess.is_active` - Account active/disabled status
-- Migration: `migrations/024_add_multi_tenant_fields.sql`
-
-**2. Platform Admin Interface**
-- New routes in `routes/admin_routes.py`:
-  - `GET /admin/site-owners` - List all site owners
-  - `POST /admin/site-owners/create` - Create new site owner
-  - `POST /admin/site-owners/<id>/toggle-status` - Enable/disable
-  - `POST /admin/site-owners/<id>/assign-site` - Assign sites
-  - `GET /admin/site-owners/<id>` - View site owner details
-- Templates: `templates/owner/site_owner_management.html`, `site_owner_detail.html`
-
-**3. Site Owner Customer Management (CRM Integrated)**
-- Customers are sourced from CRM `Customer` table, not created separately
-- `Customer.site_id` links CRM customer to hosting site
-- `Customer.user_account_id` links CRM customer to login account (when needed)
-- Migration: `migrations/025_add_customer_site_link.sql`
-- New routes in `modules/hosting/routes.py`:
-  - `GET /hosting/host/my-customers` - List owner's customers (from CRM)
-  - `GET /api/my-customers/unassigned` - Get unassigned CRM customers (owned by user)
-  - `POST /hosting/host/my-customers/assign` - Assign CRM customer to site
-  - `POST /hosting/host/my-customers/<id>/create-account` - Create login for customer
-  - `POST /hosting/host/my-customers/<id>/edit` - Edit customer
-  - `POST /hosting/host/my-customers/<id>/toggle-status` - Enable/disable
-- Security: Site owners can only see/assign customers they created (created_by_id)
-- Template: `templates/hosting/my_customers.html`
-
-**4. RBAC Data Isolation**
-- New helpers in `common/rbac.py`:
-  - `get_accessible_site_ids()` - Returns site IDs user can access
-  - `filter_by_site_access(query, column)` - Filter queries by site
-  - `check_site_access(site_id)` - Verify access to specific site
-- Applied to all hosting endpoints: sites, miners, tickets, incidents
-
-**5. Role-Based Login Redirect**
-- Owner/Admin → `/admin/site-owners`
-- Mining_Site_Owner → `/hosting/host/my-customers`
-- Client → `/hosting/` (dashboard)
-
-### 2026-01-26: Architecture Convergence & AI Closed-Loop
-
-**1. Command System Convergence**
-- `api/remote_control_api.py` converted to compatibility layer with deprecation headers (Sunset: 2026-06-01)
-- All command operations route through `api/control_plane_api.py` v1 as single source of truth
-- Unified audit logging to `AuditEvent` table with blockchain-style hash chain
-- See: `docs/COMMAND_API_CONVERGENCE.md`
-
-**2. Telemetry Single Source of Truth**
-- Created `services/telemetry_service.py` for unified telemetry operations
-- New unified API: `api/telemetry_api.py` at `/api/v1/telemetry/*`
-- Data contract documented in `docs/TELEMETRY_DATA_CONTRACT.md`
-- Four-layer architecture: raw_24h → live → history_5min → daily
-
-**3. Coming Soon Feature Gates**
-- Created `common/feature_gates.py` for unified feature flag handling
-- `@require_feature('feature_key')` decorator prevents mock data leakage
-- Standardized `feature_disabled` response with requirements and waitlist
-
-**4. AI Closed-Loop System**
-- Created `models_ai_closedloop.py`: AIRecommendation, AIRecommendationFeedback, AutoApproveRule
-- Created `services/ai_closedloop_service.py` for complete closed-loop workflow
-- Created `api/ai_closedloop_api.py` at `/api/v1/ai/recommendations/*`
-- Full flow: Detect → Diagnose → Recommend → Approve → Act → Audit → Learn
-- Integration with Control Plane v1 via RemoteCommand model
-
-**5. AI Feature Services (Phase 1: Explain & Advise)**
-- Created `services/ai_alert_diagnosis_service.py`: AlertDiagnosisService for Top3 root cause hypotheses
-  - Inputs: live + history telemetry, recent commands
-  - Outputs: Structured evidence package + suggested verification actions
-- Created `services/ai_ticket_draft_service.py`: TicketDraftService for automated ticket generation
-  - Inputs: Alert evidence + site/miner info
-  - Outputs: Problem description, impact scope, troubleshooting steps, customer confirmations
-- Created `services/ai_curtailment_advisor_service.py`: CurtailmentAdvisorService for power management
-  - Inputs: Electricity price, strategy, efficiency curves
-  - Outputs: Curtailment ratio, shutdown order, revenue loss estimate, risk points
-- Created `api/ai_feature_api.py` at `/api/v1/ai/diagnose/*`, `/api/v1/ai/ticket/*`, `/api/v1/ai/curtailment/*`
-
-**6. AI Feature UI Integration (Phase 2: AI Copilot)**
-- Event Monitoring (`templates/hosting/event_monitoring.html`):
-  - Added "AI" button on each alert card triggering AI diagnosis modal
-  - Modal displays Top3 hypotheses with confidence scores, evidence, and suggested actions
-  - Calls `/api/v1/ai/diagnose/alert` with site_id, miner_id, alert_type
-- Client Tickets (`templates/hosting/client_tickets.html`):
-  - Added "AI Generate Draft" button in new ticket modal
-  - Auto-fills title and description from AI-generated draft
-  - Calls `/api/v1/ai/ticket/draft` with site_id, miner_ids array, alert_type
-- Curtailment Management (`templates/hosting/curtailment_management.html`):
-  - Added "Compare Strategies" button next to existing AI prediction button
-  - Displays recommended strategy card with shutdown order and risk points
-  - Calls `/api/v1/ai/curtailment/plan` with site_id, electricity_price, target_reduction
-
-**7. AI Auto-Execution System (Phase 3: AI Native)**
-- Created `services/ai_auto_execution_service.py`:
-  - Multi-dimensional risk assessment engine (action type, target count, power/revenue impact, AI confidence)
-  - Converts curtailment plans to AIRecommendation objects
-  - Integrates with AutoApproveRule for low-risk auto-execution
-  - Risk thresholds: LOW (<0.25), MEDIUM (<0.5), HIGH (<0.75), CRITICAL (<1.0)
-- Created `api/ai_auto_execution_api.py`:
-  - `POST /api/v1/ai/auto/assess-risk` - Risk assessment
-  - `GET /api/v1/ai/auto/recommendations` - Pending recommendations
-  - `POST /api/v1/ai/auto/recommendations/{id}/approve|reject|execute` - Workflow
-  - `GET|POST|PUT|DELETE /api/v1/ai/auto/rules` - AutoApproveRule management
-  - `POST /api/v1/ai/auto/curtailment/create` - Create recommendation from plan
-  - `POST /api/v1/ai/auto/execute-approved` - Execute auto-approved batch
-- Curtailment Management UI:
-  - Auto-execution toggle switch
-  - Real-time risk assessment display (level, auto-approve status, approval level)
-  - "Submit for Approval" and "Execute Auto-Approved" buttons
-- Safety boundaries: Risk-based approval levels (operator/manager/admin), audit logging via AuditEvent
+HashInsight Enterprise is an enterprise-grade web application designed for Bitcoin mining farm owners and clients. It provides real-time Bitcoin mining profitability analysis, comprehensive operational management, and an AI-powered intelligence layer. The system aims to optimize Bitcoin mining investments, enhance transparency through dual-algorithm verification, real-time data integration, and multi-language support. Key capabilities include CRM, Web3 integration, technical analysis, professional reporting, and an advanced AI closed-loop system for recommendations and automated actions.
 
 ## User Preferences
 - **Communication style**: Simple, everyday language (中文/English)
@@ -128,43 +11,32 @@ HashInsight Enterprise is an enterprise-grade web application for Bitcoin mining
 ## System Architecture
 
 ### UI/UX Decisions
-The front-end uses Jinja2 with Bootstrap 5 for a mobile-first, responsive, BTC-themed dark design. Chart.js and CountUp.js are used for data visualization and animations. Dynamic English and Chinese language switching is supported with client-side i18n.js.
+The front-end uses Jinja2 with Bootstrap 5 for a mobile-first, responsive, BTC-themed dark design, supporting dynamic English and Chinese language switching via i18n.js. Chart.js and CountUp.js are used for data visualization and animations.
 
 ### Technical Implementations
-The system is built on a Flask backend using Blueprints, featuring custom email authentication, session management, an enterprise RBAC v2.0 system, and SQLAlchemy with PostgreSQL for data persistence. Redis is used for caching and task queuing. Performance-critical routes use SQL aggregation. Device Envelope Encryption provides zero-knowledge E2EE for miner credentials. A 4-layer telemetry storage system (raw_24h, live, history_5min, daily) with APScheduler jobs manages high-volume mining data. Command operations are routed through a single control plane API. A unified telemetry service and API are implemented, along with a feature gating system. An AI closed-loop system is integrated for recommendations and feedback.
+The system is built on a Flask backend utilizing Blueprints, custom email authentication, and robust session management. It features an enterprise RBAC v2.0 system and uses SQLAlchemy with PostgreSQL for data persistence. Redis is employed for caching and task queuing. Performance-critical routes leverage SQL aggregation. Device Envelope Encryption provides zero-knowledge E2EE for miner credentials. A 4-layer telemetry storage system (raw_24h, live, history_5min, daily) is managed by APScheduler jobs. All command operations are routed through a single control plane API. The architecture includes a unified telemetry service, a feature gating system, and an integrated AI closed-loop system for recommendations, feedback, and auto-execution.
 
 ### Feature Specifications
 - **Calculator Module**: Dual-algorithm profitability analysis, real-time BTC price/difficulty integration, ROI analysis, batch calculation.
-- **CRM System**: Flask-native CRM with lead management, deal pipeline, invoice generation, and asset management.
-- **System Monitoring**: Unified dashboard for real-time health checks, performance metrics, cache analysis, and alerts.
-- **Technical Analysis Platform**: Server-side calculation of 10+ technical indicators and historical BTC price analysis.
+- **CRM System**: Flask-native CRM with lead/deal management, invoicing, and asset management.
+- **System Monitoring**: Unified dashboard for real-time health, performance, cache, and alerts.
+- **Technical Analysis Platform**: Server-side calculation of 10+ indicators and historical BTC price analysis.
 - **Intelligence Layer**: Event-driven system with ARIMA forecasting, anomaly detection, power optimization, and intelligent ROI explanations.
 - **User Management**: Admin backend for user creation, role assignment, RBAC, and access period management.
 - **Web3 Configuration Wizard**: Secure interface for blockchain credential setup.
-- **Hosting Services Module**: Real-time miner monitoring, miner creation APIs, operational ticketing, hosting management, KPI dashboard, and White Label Branding.
-- **Smart Power Curtailment Module**: Bilingual platform with automated scheduler for energy management, supporting manual curtailment and automatic miner recovery based on Performance Priority.
-- **Treasury Management**: BTC inventory tracking, cost basis analysis, cash coverage monitoring, sell strategy templates, and a backtesting engine.
-- **Multi-Format Reporting**: Professional report generation in PDF, Excel, and PowerPoint, with role-specific dashboards.
+- **Hosting Services Module**: Real-time miner monitoring, operational ticketing, hosting management, KPI dashboard, and White Label Branding.
+- **Smart Power Curtailment Module**: Automated scheduler for energy management, supporting manual curtailment and automatic miner recovery.
+- **Treasury Management**: BTC inventory tracking, cost basis analysis, cash coverage, sell strategy templates, and backtesting.
+- **Multi-Format Reporting**: Professional reports (PDF, Excel, PowerPoint) and role-specific dashboards.
 - **Landing Page**: Enterprise-focused homepage with dynamic real-time statistics.
-- **Edge Collector Architecture**: Real-time miner telemetry collection via Python-based edge collector, cloud receiver API, and management UI, including an alert rules engine and bidirectional command control.
-- **IP Scanner & Miner Discovery**: Automatic network scanning to discover Bitcoin miners via CGMiner API.
-- **Control Plane System**: Enterprise-grade system for 100MW+ mining operations with:
-  - **Zone Partitioning**: Site-level operational boundaries for multi-tenant isolation.
-  - **ABAC (Attribute-Based Access Control)**: Customer isolation.
-  - **Dual-Approval Workflow**: Configurable risk levels and approver roles for high-risk operations.
-  - **Price Plan Versioning**: Audit-safe pricing with immutable version history.
-  - **15-Minute Demand Calculation**: Interval-based power metering with DemandLedger.
-  - **Audit Event Hash Chain**: SHA-256 blockchain-style immutable audit trail.
-  - **Portal Lite API**: Customer-facing REST API for miners, approvals, and zone status.
-  - **Zone-Bound Device Security**: Edge devices with zone_id and token_hash for strict access control.
-  - **Remote Command Flow**: Full state machine for command dispatch.
-  - **Production-Grade Command Reliability**: Atomic lease dispatch, idempotent ACK, retry with exponential backoff, rate limiting, dedupe key, HMAC signatures, and Prometheus metrics.
-  - **Credential Protection**: Three-tier IP/credential protection with anti-rollback validation and credential fingerprinting.
-  - **Test Coverage**: Extensive test suite covering security, ABAC, approval workflow, command states, credential protection, and audit chain verification.
-- **SOC2 Security Compliance Module**: Enterprise security features for SOC2 Type II compliance including log retention, login security enhancements, password policy, session security, security alerts, data access logging, and PII data masking.
+- **Edge Collector Architecture**: Real-time miner telemetry via Python-based edge collector, cloud receiver API, management UI, alert rules engine, and bidirectional command control.
+- **IP Scanner & Miner Discovery**: Automatic network scanning for Bitcoin miners via CGMiner API.
+- **Control Plane System**: Enterprise-grade system for large mining operations featuring zone partitioning, ABAC for customer isolation, dual-approval workflow, price plan versioning, 15-minute demand calculation, blockchain-style immutable audit event hash chain, a Portal Lite API, zone-bound device security, a robust remote command flow with production-grade reliability (atomic lease dispatch, idempotent ACK, retry, rate limiting, deduplication, HMAC signatures, Prometheus metrics), and three-tier credential protection.
+- **SOC2 Security Compliance Module**: Enterprise security features for SOC2 Type II compliance including log retention, login security, password policy, session security, security alerts, data access logging, and PII data masking.
+- **AI Closed-Loop System**: Detects, diagnoses, recommends, approves, acts, audits, and learns from mining operations, integrating with a Control Plane v1 via RemoteCommand. Features include AI-powered alert diagnosis, ticket drafting, and curtailment advisory. UI integrations provide AI assistance in event monitoring, ticket creation, and curtailment management, with an auto-execution system featuring multi-dimensional risk assessment and rule-based auto-approval.
 
 ### System Design Choices
-The architecture emphasizes modularity with page-isolated components and database-centric communication. Authentication is custom email-based with session management and RBAC. API integrations follow a strategy of intelligent fallback, Stale-While-Revalidate (SWR) caching, batch API calls, and robust error handling. The system is optimized for deployment on the Replit platform using Gunicorn.
+The architecture emphasizes modularity with page-isolated components and database-centric communication. Authentication is custom email-based with session management and RBAC. API integrations follow intelligent fallback, Stale-While-Revalidate (SWR) caching, batch API calls, and robust error handling. The system is optimized for deployment on the Replit platform using Gunicorn.
 
 ## External Dependencies
 
