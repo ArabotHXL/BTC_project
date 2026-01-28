@@ -17,6 +17,7 @@ Endpoints:
 """
 
 import logging
+from datetime import datetime
 from functools import wraps
 from flask import Blueprint, request, jsonify, g, session
 
@@ -71,10 +72,20 @@ def diagnose_alert():
             return jsonify({'error': f'{field} is required'}), 400
     
     try:
+        site_id = data['site_id']
+        miner_id = data['miner_id']
+        alert_type = data['alert_type']
+        
+        if not isinstance(site_id, int):
+            try:
+                site_id = int(site_id)
+            except (ValueError, TypeError):
+                return jsonify({'error': 'site_id must be an integer'}), 400
+        
         result = alert_diagnosis_service.diagnose_alert(
-            site_id=data['site_id'],
-            miner_id=data['miner_id'],
-            alert_type=data['alert_type'],
+            site_id=site_id,
+            miner_id=str(miner_id),
+            alert_type=str(alert_type),
             alert_id=data.get('alert_id'),
         )
         
@@ -84,8 +95,23 @@ def diagnose_alert():
         })
         
     except Exception as e:
-        logger.error(f"Failed to diagnose alert: {e}")
-        return jsonify({'error': str(e)}), 500
+        import traceback
+        logger.error(f"Failed to diagnose alert: {e}\n{traceback.format_exc()}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'diagnosis': {
+                'alert_id': data.get('alert_id'),
+                'miner_id': data.get('miner_id'),
+                'site_id': data.get('site_id'),
+                'alert_type': data.get('alert_type'),
+                'diagnosed_at': datetime.utcnow().isoformat(),
+                'summary': 'Diagnosis unavailable due to service error',
+                'summary_zh': '诊断服务暂时不可用，请稍后重试',
+                'data_sources': [],
+                'hypotheses': []
+            }
+        }), 500
 
 
 @ai_feature_bp.route('/api/v1/ai/diagnose/batch', methods=['POST'])

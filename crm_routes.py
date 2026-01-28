@@ -2035,7 +2035,8 @@ def new_customer_page():
             address=address,
             customer_type=customer_type,
             tags=tags,
-            mining_capacity=mining_capacity
+            mining_capacity=mining_capacity,
+            created_by_id=user_id
         )
         
         db.session.add(new_customer)
