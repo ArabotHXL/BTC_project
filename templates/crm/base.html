@@ -763,9 +763,7 @@
             </a>
             
             <!-- Customer Management -->
-            <div class="sidebar-section-title" data-i18n="customer_management_section">
-                {% if current_lang == 'en' %}Customer Management{% else %}客户管理{% endif %}
-            </div>
+            <div class="sidebar-section-title" data-i18n="crm.customer_management_section">{{ t('crm.customer_management_section') }}</div>
             <a href="{{ url_for('crm.customers') }}" class="nav-link {% if 'customers' in request.endpoint %}active{% endif %}">
                 <i class="bi bi-people-fill"></i>
                 <span data-i18n="customer_management">{{ t('customer_management') }}</span>
@@ -776,9 +774,7 @@
             </a>
             
             <!-- Deal Management -->
-            <div class="sidebar-section-title" data-i18n="deal_management_section">
-                {% if current_lang == 'en' %}Deal Management{% else %}交易管理{% endif %}
-            </div>
+            <div class="sidebar-section-title" data-i18n="crm.deal_management_section">{{ t('crm.deal_management_section') }}</div>
             <a href="{{ url_for('crm.deals') }}" class="nav-link {% if 'deals' in request.endpoint %}active{% endif %}">
                 <i class="bi bi-currency-dollar"></i>
                 <span data-i18n="deals">{{ t('deals') }}</span>
@@ -789,18 +785,14 @@
             </a>
             
             <!-- Asset Management -->
-            <div class="sidebar-section-title" data-i18n="asset_management_section">
-                {% if current_lang == 'en' %}Asset Management{% else %}资产管理{% endif %}
-            </div>
+            <div class="sidebar-section-title" data-i18n="crm.asset_management_section">{{ t('crm.asset_management_section') }}</div>
             <a href="{{ url_for('crm.assets') }}" class="nav-link {% if 'assets' in request.endpoint %}active{% endif %}">
                 <i class="bi bi-box-seam-fill"></i>
                 <span data-i18n="assets">{{ t('assets') }}</span>
             </a>
             
             <!-- Activities -->
-            <div class="sidebar-section-title" data-i18n="activity_records_section">
-                {% if current_lang == 'en' %}Activity Records{% else %}活动记录{% endif %}
-            </div>
+            <div class="sidebar-section-title" data-i18n="crm.activity_records_section">{{ t('crm.activity_records_section') }}</div>
             <a href="{{ url_for('crm.activities') }}" class="nav-link {% if request.endpoint == 'crm.activities' %}active{% endif %}">
                 <i class="bi bi-journal-text"></i>
                 <span data-i18n="activities">{{ t('activities') }}</span>
@@ -809,9 +801,7 @@
             <!-- Broker Business (Owner Only) -->
             {% if session.role == 'owner' %}
             <div class="sidebar-divider"></div>
-            <div class="sidebar-section-title" data-i18n="broker_business_section">
-                {% if current_lang == 'en' %}Broker Business{% else %}经纪人专区{% endif %}
-            </div>
+            <div class="sidebar-section-title" data-i18n="crm.broker_business_section">{{ t('crm.broker_business_section') }}</div>
             <a href="{{ url_for('crm.broker_dashboard') }}" class="nav-link {% if 'broker' in request.endpoint and 'dashboard' in request.endpoint %}active{% endif %}">
                 <i class="bi bi-graph-up-arrow"></i>
                 <span data-i18n="broker_dashboard">{{ t('broker_dashboard') }}</span>
@@ -828,9 +818,7 @@
             
             <!-- Quick Links -->
             <div class="sidebar-divider"></div>
-            <div class="sidebar-section-title" data-i18n="quick_links_section">
-                {% if current_lang == 'en' %}Quick Links{% else %}快捷链接{% endif %}
-            </div>
+            <div class="sidebar-section-title" data-i18n="crm.quick_links_section">{{ t('crm.quick_links_section') }}</div>
             <a href="{{ url_for('index') }}" class="nav-link">
                 <i class="bi bi-house-door"></i>
                 <span data-i18n="home">{{ t('home') }}</span>
@@ -1145,7 +1133,7 @@
             if (notificationBell) {
                 notificationBell.addEventListener('click', function() {
                     // Show notifications dropdown or redirect
-                    showToast('{% if current_lang == "en" %}3 new notifications{% else %}3条新通知{% endif %}', 'info');
+                    showToast(window.t ? window.t('crm.new_notifications') : '3 new notifications', 'info');
                 });
             }
         });

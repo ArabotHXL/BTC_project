@@ -875,7 +875,7 @@
                 </td>
                 <td>
                     <select class="form-select form-select-sm" onchange="updateMinerSpecs(this, '${rowId}')">
-                        <option value="">{% if current_lang == 'en' %}Select Model{% else %}选择型号{% endif %}</option>
+                        <option value="">${I18n.t('select_model')}</option>
                         ${Object.keys(minerModels).map(model => 
                             `<option value="${model}">${model}</option>`
                         ).join('')}
@@ -899,7 +899,7 @@
                 </td>
                 <td>
                     <input type="number" class="form-control form-control-sm" 
-                           min="1" max="500" placeholder="110" step="1" title="{% if current_lang == 'en' %}Custom hashrate (TH/s){% else %}自定义算力(TH/s){% endif %}">
+                           min="1" max="500" placeholder="110" step="1" title="${I18n.t('custom_hashrate_tooltip')}">
                 </td>
                 <td>
                     <input type="number" class="form-control form-control-sm" 
@@ -1006,10 +1006,10 @@
             if (calculateBtn) {
                 if (totalMiners > maxMiners && !bypassUsed) {
                     calculateBtn.disabled = true;
-                    calculateBtn.innerHTML = '<i class="bi bi-lock me-2"></i>{% if current_lang == "en" %}Upgrade Required{% else %}需要升级{% endif %}';
+                    calculateBtn.innerHTML = '<i class="bi bi-lock me-2"></i>' + I18n.t('upgrade_required');
                 } else {
                     calculateBtn.disabled = false;
-                    calculateBtn.innerHTML = '<i class="bi bi-calculator me-2"></i>{% if current_lang == "en" %}Calculate Batch Profitability{% else %}计算批量收益{% endif %}';
+                    calculateBtn.innerHTML = '<i class="bi bi-calculator me-2"></i>' + I18n.t('calculate_batch_profitability');
                 }
             }
         }
@@ -1029,7 +1029,7 @@
         }
 
         function clearAllMiners() {
-            if (confirm('{% if current_lang == "en" %}Are you sure you want to clear all miners and uploaded files?{% else %}确定要清空所有矿机和已上传文件吗？{% endif %}')) {
+            if (confirm(I18n.t('clear_all_confirm'))) {
                 // 清空表格数据
                 document.getElementById('minersTableBody').innerHTML = '';
                 minerRowCount = 0;
@@ -1068,22 +1068,22 @@
             console.log('收集到的矿机数据:', miners.length, '个');
             
             if (miners.length === 0) {
-                alert('{% if current_lang == "en" %}Please add at least one miner before calculating.{% else %}请至少添加一台矿机再进行计算。{% endif %}');
+                alert(I18n.t('add_miner_first'));
                 // 恢复按钮状态
                 calculateBtn.disabled = false;
-                calculateBtn.innerHTML = '<i class="bi bi-calculator me-2"></i>{% if current_lang == "en" %}Calculate Batch Profitability{% else %}计算批量收益{% endif %}';
+                calculateBtn.innerHTML = '<i class="bi bi-calculator me-2"></i>' + I18n.t('calculate_batch_profitability');
                 return;
             }
             
             // 临时禁用按钮防止重复点击
             calculateBtn.disabled = true;
-            calculateBtn.innerHTML = '<i class="bi bi-clock me-2"></i>{% if current_lang == "en" %}Calculating...{% else %}计算中...{% endif %}';
+            calculateBtn.innerHTML = '<i class="bi bi-clock me-2"></i>' + I18n.t('calculating');
             
             // 2秒后恢复按钮（防止卡住）
             setTimeout(() => {
                 if (calculateBtn.disabled) {
                     calculateBtn.disabled = false;
-                    calculateBtn.innerHTML = '<i class="bi bi-calculator me-2"></i>{% if current_lang == "en" %}Calculate Batch Profitability{% else %}计算批量收益{% endif %}';
+                    calculateBtn.innerHTML = '<i class="bi bi-calculator me-2"></i>' + I18n.t('calculate_batch_profitability');
                 }
             }, 2000);
 
@@ -1148,7 +1148,7 @@
                 
                 // 恢复按钮状态
                 calculateBtn.disabled = false;
-                calculateBtn.innerHTML = '<i class="bi bi-calculator me-2"></i>{% if current_lang == "en" %}Calculate Batch Profitability{% else %}计算批量收益{% endif %}';
+                calculateBtn.innerHTML = '<i class="bi bi-calculator me-2"></i>' + I18n.t('calculate_batch_profitability');
                 
                 // 先检查 results section 是否存在
                 const resultsSection = document.getElementById('resultsSection');
@@ -1182,9 +1182,9 @@
                 
                 // 恢复按钮状态
                 calculateBtn.disabled = false;
-                calculateBtn.innerHTML = '<i class="bi bi-calculator me-2"></i>{% if current_lang == "en" %}Calculate Batch Profitability{% else %}计算批量收益{% endif %}';
+                calculateBtn.innerHTML = '<i class="bi bi-calculator me-2"></i>' + I18n.t('calculate_batch_profitability');
                 
-                showErrorResults('{% if current_lang == "en" %}Calculation failed. Please try again.{% else %}计算失败，请重试。{% endif %}');
+                showErrorResults(I18n.t('calculation_failed'));
             });
         }
 
@@ -1305,13 +1305,10 @@
             const modal = new bootstrap.Modal(document.getElementById('upgradeModal'));
             const message = document.getElementById('upgradeMessage');
             
-            message.innerHTML = `
-                {% if current_lang == "en" %}
-                You're trying to process <strong>${attemptedMiners} miners</strong>, but your current plan allows only <strong>${maxMiners} miners</strong>.
-                {% else %}
-                您正在尝试处理 <strong>${attemptedMiners} 台矿机</strong>，但您的当前套餐只允许 <strong>${maxMiners} 台矿机</strong>。
-                {% endif %}
-            `;
+            const isEnglish = I18n.currentLang === 'en';
+            message.innerHTML = isEnglish 
+                ? `You're trying to process <strong>${attemptedMiners} miners</strong>, but your current plan allows only <strong>${maxMiners} miners</strong>.`
+                : `您正在尝试处理 <strong>${attemptedMiners} 台矿机</strong>，但您的当前套餐只允许 <strong>${maxMiners} 台矿机</strong>。`;
             
             modal.show();
         }
@@ -1331,9 +1328,9 @@
             resultsSection.innerHTML = `
                 <div class="text-center py-4">
                     <div class="spinner-border text-primary mb-3" role="status">
-                        <span class="visually-hidden">{% if current_lang == "en" %}Loading...{% else %}加载中...{% endif %}</span>
+                        <span class="visually-hidden">${I18n.t('loading')}</span>
                     </div>
-                    <p>{% if current_lang == "en" %}Calculating profitability...{% else %}正在计算收益...{% endif %}</p>
+                    <p>${I18n.t('calculating_profitability')}</p>
                 </div>
             `;
         }
@@ -1353,31 +1350,31 @@
                 <div class="mb-4">
                     <h6 class="text-primary mb-3">
                         <i class="bi bi-bar-chart me-2"></i>
-                        {% if current_lang == "en" %}Summary{% else %}汇总{% endif %}
+                        ${I18n.t('summary')}
                     </h6>
                     <div class="row g-2">
                         <div class="col-6">
                             <div class="bg-dark p-2 rounded text-center">
-                                <div class="small text-muted">{% if current_lang == "en" %}Total Miners{% else %}总矿机数{% endif %}</div>
+                                <div class="small text-muted">${I18n.t('total_miners')}</div>
                                 <div class="fw-bold">${summary.total_miners}</div>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="bg-dark p-2 rounded text-center">
-                                <div class="small text-muted">{% if current_lang == "en" %}Daily Profit{% else %}日收益{% endif %}</div>
+                                <div class="small text-muted">${I18n.t('daily_profit')}</div>
                                 <div class="fw-bold ${summary.total_daily_profit >= 0 ? 'text-success' : 'text-danger'}">$${(summary.total_daily_profit || 0).toFixed(3)}</div>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="bg-dark p-2 rounded text-center">
-                                <div class="small text-muted">{% if current_lang == "en" %}Monthly{% else %}月收益{% endif %}</div>
+                                <div class="small text-muted">${I18n.t('monthly_profit')}</div>
                                 <div class="fw-bold">$${((summary.total_daily_profit || 0) * 30).toFixed(3)}</div>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="bg-dark p-2 rounded text-center">
-                                <div class="small text-muted">{% if current_lang == "en" %}Avg ROI Days{% else %}平均回本天数{% endif %}</div>
-                                <div class="fw-bold text-warning">${summary.average_roi_days && summary.average_roi_days < 999999 ? summary.average_roi_days.toFixed(0) + '{% if current_lang == "en" %} days{% else %}天{% endif %}' : 'N/A'}</div>
+                                <div class="small text-muted">${I18n.t('avg_roi_days')}</div>
+                                <div class="fw-bold text-warning">${summary.average_roi_days && summary.average_roi_days < 999999 ? summary.average_roi_days.toFixed(0) + ' ' + I18n.t('days') : 'N/A'}</div>
                             </div>
                         </div>
                     </div>
@@ -1390,22 +1387,15 @@
                             const worst = sortedForSummary[sortedForSummary.length - 1];
                             
                             if (best && worst && best.daily_profit !== worst.daily_profit) {
-                                const isEnglish = '{% if current_lang == "en" %}true{% else %}false{% endif %}' === 'true';
-                                const analysisTitle = isEnglish ? 'Performance Analysis:' : '效率分析:';
-                                const bestLabel = isEnglish ? 'Best: Miner #' : '最佳: #';
-                                const worstLabel = isEnglish ? 'Lowest: Miner #' : '最差: #';
-                                const dayUnit = isEnglish ? '/day' : '/天';
-                                const minerUnit = isEnglish ? ' - $' : '号矿机 - $';
-                                
-                                return `
+                                return \`
                                 <div class="mt-3 p-2 bg-info bg-opacity-10 border border-info rounded">
                                     <div class="small">
-                                        <strong>${analysisTitle}</strong><br>
-                                        <span class="text-success">🏆 ${bestLabel}${best.miner_number}${minerUnit}${(best.daily_profit || 0).toFixed(2)}${dayUnit}</span><br>
-                                        <span class="text-warning">📊 ${worstLabel}${worst.miner_number}${minerUnit}${(worst.daily_profit || 0).toFixed(2)}${dayUnit}</span>
+                                        <strong>\${I18n.t('performance_analysis')}</strong><br>
+                                        <span class="text-success">🏆 \${I18n.t('best_miner_prefix')}\${best.miner_number} - $\${(best.daily_profit || 0).toFixed(2)}\${I18n.t('per_day')}</span><br>
+                                        <span class="text-warning">📊 \${I18n.t('lowest_miner_prefix')}\${worst.miner_number} - $\${(worst.daily_profit || 0).toFixed(2)}\${I18n.t('per_day')}</span>
                                     </div>
                                 </div>
-                                `;
+                                \`;
                             }
                         }
                         return '';
@@ -1416,17 +1406,17 @@
                 <div>
                     <h6 class="text-primary mb-3">
                         <i class="bi bi-list-ul me-2"></i>
-                        {% if current_lang == "en" %}Individual Results (Sorted by Performance){% else %}单项结果 (按效率排序){% endif %}
+                        ${I18n.t('individual_results_sorted')}
                     </h6>
                     <div class="table-responsive">
                         <table class="table table-sm table-dark">
                             <thead>
                                 <tr>
-                                    <th>{% if current_lang == "en" %}#{% else %}编号{% endif %}</th>
-                                    <th>{% if current_lang == "en" %}Model{% else %}型号{% endif %}</th>
-                                    <th>{% if current_lang == "en" %}Qty{% else %}数量{% endif %}</th>
-                                    <th>{% if current_lang == "en" %}Daily{% else %}日收益{% endif %}</th>
-                                    <th>{% if current_lang == "en" %}ROI Days{% else %}回本天数{% endif %}</th>
+                                    <th>${I18n.t('number')}</th>
+                                    <th>${I18n.t('model')}</th>
+                                    <th>${I18n.t('qty')}</th>
+                                    <th>${I18n.t('daily_profit')}</th>
+                                    <th>${I18n.t('roi_days')}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1441,13 +1431,10 @@
                 
                 // 标记最高和最低效率矿机
                 if (sortedResults.length > 1) {
-                    const isEnglish = '{% if current_lang == "en" %}true{% else %}false{% endif %}' === 'true';
                     if (index === 0 && result.daily_profit > 0) {
-                        const bestText = isEnglish ? 'BEST' : '最佳';
-                        statusBadge = `<span class="badge bg-success ms-1">${bestText}</span>`;
+                        statusBadge = `<span class="badge bg-success ms-1">${I18n.t('best_badge')}</span>`;
                     } else if (index === sortedResults.length - 1 && sortedResults.length > 2) {
-                        const worstText = isEnglish ? 'LOWEST' : '最差';
-                        statusBadge = `<span class="badge bg-warning ms-1">${worstText}</span>`;
+                        statusBadge = `<span class="badge bg-warning ms-1">${I18n.t('lowest_badge')}</span>`;
                     }
                 }
                 
@@ -1457,7 +1444,7 @@
                         <td class="small">${result.model}</td>
                         <td>${result.quantity}</td>
                         <td class="${profitClass}">$${(result.daily_profit || 0).toFixed(3)}</td>
-                        <td>${result.roi_days && result.roi_days < 999999 ? result.roi_days + '{% if current_lang == "en" %} days{% else %}天{% endif %}' : 'N/A'}</td>
+                        <td>${result.roi_days && result.roi_days < 999999 ? result.roi_days + ' ' + I18n.t('days') : 'N/A'}</td>
                     </tr>
                 `;
             });
@@ -1505,7 +1492,7 @@
                 <div class="text-center text-muted py-4">
                     <i class="bi bi-calculator" style="font-size: 2rem;"></i>
                     <p class="mt-2">
-                        {% if current_lang == "en" %}Configure miners and click calculate to see results{% else %}配置矿机并点击计算查看结果{% endif %}
+                        ${I18n.t('configure_and_calculate')}
                     </p>
                 </div>
             `;
@@ -1514,25 +1501,27 @@
 
         function showQuotaLimitWarning(calculatedMiners, totalMiners) {
             const resultsSection = document.getElementById('resultsSection');
+            const isEnglish = I18n.currentLang === 'en';
+            const warningMsg = isEnglish 
+                ? `Your CSV contains ${totalMiners} miners, but your Free plan allows only ${calculatedMiners}. Only the first ${calculatedMiners} miners will be calculated.`
+                : `您的CSV包含${totalMiners}台矿机，但免费计划只允许${calculatedMiners}台。仅计算前${calculatedMiners}台矿机。`;
+            const processMsg = isEnglish
+                ? `Click calculate to process the first ${calculatedMiners} miners`
+                : `点击计算处理前${calculatedMiners}台矿机`;
+            
             resultsSection.innerHTML = `
                 <div class="alert alert-warning mb-3">
                     <i class="bi bi-exclamation-triangle me-2"></i>
-                    {% if current_lang == "en" %}
-                    Your CSV contains ${totalMiners} miners, but your Free plan allows only ${calculatedMiners}. 
-                    Only the first ${calculatedMiners} miners will be calculated.
-                    {% else %}
-                    您的CSV包含${totalMiners}台矿机，但免费计划只允许${calculatedMiners}台。
-                    仅计算前${calculatedMiners}台矿机。
-                    {% endif %}
+                    ${warningMsg}
                     <br>
                     <a href="#" onclick="showUpgradeModal(${totalMiners})" class="btn btn-sm btn-primary mt-2">
-                        {% if current_lang == "en" %}Upgrade to Calculate All{% else %}升级以计算全部{% endif %}
+                        ${I18n.t('upgrade_to_calculate_all')}
                     </a>
                 </div>
                 <div class="text-center text-muted py-4">
                     <i class="bi bi-calculator" style="font-size: 2rem;"></i>
                     <p class="mt-2">
-                        {% if current_lang == "en" %}Click calculate to process the first ${calculatedMiners} miners{% else %}点击计算处理前${calculatedMiners}台矿机{% endif %}
+                        ${processMsg}
                     </p>
                 </div>
             `;
@@ -1572,8 +1561,7 @@
             
             // 只有在真正有用户数据时才显示确认对话框
             if (hasRealTableData || (hasExistingCsvData && hasUserInputData)) {
-                const confirmMessage = '{% if current_lang == "en" %}You have existing data. Do you want to replace it with the new CSV file?{% else %}您已有现有数据。是否要用新的CSV文件替换？{% endif %}';
-                if (!confirm(confirmMessage)) {
+                if (!confirm(I18n.t('replace_existing_data_confirm'))) {
                     // 用户选择不替换，清空文件输入
                     event.target.value = '';
                     console.log('用户取消文件替换');
@@ -1668,10 +1656,10 @@
                     <div class="progress mb-2" style="height: 25px;">
                         <div class="progress-bar progress-bar-striped progress-bar-animated" 
                              role="progressbar" id="csvProgress" style="width: 0%">
-                            <span id="csvProgressText">{% if current_lang == "en" %}Loading... 0%{% else %}加载中... 0%{% endif %}</span>
+                            <span id="csvProgressText">${I18n.t('loading_percent')} 0%</span>
                         </div>
                     </div>
-                    <small class="text-muted">{% if current_lang == "en" %}Processing CSV file...{% else %}处理CSV文件...{% endif %}</small>
+                    <small class="text-muted">${I18n.t('processing_csv')}</small>
                 `;
                 tbody.appendChild(progressContainer);
                 
@@ -1725,7 +1713,7 @@
                     const progressBar = document.getElementById('csvProgress');
                     const progressText = document.getElementById('csvProgressText');
                     if (progressBar) progressBar.style.width = progress + '%';
-                    if (progressText) progressText.textContent = `{% if current_lang == "en" %}Loading... ${progress}%{% else %}加载中... ${progress}%{% endif %}`;
+                    if (progressText) progressText.textContent = `${I18n.t('loading_percent')} ${progress}%`;
                     
                     // 继续处理或完成
                     if (processedCount < validLines.length) {
@@ -1883,7 +1871,7 @@
         // Export functions
         function exportToCSV() {
             if (calculationResults.length === 0) {
-                alert('{% if current_lang == "en" %}No results to export. Please calculate first.{% else %}没有结果可导出，请先进行计算。{% endif %}');
+                alert(I18n.t('no_results_export'));
                 return;
             }
             
@@ -1919,13 +1907,13 @@
             })
             .catch(error => {
                 console.error('CSV export error:', error);
-                alert('{% if current_lang == "en" %}Export failed. Please try again.{% else %}导出失败，请重试。{% endif %}');
+                alert(I18n.t('export_failed'));
             });
         }
 
         function exportToExcel() {
             if (calculationResults.length === 0) {
-                alert('{% if current_lang == "en" %}No results to export. Please calculate first.{% else %}没有结果可导出，请先进行计算。{% endif %}');
+                alert(I18n.t('no_results_export'));
                 return;
             }
             
@@ -1960,13 +1948,13 @@
             })
             .catch(error => {
                 console.error('Excel export error:', error);
-                alert('{% if current_lang == "en" %}Export failed. Please try again.{% else %}导出失败，请重试。{% endif %}');
+                alert(I18n.t('export_failed'));
             });
         }
 
         function exportToPDF() {
             if (calculationResults.length === 0) {
-                alert('{% if current_lang == "en" %}No results to export. Please calculate first.{% else %}没有结果可导出，请先进行计算。{% endif %}');
+                alert(I18n.t('no_results_export'));
                 return;
             }
             
@@ -2002,7 +1990,7 @@
             })
             .catch(error => {
                 console.error('PDF export error:', error);
-                alert('{% if current_lang == "en" %}Export failed. Please try again.{% else %}导出失败，请重试。{% endif %}');
+                alert(I18n.t('export_failed'));
             });
         }
 
@@ -2104,7 +2092,7 @@ Antminer S19j Pro,9,3068,2300,0.08,100,0.5`;
             document.body.removeChild(link);
             
             // Show success message
-            const isEnglish = '{% if current_lang == "en" %}true{% else %}false{% endif %}' === 'true';
+            const isEnglish = I18n.currentLang === 'en';
             const message = isEnglish ? 'Template downloaded successfully!' : '模板下载成功！';
             
             // Create a simple toast notification

@@ -2,7 +2,7 @@
 
 {% block title %}{{ t('dashboard') }} | BTC Mining CRM{% endblock %}
 
-{% block page_title %}<span data-i18n="dashboard">{{ t('dashboard') }}</span> - <span data-i18n="mining_intelligence">{% if current_lang == 'en' %}Mining Intelligence{% else %}矿场智能中心{% endif %}</span>{% endblock %}
+{% block page_title %}<span data-i18n="dashboard">{{ t('dashboard') }}</span> - <span data-i18n="crm.mining_intelligence">{{ t('crm.mining_intelligence') }}</span>{% endblock %}
 
 {% block breadcrumb %}
 <li class="breadcrumb-item active" aria-current="page">{{ t('dashboard') }}</li>
@@ -288,7 +288,7 @@
             <div class="kpi-label" data-i18n="total_customers">{{ t('total_customers') }}</div>
             <div class="kpi-trend trend-up">
                 <i class="bi bi-arrow-up-circle-fill"></i>
-                <span>+{{ (customers_count * 0.12)|int }} {% if current_lang == 'en' %}This Month{% else %}本月新增{% endif %}</span>
+                <span>+{{ (customers_count * 0.12)|int }} <span data-i18n="crm.this_month_new">{{ t('crm.this_month_new') }}</span></span>
             </div>
         </div>
     </div>
@@ -303,7 +303,7 @@
             <div class="kpi-label" data-i18n="total_deals_value">{{ t('total_deals_value') }}</div>
             <div class="kpi-trend trend-up">
                 <i class="bi bi-graph-up-arrow"></i>
-                <span>{% if current_lang == 'en' %}+15.3% YoY{% else %}年同比 +15.3%{% endif %}</span>
+                <span data-i18n="crm.yoy_growth">{{ t('crm.yoy_growth') }}</span>
             </div>
         </div>
     </div>
@@ -318,7 +318,7 @@
             <div class="kpi-label" data-i18n="hosting_capacity">{{ t('hosting_capacity') }}</div>
             <div class="kpi-trend trend-up">
                 <i class="bi bi-speedometer"></i>
-                <span>{% if current_lang == 'en' %}92% Utilization{% else %}利用率 92%{% endif %}</span>
+                <span data-i18n="crm.utilization_rate">{{ t('crm.utilization_rate') }}</span>
             </div>
         </div>
     </div>
@@ -333,7 +333,7 @@
             <div class="kpi-label" data-i18n="active_deals">{{ t('active_deals') }}</div>
             <div class="kpi-trend trend-up">
                 <i class="bi bi-percent"></i>
-                <span>{% if current_lang == 'en' %}68% Conversion{% else %}转化率 68%{% endif %}</span>
+                <span data-i18n="crm.conversion_rate">{{ t('crm.conversion_rate') }}</span>
             </div>
         </div>
     </div>
@@ -422,7 +422,7 @@
     <div class="col-12">
         <h4 class="section-title">
             <i class="bi bi-cpu me-2" style="color: var(--btc-gold);"></i>
-            {% if current_lang == 'en' %}Mining Business Zone{% else %}矿场业务专区{% endif %}
+            <span data-i18n="crm.mining_business_zone">{{ t('crm.mining_business_zone') }}</span>
         </h4>
     </div>
     
@@ -432,7 +432,7 @@
             <div class="card-header bg-transparent border-0">
                 <h6 class="mb-0">
                     <i class="bi bi-trophy-fill me-2" style="color: var(--btc-gold);"></i>
-                    {% if current_lang == 'en' %}Top 5 Miner Models{% else %}矿机型号销售 TOP 5{% endif %}
+                    <span data-i18n="crm.top_5_miner_models">{{ t('crm.top_5_miner_models') }}</span>
                 </h6>
             </div>
             <div class="card-body" data-api-endpoint="/crm/api/rankings/miners">
@@ -481,7 +481,7 @@
             <div class="card-header bg-transparent border-0">
                 <h6 class="mb-0">
                     <i class="bi bi-lightning-charge-fill me-2" style="color: var(--btc-gold);"></i>
-                    {% if current_lang == 'en' %}Top 5 Customer Capacity{% else %}客户挖矿容量 TOP 5{% endif %}
+                    <span data-i18n="crm.top_5_customer_capacity">{{ t('crm.top_5_customer_capacity') }}</span>
                 </h6>
             </div>
             <div class="card-body" data-api-endpoint="/crm/api/rankings/customer-capacity">
@@ -530,7 +530,7 @@
     <div class="col-12">
         <h4 class="section-title">
             <i class="bi bi-bell-fill me-2" style="color: var(--btc-gold);"></i>
-            {% if current_lang == 'en' %}Smart Operations{% else %}智能操作区{% endif %}
+            <span data-i18n="crm.smart_operations">{{ t('crm.smart_operations') }}</span>
         </h4>
     </div>
     
@@ -540,7 +540,7 @@
             <div class="card-header bg-transparent border-0">
                 <h6 class="mb-0">
                     <i class="bi bi-calendar-check me-2" style="color: var(--btc-gold);"></i>
-                    {% if current_lang == 'en' %}Today's Follow-ups{% else %}今日待跟进客户{% endif %}
+                    <span data-i18n="crm.today_followups">{{ t('crm.today_followups') }}</span>
                     <span class="badge bg-danger ms-2">3</span>
                 </h6>
             </div>
@@ -566,8 +566,8 @@
                             <i class="bi bi-check-circle-fill text-white" style="font-size: 14px;"></i>
                         </div>
                         <div>
-                            <div class="text-white">{% if current_lang == 'en' %}All caught up!{% else %}今日无待跟进客户{% endif %}</div>
-                            <small class="text-muted">{% if current_lang == 'en' %}Great job!{% else %}干得漂亮！{% endif %}</small>
+                            <div class="text-white" data-i18n="crm.all_caught_up">{{ t('crm.all_caught_up') }}</div>
+                            <small class="text-muted" data-i18n="crm.great_job">{{ t('crm.great_job') }}</small>
                         </div>
                     </div>
                 {% endif %}
@@ -581,7 +581,7 @@
             <div class="card-header bg-transparent border-0">
                 <h6 class="mb-0">
                     <i class="bi bi-exclamation-octagon me-2" style="color: var(--btc-gold);"></i>
-                    {% if current_lang == 'en' %}Urgent Alerts{% else %}紧急订单提醒{% endif %}
+                    <span data-i18n="crm.urgent_alerts">{{ t('crm.urgent_alerts') }}</span>
                     <span class="badge bg-warning ms-2">2</span>
                 </h6>
             </div>
@@ -591,8 +591,8 @@
                         <i class="bi bi-lightning-fill text-white" style="font-size: 14px;"></i>
                     </div>
                     <div>
-                        <div class="text-white fw-semibold">{% if current_lang == 'en' %}Payment Pending{% else %}付款待确认{% endif %}</div>
-                        <small class="text-muted">BTC Mining Corp · $250K · {% if current_lang == 'en' %}2 hours ago{% else %}2小时前{% endif %}</small>
+                        <div class="text-white fw-semibold" data-i18n="crm.payment_pending">{{ t('crm.payment_pending') }}</div>
+                        <small class="text-muted">BTC Mining Corp · $250K · <span data-i18n="crm.hours_ago">{{ t('crm.hours_ago') }}</span></small>
                     </div>
                 </div>
                 <div class="alert-item">
@@ -600,8 +600,8 @@
                         <i class="bi bi-clock-fill text-white" style="font-size: 14px;"></i>
                     </div>
                     <div>
-                        <div class="text-white fw-semibold">{% if current_lang == 'en' %}Contract Expiring{% else %}合同即将到期{% endif %}</div>
-                        <small class="text-muted">HashPower Solutions · {% if current_lang == 'en' %}5 days left{% else %}还有5天{% endif %}</small>
+                        <div class="text-white fw-semibold" data-i18n="crm.contract_expiring">{{ t('crm.contract_expiring') }}</div>
+                        <small class="text-muted">HashPower Solutions · <span data-i18n="crm.days_left">{{ t('crm.days_left') }}</span></small>
                     </div>
                 </div>
             </div>
@@ -615,19 +615,19 @@
         <div class="d-flex flex-wrap justify-content-center gap-3">
             <a href="{{ url_for('crm.customers') }}" class="quick-action-btn">
                 <i class="bi bi-person-plus-fill me-2"></i>
-                {% if current_lang == 'en' %}New Customer{% else %}新建客户{% endif %}
+                <span data-i18n="crm.new_customer">{{ t('crm.new_customer') }}</span>
             </a>
             <a href="{{ url_for('crm.deals') }}" class="quick-action-btn">
                 <i class="bi bi-plus-circle-fill me-2"></i>
-                {% if current_lang == 'en' %}New Deal{% else %}新建交易{% endif %}
+                <span data-i18n="crm.new_deal">{{ t('crm.new_deal') }}</span>
             </a>
             <button class="quick-action-btn" onclick="generateQuote()">
                 <i class="bi bi-file-earmark-text-fill me-2"></i>
-                {% if current_lang == 'en' %}Generate Quote{% else %}生成报价{% endif %}
+                <span data-i18n="crm.generate_quote">{{ t('crm.generate_quote') }}</span>
             </button>
             <a href="{{ url_for('index') }}" class="quick-action-btn">
                 <i class="bi bi-calculator-fill me-2"></i>
-                {% if current_lang == 'en' %}Mining Calculator{% else %}挖矿计算器{% endif %}
+                <span data-i18n="mining_calculator">{{ t('mining_calculator') }}</span>
             </a>
         </div>
     </div>
@@ -685,7 +685,7 @@ if (revenueTrendCtx) {
             labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
             datasets: [
                 {
-                    label: '{% if current_lang == "en" %}Miner Sales{% else %}矿机销售{% endif %}',
+                    label: window.t ? window.t('crm.miner_sales') : 'Miner Sales',
                     data: [120, 190, 170, 250, 280, 320, 350, 380, 420, 460, 490, 520],
                     borderColor: chartConfig.colors.gold,
                     backgroundColor: 'rgba(247, 147, 26, 0.1)',
@@ -693,7 +693,7 @@ if (revenueTrendCtx) {
                     fill: true
                 },
                 {
-                    label: '{% if current_lang == "en" %}Hosting Fees{% else %}托管费用{% endif %}',
+                    label: window.t ? window.t('crm.hosting_fees') : 'Hosting Fees',
                     data: [80, 110, 130, 150, 170, 190, 210, 230, 250, 270, 290, 310],
                     borderColor: chartConfig.colors.orange,
                     backgroundColor: 'rgba(255, 165, 0, 0.1)',
@@ -712,9 +712,9 @@ if (salesFunnelCtx) {
     new Chart(salesFunnelCtx, {
         type: 'bar',
         data: {
-            labels: ['{% if current_lang == "en" %}Leads{% else %}潜在客户{% endif %}', '{% if current_lang == "en" %}Qualified{% else %}合格线索{% endif %}', '{% if current_lang == "en" %}Signed{% else %}签约{% endif %}', '{% if current_lang == "en" %}Delivered{% else %}交付{% endif %}'],
+            labels: [window.t ? window.t('leads') : 'Leads', window.t ? window.t('crm.qualified') : 'Qualified', window.t ? window.t('crm.signed') : 'Signed', window.t ? window.t('crm.delivered') : 'Delivered'],
             datasets: [{
-                label: '{% if current_lang == "en" %}Count{% else %}数量{% endif %}',
+                label: window.t ? window.t('crm.count') : 'Count',
                 data: [450, 320, 180, 120],
                 backgroundColor: [
                     'rgba(247, 147, 26, 0.9)',
@@ -739,7 +739,7 @@ if (capacityDistCtx) {
     new Chart(capacityDistCtx, {
         type: 'doughnut',
         data: {
-            labels: ['BTC Mining Corp', 'HashPower Solutions', 'CryptoFarm Ltd', 'Digital Assets Inc', '{% if current_lang == "en" %}Others{% else %}其他{% endif %}'],
+            labels: ['BTC Mining Corp', 'HashPower Solutions', 'CryptoFarm Ltd', 'Digital Assets Inc', window.t ? window.t('crm.others') : 'Others'],
             datasets: [{
                 data: [21.6, 15.0, 10.7, 7.6, 30.7],
                 backgroundColor: [
@@ -771,7 +771,7 @@ if (customerTypeCtx) {
     new Chart(customerTypeCtx, {
         type: 'pie',
         data: {
-            labels: ['{% if current_lang == "en" %}Enterprise{% else %}企业客户{% endif %}', '{% if current_lang == "en" %}Individual{% else %}个人客户{% endif %}'],
+            labels: [window.t ? window.t('enterprise') : 'Enterprise', window.t ? window.t('individual') : 'Individual'],
             datasets: [{
                 data: [65, 35],
                 backgroundColor: [
@@ -796,7 +796,7 @@ if (customerTypeCtx) {
 
 // 生成报价功能
 function generateQuote() {
-    alert('{% if current_lang == "en" %}Quote generation feature coming soon!{% else %}报价生成功能即将推出！{% endif %}');
+    alert(window.t ? window.t('crm.quote_coming_soon') : 'Quote generation feature coming soon!');
 }
 
 // 定期刷新数据 (可选)
