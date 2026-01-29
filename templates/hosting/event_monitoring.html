@@ -1,16 +1,16 @@
 {% extends "hosting/hosting_base.html" %}
 
-{% block page_title %}{% if current_lang == 'en' %}Event Monitoring{% else %}事件监控{% endif %}{% endblock %}
-{% block page_subtitle %}{% if current_lang == 'en' %}Real-time monitoring and incident management{% else %}实时监控和事件管理{% endif %}{% endblock %}
+{% block page_title %}<span data-i18n="hosting.event_monitoring">Event Monitoring</span>{% endblock %}
+{% block page_subtitle %}<span data-i18n="hosting.realtime_monitoring_incident">Real-time monitoring and incident management</span>{% endblock %}
 
 {% block header_actions %}
 {{ super() }}
 <div class="btn-group ms-3" role="group">
     <button class="btn btn-hosting-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createIncidentModal">
-        <i class="bi bi-plus-circle me-1"></i>{% if current_lang == 'en' %}New Incident{% else %}新建事件{% endif %}
+        <i class="bi bi-plus-circle me-1"></i><span data-i18n="hosting.new_incident">New Incident</span>
     </button>
     <button class="btn btn-hosting-secondary btn-sm" onclick="refreshMonitoring()">
-        <i class="bi bi-arrow-clockwise me-1"></i>{% if current_lang == 'en' %}Refresh{% else %}刷新{% endif %}
+        <i class="bi bi-arrow-clockwise me-1"></i><span data-i18n="refresh">Refresh</span>
     </button>
 </div>
 {% endblock %}
@@ -21,22 +21,22 @@
 <div class="hosting-stats-grid">
     <div class="hosting-stat-card">
         <div class="hosting-stat-value" id="active-alerts">--</div>
-        <div class="hosting-stat-label">{% if current_lang == 'en' %}Active Alerts{% else %}活跃告警{% endif %}</div>
+        <div class="hosting-stat-label" data-i18n="hosting.active_alerts">Active Alerts</div>
         <i class="bi bi-exclamation-triangle hosting-stat-icon"></i>
     </div>
     <div class="hosting-stat-card">
         <div class="hosting-stat-value" id="total-incidents">--</div>
-        <div class="hosting-stat-label">{% if current_lang == 'en' %}Total Incidents{% else %}总事件数{% endif %}</div>
+        <div class="hosting-stat-label" data-i18n="hosting.total_incidents">Total Incidents</div>
         <i class="bi bi-shield-exclamation hosting-stat-icon"></i>
     </div>
     <div class="hosting-stat-card">
         <div class="hosting-stat-value" id="response-time">--</div>
-        <div class="hosting-stat-label">{% if current_lang == 'en' %}Avg Response{% else %}平均响应{% endif %}</div>
+        <div class="hosting-stat-label" data-i18n="hosting.avg_response">Avg Response</div>
         <i class="bi bi-clock hosting-stat-icon"></i>
     </div>
     <div class="hosting-stat-card">
         <div class="hosting-stat-value" id="uptime-percentage">--</div>
-        <div class="hosting-stat-label">{% if current_lang == 'en' %}System Uptime{% else %}系统可用率{% endif %}</div>
+        <div class="hosting-stat-label" data-i18n="hosting.system_uptime">System Uptime</div>
         <i class="bi bi-check-circle hosting-stat-icon"></i>
     </div>
 </div>
@@ -45,12 +45,12 @@
 <div class="hosting-card">
     <div class="hosting-card-header">
         <h5 class="hosting-card-title">
-            <i class="bi bi-bell me-2"></i>{% if current_lang == 'en' %}Real-time Alerts{% else %}实时告警{% endif %}
+            <i class="bi bi-bell me-2"></i><span data-i18n="hosting.realtime_alerts">Real-time Alerts</span>
         </h5>
         <div class="btn-group" role="group">
-            <button class="btn btn-hosting-outline btn-sm active" onclick="filterAlerts('all')">{% if current_lang == 'en' %}All{% else %}全部{% endif %}</button>
-            <button class="btn btn-hosting-outline btn-sm" onclick="filterAlerts('critical')">{% if current_lang == 'en' %}Critical{% else %}严重{% endif %}</button>
-            <button class="btn btn-hosting-outline btn-sm" onclick="filterAlerts('warning')">{% if current_lang == 'en' %}Warning{% else %}警告{% endif %}</button>
+            <button class="btn btn-hosting-outline btn-sm active" onclick="filterAlerts('all')" data-i18n="all">All</button>
+            <button class="btn btn-hosting-outline btn-sm" onclick="filterAlerts('critical')" data-i18n="hosting.critical">Critical</button>
+            <button class="btn btn-hosting-outline btn-sm" onclick="filterAlerts('warning')" data-i18n="hosting.warning">Warning</button>
         </div>
     </div>
     <div class="hosting-card-body">
@@ -64,11 +64,11 @@
 <div class="hosting-card">
     <div class="hosting-card-header">
         <h5 class="hosting-card-title">
-            <i class="bi bi-calendar-event me-2"></i>{% if current_lang == 'en' %}Incident Management{% else %}事件管理{% endif %}
+            <i class="bi bi-calendar-event me-2"></i><span data-i18n="hosting.incident_management">Incident Management</span>
         </h5>
         <div class="btn-group" role="group">
             <button class="btn btn-hosting-secondary btn-sm" onclick="exportIncidents()">
-                <i class="bi bi-download me-1"></i>{% if current_lang == 'en' %}Export{% else %}导出{% endif %}
+                <i class="bi bi-download me-1"></i><span data-i18n="export">Export</span>
             </button>
         </div>
     </div>
@@ -77,30 +77,30 @@
         <div class="row g-3 mb-4">
             <div class="col-md-3">
                 <select class="form-select" id="severity-filter" onchange="filterIncidents()">
-                    <option value="">{% if current_lang == 'en' %}All Severities{% else %}全部严重级别{% endif %}</option>
-                    <option value="critical">{% if current_lang == 'en' %}Critical{% else %}严重{% endif %}</option>
-                    <option value="high">{% if current_lang == 'en' %}High{% else %}高{% endif %}</option>
-                    <option value="medium">{% if current_lang == 'en' %}Medium{% else %}中等{% endif %}</option>
-                    <option value="low">{% if current_lang == 'en' %}Low{% else %}低{% endif %}</option>
+                    <option value="" data-i18n="hosting.all_severities">All Severities</option>
+                    <option value="critical" data-i18n="hosting.critical">Critical</option>
+                    <option value="high" data-i18n="high">High</option>
+                    <option value="medium" data-i18n="medium">Medium</option>
+                    <option value="low" data-i18n="low">Low</option>
                 </select>
             </div>
             <div class="col-md-3">
                 <select class="form-select" id="status-filter" onchange="filterIncidents()">
-                    <option value="">{% if current_lang == 'en' %}All Statuses{% else %}全部状态{% endif %}</option>
-                    <option value="open">{% if current_lang == 'en' %}Open{% else %}开放{% endif %}</option>
-                    <option value="investigating">{% if current_lang == 'en' %}Investigating{% else %}调查中{% endif %}</option>
-                    <option value="resolved">{% if current_lang == 'en' %}Resolved{% else %}已解决{% endif %}</option>
-                    <option value="closed">{% if current_lang == 'en' %}Closed{% else %}已关闭{% endif %}</option>
+                    <option value="" data-i18n="hosting.all_statuses">All Statuses</option>
+                    <option value="open" data-i18n="hosting.open">Open</option>
+                    <option value="investigating" data-i18n="hosting.investigating">Investigating</option>
+                    <option value="resolved" data-i18n="hosting.resolved">Resolved</option>
+                    <option value="closed" data-i18n="hosting.closed">Closed</option>
                 </select>
             </div>
             <div class="col-md-3">
                 <select class="form-select" id="site-filter" onchange="filterIncidents()">
-                    <option value="">{% if current_lang == 'en' %}All Sites{% else %}全部站点{% endif %}</option>
+                    <option value="" data-i18n="all_sites">All Sites</option>
                     <!-- 站点选项通过JavaScript动态加载 -->
                 </select>
             </div>
             <div class="col-md-3">
-                <input type="text" class="form-control" id="search-incidents" placeholder="{% if current_lang == 'en' %}Search incidents...{% else %}搜索事件...{% endif %}" onkeyup="searchIncidents()">
+                <input type="text" class="form-control" id="search-incidents" data-i18n-placeholder="hosting.search_incidents" placeholder="Search incidents..." onkeyup="searchIncidents()">
             </div>
         </div>
         
@@ -109,14 +109,14 @@
             <table class="table table-hover" id="incidents-table">
                 <thead>
                     <tr>
-                        <th>{% if current_lang == 'en' %}ID{% else %}编号{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Title{% else %}标题{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Severity{% else %}严重级别{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Site{% else %}站点{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Created{% else %}创建时间{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Duration{% else %}持续时间{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
+                        <th data-i18n="hosting.id">ID</th>
+                        <th data-i18n="hosting.title">Title</th>
+                        <th data-i18n="hosting.severity">Severity</th>
+                        <th data-i18n="status">Status</th>
+                        <th data-i18n="site">Site</th>
+                        <th data-i18n="hosting.created">Created</th>
+                        <th data-i18n="hosting.duration">Duration</th>
+                        <th data-i18n="actions">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -140,13 +140,13 @@
         <div class="hosting-card">
             <div class="hosting-card-header">
                 <h5 class="hosting-card-title">
-                    <i class="bi bi-activity me-2"></i>{% if current_lang == 'en' %}System Performance{% else %}系统性能{% endif %}
+                    <i class="bi bi-activity me-2"></i><span data-i18n="hosting.system_performance">System Performance</span>
                 </h5>
                 <div class="btn-group" role="group">
-                    <button class="btn btn-hosting-outline btn-sm active" onclick="switchTimeRange('1h')">1{% if current_lang == 'en' %}H{% else %}小时{% endif %}</button>
-                    <button class="btn btn-hosting-outline btn-sm" onclick="switchTimeRange('6h')">6{% if current_lang == 'en' %}H{% else %}小时{% endif %}</button>
-                    <button class="btn btn-hosting-outline btn-sm" onclick="switchTimeRange('24h')">24{% if current_lang == 'en' %}H{% else %}小时{% endif %}</button>
-                    <button class="btn btn-hosting-outline btn-sm" onclick="switchTimeRange('7d')">7{% if current_lang == 'en' %}D{% else %}天{% endif %}</button>
+                    <button class="btn btn-hosting-outline btn-sm active" onclick="switchTimeRange('1h')">1<span data-i18n="hosting.hour_short">H</span></button>
+                    <button class="btn btn-hosting-outline btn-sm" onclick="switchTimeRange('6h')">6<span data-i18n="hosting.hour_short">H</span></button>
+                    <button class="btn btn-hosting-outline btn-sm" onclick="switchTimeRange('24h')">24<span data-i18n="hosting.hour_short">H</span></button>
+                    <button class="btn btn-hosting-outline btn-sm" onclick="switchTimeRange('7d')">7<span data-i18n="hosting.day_short">D</span></button>
                 </div>
             </div>
             <div class="hosting-card-body">
@@ -159,13 +159,13 @@
         <div class="hosting-card">
             <div class="hosting-card-header">
                 <h5 class="hosting-card-title">
-                    <i class="bi bi-speedometer2 me-2"></i>{% if current_lang == 'en' %}Key Metrics{% else %}关键指标{% endif %}
+                    <i class="bi bi-speedometer2 me-2"></i><span data-i18n="hosting.key_metrics">Key Metrics</span>
                 </h5>
             </div>
             <div class="hosting-card-body">
                 <div class="metric-item mb-4">
                     <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted">{% if current_lang == 'en' %}CPU Usage{% else %}CPU使用率{% endif %}</span>
+                        <span class="text-muted" data-i18n="hosting.cpu_usage">CPU Usage</span>
                         <span class="fw-bold" id="cpu-usage">--</span>
                     </div>
                     <div class="progress" style="height: 8px;">
@@ -175,7 +175,7 @@
                 
                 <div class="metric-item mb-4">
                     <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted">{% if current_lang == 'en' %}Memory Usage{% else %}内存使用率{% endif %}</span>
+                        <span class="text-muted" data-i18n="hosting.memory_usage">Memory Usage</span>
                         <span class="fw-bold" id="memory-usage">--</span>
                     </div>
                     <div class="progress" style="height: 8px;">
@@ -185,7 +185,7 @@
                 
                 <div class="metric-item mb-4">
                     <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted">{% if current_lang == 'en' %}Network I/O{% else %}网络I/O{% endif %}</span>
+                        <span class="text-muted" data-i18n="hosting.network_io">Network I/O</span>
                         <span class="fw-bold" id="network-io">--</span>
                     </div>
                     <div class="progress" style="height: 8px;">
@@ -195,7 +195,7 @@
                 
                 <div class="metric-item">
                     <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted">{% if current_lang == 'en' %}Error Rate{% else %}错误率{% endif %}</span>
+                        <span class="text-muted" data-i18n="hosting.error_rate">Error Rate</span>
                         <span class="fw-bold" id="error-rate">--</span>
                     </div>
                     <div class="progress" style="height: 8px;">
@@ -214,7 +214,7 @@
             <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
                 <h5 class="modal-title" id="createIncidentModalLabel">
                     <i class="bi bi-plus-circle me-2"></i>
-                    {% if current_lang == 'en' %}Create New Incident{% else %}创建新事件{% endif %}
+                    <span data-i18n="hosting.create_new_incident">Create New Incident</span>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -223,48 +223,44 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label for="incident-title" class="form-label">
-                                {% if current_lang == 'en' %}Title{% else %}标题{% endif %} <span class="text-danger">*</span>
+                                <span data-i18n="hosting.title">Title</span> <span class="text-danger">*</span>
                             </label>
                             <input type="text" class="form-control" id="incident-title" name="title" required>
                         </div>
                         <div class="col-md-6">
                             <label for="incident-severity" class="form-label">
-                                {% if current_lang == 'en' %}Severity{% else %}严重级别{% endif %} <span class="text-danger">*</span>
+                                <span data-i18n="hosting.severity">Severity</span> <span class="text-danger">*</span>
                             </label>
                             <select class="form-select" id="incident-severity" name="severity" required>
-                                <option value="">{% if current_lang == 'en' %}Select Severity{% else %}选择级别{% endif %}</option>
-                                <option value="critical">{% if current_lang == 'en' %}Critical{% else %}严重{% endif %}</option>
-                                <option value="high">{% if current_lang == 'en' %}High{% else %}高{% endif %}</option>
-                                <option value="medium">{% if current_lang == 'en' %}Medium{% else %}中等{% endif %}</option>
-                                <option value="low">{% if current_lang == 'en' %}Low{% else %}低{% endif %}</option>
+                                <option value="" data-i18n="hosting.select_severity">Select Severity</option>
+                                <option value="critical" data-i18n="hosting.critical">Critical</option>
+                                <option value="high" data-i18n="high">High</option>
+                                <option value="medium" data-i18n="medium">Medium</option>
+                                <option value="low" data-i18n="low">Low</option>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label for="incident-site" class="form-label">
-                                {% if current_lang == 'en' %}Affected Site{% else %}受影响站点{% endif %}
-                            </label>
+                            <label for="incident-site" class="form-label" data-i18n="hosting.affected_site">Affected Site</label>
                             <select class="form-select" id="incident-site" name="site_id">
-                                <option value="">{% if current_lang == 'en' %}Select Site{% else %}选择站点{% endif %}</option>
+                                <option value="" data-i18n="hosting.select_site">Select Site</option>
                                 <!-- 站点选项通过JavaScript动态加载 -->
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label for="incident-category" class="form-label">
-                                {% if current_lang == 'en' %}Category{% else %}类别{% endif %}
-                            </label>
+                            <label for="incident-category" class="form-label" data-i18n="hosting.category">Category</label>
                             <select class="form-select" id="incident-category" name="category">
-                                <option value="">{% if current_lang == 'en' %}Select Category{% else %}选择类别{% endif %}</option>
-                                <option value="hardware">{% if current_lang == 'en' %}Hardware{% else %}硬件{% endif %}</option>
-                                <option value="network">{% if current_lang == 'en' %}Network{% else %}网络{% endif %}</option>
-                                <option value="power">{% if current_lang == 'en' %}Power{% else %}电力{% endif %}</option>
-                                <option value="cooling">{% if current_lang == 'en' %}Cooling{% else %}冷却{% endif %}</option>
-                                <option value="security">{% if current_lang == 'en' %}Security{% else %}安全{% endif %}</option>
-                                <option value="other">{% if current_lang == 'en' %}Other{% else %}其他{% endif %}</option>
+                                <option value="" data-i18n="hosting.select_category">Select Category</option>
+                                <option value="hardware" data-i18n="hosting.hardware">Hardware</option>
+                                <option value="network" data-i18n="hosting.network">Network</option>
+                                <option value="power" data-i18n="hosting.power">Power</option>
+                                <option value="cooling" data-i18n="hosting.cooling">Cooling</option>
+                                <option value="security" data-i18n="hosting.security">Security</option>
+                                <option value="other" data-i18n="hosting.other">Other</option>
                             </select>
                         </div>
                         <div class="col-12">
                             <label for="incident-description" class="form-label">
-                                {% if current_lang == 'en' %}Description{% else %}描述{% endif %} <span class="text-danger">*</span>
+                                <span data-i18n="description">Description</span> <span class="text-danger">*</span>
                             </label>
                             <textarea class="form-control" id="incident-description" name="description" rows="4" required></textarea>
                         </div>
@@ -272,12 +268,8 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-hosting-secondary" data-bs-dismiss="modal">
-                    {% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}
-                </button>
-                <button type="button" class="btn btn-hosting-primary" onclick="createIncident()">
-                    {% if current_lang == 'en' %}Create Incident{% else %}创建事件{% endif %}
-                </button>
+                <button type="button" class="btn btn-hosting-secondary" data-bs-dismiss="modal" data-i18n="cancel">Cancel</button>
+                <button type="button" class="btn btn-hosting-primary" onclick="createIncident()" data-i18n="hosting.create_incident">Create Incident</button>
             </div>
         </div>
     </div>
@@ -290,7 +282,7 @@
             <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
                 <h5 class="modal-title" id="incidentDetailModalLabel">
                     <i class="bi bi-info-circle me-2"></i>
-                    {% if current_lang == 'en' %}Incident Details{% else %}事件详情{% endif %}
+                    <span data-i18n="hosting.incident_details">Incident Details</span>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -298,12 +290,8 @@
                 <!-- 事件详情内容将在这里加载 -->
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-hosting-secondary" data-bs-dismiss="modal">
-                    {% if current_lang == 'en' %}Close{% else %}关闭{% endif %}
-                </button>
-                <button type="button" class="btn btn-hosting-primary" onclick="updateIncidentStatus()">
-                    {% if current_lang == 'en' %}Update Status{% else %}更新状态{% endif %}
-                </button>
+                <button type="button" class="btn btn-hosting-secondary" data-bs-dismiss="modal" data-i18n="hosting.close">Close</button>
+                <button type="button" class="btn btn-hosting-primary" onclick="updateIncidentStatus()" data-i18n="hosting.update_status">Update Status</button>
             </div>
         </div>
     </div>

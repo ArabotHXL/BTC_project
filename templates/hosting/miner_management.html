@@ -1,19 +1,19 @@
 {% extends "hosting/hosting_base.html" %}
 
-{% block page_title %}{% if current_lang == 'en' %}Miner Management{% else %}矿机管理{% endif %}{% endblock %}
-{% block page_subtitle %}{% if current_lang == 'en' %}Professional mining device management with unified approval workflow{% else %}专业矿机设备管理，统一审核流程{% endif %}{% endblock %}
+{% block page_title %}<span data-i18n="miner_management">Miner Management</span>{% endblock %}
+{% block page_subtitle %}<span data-i18n="hosting.miner_management_subtitle">Professional mining device management with unified approval workflow</span>{% endblock %}
 
 {% block header_actions %}
 {{ super() }}
 <div class="btn-group ms-3" role="group">
     <button class="btn btn-hosting-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addMinerModal">
-        <i class="bi bi-plus-circle me-1"></i>{% if current_lang == 'en' %}Add Miner{% else %}添加矿机{% endif %}
+        <i class="bi bi-plus-circle me-1"></i><span data-i18n="add_miner">Add Miner</span>
     </button>
     <button class="btn btn-hosting-secondary btn-sm" onclick="refreshMiners()">
-        <i class="bi bi-arrow-clockwise me-1"></i>{% if current_lang == 'en' %}Refresh{% else %}刷新{% endif %}
+        <i class="bi bi-arrow-clockwise me-1"></i><span data-i18n="refresh">Refresh</span>
     </button>
     <a href="{{ url_for('hosting_service_bp.miner_setup_guide') }}" class="btn btn-info btn-sm" target="_blank">
-        <i class="bi bi-book me-1"></i>{% if current_lang == 'en' %}Help Guide{% else %}帮助文档{% endif %}
+        <i class="bi bi-book me-1"></i><span data-i18n="help_guide">Help Guide</span>
     </a>
 </div>
 {% endblock %}
@@ -28,7 +28,7 @@
                 <i class="bi bi-cpu"></i>
             </div>
             <div class="kpi-content">
-                <div class="kpi-label">{% if current_lang == 'en' %}Total Miners{% else %}总矿机数{% endif %}</div>
+                <div class="kpi-label" data-i18n="total_miners">Total Miners</div>
                 <div class="kpi-value" id="kpi-total-miners">-</div>
                 <div class="kpi-unit">&nbsp;</div>
             </div>
@@ -40,7 +40,7 @@
                 <i class="bi bi-speedometer2"></i>
             </div>
             <div class="kpi-content">
-                <div class="kpi-label">{% if current_lang == 'en' %}Total Hashrate{% else %}总算力{% endif %}</div>
+                <div class="kpi-label" data-i18n="total_hashrate">Total Hashrate</div>
                 <div class="kpi-value" id="kpi-total-hashrate">-</div>
                 <div class="kpi-unit">PH/s</div>
             </div>
@@ -52,7 +52,7 @@
                 <i class="bi bi-lightning-charge"></i>
             </div>
             <div class="kpi-content">
-                <div class="kpi-label">{% if current_lang == 'en' %}Power & Efficiency{% else %}功耗+能效{% endif %}</div>
+                <div class="kpi-label" data-i18n="power_efficiency">Power & Efficiency</div>
                 <div class="kpi-value" id="kpi-total-power">-</div>
                 <div class="kpi-subvalue" id="kpi-avg-efficiency">-</div>
             </div>
@@ -64,10 +64,10 @@
                 <i class="bi bi-heart-pulse"></i>
             </div>
             <div class="kpi-content">
-                <div class="kpi-label">{% if current_lang == 'en' %}Device Health{% else %}设备健康度{% endif %}</div>
+                <div class="kpi-label" data-i18n="device_health">Device Health</div>
                 <div class="kpi-value" id="kpi-health-score">-</div>
                 <div class="kpi-subvalue">
-                    {% if current_lang == 'en' %}Online Rate:{% else %}在线率:{% endif %} 
+                    <span data-i18n="online_rate">Online Rate</span>: 
                     <span id="kpi-online-rate">-</span>
                 </div>
             </div>
@@ -81,10 +81,8 @@
     <div class="hosting-card-header d-flex justify-content-between align-items-center cursor-pointer" 
          data-bs-toggle="collapse" data-bs-target="#encryptionBody" aria-expanded="false">
         <h6 class="hosting-card-title mb-0">
-            <i class="bi bi-shield-lock me-2"></i>{% if current_lang == 'en' %}Encryption Control Center{% else %}加密控制中心{% endif %}
-            <span class="badge bg-warning ms-2" id="encryption-status-badge">
-                {% if current_lang == 'en' %}Not Configured{% else %}未配置{% endif %}
-            </span>
+            <i class="bi bi-shield-lock me-2"></i><span data-i18n="hosting.encryption_control_center">Encryption Control Center</span>
+            <span class="badge bg-warning ms-2" id="encryption-status-badge" data-i18n="hosting.not_configured">Not Configured</span>
         </h6>
         <i class="bi bi-chevron-down collapse-icon"></i>
     </div>
@@ -95,35 +93,35 @@
                 <div class="col-md-6">
                     <div class="encryption-status-panel p-3 rounded" style="background: rgba(247,147,26,0.1); border: 1px solid rgba(247,147,26,0.3);">
                         <h6 class="mb-3">
-                            <i class="bi bi-info-circle me-2"></i>{% if current_lang == 'en' %}Encryption Status{% else %}加密状态{% endif %}
+                            <i class="bi bi-info-circle me-2"></i><span data-i18n="hosting.encryption_status">Encryption Status</span>
                         </h6>
                         <div class="row">
                             <div class="col-6">
                                 <div class="mb-2">
-                                    <small class="text-muted">{% if current_lang == 'en' %}Total Miners{% else %}矿机总数{% endif %}</small>
+                                    <small class="text-muted" data-i18n="total_miners">Total Miners</small>
                                     <div class="fw-bold" id="enc-total-miners">-</div>
                                 </div>
                                 <div class="mb-2">
-                                    <small class="text-muted">{% if current_lang == 'en' %}Encrypted Miners{% else %}已加密矿机{% endif %}</small>
+                                    <small class="text-muted" data-i18n="hosting.encrypted_miners">Encrypted Miners</small>
                                     <div class="fw-bold" id="enc-encrypted-miners">-</div>
                                 </div>
                             </div>
                             <div class="col-6">
                                 <div class="mb-2">
-                                    <small class="text-muted">{% if current_lang == 'en' %}Key Version{% else %}密钥版本{% endif %}</small>
+                                    <small class="text-muted" data-i18n="hosting.key_version">Key Version</small>
                                     <div class="fw-bold" id="enc-key-version">-</div>
                                 </div>
                                 <div class="mb-2">
-                                    <small class="text-muted">{% if current_lang == 'en' %}Unlock Status{% else %}解锁状态{% endif %}</small>
+                                    <small class="text-muted" data-i18n="hosting.unlock_status">Unlock Status</small>
                                     <div id="enc-unlock-status">
-                                        <span class="badge bg-secondary">{% if current_lang == 'en' %}Locked{% else %}已锁定{% endif %}</span>
+                                        <span class="badge bg-secondary" data-i18n="hosting.locked">Locked</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <!-- 进度条 -->
                         <div class="mt-3" id="enc-progress-container" style="display: none;">
-                            <small class="text-muted">{% if current_lang == 'en' %}Processing...{% else %}处理中...{% endif %}</small>
+                            <small class="text-muted" data-i18n="hosting.processing">Processing...</small>
                             <div class="progress mt-1" style="height: 20px;">
                                 <div class="progress-bar progress-bar-striped progress-bar-animated" 
                                      role="progressbar" id="enc-progress-bar" 
@@ -137,46 +135,42 @@
                 <div class="col-md-6">
                     <div class="p-3">
                         <h6 class="mb-3">
-                            <i class="bi bi-gear me-2"></i>{% if current_lang == 'en' %}Quick Actions{% else %}快捷操作{% endif %}
+                            <i class="bi bi-gear me-2"></i><span data-i18n="quick_actions">Quick Actions</span>
                         </h6>
                         <!-- 首次设置密码 -->
                         <div id="enc-setup-section">
-                            <p class="text-muted small mb-2">
-                                {% if current_lang == 'en' %}Set up a master passphrase to encrypt all miners' network data (IP/MAC addresses).{% else %}设置主密码以加密所有矿机的网络数据（IP/MAC地址）。{% endif %}
-                            </p>
+                            <p class="text-muted small mb-2" data-i18n="hosting.encryption_setup_desc">Set up a master passphrase to encrypt all miners' network data (IP/MAC addresses).</p>
                             <div class="input-group mb-2">
                                 <span class="input-group-text"><i class="bi bi-key"></i></span>
                                 <input type="password" class="form-control" id="enc-setup-passphrase" 
-                                       placeholder="{% if current_lang == 'en' %}Enter master passphrase (min 8 chars){% else %}输入主密码（至少8位）{% endif %}">
+                                       data-i18n-placeholder="hosting.enter_master_passphrase" placeholder="Enter master passphrase (min 8 chars)">
                             </div>
                             <div class="input-group mb-3">
                                 <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
                                 <input type="password" class="form-control" id="enc-setup-confirm" 
-                                       placeholder="{% if current_lang == 'en' %}Confirm passphrase{% else %}确认密码{% endif %}">
+                                       data-i18n-placeholder="hosting.confirm_passphrase" placeholder="Confirm passphrase">
                             </div>
                             <button class="btn btn-hosting-primary w-100" onclick="setupOwnerEncryption()">
-                                <i class="bi bi-shield-lock me-2"></i>{% if current_lang == 'en' %}Setup & Encrypt All{% else %}设置并加密所有矿机{% endif %}
+                                <i class="bi bi-shield-lock me-2"></i><span data-i18n="hosting.setup_encrypt_all">Setup & Encrypt All</span>
                             </button>
                         </div>
                         <!-- 解锁操作 -->
                         <div id="enc-unlock-section" style="display: none;">
-                            <p class="text-muted small mb-2">
-                                {% if current_lang == 'en' %}Enter your master passphrase to unlock and view encrypted data.{% else %}输入主密码以解锁并查看加密数据。{% endif %}
-                            </p>
+                            <p class="text-muted small mb-2" data-i18n="hosting.unlock_desc">Enter your master passphrase to unlock and view encrypted data.</p>
                             <div class="input-group mb-3">
                                 <span class="input-group-text"><i class="bi bi-unlock"></i></span>
                                 <input type="password" class="form-control" id="enc-unlock-passphrase" 
-                                       placeholder="{% if current_lang == 'en' %}Enter master passphrase{% else %}输入主密码{% endif %}">
+                                       data-i18n-placeholder="hosting.enter_master_passphrase_short" placeholder="Enter master passphrase">
                                 <button class="btn btn-hosting-primary" onclick="unlockOwnerEncryption()">
                                     <i class="bi bi-unlock-fill"></i>
                                 </button>
                             </div>
                             <div class="d-flex gap-2">
                                 <button class="btn btn-outline-warning flex-fill" onclick="lockOwnerEncryption()">
-                                    <i class="bi bi-lock me-1"></i>{% if current_lang == 'en' %}Lock{% else %}锁定{% endif %}
+                                    <i class="bi bi-lock me-1"></i><span data-i18n="hosting.lock">Lock</span>
                                 </button>
                                 <button class="btn btn-outline-danger flex-fill" onclick="rotateOwnerKey()">
-                                    <i class="bi bi-arrow-repeat me-1"></i>{% if current_lang == 'en' %}Rotate Key{% else %}轮换密钥{% endif %}
+                                    <i class="bi bi-arrow-repeat me-1"></i><span data-i18n="hosting.rotate_key">Rotate Key</span>
                                 </button>
                             </div>
                         </div>
@@ -192,86 +186,86 @@
 <div class="d-flex justify-content-between gap-3 mb-4 flex-wrap">
     <div class="d-flex gap-2 flex-wrap">
         <button class="btn btn-hosting-primary" data-bs-toggle="modal" data-bs-target="#batchImportModal">
-            <i class="bi bi-upload me-2"></i>{% if current_lang == 'en' %}Batch Import{% else %}批量导入{% endif %}
+            <i class="bi bi-upload me-2"></i><span data-i18n="batch_import">Batch Import</span>
         </button>
         <button class="btn btn-hosting-secondary" onclick="showPendingOnly()">
-            <i class="bi bi-clock me-2"></i>{% if current_lang == 'en' %}Pending Review{% else %}待审核{% endif %}
+            <i class="bi bi-clock me-2"></i><span data-i18n="pending_review">Pending Review</span>
             <span class="badge bg-warning text-dark ms-2" id="pending-count">0</span>
         </button>
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <div class="btn-group" role="group">
             <button type="button" class="btn btn-warning dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="batch-ops-btn" disabled>
-                <i class="bi bi-list-check me-1"></i>{% if current_lang == 'en' %}Batch Operations{% else %}批量操作{% endif %}
+                <i class="bi bi-list-check me-1"></i><span data-i18n="batch_operations">Batch Operations</span>
                 <span class="badge bg-light text-dark ms-1" id="selected-count">0</span>
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
                 <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchApprove()">
-                    <i class="bi bi-check-circle me-2"></i>{% if current_lang == 'en' %}Approve{% else %}批量审核通过{% endif %}
+                    <i class="bi bi-check-circle me-2"></i><span data-i18n="approve">Approve</span>
                 </a></li>
                 <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchStart()">
-                    <i class="bi bi-play-circle me-2"></i>{% if current_lang == 'en' %}Start{% else %}批量启动{% endif %}
+                    <i class="bi bi-play-circle me-2"></i><span data-i18n="start">Start</span>
                 </a></li>
                 <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchShutdown()">
-                    <i class="bi bi-stop-circle me-2"></i>{% if current_lang == 'en' %}Shutdown{% else %}批量关闭{% endif %}
+                    <i class="bi bi-stop-circle me-2"></i><span data-i18n="shutdown">Shutdown</span>
                 </a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchChangeStatus()">
-                    <i class="bi bi-arrow-left-right me-2"></i>{% if current_lang == 'en' %}Change Status{% else %}批量修改状态{% endif %}
+                    <i class="bi bi-arrow-left-right me-2"></i><span data-i18n="change_status">Change Status</span>
                 </a></li>
                 <li><hr class="dropdown-divider"></li>
                 <!-- Remote Commands Submenu -->
                 <li class="dropdown-submenu">
                     <a class="dropdown-item dropdown-toggle" href="javascript:void(0)" data-bs-toggle="dropdown">
-                        <i class="bi bi-terminal me-2"></i>{% if current_lang == 'en' %}Remote Commands{% else %}远程命令{% endif %}
+                        <i class="bi bi-terminal me-2"></i><span data-i18n="hosting.remote_commands">Remote Commands</span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchRemoteCommand('change_pools')">
-                            <i class="bi bi-shuffle me-2"></i>{% if current_lang == 'en' %}Change Pools{% else %}更换矿池{% endif %}
+                            <i class="bi bi-shuffle me-2"></i><span data-i18n="hosting.change_pools">Change Pools</span>
                         </a></li>
                         <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchRemoteCommand('reboot')">
-                            <i class="bi bi-arrow-clockwise me-2"></i>{% if current_lang == 'en' %}Reboot{% else %}重启{% endif %}
+                            <i class="bi bi-arrow-clockwise me-2"></i><span data-i18n="hosting.reboot">Reboot</span>
                         </a></li>
                         <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchRemoteCommand('fetch_logs')">
-                            <i class="bi bi-file-text me-2"></i>{% if current_lang == 'en' %}Fetch Logs{% else %}获取日志{% endif %}
+                            <i class="bi bi-file-text me-2"></i><span data-i18n="hosting.fetch_logs">Fetch Logs</span>
                         </a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchRemoteCommand('power_mode')">
-                            <i class="bi bi-lightning me-2"></i>{% if current_lang == 'en' %}Power Mode{% else %}电源模式{% endif %}
+                            <i class="bi bi-lightning me-2"></i><span data-i18n="hosting.power_mode">Power Mode</span>
                         </a></li>
                         <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchRemoteCommand('power_target')">
-                            <i class="bi bi-speedometer2 me-2"></i>{% if current_lang == 'en' %}Power Target{% else %}功率目标{% endif %}
+                            <i class="bi bi-speedometer2 me-2"></i><span data-i18n="hosting.power_target">Power Target</span>
                         </a></li>
                         <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchRemoteCommand('overclock')">
-                            <i class="bi bi-cpu me-2"></i>{% if current_lang == 'en' %}Overclock{% else %}超频{% endif %}
+                            <i class="bi bi-cpu me-2"></i><span data-i18n="hosting.overclock">Overclock</span>
                         </a></li>
                         <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchRemoteCommand('fan_mode')">
-                            <i class="bi bi-fan me-2"></i>{% if current_lang == 'en' %}Fan Mode{% else %}风扇模式{% endif %}
+                            <i class="bi bi-fan me-2"></i><span data-i18n="hosting.fan_mode">Fan Mode</span>
                         </a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchRemoteCommand('static_ip')">
-                            <i class="bi bi-ethernet me-2"></i>{% if current_lang == 'en' %}Assign Static IP{% else %}分配静态IP{% endif %}
+                            <i class="bi bi-ethernet me-2"></i><span data-i18n="hosting.assign_static_ip">Assign Static IP</span>
                         </a></li>
                         <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchRemoteCommand('change_password')">
-                            <i class="bi bi-key me-2"></i>{% if current_lang == 'en' %}Change Password{% else %}更改密码{% endif %}
+                            <i class="bi bi-key me-2"></i><span data-i18n="hosting.change_password">Change Password</span>
                         </a></li>
                         <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchRemoteCommand('blink_led')">
-                            <i class="bi bi-lightbulb me-2"></i>{% if current_lang == 'en' %}Blink LEDs{% else %}闪烁LED{% endif %}
+                            <i class="bi bi-lightbulb me-2"></i><span data-i18n="hosting.blink_leds">Blink LEDs</span>
                         </a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="batchRemoteCommand('factory_reset')">
-                            <i class="bi bi-exclamation-triangle me-2"></i>{% if current_lang == 'en' %}Factory Reset{% else %}恢复出厂设置{% endif %}
+                            <i class="bi bi-exclamation-triangle me-2"></i><span data-i18n="hosting.factory_reset">Factory Reset</span>
                         </a></li>
                     </ul>
                 </li>
                 <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="batchDelete()">
-                    <i class="bi bi-trash me-2"></i>{% if current_lang == 'en' %}Delete{% else %}批量删除{% endif %}
+                    <i class="bi bi-trash me-2"></i><span data-i18n="delete">Delete</span>
                 </a></li>
             </ul>
         </div>
         <button class="btn btn-success" onclick="exportCSV()">
-            <i class="bi bi-download me-1"></i>{% if current_lang == 'en' %}Export CSV{% else %}导出CSV{% endif %}
+            <i class="bi bi-download me-1"></i><span data-i18n="export_csv">Export CSV</span>
         </button>
     </div>
 </div>
@@ -280,51 +274,43 @@
 <div class="hosting-card">
     <div class="hosting-card-header d-flex justify-content-between align-items-center">
         <h6 class="hosting-card-title mb-0">
-            <i class="bi bi-funnel me-2"></i>{% if current_lang == 'en' %}Filter Options{% else %}筛选选项{% endif %}
+            <i class="bi bi-funnel me-2"></i><span data-i18n="filter_options">Filter Options</span>
         </h6>
         <div class="input-group" style="width: 300px;">
             <span class="input-group-text"><i class="bi bi-search"></i></span>
-            <input type="text" class="form-control" id="quickSearch" placeholder="{% if current_lang == 'en' %}Search Serial Number/IP/Rack...{% else %}搜索序列号/IP/机架位置...{% endif %}">
+            <input type="text" class="form-control" id="quickSearch" data-i18n-placeholder="hosting.search_serial_ip_rack" placeholder="Search Serial Number/IP/Rack...">
         </div>
     </div>
     <div class="hosting-card-body">
         <form class="row g-3" id="filter-form">
             <div class="col-md-3">
-                <label for="status-filter" class="form-label">
-                    {% if current_lang == 'en' %}Status{% else %}状态{% endif %}
-                </label>
+                <label for="status-filter" class="form-label" data-i18n="status">Status</label>
                 <select class="form-select" id="status-filter" name="status">
-                    <option value="">{% if current_lang == 'en' %}All Status{% else %}全部状态{% endif %}</option>
-                    <option value="active">{% if current_lang == 'en' %}Running{% else %}运行中{% endif %}</option>
-                    <option value="offline">{% if current_lang == 'en' %}Offline{% else %}离线{% endif %}</option>
-                    <option value="maintenance">{% if current_lang == 'en' %}Maintenance{% else %}维护中{% endif %}</option>
-                    <option value="error">{% if current_lang == 'en' %}Error{% else %}故障{% endif %}</option>
+                    <option value="" data-i18n="all_status">All Status</option>
+                    <option value="active" data-i18n="running">Running</option>
+                    <option value="offline" data-i18n="offline">Offline</option>
+                    <option value="maintenance" data-i18n="maintenance">Maintenance</option>
+                    <option value="error" data-i18n="error">Error</option>
                 </select>
             </div>
             <div class="col-md-3">
-                <label for="model-filter" class="form-label">
-                    {% if current_lang == 'en' %}Miner Model{% else %}矿机型号{% endif %}
-                </label>
+                <label for="model-filter" class="form-label" data-i18n="miner_model">Miner Model</label>
                 <select class="form-select" id="model-filter" name="model_id">
-                    <option value="">{% if current_lang == 'en' %}All Models{% else %}全部型号{% endif %}</option>
+                    <option value="" data-i18n="hosting.all_models">All Models</option>
                     <!-- 动态加载矿机型号选项 -->
                 </select>
             </div>
             <div class="col-md-3">
-                <label for="site-filter" class="form-label">
-                    {% if current_lang == 'en' %}Site{% else %}站点{% endif %}
-                </label>
+                <label for="site-filter" class="form-label" data-i18n="site">Site</label>
                 <select class="form-select" id="site-filter" name="site_id">
-                    <option value="">{% if current_lang == 'en' %}All Sites{% else %}全部站点{% endif %}</option>
+                    <option value="" data-i18n="all_sites">All Sites</option>
                     <!-- 动态加载站点选项 -->
                 </select>
             </div>
             <div class="col-md-3">
-                <label for="customer-filter" class="form-label">
-                    {% if current_lang == 'en' %}Customer{% else %}客户{% endif %}
-                </label>
+                <label for="customer-filter" class="form-label" data-i18n="customer">Customer</label>
                 <select class="form-select" id="customer-filter" name="customer_id">
-                    <option value="">{% if current_lang == 'en' %}All Customers{% else %}全部客户{% endif %}</option>
+                    <option value="" data-i18n="all_customers">All Customers</option>
                     <!-- 动态加载客户选项 -->
                 </select>
             </div>
@@ -336,12 +322,12 @@
 <div class="hosting-card">
     <div class="hosting-card-header">
         <h5 class="hosting-card-title">
-            <i class="bi bi-list me-2"></i>{% if current_lang == 'en' %}Miner List{% else %}矿机列表{% endif %}
+            <i class="bi bi-list me-2"></i><span data-i18n="miner_list">Miner List</span>
         </h5>
         <div class="d-flex gap-2 flex-wrap">
-            <span class="badge bg-info" id="total-count">{% if current_lang == 'en' %}Total: 0{% else %}总计: 0{% endif %}</span>
-            <span class="badge bg-success" id="active-count">{% if current_lang == 'en' %}Running: 0{% else %}运行: 0{% endif %}</span>
-            <span class="badge bg-warning" id="pending-approval-count">{% if current_lang == 'en' %}Pending: 0{% else %}待审核: 0{% endif %}</span>
+            <span class="badge bg-info" id="total-count"><span data-i18n="hosting.total">Total</span>: 0</span>
+            <span class="badge bg-success" id="active-count"><span data-i18n="running">Running</span>: 0</span>
+            <span class="badge bg-warning" id="pending-approval-count"><span data-i18n="pending">Pending</span>: 0</span>
         </div>
     </div>
     <div class="hosting-card-body">
@@ -351,51 +337,51 @@
                     <tr>
                         <th style="width: 40px;"><input type="checkbox" id="selectAll" class="form-check-input"></th>
                         <th class="sortable-header" data-sort="serial_number" onclick="toggleSort('serial_number')">
-                            {% if current_lang == 'en' %}Serial Number{% else %}序列号{% endif %}
+                            <span data-i18n="serial_number">Serial Number</span>
                             <i class="bi bi-arrow-down-up sort-icon ms-1"></i>
                         </th>
                         <th class="sortable-header" data-sort="evaluation_grade" onclick="toggleSort('evaluation_grade')">
-                            {% if current_lang == 'en' %}Grade{% else %}评级{% endif %}
+                            <span data-i18n="grade">Grade</span>
                             <i class="bi bi-arrow-down-up sort-icon ms-1"></i>
                         </th>
                         <th class="sortable-header" data-sort="customer_email" onclick="toggleSort('customer_email')">
-                            {% if current_lang == 'en' %}Customer{% else %}客户{% endif %}
+                            <span data-i18n="customer">Customer</span>
                             <i class="bi bi-arrow-down-up sort-icon ms-1"></i>
                         </th>
                         <th class="sortable-header" data-sort="miner_model" onclick="toggleSort('miner_model')">
-                            {% if current_lang == 'en' %}Miner Model{% else %}矿机型号{% endif %}
+                            <span data-i18n="miner_model">Miner Model</span>
                             <i class="bi bi-arrow-down-up sort-icon ms-1"></i>
                         </th>
                         <th class="sortable-header" data-sort="site_name" onclick="toggleSort('site_name')">
-                            {% if current_lang == 'en' %}Site{% else %}站点{% endif %}
+                            <span data-i18n="site">Site</span>
                             <i class="bi bi-arrow-down-up sort-icon ms-1"></i>
                         </th>
                         <th class="sortable-header" data-sort="actual_hashrate" onclick="toggleSort('actual_hashrate')">
-                            {% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}
+                            <span data-i18n="hashrate">Hashrate</span>
                             <i class="bi bi-arrow-down-up sort-icon ms-1"></i>
                         </th>
                         <th class="sortable-header" data-sort="actual_power" onclick="toggleSort('actual_power')">
-                            {% if current_lang == 'en' %}Power{% else %}功耗{% endif %}
+                            <span data-i18n="power">Power</span>
                             <i class="bi bi-arrow-down-up sort-icon ms-1"></i>
                         </th>
                         <th class="sortable-header" data-sort="daily_profit" onclick="toggleSort('daily_profit')">
-                            {% if current_lang == 'en' %}Daily Profit{% else %}日收益{% endif %}
+                            <span data-i18n="daily_profit">Daily Profit</span>
                             <i class="bi bi-arrow-down-up sort-icon ms-1"></i>
                         </th>
-                        <th>{% if current_lang == 'en' %}CGMiner{% else %}CGMiner{% endif %}</th>
+                        <th>CGMiner</th>
                         <th class="sortable-header" data-sort="temperature_avg" onclick="toggleSort('temperature_avg')">
-                            {% if current_lang == 'en' %}Temperature{% else %}温度{% endif %}
+                            <span data-i18n="temperature">Temperature</span>
                             <i class="bi bi-arrow-down-up sort-icon ms-1"></i>
                         </th>
                         <th class="sortable-header" data-sort="fan_avg" onclick="toggleSort('fan_avg')">
-                            {% if current_lang == 'en' %}Fan{% else %}风扇{% endif %}
+                            <span data-i18n="fan">Fan</span>
                             <i class="bi bi-arrow-down-up sort-icon ms-1"></i>
                         </th>
                         <th class="sortable-header" data-sort="status" onclick="toggleSort('status')">
-                            {% if current_lang == 'en' %}Status{% else %}状态{% endif %}
+                            <span data-i18n="status">Status</span>
                             <i class="bi bi-arrow-down-up sort-icon ms-1"></i>
                         </th>
-                        <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
+                        <th data-i18n="actions">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -420,7 +406,7 @@
             <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
                 <h5 class="modal-title" id="addMinerModalLabel">
                     <i class="bi bi-plus-circle me-2"></i>
-                    {% if current_lang == 'en' %}Add New Miner{% else %}添加新矿机{% endif %}
+                    <span data-i18n="hosting.add_new_miner">Add New Miner</span>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -429,16 +415,16 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label for="serial_number" class="form-label">
-                                {% if current_lang == 'en' %}Serial Number{% else %}序列号{% endif %} <span class="text-danger">*</span>
+                                <span data-i18n="serial_number">Serial Number</span> <span class="text-danger">*</span>
                             </label>
                             <input type="text" class="form-control" id="serial_number" name="serial_number" required>
                         </div>
                         <div class="col-md-6">
                             <label for="miner_model" class="form-label">
-                                {% if current_lang == 'en' %}Miner Model{% else %}矿机型号{% endif %} <span class="text-danger">*</span>
+                                <span data-i18n="miner_model">Miner Model</span> <span class="text-danger">*</span>
                             </label>
                             <select class="form-select" id="miner_model" name="miner_model" required>
-                                <option value="">{% if current_lang == 'en' %}Select Model{% else %}选择型号{% endif %}</option>
+                                <option value="" data-i18n="select_model">Select Model</option>
                                 <option value="Antminer S19 Pro">Antminer S19 Pro</option>
                                 <option value="Antminer S19j Pro">Antminer S19j Pro</option>
                                 <option value="WhatsMiner M30S++">WhatsMiner M30S++</option>
@@ -448,47 +434,37 @@
                         </div>
                         <div class="col-md-6">
                             <label for="site_id" class="form-label">
-                                {% if current_lang == 'en' %}Site{% else %}站点{% endif %} <span class="text-danger">*</span>
+                                <span data-i18n="site">Site</span> <span class="text-danger">*</span>
                             </label>
                             <select class="form-select" id="site_id" name="site_id" required>
-                                <option value="">{% if current_lang == 'en' %}Select Site{% else %}选择站点{% endif %}</option>
+                                <option value="" data-i18n="select_site">Select Site</option>
                                 <!-- 动态加载站点选项 -->
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label for="customer_email" class="form-label">
-                                {% if current_lang == 'en' %}Customer Email{% else %}客户邮箱{% endif %} <span class="text-danger">*</span>
+                                <span data-i18n="hosting.customer_email">Customer Email</span> <span class="text-danger">*</span>
                             </label>
                             <input type="email" class="form-control" id="customer_email" name="customer_email" required>
                         </div>
                         <div class="col-md-6">
-                            <label for="ip_address" class="form-label">
-                                {% if current_lang == 'en' %}IP Address{% else %}IP地址{% endif %}
-                            </label>
+                            <label for="ip_address" class="form-label" data-i18n="hosting.ip_address">IP Address</label>
                             <input type="text" class="form-control" id="ip_address" name="ip_address" placeholder="192.168.1.100">
                         </div>
                         <div class="col-md-6">
-                            <label for="rack_position" class="form-label">
-                                {% if current_lang == 'en' %}Rack Position{% else %}机架位置{% endif %}
-                            </label>
+                            <label for="rack_position" class="form-label" data-i18n="hosting.rack_position">Rack Position</label>
                             <input type="text" class="form-control" id="rack_position" name="rack_position" placeholder="A-01-05">
                         </div>
                         <div class="col-12">
-                            <label for="notes" class="form-label">
-                                {% if current_lang == 'en' %}Notes{% else %}备注{% endif %}
-                            </label>
+                            <label for="notes" class="form-label" data-i18n="notes">Notes</label>
                             <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
                         </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-hosting-secondary" data-bs-dismiss="modal">
-                    {% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}
-                </button>
-                <button type="button" class="btn btn-hosting-primary" onclick="addMiner()">
-                    {% if current_lang == 'en' %}Add Miner{% else %}添加矿机{% endif %}
-                </button>
+                <button type="button" class="btn btn-hosting-secondary" data-bs-dismiss="modal" data-i18n="cancel">Cancel</button>
+                <button type="button" class="btn btn-hosting-primary" onclick="addMiner()" data-i18n="add_miner">Add Miner</button>
             </div>
         </div>
     </div>
@@ -501,7 +477,7 @@
             <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
                 <h5 class="modal-title" id="batchImportModalLabel">
                     <i class="bi bi-upload me-2"></i>
-                    {% if current_lang == 'en' %}Batch Import Miners{% else %}批量导入矿机{% endif %}
+                    <span data-i18n="hosting.batch_import_miners">Batch Import Miners</span>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -511,23 +487,11 @@
                     <div class="d-flex align-items-start">
                         <i class="bi bi-lightbulb-fill fs-4 me-3 text-warning"></i>
                         <div class="flex-grow-1">
-                            <h6 class="alert-heading mb-2">
-                                {% if current_lang == 'en' %}
-                                    Need detailed field requirements?
-                                {% else %}
-                                    需要查看详细字段说明？
-                                {% endif %}
-                            </h6>
-                            <p class="mb-2">
-                                {% if current_lang == 'en' %}
-                                    For complete hosting field documentation, required vs optional fields, and validation rules, visit our full import page.
-                                {% else %}
-                                    如需查看完整的托管字段说明、必填与可选字段、验证规则，请访问完整导入页面。
-                                {% endif %}
-                            </p>
+                            <h6 class="alert-heading mb-2" data-i18n="hosting.need_field_requirements">Need detailed field requirements?</h6>
+                            <p class="mb-2" data-i18n="hosting.field_requirements_desc">For complete hosting field documentation, required vs optional fields, and validation rules, visit our full import page.</p>
                             <a href="/batch/import" target="_blank" class="btn btn-sm btn-outline-warning">
                                 <i class="bi bi-box-arrow-up-right me-1"></i>
-                                {% if current_lang == 'en' %}Open Full Import Page{% else %}打开完整导入页面{% endif %}
+                                <span data-i18n="hosting.open_full_import_page">Open Full Import Page</span>
                             </a>
                         </div>
                     </div>
@@ -537,39 +501,27 @@
                 <div class="alert alert-info d-flex justify-content-between align-items-center mb-3">
                     <div>
                         <i class="bi bi-info-circle me-2"></i>
-                        {% if current_lang == 'en' %}
-                            <strong>First time?</strong> Download the CSV template to get started
-                        {% else %}
-                            <strong>第一次使用？</strong> 下载CSV模板开始使用
-                        {% endif %}
+                        <strong data-i18n="hosting.first_time">First time?</strong> <span data-i18n="hosting.download_template_desc">Download the CSV template to get started</span>
                     </div>
                     <div class="btn-group" role="group">
                         <a href="/batch/api/template/download?lang={{ current_lang }}&examples=true" class="btn btn-sm btn-outline-primary" download>
                             <i class="bi bi-download me-1"></i>
-                            {% if current_lang == 'en' %}With Examples{% else %}带示例{% endif %}
+                            <span data-i18n="hosting.with_examples">With Examples</span>
                         </a>
                         <a href="/batch/api/template/download?lang={{ current_lang }}&examples=false" class="btn btn-sm btn-outline-secondary" download>
                             <i class="bi bi-file-earmark me-1"></i>
-                            {% if current_lang == 'en' %}Blank{% else %}空白模板{% endif %}
+                            <span data-i18n="hosting.blank">Blank</span>
                         </a>
                     </div>
                 </div>
                 
                 <div class="mb-3">
-                    <label for="batchFile" class="form-label">
-                        {% if current_lang == 'en' %}Select CSV File{% else %}选择CSV文件{% endif %}
-                    </label>
+                    <label for="batchFile" class="form-label" data-i18n="hosting.select_csv_file">Select CSV File</label>
                     <input type="file" class="form-control" id="batchFile" accept=".csv">
-                    <div class="form-text">
-                        {% if current_lang == 'en' %}
-                            Required fields: Hashrate (TH/s), Power (W), Electricity Cost ($/kWh)
-                        {% else %}
-                            必填字段：算力(TH/s)、功耗(W)、电费($/kWh)
-                        {% endif %}
-                    </div>
+                    <div class="form-text" data-i18n="hosting.required_fields_desc">Required fields: Hashrate (TH/s), Power (W), Electricity Cost ($/kWh)</div>
                 </div>
                 <div id="importPreview" class="d-none">
-                    <h6>{% if current_lang == 'en' %}Import Preview:{% else %}导入预览：{% endif %}</h6>
+                    <h6 data-i18n="hosting.import_preview">Import Preview:</h6>
                     <div class="table-responsive">
                         <table class="table table-sm" id="previewTable">
                             <thead></thead>
@@ -579,12 +531,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-hosting-secondary" data-bs-dismiss="modal">
-                    {% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}
-                </button>
-                <button type="button" class="btn btn-hosting-primary" id="confirmImport" disabled onclick="confirmBatchImport()">
-                    {% if current_lang == 'en' %}Import{% else %}导入{% endif %}
-                </button>
+                <button type="button" class="btn btn-hosting-secondary" data-bs-dismiss="modal" data-i18n="cancel">Cancel</button>
+                <button type="button" class="btn btn-hosting-primary" id="confirmImport" disabled onclick="confirmBatchImport()" data-i18n="import">Import</button>
             </div>
         </div>
     </div>
@@ -597,7 +545,7 @@
             <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
                 <h5 class="modal-title" id="editMinerModalLabel">
                     <i class="bi bi-pencil me-2"></i>
-                    {% if current_lang == 'en' %}Edit Miner{% else %}编辑矿机{% endif %}
+                    <span data-i18n="hosting.edit_miner">Edit Miner</span>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -607,56 +555,42 @@
                     
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label for="edit_serial_number" class="form-label">
-                                {% if current_lang == 'en' %}Serial Number{% else %}序列号{% endif %}
-                            </label>
+                            <label for="edit_serial_number" class="form-label" data-i18n="serial_number">Serial Number</label>
                             <input type="text" class="form-control" id="edit_serial_number" readonly>
                         </div>
                         
                         <div class="col-md-6">
-                            <label for="edit_rack_position" class="form-label">
-                                {% if current_lang == 'en' %}Rack Position{% else %}机架位置{% endif %}
-                            </label>
+                            <label for="edit_rack_position" class="form-label" data-i18n="hosting.rack_position">Rack Position</label>
                             <input type="text" class="form-control" id="edit_rack_position" name="rack_position">
                         </div>
                         
                         <div class="col-md-6">
-                            <label for="edit_ip_address" class="form-label">
-                                {% if current_lang == 'en' %}IP Address{% else %}IP地址{% endif %}
-                            </label>
+                            <label for="edit_ip_address" class="form-label" data-i18n="hosting.ip_address">IP Address</label>
                             <input type="text" class="form-control" id="edit_ip_address" name="ip_address" placeholder="192.168.1.100">
                         </div>
                         
                         <div class="col-md-6">
-                            <label for="edit_mac_address" class="form-label">
-                                {% if current_lang == 'en' %}MAC Address{% else %}MAC地址{% endif %}
-                            </label>
+                            <label for="edit_mac_address" class="form-label" data-i18n="hosting.mac_address">MAC Address</label>
                             <input type="text" class="form-control" id="edit_mac_address" name="mac_address" placeholder="00:1A:2B:3C:4D:5E">
                         </div>
                         
                         <div class="col-md-6">
-                            <label for="edit_actual_hashrate" class="form-label">
-                                {% if current_lang == 'en' %}Actual Hashrate (TH/s){% else %}实际算力 (TH/s){% endif %}
-                            </label>
+                            <label for="edit_actual_hashrate" class="form-label" data-i18n="hosting.actual_hashrate">Actual Hashrate (TH/s)</label>
                             <input type="number" class="form-control" id="edit_actual_hashrate" name="actual_hashrate" step="0.01">
                         </div>
                         
                         <div class="col-md-6">
-                            <label for="edit_actual_power" class="form-label">
-                                {% if current_lang == 'en' %}Actual Power (W){% else %}实际功耗 (W){% endif %}
-                            </label>
+                            <label for="edit_actual_power" class="form-label" data-i18n="hosting.actual_power">Actual Power (W)</label>
                             <input type="number" class="form-control" id="edit_actual_power" name="actual_power" step="1">
                         </div>
                         
                         <div class="col-md-6">
-                            <label for="edit_status" class="form-label">
-                                {% if current_lang == 'en' %}Status{% else %}状态{% endif %}
-                            </label>
+                            <label for="edit_status" class="form-label" data-i18n="status">Status</label>
                             <select class="form-select" id="edit_status" name="status">
-                                <option value="active">{% if current_lang == 'en' %}Active{% else %}运行中{% endif %}</option>
-                                <option value="inactive">{% if current_lang == 'en' %}Inactive{% else %}停机{% endif %}</option>
-                                <option value="maintenance">{% if current_lang == 'en' %}Maintenance{% else %}维护中{% endif %}</option>
-                                <option value="offline">{% if current_lang == 'en' %}Offline{% else %}离线{% endif %}</option>
+                                <option value="active" data-i18n="active">Active</option>
+                                <option value="inactive" data-i18n="inactive">Inactive</option>
+                                <option value="maintenance" data-i18n="maintenance">Maintenance</option>
+                                <option value="offline" data-i18n="offline">Offline</option>
                             </select>
                         </div>
                     </div>
@@ -664,12 +598,8 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-hosting-secondary" data-bs-dismiss="modal">
-                    {% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}
-                </button>
-                <button type="button" class="btn btn-hosting-primary" onclick="saveMinerEdit()">
-                    {% if current_lang == 'en' %}Save Changes{% else %}保存修改{% endif %}
-                </button>
+                <button type="button" class="btn btn-hosting-secondary" data-bs-dismiss="modal" data-i18n="cancel">Cancel</button>
+                <button type="button" class="btn btn-hosting-primary" onclick="saveMinerEdit()" data-i18n="save_changes">Save Changes</button>
             </div>
         </div>
     </div>
@@ -680,7 +610,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content bg-dark">
             <div class="modal-header bg-warning text-dark">
-                <h5 class="modal-title" id="batchConfirmTitle">{% if current_lang == 'en' %}Confirm Batch Operation{% else %}确认批量操作{% endif %}</h5>
+                <h5 class="modal-title" id="batchConfirmTitle" data-i18n="hosting.confirm_batch_operation">Confirm Batch Operation</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -690,13 +620,13 @@
                 </div>
                 <div id="batchConfirmList" class="mb-3"></div>
                 <div id="batchNotesInput" class="d-none">
-                    <label class="form-label">{% if current_lang == 'en' %}Notes (Optional){% else %}备注（可选）{% endif %}</label>
+                    <label class="form-label" data-i18n="hosting.notes_optional">Notes (Optional)</label>
                     <textarea class="form-control" id="batchNotes" rows="2"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}</button>
-                <button type="button" class="btn btn-warning" id="batchConfirmBtn">{% if current_lang == 'en' %}Confirm{% else %}确认{% endif %}</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">Cancel</button>
+                <button type="button" class="btn btn-warning" id="batchConfirmBtn" data-i18n="confirm">Confirm</button>
             </div>
         </div>
     </div>
@@ -707,28 +637,28 @@
     <div class="modal-dialog">
         <div class="modal-content bg-dark">
             <div class="modal-header bg-info text-dark">
-                <h5 class="modal-title">{% if current_lang == 'en' %}Change Miner Status{% else %}修改矿机状态{% endif %}</h5>
+                <h5 class="modal-title" data-i18n="hosting.change_miner_status">Change Miner Status</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="quickStatusMinerId">
                 <div class="mb-3">
-                    <label class="form-label">{% if current_lang == 'en' %}Select New Status{% else %}选择新状态{% endif %}</label>
+                    <label class="form-label" data-i18n="hosting.select_new_status">Select New Status</label>
                     <select class="form-select" id="quickStatusSelect">
-                        <option value="active">{% if current_lang == 'en' %}Active (Running){% else %}运行中{% endif %}</option>
-                        <option value="offline">{% if current_lang == 'en' %}Offline{% else %}离线{% endif %}</option>
-                        <option value="maintenance">{% if current_lang == 'en' %}Maintenance{% else %}维护中{% endif %}</option>
-                        <option value="error">{% if current_lang == 'en' %}Error{% else %}故障{% endif %}</option>
+                        <option value="active" data-i18n="hosting.active_running">Active (Running)</option>
+                        <option value="offline" data-i18n="offline">Offline</option>
+                        <option value="maintenance" data-i18n="maintenance">Maintenance</option>
+                        <option value="error" data-i18n="error">Error</option>
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{% if current_lang == 'en' %}Notes (Optional){% else %}备注（可选）{% endif %}</label>
+                    <label class="form-label" data-i18n="hosting.notes_optional">Notes (Optional)</label>
                     <textarea class="form-control" id="quickStatusNotes" rows="2"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}</button>
-                <button type="button" class="btn btn-info" onclick="saveQuickStatus()">{% if current_lang == 'en' %}Save{% else %}保存{% endif %}</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">Cancel</button>
+                <button type="button" class="btn btn-info" onclick="saveQuickStatus()" data-i18n="save">Save</button>
             </div>
         </div>
     </div>
@@ -739,7 +669,7 @@
     <div class="modal-dialog modal-xl">
         <div class="modal-content bg-dark">
             <div class="modal-header bg-secondary">
-                <h5 class="modal-title">{% if current_lang == 'en' %}Operation Logs{% else %}操作日志{% endif %}</h5>
+                <h5 class="modal-title" data-i18n="hosting.operation_logs">Operation Logs</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -747,16 +677,16 @@
                     <table class="table table-sm table-dark table-hover">
                         <thead>
                             <tr>
-                                <th>{% if current_lang == 'en' %}Time{% else %}时间{% endif %}</th>
-                                <th>{% if current_lang == 'en' %}Operation{% else %}操作类型{% endif %}</th>
-                                <th>{% if current_lang == 'en' %}Old Status{% else %}原状态{% endif %}</th>
-                                <th>{% if current_lang == 'en' %}New Status{% else %}新状态{% endif %}</th>
-                                <th>{% if current_lang == 'en' %}Operator{% else %}操作人{% endif %}</th>
-                                <th>{% if current_lang == 'en' %}Notes{% else %}备注{% endif %}</th>
+                                <th data-i18n="time">Time</th>
+                                <th data-i18n="hosting.operation">Operation</th>
+                                <th data-i18n="hosting.old_status">Old Status</th>
+                                <th data-i18n="hosting.new_status">New Status</th>
+                                <th data-i18n="hosting.operator">Operator</th>
+                                <th data-i18n="notes">Notes</th>
                             </tr>
                         </thead>
                         <tbody id="logsTableBody">
-                            <tr><td colspan="6" class="text-center">{% if current_lang == 'en' %}Loading...{% else %}加载中...{% endif %}</td></tr>
+                            <tr><td colspan="6" class="text-center" data-i18n="loading">Loading...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -777,32 +707,32 @@
             <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
                 <h5 class="modal-title" id="changePoolsModalLabel">
                     <i class="bi bi-shuffle me-2"></i>
-                    {% if current_lang == 'en' %}Change Mining Pools{% else %}更换矿池{% endif %}
+                    <span data-i18n="hosting.change_mining_pools">Change Mining Pools</span>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="changePoolsMinerIds" value="">
                 <div class="mb-3">
-                    <label class="form-label">{% if current_lang == 'en' %}Pool 1 URL{% else %}矿池1 URL{% endif %} <span class="text-danger">*</span></label>
+                    <label class="form-label"><span data-i18n="hosting.pool_1_url">Pool 1 URL</span> <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" id="pool1Url" placeholder="stratum+tcp://pool1.example.com:3333">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{% if current_lang == 'en' %}Pool 2 URL{% else %}矿池2 URL{% endif %}</label>
+                    <label class="form-label" data-i18n="hosting.pool_2_url">Pool 2 URL</label>
                     <input type="text" class="form-control" id="pool2Url" placeholder="stratum+tcp://pool2.example.com:3333">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{% if current_lang == 'en' %}Pool 3 URL{% else %}矿池3 URL{% endif %}</label>
+                    <label class="form-label" data-i18n="hosting.pool_3_url">Pool 3 URL</label>
                     <input type="text" class="form-control" id="pool3Url" placeholder="stratum+tcp://pool3.example.com:3333">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{% if current_lang == 'en' %}Worker Name{% else %}矿工名称{% endif %} <span class="text-danger">*</span></label>
+                    <label class="form-label"><span data-i18n="hosting.worker_name">Worker Name</span> <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" id="poolWorkerName" placeholder="worker001">
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}</button>
-                <button type="button" class="btn btn-hosting-primary" onclick="submitChangePoolsCommand()">{% if current_lang == 'en' %}Apply{% else %}应用{% endif %}</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">Cancel</button>
+                <button type="button" class="btn btn-hosting-primary" onclick="submitChangePoolsCommand()" data-i18n="apply">Apply</button>
             </div>
         </div>
     </div>
@@ -815,24 +745,24 @@
             <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
                 <h5 class="modal-title" id="powerModeModalLabel">
                     <i class="bi bi-lightning me-2"></i>
-                    {% if current_lang == 'en' %}Set Power Mode{% else %}设置电源模式{% endif %}
+                    <span data-i18n="hosting.set_power_mode">Set Power Mode</span>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="powerModeMinerIds" value="">
                 <div class="mb-3">
-                    <label class="form-label">{% if current_lang == 'en' %}Power Mode{% else %}电源模式{% endif %}</label>
+                    <label class="form-label" data-i18n="hosting.power_mode">Power Mode</label>
                     <select class="form-select" id="powerModeSelect">
-                        <option value="normal">{% if current_lang == 'en' %}Normal{% else %}正常{% endif %}</option>
-                        <option value="low_power">{% if current_lang == 'en' %}Low Power{% else %}低功耗{% endif %}</option>
-                        <option value="high_performance">{% if current_lang == 'en' %}High Performance{% else %}高性能{% endif %}</option>
+                        <option value="normal" data-i18n="hosting.normal">Normal</option>
+                        <option value="low_power" data-i18n="hosting.low_power">Low Power</option>
+                        <option value="high_performance" data-i18n="hosting.high_performance">High Performance</option>
                     </select>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}</button>
-                <button type="button" class="btn btn-hosting-primary" onclick="submitPowerModeCommand()">{% if current_lang == 'en' %}Apply{% else %}应用{% endif %}</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">Cancel</button>
+                <button type="button" class="btn btn-hosting-primary" onclick="submitPowerModeCommand()" data-i18n="apply">Apply</button>
             </div>
         </div>
     </div>
@@ -845,21 +775,21 @@
             <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
                 <h5 class="modal-title" id="powerTargetModalLabel">
                     <i class="bi bi-speedometer2 me-2"></i>
-                    {% if current_lang == 'en' %}Set Power Target{% else %}设置功率目标{% endif %}
+                    <span data-i18n="hosting.set_power_target">Set Power Target</span>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="powerTargetMinerIds" value="">
                 <div class="mb-3">
-                    <label class="form-label">{% if current_lang == 'en' %}Target Power (Watts){% else %}目标功率 (瓦特){% endif %}</label>
+                    <label class="form-label" data-i18n="hosting.target_power_watts">Target Power (Watts)</label>
                     <input type="number" class="form-control" id="powerTargetWatts" placeholder="3000" min="500" max="5000">
-                    <div class="form-text">{% if current_lang == 'en' %}Enter target power consumption in watts (500-5000W){% else %}输入目标功耗，单位为瓦特 (500-5000W){% endif %}</div>
+                    <div class="form-text" data-i18n="hosting.power_target_desc">Enter target power consumption in watts (500-5000W)</div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}</button>
-                <button type="button" class="btn btn-hosting-primary" onclick="submitPowerTargetCommand()">{% if current_lang == 'en' %}Apply{% else %}应用{% endif %}</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">Cancel</button>
+                <button type="button" class="btn btn-hosting-primary" onclick="submitPowerTargetCommand()" data-i18n="apply">Apply</button>
             </div>
         </div>
     </div>
@@ -872,18 +802,18 @@
             <div class="modal-header bg-warning text-dark">
                 <h5 class="modal-title" id="overclockModalLabel">
                     <i class="bi bi-cpu me-2"></i>
-                    {% if current_lang == 'en' %}Overclock Settings{% else %}超频设置{% endif %}
+                    <span data-i18n="hosting.overclock_settings">Overclock Settings</span>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-warning">
                     <i class="bi bi-exclamation-triangle me-2"></i>
-                    {% if current_lang == 'en' %}Warning: Overclocking may void warranty and cause hardware damage. Proceed with caution.{% else %}警告：超频可能导致保修失效和硬件损坏。请谨慎操作。{% endif %}
+                    <span data-i18n="hosting.overclock_warning">Warning: Overclocking may void warranty and cause hardware damage. Proceed with caution.</span>
                 </div>
                 <input type="hidden" id="overclockMinerIds" value="">
                 <div class="mb-3">
-                    <label class="form-label">{% if current_lang == 'en' %}Frequency (MHz){% else %}频率 (MHz){% endif %}</label>
+                    <label class="form-label" data-i18n="hosting.frequency_mhz">Frequency (MHz)</label>
                     <input type="range" class="form-range" id="overclockFreqSlider" min="400" max="800" value="500" oninput="document.getElementById('overclockFreqValue').value = this.value">
                     <div class="d-flex justify-content-between align-items-center mt-2">
                         <small class="text-muted">400 MHz</small>
@@ -893,8 +823,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}</button>
-                <button type="button" class="btn btn-warning" onclick="submitOverclockCommand()">{% if current_lang == 'en' %}Apply Overclock{% else %}应用超频{% endif %}</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">Cancel</button>
+                <button type="button" class="btn btn-warning" onclick="submitOverclockCommand()" data-i18n="hosting.apply_overclock">Apply Overclock</button>
             </div>
         </div>
     </div>
@@ -907,30 +837,30 @@
             <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
                 <h5 class="modal-title" id="fanModeModalLabel">
                     <i class="bi bi-fan me-2"></i>
-                    {% if current_lang == 'en' %}Fan Control Settings{% else %}风扇控制设置{% endif %}
+                    <span data-i18n="hosting.fan_control_settings">Fan Control Settings</span>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="fanModeMinerIds" value="">
                 <div class="mb-3">
-                    <label class="form-label">{% if current_lang == 'en' %}Fan Mode{% else %}风扇模式{% endif %}</label>
+                    <label class="form-label" data-i18n="hosting.fan_mode">Fan Mode</label>
                     <div class="btn-group w-100" role="group">
                         <input type="radio" class="btn-check" name="fanModeRadio" id="fanModeAuto" value="auto" checked onchange="toggleManualFanSpeed()">
-                        <label class="btn btn-outline-primary" for="fanModeAuto">{% if current_lang == 'en' %}Auto{% else %}自动{% endif %}</label>
+                        <label class="btn btn-outline-primary" for="fanModeAuto" data-i18n="hosting.auto">Auto</label>
                         <input type="radio" class="btn-check" name="fanModeRadio" id="fanModeManual" value="manual" onchange="toggleManualFanSpeed()">
-                        <label class="btn btn-outline-primary" for="fanModeManual">{% if current_lang == 'en' %}Manual{% else %}手动{% endif %}</label>
+                        <label class="btn btn-outline-primary" for="fanModeManual" data-i18n="hosting.manual">Manual</label>
                     </div>
                 </div>
                 <div class="mb-3" id="manualFanSpeedSection" style="display: none;">
-                    <label class="form-label">{% if current_lang == 'en' %}Fan Speed (%){% else %}风扇转速 (%){% endif %}</label>
+                    <label class="form-label" data-i18n="hosting.fan_speed_percent">Fan Speed (%)</label>
                     <input type="range" class="form-range" id="manualFanSpeedSlider" min="20" max="100" value="80" oninput="document.getElementById('manualFanSpeedValue').textContent = this.value + '%'">
                     <div class="text-center"><span id="manualFanSpeedValue">80%</span></div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}</button>
-                <button type="button" class="btn btn-hosting-primary" onclick="submitFanModeCommand()">{% if current_lang == 'en' %}Apply{% else %}应用{% endif %}</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">Cancel</button>
+                <button type="button" class="btn btn-hosting-primary" onclick="submitFanModeCommand()" data-i18n="apply">Apply</button>
             </div>
         </div>
     </div>
@@ -943,32 +873,32 @@
             <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
                 <h5 class="modal-title" id="staticIpModalLabel">
                     <i class="bi bi-ethernet me-2"></i>
-                    {% if current_lang == 'en' %}Configure Static IP{% else %}配置静态IP{% endif %}
+                    <span data-i18n="hosting.configure_static_ip">Configure Static IP</span>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="staticIpMinerIds" value="">
                 <div class="mb-3">
-                    <label class="form-label">{% if current_lang == 'en' %}IP Address{% else %}IP地址{% endif %} <span class="text-danger">*</span></label>
+                    <label class="form-label"><span data-i18n="hosting.ip_address">IP Address</span> <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" id="staticIpAddress" placeholder="192.168.1.100">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{% if current_lang == 'en' %}Subnet Mask{% else %}子网掩码{% endif %} <span class="text-danger">*</span></label>
+                    <label class="form-label"><span data-i18n="hosting.subnet_mask">Subnet Mask</span> <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" id="staticSubnetMask" placeholder="255.255.255.0" value="255.255.255.0">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{% if current_lang == 'en' %}Gateway{% else %}网关{% endif %} <span class="text-danger">*</span></label>
+                    <label class="form-label"><span data-i18n="hosting.gateway">Gateway</span> <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" id="staticGateway" placeholder="192.168.1.1">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{% if current_lang == 'en' %}DNS Server{% else %}DNS服务器{% endif %}</label>
+                    <label class="form-label" data-i18n="hosting.dns_server">DNS Server</label>
                     <input type="text" class="form-control" id="staticDns" placeholder="8.8.8.8" value="8.8.8.8">
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}</button>
-                <button type="button" class="btn btn-hosting-primary" onclick="submitStaticIpCommand()">{% if current_lang == 'en' %}Apply{% else %}应用{% endif %}</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">Cancel</button>
+                <button type="button" class="btn btn-hosting-primary" onclick="submitStaticIpCommand()" data-i18n="apply">Apply</button>
             </div>
         </div>
     </div>
@@ -981,24 +911,24 @@
             <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
                 <h5 class="modal-title" id="changePasswordModalLabel">
                     <i class="bi bi-key me-2"></i>
-                    {% if current_lang == 'en' %}Change Miner Password{% else %}更改矿机密码{% endif %}
+                    <span data-i18n="hosting.change_miner_password">Change Miner Password</span>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="changePasswordMinerIds" value="">
                 <div class="mb-3">
-                    <label class="form-label">{% if current_lang == 'en' %}New Password{% else %}新密码{% endif %} <span class="text-danger">*</span></label>
-                    <input type="password" class="form-control" id="minerNewPassword" placeholder="{% if current_lang == 'en' %}Enter new password{% else %}输入新密码{% endif %}">
+                    <label class="form-label"><span data-i18n="new_password">New Password</span> <span class="text-danger">*</span></label>
+                    <input type="password" class="form-control" id="minerNewPassword" data-i18n-placeholder="hosting.enter_new_password" placeholder="Enter new password">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{% if current_lang == 'en' %}Confirm Password{% else %}确认密码{% endif %} <span class="text-danger">*</span></label>
-                    <input type="password" class="form-control" id="minerConfirmPassword" placeholder="{% if current_lang == 'en' %}Confirm new password{% else %}确认新密码{% endif %}">
+                    <label class="form-label"><span data-i18n="confirm_password">Confirm Password</span> <span class="text-danger">*</span></label>
+                    <input type="password" class="form-control" id="minerConfirmPassword" data-i18n-placeholder="hosting.confirm_new_password" placeholder="Confirm new password">
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}</button>
-                <button type="button" class="btn btn-hosting-primary" onclick="submitChangePasswordCommand()">{% if current_lang == 'en' %}Apply{% else %}应用{% endif %}</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">Cancel</button>
+                <button type="button" class="btn btn-hosting-primary" onclick="submitChangePasswordCommand()" data-i18n="apply">Apply</button>
             </div>
         </div>
     </div>
