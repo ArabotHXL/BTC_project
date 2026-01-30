@@ -8832,10 +8832,18 @@ def get_my_customers():
             'name': s.name
         } for s in owned_sites]
         
+        # 调试信息：确认代码版本
+        logger.info(f"[API_VERSION_2026_01_30] get_my_customers: user={session.get('email')}, owned_site_ids={owned_site_ids}, sites_count={len(sites_data)}")
+        
         return jsonify({
             'success': True,
             'customers': customers_data,
-            'sites': sites_data
+            'sites': sites_data,
+            '_debug': {
+                'api_version': '2026-01-30-v2',
+                'owned_site_ids': owned_site_ids,
+                'sites_count': len(sites_data)
+            }
         })
     except Exception as e:
         logger.error(f"获取客户列表失败: {e}")
