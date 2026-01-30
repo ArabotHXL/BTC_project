@@ -446,6 +446,44 @@ def get_sites():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@hosting_bp.route('/api/debug-sites', methods=['GET'])
+@login_required
+def debug_sites():
+    """临时调试端点 - 验证站点访问权限"""
+    from models import UserAccess, HostingSite
+    from sqlalchemy import or_
+    
+    user_email = session.get('email', '')
+    user_role = session.get('role', 'guest')
+    
+    # 获取用户
+    user = UserAccess.query.filter_by(email=user_email).first()
+    user_id = user.id if user else None
+    
+    # 直接查询站点
+    direct_sites = []
+    if user:
+        sites = HostingSite.query.filter(
+            or_(
+                HostingSite.owner_id == user.id,
+                HostingSite.contact_email == user_email
+            )
+        ).all()
+        direct_sites = [{'id': s.id, 'name': s.name, 'owner_id': s.owner_id, 'contact_email': s.contact_email} for s in sites]
+    
+    # 调用 get_accessible_site_ids
+    accessible_ids = get_accessible_site_ids()
+    
+    return jsonify({
+        'user_email': user_email,
+        'user_role': user_role,
+        'user_db_id': user_id,
+        'accessible_site_ids': accessible_ids,
+        'direct_query_sites': direct_sites,
+        'direct_query_count': len(direct_sites)
+    })
+
+
 @hosting_bp.route('/api/customers', methods=['GET'])
 @login_required
 @requires_module_access(Module.HOSTING_STATUS_MONITOR)
