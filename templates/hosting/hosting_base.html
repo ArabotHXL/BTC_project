@@ -811,6 +811,7 @@
                         {% if session.role == 'owner' %}<span data-i18n="owner">{% if current_lang == 'en' %}Owner{% else %}业主{% endif %}</span>
                         {% elif session.role == 'admin' %}<span data-i18n="admin">{% if current_lang == 'en' %}Admin{% else %}管理员{% endif %}</span>
                         {% elif session.role == 'mining_site' %}<span data-i18n="site_manager">{% if current_lang == 'en' %}Site Manager{% else %}站点管理员{% endif %}</span>
+                        {% elif session.role == 'mining_site_owner' %}<span data-i18n="site_owner">{% if current_lang == 'en' %}Site Owner{% else %}矿场主{% endif %}</span>
                         {% else %}<span data-i18n="client">{% if current_lang == 'en' %}Client{% else %}客户{% endif %}</span>{% endif %}
                     </span>
                     {% endblock %}
