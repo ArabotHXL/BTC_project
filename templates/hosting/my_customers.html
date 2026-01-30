@@ -265,6 +265,9 @@ function loadCustomersData() {
     fetch(url)
         .then(response => response.json())
         .then(data => {
+            console.log('[DEBUG] my-customers API response:', JSON.stringify(data));
+            console.log('[DEBUG] sites count:', data.sites ? data.sites.length : 0);
+            console.log('[DEBUG] customers count:', data.customers ? data.customers.length : 0);
             if (data.success) {
                 allCustomers = data.customers;
                 allSites = data.sites;
