@@ -5,6 +5,11 @@ import sys
 # 配置日志
 logging.basicConfig(level=logging.INFO)
 
+# === 强制重新构建标记 ===
+BUILD_VERSION = "2026-01-30-v3"
+logging.info(f"🚀 Application Version: {BUILD_VERSION}")
+# === 强制重新构建标记 ===
+
 # 确保数据库健康检查模块可用
 try:
     from database_health import db_health_manager
