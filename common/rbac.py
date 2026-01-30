@@ -1217,7 +1217,7 @@ def get_accessible_site_ids() -> List[int]:
     Returns:
         List[int]: 用户可访问的站点ID列表
         - Owner/Admin: 返回所有站点（空列表表示无限制）
-        - Mining_Site_Owner: 返回其拥有的站点
+        - Mining_Site_Owner: 返回其拥有的站点（通过 owner_id 或 contact_email）
         - Client: 返回其所属的站点
         - 其他: 返回空列表
     """

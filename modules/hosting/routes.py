@@ -4913,9 +4913,20 @@ def get_miners_stats():
             # 管理员可以查看所有矿机
             allowed_site_ids = None
         elif user_role == 'mining_site_owner':
-            # 矿场运营方只能查看自己管理站点的矿机
-            managed_sites = HostingSite.query.filter_by(contact_email=user_email).all()
-            allowed_site_ids = [s.id for s in managed_sites]
+            # 矿场运营方查看自己管理站点的矿机（通过 owner_id 或 contact_email）
+            from models import UserAccess
+            from sqlalchemy import or_
+            user = UserAccess.query.filter_by(email=user_email).first()
+            if user:
+                managed_sites = HostingSite.query.filter(
+                    or_(
+                        HostingSite.owner_id == user.id,
+                        HostingSite.contact_email == user_email
+                    )
+                ).all()
+                allowed_site_ids = [s.id for s in managed_sites]
+            else:
+                allowed_site_ids = []
         else:
             # owner/customer - 不使用站点限制，而是使用customer_id
             pass
