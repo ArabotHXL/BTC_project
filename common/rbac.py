@@ -1242,8 +1242,14 @@ def get_accessible_site_ids() -> List[int]:
             return []
         
         if user_role == Role.MINING_SITE_OWNER:
-            # Site owner sees sites they own
-            sites = HostingSite.query.filter_by(owner_id=user.id).all()
+            # Site owner sees sites they own (by owner_id OR contact_email)
+            from sqlalchemy import or_
+            sites = HostingSite.query.filter(
+                or_(
+                    HostingSite.owner_id == user.id,
+                    HostingSite.contact_email == email
+                )
+            ).all()
             return [site.id for site in sites]
         
         elif user_role == Role.CLIENT:
