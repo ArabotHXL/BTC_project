@@ -730,6 +730,16 @@ def index():
                          btc_price=btc_price,
                          network_hashrate=network_hashrate)
 
+# 版本检查端点 - 用于验证发布版本
+@app.route('/api/version')
+def check_version():
+    """返回当前代码版本 - 无需认证"""
+    return jsonify({
+        'version': '2026-01-30-v4',
+        'timestamp': datetime.now().isoformat(),
+        'message': 'If you see this, deployment is using latest code'
+    })
+
 # 根路径显示介绍页面
 @app.route('/')
 def home():
