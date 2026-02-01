@@ -35,7 +35,7 @@ from models_remote_control import (
     CommandType, CommandStatus, ResultStatus,
     COMMAND_PAYLOAD_SCHEMAS
 )
-from common.rbac import requires_module_access, Module, AccessLevel
+from common.rbac import requires_module_access, Module, AccessLevel, check_site_access
 
 logger = logging.getLogger(__name__)
 
@@ -223,6 +223,11 @@ def create_command(site_id):
     if not site:
         return jsonify({'error': 'Site not found'}), 404
     
+    # 验证用户是否有权访问该站点
+    if not check_site_access(site_id):
+        logger.warning(f"User {session.get('email')} attempted to control site {site_id} without access")
+        return jsonify({'error': 'Access denied: You do not have permission to control this site'}), 403
+    
     data = request.get_json() or {}
     
     command_type = data.get('command_type')
@@ -313,6 +318,10 @@ def list_commands(site_id):
     site = HostingSite.query.get(site_id)
     if not site:
         return jsonify({'error': 'Site not found'}), 404
+    
+    # 验证用户是否有权访问该站点
+    if not check_site_access(site_id):
+        return jsonify({'error': 'Access denied: You do not have permission to view commands for this site'}), 403
     
     status = request.args.get('status')
     limit = min(int(request.args.get('limit', 50)), 100)
