@@ -1352,6 +1352,7 @@ function submitControlCommand() {
     fetch(`/api/sites/${siteId}/commands`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
         body: JSON.stringify({
             command_type: currentCommandType,
             payload: payload,

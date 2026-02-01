@@ -75,3 +75,15 @@ The architecture emphasizes modularity with page-isolated components and databas
 - **Redis**: In-memory data store (cache + task queue).
 - **Python 3.9+**: Runtime.
 - **Replit Platform**: Deployment and hosting.
+
+## Recent Changes
+
+### 2026-02-01: Remote Control API Bug Fix
+- **Issue**: mining_site_owner users were getting 500 errors when executing remote control commands (REBOOT, etc.)
+- **Root Cause**: Server process was not restarting properly, causing old code to run
+- **Fix Applied**:
+  - Added error handling wrapper to `create_command` endpoint with proper exception logging
+  - Added debug-level request logging to remote_control_bp blueprint
+  - Added `credentials: 'same-origin'` to frontend fetch requests for session cookie handling
+  - Sanitized error responses to avoid leaking internal details (returns generic error message to client)
+- **Verification**: Tested with test@test.com user, commands now successfully queue in database

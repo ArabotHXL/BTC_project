@@ -41,6 +41,12 @@ logger = logging.getLogger(__name__)
 
 remote_control_bp = Blueprint('remote_control', __name__)
 
+@remote_control_bp.before_request
+def log_request_info():
+    """Log request info before RBAC check (minimal logging for production)"""
+    logger.debug(f"[REMOTE_CONTROL_BP] Request: {request.method} {request.path}, "
+                 f"user_id={session.get('user_id')}, role={session.get('role')}")
+
 REMOTE_CONTROL_ENABLED = os.environ.get('REMOTE_CONTROL_ENABLED', 'true').lower() == 'true'
 COMMAND_EXPIRY_HOURS = int(os.environ.get('COMMAND_EXPIRY_HOURS', '24'))
 MAX_BATCH_SIZE_USER = 10
@@ -216,8 +222,30 @@ def create_command(site_id):
     - Owner/Admin/Mining_Site_Owner/Client: FULL (可以提交命令)
     - Customer/Guest: NONE (无权限)
     """
+    import traceback
+    
+    try:
+        return _create_command_impl(site_id)
+    except Exception as e:
+        logger.error(f"[create_command] Unhandled exception for user_id={session.get('user_id')}, site_id={site_id}: {e}\n{traceback.format_exc()}")
+        return jsonify({'error': 'An unexpected error occurred. Please try again later.', 'error_code': 'INTERNAL_ERROR'}), 500
+
+
+def _create_command_impl(site_id):
+    """Internal implementation of create_command"""
     if not REMOTE_CONTROL_ENABLED:
         return jsonify({'error': 'Remote control is disabled'}), 503
+    
+    # 获取用户信息
+    user_id = session.get('user_id')
+    user_role_str = session.get('role', 'user')
+    if not user_id:
+        return jsonify({'error': 'User not authenticated'}), 401
+    
+    # 设置 g.user_id 供后续使用
+    g.user_id = user_id
+    if not hasattr(g, 'user_role') or g.user_role is None:
+        g.user_role = user_role_str
     
     site = HostingSite.query.get(site_id)
     if not site:
@@ -245,7 +273,8 @@ def create_command(site_id):
     if not target_ids:
         return jsonify({'error': 'target_ids required'}), 400
     
-    is_admin = g.user_role in ('admin', 'owner')
+    user_role_check = g.user_role if isinstance(g.user_role, str) else (g.user_role.value if hasattr(g.user_role, 'value') else str(g.user_role))
+    is_admin = user_role_check in ('admin', 'owner')
     max_batch = MAX_BATCH_SIZE_ADMIN if is_admin else MAX_BATCH_SIZE_USER
     
     if len(target_ids) > max_batch:
@@ -268,33 +297,43 @@ def create_command(site_id):
         if existing:
             return jsonify({'command': existing.to_dict(include_results=True)}), 200
     
-    command = RemoteCommand(
-        tenant_id=g.user_id,
-        site_id=site_id,
-        requested_by_user_id=g.user_id,
-        requested_by_role=g.user_role,
-        command_type=command_type,
-        payload_json=payload,
-        target_scope=target_scope,
-        target_ids=target_ids,
-        status='PENDING_APPROVAL' if require_approval else 'QUEUED',
-        require_approval=require_approval,
-        idempotency_key=idempotency_key,
-        expires_at=datetime.utcnow() + timedelta(hours=COMMAND_EXPIRY_HOURS)
-    )
+    logger.info(f"Creating remote command: user_id={g.user_id}, site_id={site_id}, type={command_type}, targets={target_ids}")
     
-    db.session.add(command)
-    db.session.flush()
-    
-    for miner_id in target_ids:
-        result = RemoteCommandResult(
-            command_id=command.id,
-            miner_id=str(miner_id),
-            result_status='PENDING'
+    try:
+        command = RemoteCommand(
+            tenant_id=g.user_id,
+            site_id=site_id,
+            requested_by_user_id=g.user_id,
+            requested_by_role=user_role_check,
+            command_type=command_type,
+            payload_json=payload,
+            target_scope=target_scope,
+            target_ids=target_ids,
+            status='PENDING_APPROVAL' if require_approval else 'QUEUED',
+            require_approval=require_approval,
+            idempotency_key=idempotency_key,
+            expires_at=datetime.utcnow() + timedelta(hours=COMMAND_EXPIRY_HOURS)
         )
-        db.session.add(result)
-    
-    db.session.commit()
+        
+        db.session.add(command)
+        db.session.flush()
+        logger.info(f"Remote command created with id={command.id}")
+        
+        for miner_id in target_ids:
+            result = RemoteCommandResult(
+                command_id=command.id,
+                miner_id=str(miner_id),
+                result_status='PENDING'
+            )
+            db.session.add(result)
+        
+        db.session.commit()
+        logger.info(f"Remote command committed successfully: {command.id}")
+    except Exception as e:
+        db.session.rollback()
+        import traceback
+        logger.error(f"Error creating remote command: {e}\n{traceback.format_exc()}")
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
     
     log_command_event(command, 'create')
     
