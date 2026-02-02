@@ -887,22 +887,8 @@ def get_client_miners():
         if user_role == 'admin':
             base_query = HostingMiner.query
         elif user_role == 'mining_site_owner':
-            managed_sites = HostingSite.query.filter(
-                or_(
-                    HostingSite.owner_id == user_id,
-                    HostingSite.contact_email == user_email
-                )
-            ).all()
-            managed_site_ids = [s.id for s in managed_sites]
-            if managed_site_ids:
-                base_query = HostingMiner.query.filter(HostingMiner.site_id.in_(managed_site_ids))
-            else:
-                return jsonify({
-                    'success': True, 
-                    'miners': [],
-                    'stats': {'total': 0, 'active': 0, 'offline': 0, 'pending': 0},
-                    'pagination': {'page': page, 'per_page': per_page, 'total': 0, 'pages': 0}
-                })
+            # 只显示用户名下的矿机（按 customer_id 过滤）
+            base_query = HostingMiner.query.filter_by(customer_id=user_id)
         else:
             base_query = HostingMiner.query.filter_by(customer_id=user_id)
         
