@@ -1,3 +1,24 @@
+# ============================================================
+# HashInsight Enterprise - Docker Compose Configuration
+# ============================================================
+# For private deployment (on-premise / cloud VMs)
+# Primary deployment target: Replit (see docs/DEPLOYMENT.md)
+# ============================================================
+#
+# Quick Start:
+#   1. cp .env.example .env
+#   2. Edit .env with production secrets
+#   3. docker-compose up -d
+#
+# Services:
+#   - web: Flask application (Gunicorn, 4 workers)
+#   - worker: Background task worker
+#   - scheduler: APScheduler jobs
+#   - postgres: PostgreSQL 15 database
+#   - redis: Redis 7 cache and queue
+#
+# ============================================================
+
 services:
   postgres:
     image: postgres:15

@@ -108,6 +108,27 @@ The architecture emphasizes modularity with page-isolated components and databas
   - Database stamped to baseline_001
   - Documentation: `docs/DATABASE_MIGRATIONS.md`
 
+- **Application Factory Pattern** (P0-5)
+  - `main.py` contains `create_app()` with environment validation
+  - Required variables check: DATABASE_URL, SESSION_SECRET
+  - Fail-fast on missing critical security variables
+  
+- **Environment Configuration** (P0-7)
+  - `.env.example` with REQUIRED/RECOMMENDED sections
+  - Clear documentation for all environment variables
+  - Security notes for SESSION_SECRET generation
+  
+- **Docker Compose & Deployment Docs** (P0-8)
+  - `docker-compose.yml` with web/worker/scheduler/postgres/redis
+  - `docs/DEPLOYMENT.md` comprehensive deployment guide
+  - Supports Replit (primary) and Docker Compose (private) modes
+
+- **Ticket System Enhancement**
+  - Miner snapshot captured at ticket creation
+  - Support tickets section in event monitoring page
+  - Ticket status management (mark resolved/reopen)
+  - API: PATCH `/hosting/api/tickets/{id}/status`
+
 ### 2026-02-02: Miner Management Dropdown Menu Fixes
 - **Miner Status Toggle API** (`POST /hosting/api/miners/{id}/status`)
   - New endpoint to enable/disable miners
