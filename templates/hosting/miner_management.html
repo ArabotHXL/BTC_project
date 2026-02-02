@@ -3644,11 +3644,96 @@ function getSelectedMinerIds() {
 }
 
 function openTicketForMiner(minerId) {
-    window.location.href = `/hosting/tickets/new?miner_id=${minerId}`;
+    const lang = getLanguage();
+    const miner = allMiners.find(m => m.id === minerId);
+    const minerName = miner ? miner.serial_number : `Miner #${minerId}`;
+    
+    const subject = prompt(
+        lang === 'en' 
+            ? `Create ticket for ${minerName}\n\nEnter ticket subject:` 
+            : `为 ${minerName} 创建工单\n\n请输入工单主题:`
+    );
+    
+    if (!subject) return;
+    
+    const description = prompt(
+        lang === 'en' 
+            ? 'Enter ticket description (optional):' 
+            : '请输入工单描述（可选）:'
+    ) || '';
+    
+    fetch('/hosting/api/tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+            subject: subject,
+            description: description,
+            miner_id: minerId,
+            site_id: miner ? miner.site_id : null,
+            priority: 'medium'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(lang === 'en' ? 'Ticket created successfully' : '工单创建成功', 'success');
+        } else {
+            throw new Error(data.error || 'Failed to create ticket');
+        }
+    })
+    .catch(err => {
+        showToast((lang === 'en' ? 'Failed to create ticket: ' : '创建工单失败: ') + err.message, 'error');
+    });
 }
 
 function viewMinerTickets(minerId) {
-    window.location.href = `/hosting/tickets?miner_id=${minerId}`;
+    const lang = getLanguage();
+    const miner = allMiners.find(m => m.id === minerId);
+    const minerName = miner ? miner.serial_number : `Miner #${minerId}`;
+    const siteId = miner ? miner.site_id : null;
+    
+    if (!siteId) {
+        showToast(lang === 'en' ? 'Unable to find site for this miner' : '无法找到该矿机所属站点', 'error');
+        return;
+    }
+    
+    fetch(`/hosting/api/tickets?site_id=${siteId}&limit=20`, {
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.tickets) {
+            const tickets = data.tickets;
+            if (tickets.length === 0) {
+                showToast(
+                    lang === 'en' 
+                        ? `No tickets found for this site` 
+                        : `该站点没有相关工单`, 
+                    'info'
+                );
+                return;
+            }
+            
+            let ticketList = tickets.slice(0, 10).map(t => 
+                `• [${t.status}] ${t.subject || t.title} (${t.priority})`
+            ).join('\n');
+            
+            if (tickets.length > 10) {
+                ticketList += `\n... ${lang === 'en' ? 'and' : '及其他'} ${tickets.length - 10} ${lang === 'en' ? 'more tickets' : '个工单'}`;
+            }
+            
+            alert(
+                (lang === 'en' ? `Site Tickets (${minerName}):\n\n` : `站点工单 (${minerName}):\n\n`) + 
+                ticketList
+            );
+        } else {
+            throw new Error(data.error || 'Failed to load tickets');
+        }
+    })
+    .catch(err => {
+        showToast((lang === 'en' ? 'Failed to load tickets: ' : '加载工单失败: ') + err.message, 'error');
+    });
 }
 
 function toggleMinerStatus(minerId, action) {

@@ -643,9 +643,9 @@ def get_site_detail(site_id):
 def get_tickets():
     """获取工单列表"""
     try:
-        # 获取查询参数
         status = request.args.get('status')
         priority = request.args.get('priority')
+        site_id = request.args.get('site_id', type=int)
         limit = int(request.args.get('limit', 50))
         
         query = HostingTicket.query
@@ -656,6 +656,8 @@ def get_tickets():
             query = query.filter_by(status=status)
         if priority:
             query = query.filter_by(priority=priority)
+        if site_id:
+            query = query.filter_by(site_id=site_id)
             
         tickets = query.order_by(HostingTicket.created_at.desc()).limit(limit).all()
         
@@ -663,6 +665,7 @@ def get_tickets():
         for ticket in tickets:
             ticket_data = {
                 'id': ticket.id,
+                'subject': ticket.title,
                 'title': ticket.title,
                 'priority': ticket.priority,
                 'status': ticket.status,
@@ -688,8 +691,10 @@ def create_ticket():
         data = request.get_json()
         customer_id = session.get('user_id')
         
+        title = data.get('title') or data.get('subject', 'Untitled Ticket')
+        
         ticket = HostingTicket(
-            title=data['title'],
+            title=title,
             customer_id=customer_id,
             description=data.get('description', ''),
             priority=data.get('priority', 'medium'),
@@ -2552,6 +2557,52 @@ def delete_miner(miner_id):
             'success': False,
             'error': '删除矿机失败'
         }), 500
+
+
+@hosting_bp.route('/api/miners/<int:miner_id>/status', methods=['POST'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
+def toggle_miner_status(miner_id):
+    """切换矿机状态 (Toggle Miner Status)
+    
+    支持 enable/disable 操作
+    """
+    try:
+        from common.rbac import check_site_access
+        
+        miner = HostingMiner.query.get_or_404(miner_id)
+        
+        if not check_site_access(miner.site_id):
+            return jsonify({'success': False, 'error': 'Access denied'}), 403
+        
+        data = request.get_json() or {}
+        action = data.get('action', 'enable')
+        
+        if action not in ['enable', 'disable']:
+            return jsonify({'success': False, 'error': 'Invalid action'}), 400
+        
+        if action == 'enable':
+            miner.status = 'active'
+        else:
+            miner.status = 'disabled'
+        
+        miner.updated_at = datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'矿机已{"启用" if action == "enable" else "禁用"}',
+            'status': miner.status
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"切换矿机状态失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': '操作失败'
+        }), 500
+
 
 # ==================== 公开状态页面 ====================
 
