@@ -1,0 +1,44 @@
+你是资深矿场 SaaS 云端架构师（Flask/Postgres/多租户/审计/控制平面/托管对账）。我已经扫描过项目并得到如下结论：
+- 已完成：RBAC(common/rbac.py)、ABAC(check_site_access)、控制平面状态机(models_remote_control.py)、remote control API(api/control_plane_api.py / api/remote_control_api.py)、Telemetry 四层表(TelemetryRaw24h/TelemetryLive/TelemetryHistory5min/MinerTelemetryHistory)、SchedulerLock、health endpoints、审计日志(audit_logger + AuditEvent prev_hash)、hosting模块(routes.py)、edge_collector、remote_id 字段、设备加密(E2EE)、凭证保护、AI闭环与自动执行、限电调度等。
+- 部分/未完成：verify_audit_chain 脚本、完整证据包导出（停机归因+时间线+审计校验）、Telemetry 聚合层幂等性需验证、越权验证脚本缺失、Application Factory(create_app)缺失、Alembic迁移缺失、Google/Microsoft OIDC缺失、mTLS/VPN开关缺失、docker-compose.yml 缺失、.env.example 缺失、worker/scheduler 分离运行模式不完整。
+
+【目标与约束（必须遵守）】
+- 现在继续 Replit 单体跑托管 PoC；未来要私有化（先 Hybrid，再 On-Prem）。
+- DB 维持现状（不强推 TimescaleDB）。
+- 单站 5,000 miners；支持多个 Remote 汇总到统一表/视图（remote_id + source_seq + received_at），断网补传不重复写。
+- 多租户 + 客户门户只读 必须过审（强 ABAC，客户绝不越权）。
+- 审计必须不可篡改（hash chain），留存可配置。
+- 控制动作保留现有能力，但必须“护栏+审批+回滚+审计+可追溯”。
+- 兼容现有接口与 collector/remote 协议，不破坏现有路径与数据结构。
+
+【优先级：只做这些，其他先不动】
+P0（立刻实现/补齐）：
+1) 审计链验证脚本：新增 scripts/verify_audit_chain.py（CLI），并可选提供 GET /api/v1/audit/verify。
+   - 验收：对指定范围输出 PASS；任意断链输出 FAIL 并标出 event_id 与断点。
+   - 要求：canonical json 规则固定；AuditEvent 必须 append-only（应用层 + DB约束/触发器）。
+2) 越权验证脚本：新增 scripts/verify_tenant_isolation.py。
+   - 验收：使用 customer token 访问非本租户资源（telemetry/reports/workorders/commands）100% 返回 403，脚本输出 PASS/FAIL 清单。
+3) Telemetry 幂等性验证与修复：新增 scripts/verify_telemetry_idempotency.py，重点验证聚合层（1m或5min bucket）。
+   - 验收：相同 bucket 重传 N 次，行数不增加、聚合值一致；out-of-order 不污染口径（除非标记修正写入并入审计）。
+4) 托管证据包导出 v1：实现“停机归因 + 时间线 + 审计链校验结果”的证据包导出（先 CSV/JSON zip 即可，PDF可后续）。
+   - 验收：任意账期可生成并下载，包含口径声明、停机分钟、事件时间线、审计验证 PASS/FAIL。
+5) Application Factory：实现 create_app()，把全局初始化迁入 init_app(app)；scheduler 全部加全局锁。
+   - 验收：冷启动 0 ImportError；多 worker 模式下 scheduler 不重复执行（可通过锁验证日志）。
+6) Alembic 迁移体系：引入 Alembic，生成 baseline migration，并对现有 DB 使用 stamp head。
+   - 验收：可在空库 migrate 到当前结构；在已有库 stamp 后后续迁移可升级/回滚。
+7) 工程化配置：新增 .env.example + 启动时 fail-fast 校验（缺关键变量直接启动失败）。
+8) Docker Compose 草案：新增 docker-compose.yml（web/worker/scheduler/db/redis 占位即可）+ docs（未来私有化准备）。
+
+P1（只写计划，不在本轮强制落代码，除非我明确要求）：
+- Google/Microsoft OIDC + 保留邮箱登录（统一 user + 多 identity 绑定）
+- mTLS/VPN 开关（可配置且可审计证明）
+- worker/scheduler 完整分离运行模式（Replit 多进程启动模板/Procfile）
+- 可观测性完善（metrics：ingest_success_rate、latency_p95、queue_lag、command_ack_latency）
+
+【输出格式（必须按顺序）】
+1) 列出将新增/修改的文件清单（按 P0 顺序）
+2) 给出每项 P0 的验收测试步骤（命令/脚本如何跑）
+3) 分 commit 输出改动说明（每步可运行）
+4) 风险与回滚策略
+
+现在开始执行：只做 P0，不做 UI 大改，不引入微服务，不破坏现有接口与 collector/remote 协议。

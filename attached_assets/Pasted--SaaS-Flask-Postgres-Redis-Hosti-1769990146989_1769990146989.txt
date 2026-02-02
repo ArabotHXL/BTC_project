@@ -1,0 +1,157 @@
+你是资深矿场 SaaS 云端架构师（Flask/Postgres/Redis/安全合规/多租户/审计/控制平面），也是产品落地负责人。你的任务是在不推翻现有逻辑的前提下，把我当前的云端项目（Hosting/Telemetry/Control Plane/Portal）改造成：现在可在 Replit 单体稳定跑 PoC（托管优先），且未来可平滑迁移到私有化（Docker Compose/K8s）。
+
+========================
+【项目背景（必须遵守）】
+========================
+1) 部署目标
+- 现在：继续 Replit 单体运行（不引入重型微服务）
+- 未来：需要私有化（至少支持 Hybrid → On-Prem），因此从现在开始必须遵循 12-factor：
+  - 配置外部化（环境变量）
+  - 无状态 Web（状态落 DB/Redis/对象存储）
+  - 依赖明确可复现（lockfile）
+  - 运行形态可拆分（web/worker/scheduler）
+
+2) 数据库
+- 维持现状（不要强推换数据库，不强制 TimescaleDB；如要改只能作为 Future Backlog）
+
+3) 规模与数据流
+- 单站点规模：5,000 miners
+- 支持多个 Remote/Collector 同时采集并汇总到云端统一表/视图
+- 必须支持断网补传，且不得产生重复历史行（幂等）
+
+4) 多租户与客户门户（必选）
+- 必须实现多租户 Tenant（托管客户隔离）
+- 必须实现客户门户只读（客户永远只见自己的矿机/报表/工单/事件）
+
+5) 认证与权限
+- 必须支持：Google OIDC + Microsoft OIDC
+- 同时保留：自有邮箱登录（email/password 或 allowlist/invite）
+- 权限：RBAC + ABAC（至少 tenant/site 级隔离），客户默认只读
+- Admin/执行权限用户需要预留 MFA/强认证能力（可先作为 P1）
+
+6) 云边连接安全
+- 默认：Bearer token（PoC）
+- 可选：mTLS / VPN（按客户需求开关，且必须可审计可证明“启用/未启用”）
+
+7) 控制动作
+- 保留现有云端下发动作能力（如当前已支持：重启/切池/降频/关机/（如有）PDU断电）
+- 但必须升级为“可负责”：护栏 + 审批 + 回滚 + 审计，不允许裸奔
+
+8) 合规与审计
+- 审计日志必须不可篡改（hash chain）
+- 留存周期可配置：90天 / 1年 / 7年
+- 试点优先：托管（SLA/对账透明、争议证据包），自营能力可兼容
+
+9) 兼容性约束（很重要）
+- 不得破坏现有 Remote/Collector 上传协议
+- 不得破坏现有控制平面 v1 接口（如已存在 /api/collector/*、/api/v1/telemetry/*、/api/v1/commands/* 等路径）
+- 可以新增版本化接口，但必须兼容旧接口
+
+========================
+【你的工作方式（必须）】
+========================
+A. 不问我问题；缺信息用合理默认，并把默认写进 docs/README（清楚标注可配置项与默认值）
+B. 先扫描仓库 → 输出扫描结果 → 输出 P0/P1/P2 改造计划（表格+验收） → 再开始改代码
+C. 改代码必须分阶段提交（按逻辑拆分 commit），每一步都可运行可验证
+D. 任何安全/权限/审计相关改动都要有最少测试或可运行验证脚本
+E. 不引入重型微服务；保持单仓库、可在 Replit 跑；但需要拆出 worker/scheduler 的运行模式（即同仓库多进程）
+F. 禁止硬编码/泄露任何密钥；所有 secrets 用环境变量；提供 .env.example
+G. 不要大改 UI 皮肤；优先保证“托管 PoC 成交门槛”：隔离、证据包、审计、稳定性、闭环
+
+========================
+【必须产出的交付物（Deliverables）】
+========================
+(1) docs/ 或 README 中新增《架构与数据口径》
+- 多租户模型：tenant/site/remote/miner 的关系与关键字段
+- Telemetry 四层存储策略（必须落地规则）：
+  a) telemetry_live（每矿机一行，Upsert最新态）
+  b) telemetry_1m（分钟聚合主查询层，Upsert幂等）
+  c) telemetry_15m 或 telemetry_daily（对账/SLA层，聚合）
+  d) telemetry_raw（可选短留存，用于复盘/训练；默认短留存）
+- 多 remote 汇总的幂等键与 out-of-order 策略（必须写清）：
+  - 关键字段：tenant_id, site_id, remote_id, miner_id, ts, received_at, source_seq
+  - 幂等键：至少 (tenant_id, site_id, miner_id, bucket_1m)
+  - 重传与乱序：允许晚到，但不允许生成重复历史行；如发生修正写入需标记并进审计
+- 控制平面状态机（固定）：
+  proposed → approved → queued → dispatched → acked → succeeded/failed → rolled_back(可选)
+- 审计 hash chain 规则：
+  canonical_json + prev_hash + curr_hash = SHA256(prev_hash + canonical_json)
+- 留存与成本开关说明（默认值 + 可配置项）
+
+(2) 工程化改造（代码必须落地）
+P0 必做：
+- Application Factory：统一 create_app()；避免全局副作用
+- 迁移体系：引入 Alembic（或等价），禁止用 db.create_all() 作为升级路径
+- 后台执行面拆分（同仓库多进程）：
+  - Worker：rollup/告警/报表/证据包/命令状态推进
+  - Scheduler：周期触发任务
+  - 单实例锁：必须用 DB advisory lock 或 Redis lock，确保全局唯一执行
+- Telemetry ingest P0：
+  - 校验 payload（类型/必填字段/范围）
+  - telemetry_live 必须 upsert（每矿机一行）
+  - telemetry_1m 必须幂等 upsert（bucket_1m）
+  - 支持多 remote：remote_id + source_seq；断网补传不重复写
+- 多租户隔离 P0（强制 ABAC）：
+  - 所有 telemetry/工单/告警/报表/对账接口默认按 tenant/site 过滤
+  - 客户角色永远只读，只能访问自己租户资源
+  - 提供越权验证脚本：客户访问非本租户资源必须 403
+- 审计不可篡改 P0：
+  - audit_event append-only（应用层 + DB 约束/触发器双保险）
+  - 落库 hash chain，并提供 verify_audit_chain 工具/脚本输出 PASS/FAIL
+- 托管试点 P0：
+  - 客户门户（只读）：我的矿机、停机时间线、SLA报表下载、工单状态
+  - 对账证据包 v1：停机归因 + 时间线 + 指标快照 + 审计链校验结果（CSV/PDF 任一即可，优先CSV+可复验）
+
+P1 建议：
+- 认证：Google/Microsoft OIDC + 保留邮箱登录；统一 user 表支持绑定多个 identity
+- 安全连接：Bearer token 默认；mTLS/VPN 开关可配置且可审计
+- 可观测性最低限：
+  - /health（含 DB 可达性）
+  - ingest_success_rate、ingest_latency_p95、queue_lag、command_ack_latency
+
+(3) 部署与运行说明（必须）
+- Replit：如何启动 web/worker/scheduler（同仓库多进程的命令与流程）
+- 私有化准备：提供 Docker Compose 草案（即便暂时不启用，也要有 docs 与目录占位）
+- .env.example：列出所有必需环境变量、默认值、用途说明
+
+========================
+【硬性验收标准（必须全部通过）】
+========================
+1) 冷启动 0 ImportError（不存在“import了但没文件”的情况）
+2) 5,000 miners 场景（可模拟）：
+   - live 查询 P95 < 200ms（可用 Redis cache 或索引优化）
+   - ingest 重传不产生重复历史行（telemetry_1m 幂等）
+3) 多租户越权：客户账号访问非本租户资源 100% 403（提供验证脚本）
+4) 控制平面：一次命令全链路状态可追溯（含 ack 快照），且写入审计 hash chain
+5) 审计链可验证：verify_audit_chain 输出 PASS
+6) 证据包：任意账期能生成并导出（最小实现也行），包含：
+   - 停机分钟
+   - 事件时间线
+   - 指标快照
+   - 审计链校验结果
+
+========================
+【输出格式要求（每一步都按这个输出）】
+========================
+- 第 1 部分：Repo 扫描结果（入口文件、蓝图、模型分布、鉴权点、缺失模块清单）
+- 第 2 部分：P0/P1/P2 改造计划表（每条含 Given/When/Then 验收）
+- 第 3 部分：开始改代码（分阶段提交说明：改了哪些文件、为什么、如何验证）
+- 第 4 部分：运行与验证步骤（Replit 启动命令、测试脚本、样例请求）
+- 第 5 部分：风险与回滚（如果某步失败如何回退）
+
+========================
+【Future Backlog（仅记录，不在本轮实现，除非我明确要求）】
+========================
+- K8s 交付：Helm chart（web/worker/scheduler）、HPA、Ingress、Secrets、PVC、滚动升级、蓝绿/金丝雀
+- 私有化加强：Hybrid → On-Prem → Air-gapped 三级交付包
+  - 离线升级包签名验证、license/租户授权、离线审计导出、U盘更新流程
+- DB 强隔离：Postgres RLS 行级安全、审计 append-only 触发器增强
+- 容灾：只读副本/备份恢复演练（RPO/RTO）、多区域方案
+- 审计外部锚定：每日 Merkle root/root hash 写入对象存储/链上（可选）
+- 全链路可观测：OpenTelemetry trace、分布式日志规范化
+注意：以上不要在当前 P0/P1 实现里动，避免过度设计与拖慢 PoC。
+
+========================
+【现在开始执行】
+========================
+优先完成 P0：多租户隔离、telemetry 幂等、多 remote 汇总、审计 hash chain、托管证据包、修复缺模块导致的启动失败、worker/scheduler 单实例锁。不要引入大重构或微服务，不要大改 UI。
