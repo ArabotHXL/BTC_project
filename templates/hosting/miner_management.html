@@ -3661,21 +3661,53 @@ function openTicketForMiner(minerId, siteId, minerName) {
             : '请输入工单描述（可选）:'
     ) || '';
     
-    fetch('/hosting/api/tickets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({
-            subject: subject,
-            description: description,
-            site_id: siteId,
-            priority: 'medium'
-        })
+    showToast(lang === 'en' ? 'Fetching miner data...' : '正在获取矿机数据...', 'info');
+    
+    fetch(`/hosting/api/miners/${minerId}`, {
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(minerData => {
+        if (!minerData.success) {
+            throw new Error(minerData.error || 'Failed to fetch miner data');
+        }
+        
+        const miner = minerData.miner;
+        const minerSnapshot = {
+            serial_number: miner.serial_number,
+            miner_model: miner.miner_model_name || miner.model,
+            site_name: miner.site_name,
+            site_location: miner.site_location,
+            customer_email: miner.customer_email,
+            ip_address: miner.ip_address,
+            hashrate: miner.actual_hashrate,
+            power: miner.actual_power,
+            temperature_avg: miner.temperature_avg,
+            temperature_max: miner.temperature_max,
+            status: miner.status,
+            cgminer_online: miner.cgminer_online,
+            last_seen: miner.last_seen,
+            captured_at: new Date().toISOString()
+        };
+        
+        return fetch('/hosting/api/tickets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                subject: subject,
+                description: description,
+                site_id: siteId,
+                miner_id: minerId,
+                miner_snapshot: minerSnapshot,
+                priority: 'medium'
+            })
+        });
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            showToast(lang === 'en' ? 'Ticket created successfully' : '工单创建成功', 'success');
+            showToast(lang === 'en' ? 'Ticket created successfully with miner snapshot' : '工单创建成功，已记录矿机数据', 'success');
         } else {
             throw new Error(data.error || 'Failed to create ticket');
         }
@@ -3686,50 +3718,7 @@ function openTicketForMiner(minerId, siteId, minerName) {
 }
 
 function viewMinerTickets(minerId, siteId, minerName) {
-    const lang = getLanguage();
-    minerName = minerName || `Miner #${minerId}`;
-    
-    if (!siteId) {
-        showToast(lang === 'en' ? 'Unable to find site for this miner' : '无法找到该矿机所属站点', 'error');
-        return;
-    }
-    
-    fetch(`/hosting/api/tickets?site_id=${siteId}&limit=20`, {
-        credentials: 'same-origin'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success && data.tickets) {
-            const tickets = data.tickets;
-            if (tickets.length === 0) {
-                showToast(
-                    lang === 'en' 
-                        ? `No tickets found for this site` 
-                        : `该站点没有相关工单`, 
-                    'info'
-                );
-                return;
-            }
-            
-            let ticketList = tickets.slice(0, 10).map(t => 
-                `• [${t.status}] ${t.subject || t.title} (${t.priority})`
-            ).join('\n');
-            
-            if (tickets.length > 10) {
-                ticketList += `\n... ${lang === 'en' ? 'and' : '及其他'} ${tickets.length - 10} ${lang === 'en' ? 'more tickets' : '个工单'}`;
-            }
-            
-            alert(
-                (lang === 'en' ? `Site Tickets (${minerName}):\n\n` : `站点工单 (${minerName}):\n\n`) + 
-                ticketList
-            );
-        } else {
-            throw new Error(data.error || 'Failed to load tickets');
-        }
-    })
-    .catch(err => {
-        showToast((lang === 'en' ? 'Failed to load tickets: ' : '加载工单失败: ') + err.message, 'error');
-    });
+    window.location.href = '/hosting/host/event_monitoring';
 }
 
 function toggleMinerStatus(minerId, action) {

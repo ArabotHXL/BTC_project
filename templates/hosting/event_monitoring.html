@@ -134,6 +134,41 @@
     </div>
 </div>
 
+<!-- 支持工单 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-ticket-detailed me-2"></i><span data-i18n="hosting.support_tickets">Support Tickets</span>
+        </h5>
+        <div class="btn-group" role="group">
+            <button class="btn btn-hosting-outline btn-sm active" onclick="filterTickets('all', this)" data-i18n="all">All</button>
+            <button class="btn btn-hosting-outline btn-sm" onclick="filterTickets('open', this)" data-i18n="hosting.open">Open</button>
+            <button class="btn btn-hosting-outline btn-sm" onclick="filterTickets('resolved', this)" data-i18n="hosting.resolved">Resolved</button>
+        </div>
+    </div>
+    <div class="hosting-card-body">
+        <!-- 工单列表 -->
+        <div class="hosting-table">
+            <table class="table table-hover" id="tickets-table">
+                <thead>
+                    <tr>
+                        <th data-i18n="hosting.id">ID</th>
+                        <th data-i18n="hosting.title">Title</th>
+                        <th data-i18n="hosting.miner">Miner</th>
+                        <th data-i18n="hosting.priority">Priority</th>
+                        <th data-i18n="status">Status</th>
+                        <th data-i18n="hosting.created">Created</th>
+                        <th data-i18n="actions">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tickets-tbody">
+                    <!-- 工单数据通过JavaScript加载 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <!-- 系统监控图表 -->
 <div class="row">
     <div class="col-lg-8">
@@ -344,6 +379,9 @@ function loadMonitoringData() {
     
     // 加载事件列表
     loadIncidents();
+    
+    // 加载工单列表
+    loadTickets();
 }
 
 function updateMonitoringStats(stats) {
@@ -469,6 +507,179 @@ function displayIncidents(incidents) {
         `;
         tbody.insertAdjacentHTML('beforeend', row);
     });
+}
+
+// ==================== 工单相关函数 ====================
+
+let currentTicketFilter = 'all';
+
+function loadTickets(filter = null) {
+    if (filter !== null) {
+        currentTicketFilter = filter;
+    }
+    
+    let url = '/hosting/api/tickets?limit=50';
+    if (currentTicketFilter && currentTicketFilter !== 'all') {
+        url += `&status=${currentTicketFilter}`;
+    }
+    
+    fetch(url, { credentials: 'same-origin' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayTickets(data.tickets);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading tickets:', error);
+        });
+}
+
+function filterTickets(filter, btn) {
+    // 更新按钮状态
+    const ticketsCard = document.getElementById('tickets-table').closest('.hosting-card');
+    if (ticketsCard) {
+        ticketsCard.querySelectorAll('.hosting-card-header .btn-group .btn').forEach(b => {
+            b.classList.remove('active');
+        });
+    }
+    if (btn) {
+        btn.classList.add('active');
+    }
+    
+    loadTickets(filter);
+}
+
+function displayTickets(tickets) {
+    const tbody = document.getElementById('tickets-tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    if (!tickets || tickets.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center text-muted py-4">
+                    <i class="bi bi-ticket-detailed fs-1 mb-2 d-block"></i>
+                    ${getLanguage() === 'en' ? 'No tickets found' : '未找到工单'}
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tickets.forEach(ticket => {
+        const snapshot = ticket.miner_snapshot || {};
+        const minerInfo = snapshot.serial_number 
+            ? `<strong>${snapshot.serial_number}</strong><br>
+               <small class="text-muted">
+                   ${snapshot.site_name || ''} | 
+                   ${snapshot.hashrate || '-'} TH/s | 
+                   ${snapshot.power || '-'} W
+               </small>`
+            : '<span class="text-muted">-</span>';
+        
+        const priorityColors = {
+            'urgent': 'danger',
+            'high': 'warning',
+            'medium': 'info',
+            'low': 'secondary'
+        };
+        
+        const row = `
+            <tr>
+                <td><strong>#${ticket.id}</strong></td>
+                <td>
+                    <div>${ticket.title}</div>
+                    ${ticket.description ? `<small class="text-muted">${ticket.description.substring(0, 50)}${ticket.description.length > 50 ? '...' : ''}</small>` : ''}
+                </td>
+                <td>${minerInfo}</td>
+                <td><span class="badge bg-${priorityColors[ticket.priority] || 'secondary'}">${getPriorityText(ticket.priority)}</span></td>
+                <td><span class="badge bg-${getStatusColor(ticket.status)}">${getStatusText(ticket.status)}</span></td>
+                <td><small>${formatDate(ticket.created_at)}</small></td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-hosting-outline" onclick="viewTicketDetails(${ticket.id})" title="${getLanguage() === 'en' ? 'View Details' : '查看详情'}">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        tbody.insertAdjacentHTML('beforeend', row);
+    });
+}
+
+function getPriorityText(priority) {
+    const language = getLanguage();
+    const map = {
+        'urgent': language === 'en' ? 'Urgent' : '紧急',
+        'high': language === 'en' ? 'High' : '高',
+        'medium': language === 'en' ? 'Medium' : '中',
+        'low': language === 'en' ? 'Low' : '低'
+    };
+    return map[priority] || priority;
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    try {
+        const date = new Date(dateStr);
+        return date.toLocaleString(getLanguage() === 'en' ? 'en-US' : 'zh-CN', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    } catch (e) {
+        return dateStr;
+    }
+}
+
+function viewTicketDetails(ticketId) {
+    fetch(`/hosting/api/tickets/${ticketId}`, { credentials: 'same-origin' })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success || !data.ticket) {
+                showToast(getLanguage() === 'en' ? 'Ticket not found' : '未找到工单', 'error');
+                return;
+            }
+            
+            const ticket = data.ticket;
+            
+            const lang = getLanguage();
+            const snapshot = ticket.miner_snapshot || {};
+            
+            let details = `${lang === 'en' ? 'Ticket' : '工单'} #${ticket.id}\n`;
+            details += `${lang === 'en' ? 'Title' : '标题'}: ${ticket.title}\n`;
+            details += `${lang === 'en' ? 'Status' : '状态'}: ${getStatusText(ticket.status)}\n`;
+            details += `${lang === 'en' ? 'Priority' : '优先级'}: ${getPriorityText(ticket.priority)}\n`;
+            details += `${lang === 'en' ? 'Created' : '创建时间'}: ${formatDate(ticket.created_at)}\n`;
+            
+            if (ticket.description) {
+                details += `\n${lang === 'en' ? 'Description' : '描述'}:\n${ticket.description}\n`;
+            }
+            
+            if (Object.keys(snapshot).length > 0) {
+                details += `\n--- ${lang === 'en' ? 'Miner Snapshot at Creation' : '创建时矿机快照'} ---\n`;
+                details += `${lang === 'en' ? 'Serial Number' : '序列号'}: ${snapshot.serial_number || '-'}\n`;
+                details += `${lang === 'en' ? 'Site' : '站点'}: ${snapshot.site_name || '-'} (${snapshot.site_location || '-'})\n`;
+                details += `${lang === 'en' ? 'Customer' : '客户'}: ${snapshot.customer_email || '-'}\n`;
+                details += `${lang === 'en' ? 'Model' : '型号'}: ${snapshot.miner_model || '-'}\n`;
+                details += `${lang === 'en' ? 'Hashrate' : '算力'}: ${snapshot.hashrate || '-'} TH/s\n`;
+                details += `${lang === 'en' ? 'Power' : '功率'}: ${snapshot.power || '-'} W\n`;
+                details += `${lang === 'en' ? 'Temperature' : '温度'}: ${snapshot.temperature_avg || '-'}°C (${lang === 'en' ? 'Max' : '最高'}: ${snapshot.temperature_max || '-'}°C)\n`;
+                details += `${lang === 'en' ? 'IP Address' : 'IP地址'}: ${snapshot.ip_address || '-'}\n`;
+                details += `${lang === 'en' ? 'Status' : '状态'}: ${snapshot.status || '-'}\n`;
+                details += `${lang === 'en' ? 'Online' : '在线'}: ${snapshot.cgminer_online ? (lang === 'en' ? 'Yes' : '是') : (lang === 'en' ? 'No' : '否')}\n`;
+                details += `${lang === 'en' ? 'Captured At' : '记录时间'}: ${snapshot.captured_at || '-'}\n`;
+            }
+            
+            alert(details);
+        })
+        .catch(error => {
+            console.error('Error loading ticket details:', error);
+        });
 }
 
 function loadSiteOptions() {

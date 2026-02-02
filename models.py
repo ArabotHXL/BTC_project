@@ -2000,6 +2000,10 @@ class HostingTicket(db.Model):
     status = db.Column(db.String(20), default='open', nullable=False)  # open/assigned/in_progress/resolved/closed
     category = db.Column(db.String(50), nullable=True)  # hardware/network/power/other
     
+    # 矿机快照数据（创建工单时的矿机状态）
+    miner_id = db.Column(db.Integer, db.ForeignKey('hosting_miners.id'), nullable=True, index=True)
+    miner_snapshot = db.Column(db.JSON, nullable=True)  # 矿机状态快照：序列号、位置、客户、算力、功率、温度、IP等
+    
     # 关联信息
     customer_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=False, index=True)
     site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=True, index=True)

@@ -673,7 +673,10 @@ def get_tickets():
                 'customer_name': ticket.customer.name if ticket.customer else 'Unknown',
                 'created_at': ticket.created_at.isoformat(),
                 'response_time_minutes': ticket.response_time_minutes,
-                'resolution_time_hours': ticket.resolution_time_hours
+                'resolution_time_hours': ticket.resolution_time_hours,
+                'miner_id': ticket.miner_id,
+                'miner_snapshot': ticket.miner_snapshot,
+                'description': ticket.description
             }
             tickets_data.append(ticket_data)
         
@@ -692,6 +695,8 @@ def create_ticket():
         customer_id = session.get('user_id')
         
         title = data.get('title') or data.get('subject', 'Untitled Ticket')
+        miner_id = data.get('miner_id')
+        miner_snapshot = data.get('miner_snapshot')
         
         ticket = HostingTicket(
             title=title,
@@ -699,7 +704,9 @@ def create_ticket():
             description=data.get('description', ''),
             priority=data.get('priority', 'medium'),
             category=data.get('category'),
-            site_id=data.get('site_id')
+            site_id=data.get('site_id'),
+            miner_id=miner_id,
+            miner_snapshot=miner_snapshot
         )
         
         db.session.add(ticket)
@@ -713,6 +720,41 @@ def create_ticket():
     except Exception as e:
         db.session.rollback()
         logger.error(f"创建工单失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@hosting_bp.route('/api/tickets/<int:ticket_id>', methods=['GET'])
+@login_required
+@requires_module_access(Module.HOSTING_TICKET)
+def get_ticket_detail(ticket_id):
+    """获取单个工单详情"""
+    try:
+        ticket = HostingTicket.query.get_or_404(ticket_id)
+        
+        if ticket.site_id and not check_site_access(ticket.site_id):
+            return jsonify({
+                'success': False,
+                'error': 'Access denied'
+            }), 403
+        
+        ticket_data = {
+            'id': ticket.id,
+            'subject': ticket.title,
+            'title': ticket.title,
+            'priority': ticket.priority,
+            'status': ticket.status,
+            'category': ticket.category,
+            'description': ticket.description,
+            'customer_name': ticket.customer.name if ticket.customer else 'Unknown',
+            'created_at': ticket.created_at.isoformat(),
+            'response_time_minutes': ticket.response_time_minutes,
+            'resolution_time_hours': ticket.resolution_time_hours,
+            'miner_id': ticket.miner_id,
+            'miner_snapshot': ticket.miner_snapshot
+        }
+        
+        return jsonify({'success': True, 'ticket': ticket_data})
+    except Exception as e:
+        logger.error(f"获取工单详情失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 # ==================== 客户API路由 ====================
