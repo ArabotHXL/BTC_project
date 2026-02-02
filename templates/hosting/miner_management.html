@@ -1368,10 +1368,10 @@ function displayMiners(miners) {
                                 <i class="bi bi-activity me-2"></i>${getLanguage() === 'en' ? 'Test Connection' : '测试连接'}
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="openTicketForMiner(${miner.id})">
+                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="openTicketForMiner(${miner.id}, ${miner.site_id || 'null'}, '${(miner.serial_number || '').replace(/'/g, "\\'")}')">
                                 <i class="bi bi-ticket-detailed me-2"></i>${getLanguage() === 'en' ? 'Open Ticket' : '创建工单'}
                             </a></li>
-                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="viewMinerTickets(${miner.id})">
+                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="viewMinerTickets(${miner.id}, ${miner.site_id || 'null'}, '${(miner.serial_number || '').replace(/'/g, "\\'")}')">
                                 <i class="bi bi-list-task me-2"></i>${getLanguage() === 'en' ? 'View Tickets' : '查看工单'}
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
@@ -3643,10 +3643,9 @@ function getSelectedMinerIds() {
     return Array.from(document.querySelectorAll('.miner-checkbox:checked')).map(cb => parseInt(cb.value));
 }
 
-function openTicketForMiner(minerId) {
+function openTicketForMiner(minerId, siteId, minerName) {
     const lang = getLanguage();
-    const miner = allMiners.find(m => m.id === minerId);
-    const minerName = miner ? miner.serial_number : `Miner #${minerId}`;
+    minerName = minerName || `Miner #${minerId}`;
     
     const subject = prompt(
         lang === 'en' 
@@ -3669,8 +3668,7 @@ function openTicketForMiner(minerId) {
         body: JSON.stringify({
             subject: subject,
             description: description,
-            miner_id: minerId,
-            site_id: miner ? miner.site_id : null,
+            site_id: siteId,
             priority: 'medium'
         })
     })
@@ -3687,11 +3685,9 @@ function openTicketForMiner(minerId) {
     });
 }
 
-function viewMinerTickets(minerId) {
+function viewMinerTickets(minerId, siteId, minerName) {
     const lang = getLanguage();
-    const miner = allMiners.find(m => m.id === minerId);
-    const minerName = miner ? miner.serial_number : `Miner #${minerId}`;
-    const siteId = miner ? miner.site_id : null;
+    minerName = minerName || `Miner #${minerId}`;
     
     if (!siteId) {
         showToast(lang === 'en' ? 'Unable to find site for this miner' : '无法找到该矿机所属站点', 'error');
