@@ -108,6 +108,22 @@ The architecture emphasizes modularity with page-isolated components and databas
   - Database stamped to baseline_001
   - Documentation: `docs/DATABASE_MIGRATIONS.md`
 
+### 2026-02-02: Miner Management Dropdown Menu Fixes
+- **Miner Status Toggle API** (`POST /hosting/api/miners/{id}/status`)
+  - New endpoint to enable/disable miners
+  - Supports action: 'enable' or 'disable'
+  - Includes site access check for authorization
+  
+- **Ticket Creation Fix**
+  - Changed from page navigation to in-page prompt dialogs
+  - Direct POST to /hosting/api/tickets endpoint
+  - API accepts both 'subject' and 'title' fields
+  
+- **View Tickets Fix**
+  - Changed from page navigation to in-page alert display
+  - Fetches tickets by site_id (HostingTicket model doesn't have miner_id)
+  - Shows ticket list with status, subject, and priority
+
 ### 2026-02-01: Remote Control API Bug Fix
 - **Issue**: mining_site_owner users were getting 500 errors when executing remote control commands (REBOOT, etc.)
 - **Root Cause**: Server process was not restarting properly, causing old code to run
