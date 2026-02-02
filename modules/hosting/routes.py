@@ -722,6 +722,49 @@ def create_ticket():
         logger.error(f"创建工单失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@hosting_bp.route('/api/tickets/<int:ticket_id>/status', methods=['PATCH'])
+@login_required
+@requires_module_access(Module.HOSTING_TICKET)
+def update_ticket_status(ticket_id):
+    """更新工单状态"""
+    try:
+        ticket = HostingTicket.query.get_or_404(ticket_id)
+        
+        if ticket.site_id and not check_site_access(ticket.site_id):
+            return jsonify({
+                'success': False,
+                'error': 'Access denied'
+            }), 403
+        
+        data = request.get_json()
+        new_status = data.get('status')
+        
+        if new_status not in ['open', 'resolved', 'closed', 'pending']:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid status. Must be: open, resolved, closed, or pending'
+            }), 400
+        
+        old_status = ticket.status
+        ticket.status = new_status
+        
+        if new_status == 'resolved' and old_status != 'resolved':
+            ticket.resolved_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'工单状态已更新为 {new_status}',
+            'ticket_id': ticket.id,
+            'old_status': old_status,
+            'new_status': new_status
+        })
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"更新工单状态失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @hosting_bp.route('/api/tickets/<int:ticket_id>', methods=['GET'])
 @login_required
 @requires_module_access(Module.HOSTING_TICKET)

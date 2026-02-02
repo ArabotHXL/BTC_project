@@ -602,11 +602,49 @@ function displayTickets(tickets) {
                         <button class="btn btn-hosting-outline" onclick="viewTicketDetails(${ticket.id})" title="${getLanguage() === 'en' ? 'View Details' : '查看详情'}">
                             <i class="bi bi-eye"></i>
                         </button>
+                        ${ticket.status !== 'resolved' ? `
+                        <button class="btn btn-success" onclick="updateTicketStatus(${ticket.id}, 'resolved')" title="${getLanguage() === 'en' ? 'Mark Resolved' : '标记已解决'}">
+                            <i class="bi bi-check-lg"></i>
+                        </button>
+                        ` : `
+                        <button class="btn btn-warning" onclick="updateTicketStatus(${ticket.id}, 'open')" title="${getLanguage() === 'en' ? 'Reopen' : '重新打开'}">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </button>
+                        `}
                     </div>
                 </td>
             </tr>
         `;
         tbody.insertAdjacentHTML('beforeend', row);
+    });
+}
+
+function updateTicketStatus(ticketId, newStatus) {
+    const lang = getLanguage();
+    const confirmMsg = newStatus === 'resolved' 
+        ? (lang === 'en' ? 'Mark this ticket as resolved?' : '将此工单标记为已解决？')
+        : (lang === 'en' ? 'Reopen this ticket?' : '重新打开此工单？');
+    
+    if (!confirm(confirmMsg)) return;
+    
+    fetch(`/hosting/api/tickets/${ticketId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ status: newStatus })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(lang === 'en' ? 'Ticket status updated' : '工单状态已更新', 'success');
+            loadTickets();
+        } else {
+            showToast(data.error || (lang === 'en' ? 'Failed to update' : '更新失败'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating ticket status:', error);
+        showToast(lang === 'en' ? 'Network error' : '网络错误', 'error');
     });
 }
 
