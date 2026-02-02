@@ -78,6 +78,36 @@ The architecture emphasizes modularity with page-isolated components and databas
 
 ## Recent Changes
 
+### 2026-02-02: P0 Enterprise Features Implementation
+- **Audit Chain Verification Script** (`scripts/verify_audit_chain.py`)
+  - CLI tool to verify hash chain integrity
+  - Outputs PASS/FAIL with broken link details
+  - Supports filtering by site_id and date range
+  
+- **Tenant Isolation Verification Script** (`scripts/verify_tenant_isolation.py`)
+  - Tests RBAC check_site_access function
+  - Verifies customer role cannot access non-owned resources
+  - Supports --rbac-only mode for direct function testing
+  
+- **Telemetry Idempotency Verification Script** (`scripts/verify_telemetry_idempotency.py`)
+  - Tests live table upsert behavior
+  - Tests history table idempotency
+  - Tests out-of-order data handling
+  - Uses unique TEST_MINER_ prefix and cleans up after tests
+  
+- **Evidence Package Service** (`services/evidence_package_service.py`)
+  - Generates evidence packages for SLA reconciliation
+  - Includes downtime analysis, event timelines, audit chain verification
+  - Exports to ZIP with CSV files
+  - API endpoint: GET `/hosting/api/sites/{site_id}/evidence-package`
+  
+- **Alembic Migration System**
+  - `alembic.ini` configuration
+  - `alembic/env.py` with Flask integration
+  - Baseline migration for existing schema
+  - Database stamped to baseline_001
+  - Documentation: `docs/DATABASE_MIGRATIONS.md`
+
 ### 2026-02-01: Remote Control API Bug Fix
 - **Issue**: mining_site_owner users were getting 500 errors when executing remote control commands (REBOOT, etc.)
 - **Root Cause**: Server process was not restarting properly, causing old code to run
