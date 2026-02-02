@@ -9164,3 +9164,74 @@ def get_power_comparison():
     except Exception as e:
         logger.error(f"获取历史对比数据失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/sites/<int:site_id>/evidence-package', methods=['GET'])
+@login_required
+@requires_module_access(Module.HOSTING_RECONCILIATION)
+def download_evidence_package(site_id):
+    """
+    下载托管证据包 (Download Hosting Evidence Package)
+    
+    证据包包含:
+    - 停机分钟统计
+    - 事件时间线
+    - 指标快照
+    - 审计链校验结果
+    
+    Query Parameters:
+    - start_date: 开始日期 (YYYY-MM-DD)
+    - end_date: 结束日期 (YYYY-MM-DD)
+    - format: 输出格式 (json/zip), 默认 zip
+    """
+    from services.evidence_package_service import evidence_package_service
+    from flask import make_response
+    from common.rbac import check_site_access
+    
+    if not check_site_access(site_id):
+        return jsonify({'success': False, 'error': 'Access denied'}), 403
+    
+    try:
+        start_date_str = request.args.get('start_date')
+        end_date_str = request.args.get('end_date')
+        output_format = request.args.get('format', 'zip')
+        
+        if start_date_str:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+        else:
+            start_date = datetime.utcnow() - timedelta(days=30)
+        
+        if end_date_str:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').replace(hour=23, minute=59, second=59)
+        else:
+            end_date = datetime.utcnow()
+        
+        package = evidence_package_service.generate_package(
+            site_id=site_id,
+            start_date=start_date,
+            end_date=end_date,
+            include_audit_verification=True
+        )
+        
+        if output_format == 'json':
+            return jsonify({
+                'success': True,
+                'package': package
+            })
+        else:
+            zip_content = evidence_package_service.export_to_zip(package)
+            
+            site = HostingSite.query.get(site_id)
+            site_name = site.name.replace(' ', '_') if site else f'site_{site_id}'
+            filename = f"evidence_package_{site_name}_{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}.zip"
+            
+            response = make_response(zip_content)
+            response.headers['Content-Type'] = 'application/zip'
+            response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
+    
+    except ValueError as e:
+        return jsonify({'success': False, 'error': f'Invalid date format: {e}'}), 400
+    except Exception as e:
+        logger.error(f"生成证据包失败: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500

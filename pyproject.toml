@@ -69,4 +69,5 @@ dependencies = [
     "uvicorn>=0.40.0",
     "aiofiles>=25.1.0",
     "prometheus-client>=0.24.1",
+    "alembic>=1.18.3",
 ]
