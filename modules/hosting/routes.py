@@ -14,6 +14,7 @@ from common.rbac import (
     Module, Role, requires_module_access, requires_role as rbac_requires_role,
     rbac_manager, normalize_role, get_accessible_site_ids, filter_by_site_access, check_site_access
 )
+from sqlalchemy import or_
 from models import db, HostingSite, HostingMiner, HostingTicket, HostingIncident, HostingUsageRecord, HostingUsageItem, MinerTelemetry, HostingBill, HostingBillItem, HostingMinerOperationLog, HostingOwnerEncryption, MinerModel, SiteElectricityRateHistory
 from api.collector_api import MinerTelemetryLive, MinerCommand, CollectorKey
 from models import CurtailmentPlan, CurtailmentStrategy, CurtailmentExecution
@@ -290,7 +291,12 @@ def get_hosting_overview():
             ).filter(HostingSite.contact_email == user_email).first()
             
             # 获取管理站点ID用于矿机统计
-            managed_site_ids = [s.id for s in HostingSite.query.filter_by(contact_email=user_email).with_entities(HostingSite.id).all()]
+            managed_site_ids = [s.id for s in HostingSite.query.filter(
+                or_(
+                    HostingSite.owner_id == user_id,
+                    HostingSite.contact_email == user_email
+                )
+            ).with_entities(HostingSite.id).all()]
             
             total_sites = site_stats.total or 0
             online_sites = int(site_stats.online or 0)
@@ -879,7 +885,12 @@ def get_client_miners():
             miners = HostingMiner.query.all()
         elif user_role == 'mining_site_owner':
             # 矿场运营方只能查看自己管理站点的矿机
-            managed_sites = HostingSite.query.filter_by(contact_email=user_email).all()
+            managed_sites = HostingSite.query.filter(
+                or_(
+                    HostingSite.owner_id == user_id,
+                    HostingSite.contact_email == user_email
+                )
+            ).all()
             managed_site_ids = [s.id for s in managed_sites]
             if managed_site_ids:
                 miners = HostingMiner.query.filter(HostingMiner.site_id.in_(managed_site_ids)).all()
@@ -930,7 +941,12 @@ def get_client_dashboard():
             stats = base_query.first()
         elif user_role == 'mining_site_owner':
             # 矿场运营方只能查看自己管理站点的矿机
-            managed_sites = HostingSite.query.filter_by(contact_email=user_email).all()
+            managed_sites = HostingSite.query.filter(
+                or_(
+                    HostingSite.owner_id == user_id,
+                    HostingSite.contact_email == user_email
+                )
+            ).all()
             managed_site_ids = [s.id for s in managed_sites]
             if managed_site_ids:
                 stats = base_query.filter(HostingMiner.site_id.in_(managed_site_ids)).first()
@@ -963,7 +979,12 @@ def get_client_dashboard():
         if user_role == 'admin':
             recent_miners_query = HostingMiner.query.order_by(HostingMiner.id.desc()).limit(10).all()
         elif user_role == 'mining_site_owner':
-            managed_sites = HostingSite.query.filter_by(contact_email=user_email).all()
+            managed_sites = HostingSite.query.filter(
+                or_(
+                    HostingSite.owner_id == user_id,
+                    HostingSite.contact_email == user_email
+                )
+            ).all()
             managed_site_ids = [s.id for s in managed_sites]
             if managed_site_ids:
                 recent_miners_query = HostingMiner.query.filter(
@@ -1071,7 +1092,12 @@ def get_client_miner_distribution():
             unknown_count = HostingMiner.query.filter(HostingMiner.site_id == None).count()
         elif user_role == 'mining_site_owner':
             # 矿场运营方只能查看自己管理站点的矿机
-            managed_sites = HostingSite.query.filter_by(contact_email=user_email).all()
+            managed_sites = HostingSite.query.filter(
+                or_(
+                    HostingSite.owner_id == user_id,
+                    HostingSite.contact_email == user_email
+                )
+            ).all()
             managed_site_ids = [s.id for s in managed_sites]
             if managed_site_ids:
                 distribution = base_query.filter(
@@ -1327,7 +1353,12 @@ def get_client_reports():
         if user_role == 'admin':
             miners = HostingMiner.query.all()
         elif user_role == 'mining_site_owner':
-            managed_sites = HostingSite.query.filter_by(contact_email=user_email).all()
+            managed_sites = HostingSite.query.filter(
+                or_(
+                    HostingSite.owner_id == user_id,
+                    HostingSite.contact_email == user_email
+                )
+            ).all()
             managed_site_ids = [s.id for s in managed_sites]
             if managed_site_ids:
                 miners = HostingMiner.query.filter(HostingMiner.site_id.in_(managed_site_ids)).all()
@@ -1519,12 +1550,19 @@ def get_client_reports_chart():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-def _get_user_managed_site_ids(user_email, user_role):
+def _get_user_managed_site_ids(user_email, user_role, user_id=None):
     """获取用户管理的站点ID列表"""
+    if user_id is None:
+        user_id = session.get('user_id')
     if user_role == 'admin':
         sites = HostingSite.query.all()
     else:
-        sites = HostingSite.query.filter_by(contact_email=user_email).all()
+        sites = HostingSite.query.filter(
+            or_(
+                HostingSite.owner_id == user_id,
+                HostingSite.contact_email == user_email
+            )
+        ).all()
     return [s.id for s in sites]
 
 
@@ -1870,7 +1908,12 @@ def get_miners():
             count_query = count_query.filter(HostingMiner.customer_id == user_id)
         elif user_role == 'mining_site_owner':
             user_email = session.get('email', '')
-            managed_sites = HostingSite.query.filter_by(contact_email=user_email).all()
+            managed_sites = HostingSite.query.filter(
+                or_(
+                    HostingSite.owner_id == user_id,
+                    HostingSite.contact_email == user_email
+                )
+            ).all()
             managed_site_ids = [s.id for s in managed_sites]
             if managed_site_ids:
                 count_query = count_query.filter(HostingMiner.site_id.in_(managed_site_ids))
@@ -5702,7 +5745,12 @@ def get_automation_rules():
         
         if user_role not in ['admin', 'owner']:
             if user_role == 'mining_site_owner':
-                site_ids = [s.id for s in HostingSite.query.filter_by(contact_email=user_email).all()]
+                site_ids = [s.id for s in HostingSite.query.filter(
+                    or_(
+                        HostingSite.owner_id == user_id,
+                        HostingSite.contact_email == user_email
+                    )
+                ).all()]
                 query = query.filter(
                     db.or_(
                         AutomationRule.site_id.in_(site_ids),
@@ -8062,7 +8110,13 @@ def kpi_dashboard():
         sites = HostingSite.query.all()
     else:
         if user_email:
-            sites = HostingSite.query.filter_by(contact_email=user_email).all()
+            user_id = session.get('user_id')
+            sites = HostingSite.query.filter(
+                or_(
+                    HostingSite.owner_id == user_id,
+                    HostingSite.contact_email == user_email
+                )
+            ).all()
     
     selected_site_id = request.args.get('site_id', type=int)
     period_days = request.args.get('period', 7, type=int)
@@ -8156,7 +8210,12 @@ def get_power_overview():
         if user_role in ['admin', 'owner']:
             sites = HostingSite.query.all()
         elif user_role == 'mining_site_owner':
-            sites = HostingSite.query.filter_by(contact_email=user_email).all()
+            sites = HostingSite.query.filter(
+                or_(
+                    HostingSite.owner_id == user_id,
+                    HostingSite.contact_email == user_email
+                )
+            ).all()
         else:
             site_ids = db.session.query(db.distinct(HostingMiner.site_id)).filter(
                 HostingMiner.customer_id == user_id
@@ -8266,7 +8325,12 @@ def get_power_consumption():
         if user_role in ['admin', 'owner']:
             sites = HostingSite.query.all()
         elif user_role == 'mining_site_owner':
-            sites = HostingSite.query.filter_by(contact_email=user_email).all()
+            sites = HostingSite.query.filter(
+                or_(
+                    HostingSite.owner_id == user_id,
+                    HostingSite.contact_email == user_email
+                )
+            ).all()
         else:
             site_ids = db.session.query(db.distinct(HostingMiner.site_id)).filter(
                 HostingMiner.customer_id == user_id
@@ -8323,11 +8387,17 @@ def get_power_rates():
     try:
         user_role = session.get('role', 'guest')
         user_email = session.get('email', '')
+        user_id = session.get('user_id')
         
         if user_role in ['admin', 'owner']:
             sites = HostingSite.query.all()
         elif user_role == 'mining_site_owner':
-            sites = HostingSite.query.filter_by(contact_email=user_email).all()
+            sites = HostingSite.query.filter(
+                or_(
+                    HostingSite.owner_id == user_id,
+                    HostingSite.contact_email == user_email
+                )
+            ).all()
         else:
             return jsonify({'success': False, 'error': 'Access denied'}), 403
         
@@ -8467,7 +8537,12 @@ def get_curtailment_savings():
         if user_role in ['admin', 'owner']:
             sites = HostingSite.query.all()
         elif user_role == 'mining_site_owner':
-            sites = HostingSite.query.filter_by(contact_email=user_email).all()
+            sites = HostingSite.query.filter(
+                or_(
+                    HostingSite.owner_id == user_id,
+                    HostingSite.contact_email == user_email
+                )
+            ).all()
         else:
             return jsonify({'success': True, 'data': {'total_savings': 0, 'executions': []}})
         
@@ -8531,7 +8606,12 @@ def get_power_bills():
         
         if user_role not in ['admin', 'owner']:
             if user_role == 'mining_site_owner':
-                site_ids = [s.id for s in HostingSite.query.filter_by(contact_email=user_email).all()]
+                site_ids = [s.id for s in HostingSite.query.filter(
+                    or_(
+                        HostingSite.owner_id == user_id,
+                        HostingSite.contact_email == user_email
+                    )
+                ).all()]
                 query = query.filter(HostingBill.site_id.in_(site_ids))
             else:
                 query = query.filter(HostingBill.customer_id == user_id)
@@ -8692,6 +8772,7 @@ def get_power_alerts():
     try:
         user_role = session.get('role', 'guest')
         user_email = session.get('email', '')
+        user_id = session.get('user_id')
         lang = session.get('language', 'zh')
         
         alerts = []
@@ -8700,7 +8781,12 @@ def get_power_alerts():
         if user_role in ['admin', 'owner']:
             sites = HostingSite.query.all()
         elif user_role == 'mining_site_owner':
-            sites = HostingSite.query.filter_by(contact_email=user_email).all()
+            sites = HostingSite.query.filter(
+                or_(
+                    HostingSite.owner_id == user_id,
+                    HostingSite.contact_email == user_email
+                )
+            ).all()
         else:
             return jsonify({'success': True, 'alerts': []})
         
@@ -8757,7 +8843,12 @@ def get_power_contracts():
         if user_role in ['admin', 'owner']:
             sites = HostingSite.query.all()
         elif user_role == 'mining_site_owner':
-            sites = HostingSite.query.filter_by(contact_email=user_email).all()
+            sites = HostingSite.query.filter(
+                or_(
+                    HostingSite.owner_id == user_id,
+                    HostingSite.contact_email == user_email
+                )
+            ).all()
         else:
             return jsonify({'success': True, 'contracts': []})
         
@@ -8805,7 +8896,12 @@ def get_carbon_emissions():
         if user_role in ['admin', 'owner']:
             sites = HostingSite.query.all()
         elif user_role == 'mining_site_owner':
-            sites = HostingSite.query.filter_by(contact_email=user_email).all()
+            sites = HostingSite.query.filter(
+                or_(
+                    HostingSite.owner_id == user_id,
+                    HostingSite.contact_email == user_email
+                )
+            ).all()
         else:
             site_ids = db.session.query(db.distinct(HostingMiner.site_id)).filter(
                 HostingMiner.customer_id == user_id
@@ -9250,7 +9346,12 @@ def get_power_comparison():
         if user_role in ['admin', 'owner']:
             sites = HostingSite.query.all()
         elif user_role == 'mining_site_owner':
-            sites = HostingSite.query.filter_by(contact_email=user_email).all()
+            sites = HostingSite.query.filter(
+                or_(
+                    HostingSite.owner_id == user_id,
+                    HostingSite.contact_email == user_email
+                )
+            ).all()
         else:
             site_ids = db.session.query(db.distinct(HostingMiner.site_id)).filter(
                 HostingMiner.customer_id == user_id
