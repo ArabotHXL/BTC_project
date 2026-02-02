@@ -873,18 +873,20 @@ def get_client_assets():
 @login_required
 @requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def get_client_miners():
-    """获取客户矿机列表"""
+    """获取客户矿机列表（带分页）"""
     try:
         user_id = session.get('user_id')
         user_role = session.get('role', 'guest')
         user_email = session.get('email', '')
         
-        # 权限控制 - 角色级别数据隔离
+        # 获取分页参数
+        page = request.args.get('page', 1, type=int)
+        per_page = min(request.args.get('per_page', 20, type=int), 100)  # 最大100条
+        
+        # 构建基础查询
         if user_role == 'admin':
-            # 管理员可以查看所有矿机
-            miners = HostingMiner.query.all()
+            base_query = HostingMiner.query
         elif user_role == 'mining_site_owner':
-            # 矿场运营方只能查看自己管理站点的矿机
             managed_sites = HostingSite.query.filter(
                 or_(
                     HostingSite.owner_id == user_id,
@@ -893,12 +895,25 @@ def get_client_miners():
             ).all()
             managed_site_ids = [s.id for s in managed_sites]
             if managed_site_ids:
-                miners = HostingMiner.query.filter(HostingMiner.site_id.in_(managed_site_ids)).all()
+                base_query = HostingMiner.query.filter(HostingMiner.site_id.in_(managed_site_ids))
             else:
-                miners = []
+                return jsonify({
+                    'success': True, 
+                    'miners': [],
+                    'stats': {'total': 0, 'active': 0, 'offline': 0, 'pending': 0},
+                    'pagination': {'page': page, 'per_page': per_page, 'total': 0, 'pages': 0}
+                })
         else:
-            # owner/customer 只能查看自己名下的矿机
-            miners = HostingMiner.query.filter_by(customer_id=user_id).all()
+            base_query = HostingMiner.query.filter_by(customer_id=user_id)
+        
+        # 获取总数和分页数据
+        total = base_query.count()
+        miners = base_query.order_by(HostingMiner.id.desc()).offset((page - 1) * per_page).limit(per_page).all()
+        
+        # 统计各状态数量
+        active_count = base_query.filter(HostingMiner.status == 'active').count()
+        offline_count = base_query.filter(HostingMiner.status == 'offline').count()
+        pending_count = base_query.filter(HostingMiner.status == 'pending').count()
         
         miners_data = []
         for miner in miners:
@@ -906,7 +921,22 @@ def get_client_miners():
             miner_data['site_name'] = miner.site.name if miner.site else 'Unknown'
             miners_data.append(miner_data)
         
-        return jsonify({'success': True, 'miners': miners_data})
+        return jsonify({
+            'success': True, 
+            'miners': miners_data,
+            'stats': {
+                'total': total,
+                'active': active_count,
+                'offline': offline_count,
+                'pending': pending_count
+            },
+            'pagination': {
+                'page': page,
+                'per_page': per_page,
+                'total': total,
+                'pages': (total + per_page - 1) // per_page
+            }
+        })
     except Exception as e:
         logger.error(f"获取客户矿机失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500

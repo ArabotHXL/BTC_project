@@ -129,6 +129,19 @@ The architecture emphasizes modularity with page-isolated components and databas
   - Ticket status management (mark resolved/reopen)
   - API: PATCH `/hosting/api/tickets/{id}/status`
 
+### 2026-02-02: Site Access & Pagination Fixes
+- **Critical Site Access Bug Fix**
+  - Updated 19 API endpoints to check BOTH owner_id OR contact_email
+  - Mining site owners now correctly see all their sites via either identifier
+  - Affected endpoints: /api/sites, /api/client/miners, /api/client/dashboard, etc.
+
+- **Client Miners Pagination** (`/hosting/api/client/miners`)
+  - Added pagination support for 6500+ miners (max 100 per page)
+  - Returns stats: total, active, offline, pending counts
+  - Returns pagination metadata: page, per_page, total, pages
+  - Frontend pagination UI with Previous/Next navigation
+  - Edge case handling for pages <= 1
+
 ### 2026-02-02: Miner Management Dropdown Menu Fixes
 - **Miner Status Toggle API** (`POST /hosting/api/miners/{id}/status`)
   - New endpoint to enable/disable miners
