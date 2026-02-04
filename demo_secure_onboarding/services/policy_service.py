@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 import sys
 sys.path.insert(0, '..')
-from db import Actor, Site, Miner, Device
+from ..db import Actor, Site, Miner, Device
 
 
 ROLE_HIERARCHY = {

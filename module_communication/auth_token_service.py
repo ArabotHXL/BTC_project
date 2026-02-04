@@ -10,9 +10,14 @@ from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, g
 from functools import wraps
 
-from common.auth import jwt_manager, api_key_manager, auth_middleware
-from common.config import config
-from common.utils import format_error_response, format_success_response, rate_limiter
+try:
+    from .common.auth import jwt_manager, api_key_manager, auth_middleware
+    from .common.config import config
+    from .common.utils import format_error_response, format_success_response, rate_limiter
+except ImportError:
+    from common.auth import jwt_manager, api_key_manager, auth_middleware
+    from common.config import config
+    from common.utils import format_error_response, format_success_response, rate_limiter
 
 logger = logging.getLogger(__name__)
 

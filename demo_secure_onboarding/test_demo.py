@@ -6,17 +6,17 @@ import json
 import secrets
 from datetime import datetime, timedelta
 
-from db import init_db, get_session, Tenant, Actor, Site, Miner, Device, ChangeRequest, AuditEvent
-from services.policy_service import evaluate, filter_sites_by_abac
-from services.approval_service import create_change_request, approve_change_request, check_cr_expiry
-from services.credential_service import (
+from .db import init_db, get_session, Tenant, Actor, Site, Miner, Device, ChangeRequest, AuditEvent
+from .services.policy_service import evaluate, filter_sites_by_abac
+from .services.approval_service import create_change_request, approve_change_request, check_cr_expiry
+from .services.credential_service import (
     store_credential_mode1, store_credential_mode2, store_credential_mode3,
     reveal_credential_mode1, reveal_credential_mode2, get_display_credential,
     validate_anti_rollback
 )
-from services.envelope_kms_service import generate_site_dek, wrap_dek, unwrap_dek
-from services.audit_service import log_audit_event, verify_audit_chain, get_recent_events
-from services.discovery_service import simulate_discovery
+from .services.envelope_kms_service import generate_site_dek, wrap_dek, unwrap_dek
+from .services.audit_service import log_audit_event, verify_audit_chain, get_recent_events
+from .services.discovery_service import simulate_discovery
 
 
 _test_session = None
