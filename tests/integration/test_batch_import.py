@@ -4,6 +4,8 @@ HashInsight Enterprise - Batch Import Integration Tests
 """
 
 import pytest
+
+pytest.importorskip("flask_sqlalchemy")
 import csv
 import io
 from batch.batch_import_manager import BatchImportManager

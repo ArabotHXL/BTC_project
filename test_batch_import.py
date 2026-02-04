@@ -5,6 +5,10 @@ Test Batch Import Functionality
 import sys
 import os
 
+import pytest
+
+pytest.importorskip("flask_sqlalchemy")
+
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 

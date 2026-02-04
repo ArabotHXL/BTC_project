@@ -10,9 +10,9 @@ from datetime import datetime, timedelta
 from functools import wraps
 from dataclasses import dataclass, field
 
-from common.config import config
-from common.utils import CircuitBreaker, format_error_response, format_success_response
-from service_registry import service_registry
+from .common.config import config
+from .common.utils import CircuitBreaker, format_error_response, format_success_response
+from .service_registry import service_registry
 
 logger = logging.getLogger(__name__)
 

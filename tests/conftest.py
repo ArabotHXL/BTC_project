@@ -7,6 +7,7 @@ Provides pytest fixtures for Flask integration testing with in-memory SQLite.
 
 import os
 import sys
+from pathlib import Path
 import uuid
 import pytest
 from datetime import datetime, timedelta
@@ -14,6 +15,10 @@ from datetime import datetime, timedelta
 os.environ['SESSION_SECRET'] = 'test-secret-key-for-testing-only'
 os.environ['DATABASE_URL'] = 'sqlite:///:memory:'
 os.environ['TESTING'] = 'true'
+
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 
 @pytest.fixture(scope='function')

@@ -4,6 +4,8 @@ HashInsight Enterprise - Mining Calculator Unit Tests
 """
 
 import pytest
+
+pytest.importorskip("flask_sqlalchemy")
 from analytics.roi_heatmap_generator import ROIHeatmapGenerator
 
 

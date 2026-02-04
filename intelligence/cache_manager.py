@@ -24,7 +24,40 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from functools import wraps
 from typing import Any, Callable, Optional, Dict, List, Union
-from flask_caching import Cache
+try:
+    from flask_caching import Cache
+except ImportError:  # pragma: no cover - fallback for environments without Flask-Caching
+    class Cache:
+        """Minimal in-memory cache fallback when Flask-Caching is unavailable."""
+
+        def __init__(self, app=None):
+            self._store = {}
+            if app is not None:
+                self.init_app(app)
+
+        def init_app(self, app):  # noqa: D401 - simple cache needs no config
+            """No-op initializer for compatibility."""
+            return None
+
+        def get(self, key):
+            return self._store.get(key)
+
+        def set(self, key, value, timeout=None):
+            self._store[key] = value
+            return True
+
+        def delete(self, key):
+            self._store.pop(key, None)
+            return True
+
+        def delete_many(self, *keys):
+            for key in keys:
+                self._store.pop(key, None)
+            return True
+
+        def clear(self):
+            self._store.clear()
+            return True
 
 logger = logging.getLogger(__name__)
 

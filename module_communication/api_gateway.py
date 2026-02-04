@@ -10,10 +10,10 @@ from urllib.parse import urljoin, urlparse
 from flask import Flask, request, jsonify, Response
 import requests
 
-from common.config import config
-from common.auth import auth_middleware, require_auth
-from common.utils import format_error_response, format_success_response, rate_limiter, CircuitBreaker
-from service_registry import service_registry, load_balancer
+from .common.config import config
+from .common.auth import auth_middleware, require_auth
+from .common.utils import format_error_response, format_success_response, rate_limiter, CircuitBreaker
+from .service_registry import service_registry, load_balancer
 
 logger = logging.getLogger(__name__)
 

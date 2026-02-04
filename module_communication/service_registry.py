@@ -11,8 +11,8 @@ from datetime import datetime, timedelta
 from dataclasses import dataclass, field
 from flask import Flask, request, jsonify
 
-from common.config import config
-from common.utils import health_checker, format_error_response, format_success_response
+from .common.config import config
+from .common.utils import health_checker, format_error_response, format_success_response
 
 logger = logging.getLogger(__name__)
 
