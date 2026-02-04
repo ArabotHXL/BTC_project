@@ -927,6 +927,62 @@ def get_client_miners():
         logger.error(f"获取客户矿机失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@hosting_bp.route('/api/client/miners/<int:miner_id>', methods=['GET'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
+def get_client_miner_detail(miner_id):
+    """获取客户矿机详情"""
+    try:
+        user_id = session.get('user_id')
+        user_role = session.get('role', 'guest')
+        user_email = session.get('email', '')
+        
+        miner = HostingMiner.query.get(miner_id)
+        if not miner:
+            return jsonify({'success': False, 'error': 'Miner not found'}), 404
+        
+        has_access = False
+        if user_role == 'admin':
+            has_access = True
+        elif user_role == 'mining_site_owner':
+            if miner.customer_id == user_id:
+                has_access = True
+            else:
+                site = HostingSite.query.get(miner.site_id)
+                if site and (site.owner_id == user_id or site.contact_email == user_email):
+                    has_access = True
+        elif miner.customer_id == user_id:
+            has_access = True
+        
+        if not has_access:
+            return jsonify({'success': False, 'error': 'Access denied'}), 403
+        
+        site = HostingSite.query.get(miner.site_id) if miner.site_id else None
+        
+        return jsonify({
+            'success': True,
+            'device': {
+                'id': miner.id,
+                'serial_number': miner.serial_number,
+                'miner_model': miner.miner_model,
+                'site_name': site.name if site else None,
+                'status': miner.status,
+                'hashrate': miner.actual_hashrate,
+                'power': miner.actual_power,
+                'temperature': miner.temperature_avg,
+                'fan_speed': miner.fan_avg,
+                'uptime': (miner.uptime_seconds // 3600) if miner.uptime_seconds else 0,
+                'daily_revenue': 0,
+                'ip_address': miner.ip_address,
+                'pool_url': miner.pool_url,
+                'worker_name': miner.pool_worker,
+                'last_seen': miner.last_seen.isoformat() if miner.last_seen else None
+            }
+        })
+    except Exception as e:
+        logger.error(f"获取矿机详情失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @hosting_bp.route('/api/client/dashboard', methods=['GET'])
 @login_required
 @requires_module_access(Module.HOSTING_STATUS_MONITOR)
