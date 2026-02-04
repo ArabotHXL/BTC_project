@@ -23,23 +23,23 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from db import (
+from .db import (
     init_db, get_db, get_session,
     Tenant, Actor, Site, Miner, Device, ChangeRequest, AuditEvent
 )
-from services.policy_service import evaluate, filter_sites_by_abac, filter_miners_by_abac, check_device_access
-from services.audit_service import log_audit_event, verify_audit_chain, get_recent_events
-from services.credential_service import (
+from .services.policy_service import evaluate, filter_sites_by_abac, filter_miners_by_abac, check_device_access
+from .services.audit_service import log_audit_event, verify_audit_chain, get_recent_events
+from .services.credential_service import (
     get_display_credential, store_credential_mode1, store_credential_mode2, 
     store_credential_mode3, reveal_credential_mode1, reveal_credential_mode2,
     reveal_credential_mode3, validate_anti_rollback, migrate_credential
 )
-from services.envelope_kms_service import generate_site_dek, wrap_dek, compute_fingerprint
-from services.approval_service import (
+from .services.envelope_kms_service import generate_site_dek, wrap_dek, compute_fingerprint
+from .services.approval_service import (
     create_change_request, approve_change_request, reject_change_request,
     check_cr_expiry, get_pending_changes, get_all_changes
 )
-from services.discovery_service import simulate_discovery, real_discovery, create_credential_blob
+from .services.discovery_service import simulate_discovery, real_discovery, create_credential_blob
 
 app = FastAPI(title="HashInsight Secure Miner Onboarding Demo")
 

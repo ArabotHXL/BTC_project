@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 import sys
 sys.path.insert(0, '..')
-from db import AuditEvent
+from ..db import AuditEvent
 
 
 def canonical_json(obj: Dict) -> str:

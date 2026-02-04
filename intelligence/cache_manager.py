@@ -24,7 +24,37 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from functools import wraps
 from typing import Any, Callable, Optional, Dict, List, Union
-from flask_caching import Cache
+try:
+    from flask_caching import Cache
+except ImportError:  # pragma: no cover - fallback for environments without flask_caching
+    Cache = None
+
+
+class SimpleCache:
+    """Minimal in-memory cache fallback when Flask-Caching isn't available."""
+
+    def __init__(self, app=None):
+        self._store: Dict[str, Any] = {}
+
+    def get(self, key: str) -> Optional[Any]:
+        return self._store.get(key)
+
+    def set(self, key: str, value: Any, timeout: Optional[int] = None) -> bool:
+        self._store[key] = value
+        return True
+
+    def delete(self, key: str) -> bool:
+        self._store.pop(key, None)
+        return True
+
+    def delete_many(self, *keys: str) -> bool:
+        for key in keys:
+            self._store.pop(key, None)
+        return True
+
+    def clear(self) -> bool:
+        self._store.clear()
+        return True
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +125,12 @@ class IntelligenceCacheManager:
         app : Flask
             Flask application instance
         """
+        if Cache is None:
+            # Keep cache-backed code paths usable in constrained test environments.
+            logger.warning("flask_caching not installed; using SimpleCache fallback")
+            self.cache = SimpleCache(app)
+            return
+
         redis_url = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
         
         cache_config = {

@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 import sys
 sys.path.insert(0, '..')
-from db import ChangeRequest, Actor, Site, Miner, Device
+from ..db import ChangeRequest, Actor, Site, Miner, Device
 from .policy_service import evaluate, can_approve
 from .audit_service import log_audit_event
 
