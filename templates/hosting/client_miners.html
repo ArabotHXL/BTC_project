@@ -272,6 +272,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 let currentPage = 1;
 const perPage = 20;
+let cachedMiners = {};  // Cache miners by ID for KB diagnosis
 
 function loadMiners(page = 1, filters = {}) {
     const queryParams = new URLSearchParams({
@@ -297,6 +298,9 @@ function loadMiners(page = 1, filters = {}) {
 function displayMiners(miners) {
     const tbody = document.querySelector('#miners-table tbody');
     tbody.innerHTML = '';
+    
+    // Cache miners for KB diagnosis (avoid extra fetch calls)
+    miners.forEach(m => { cachedMiners[m.id] = m; });
     
     if (miners.length === 0) {
         tbody.innerHTML = `
@@ -661,52 +665,50 @@ function showKBDiagnosis(minerId, siteId) {
     const lang = getLanguage();
     container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-info"></div><p class="mt-2">' + (lang === 'en' ? 'Analyzing with Knowledge Base...' : '正在使用知识库分析...') + '</p></div>';
     
-    // First fetch miner data
-    fetch(`/hosting/api/client/miners/${minerId}`)
-        .then(r => r.json())
-        .then(minerData => {
-            if (!minerData.success) {
-                throw new Error(lang === 'en' ? 'Failed to fetch miner data' : '获取矿机数据失败');
-            }
-            
-            const device = minerData.device;
-            const brand = (device.miner_model || '').toLowerCase().includes('whatsminer') ? 'WhatsMiner' : 
-                          (device.miner_model || '').toLowerCase().includes('avalon') ? 'Avalon' : 'Bitmain';
-            
-            // Build diagnostic logs from status
-            const logs = [];
-            if (device.status === 'offline') logs.push('Miner offline, ERROR_POWER_LOST');
-            if (device.status === 'error') logs.push('Device error detected');
-            if ((device.temperature || 0) > 80) logs.push(`High temperature: ${device.temperature}°C`);
-            if ((device.hashrate || 0) < 10) logs.push(`Low hashrate: ${device.hashrate} TH/s`);
-            
-            const metrics = {
-                uptime_sec: (device.uptime || 0) * 3600,
-                temperature_avg: device.temperature || 0,
-                hashrate_current: device.hashrate || 0,
-                fan_avg: device.fan_speed || 0
-            };
-            
-            return fetch('/api/kb/diagnose', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    miner_id: String(minerId),
-                    model_id: device.miner_model || 'generic_asic_miner',
-                    brand: brand,
-                    timestamp: new Date().toISOString(),
-                    logs: logs,
-                    metrics: metrics
-                })
-            });
+    // Use cached miner data from table (no extra fetch needed)
+    const device = cachedMiners[minerId];
+    if (!device) {
+        container.innerHTML = '<div class="alert alert-warning"><i class="bi bi-exclamation-circle me-2"></i>' + (lang === 'en' ? 'Miner data not found. Please refresh the page.' : '未找到矿机数据，请刷新页面。') + '</div>';
+        return;
+    }
+    
+    const brand = (device.miner_model || '').toLowerCase().includes('whatsminer') ? 'WhatsMiner' : 
+                  (device.miner_model || '').toLowerCase().includes('avalon') ? 'Avalon' : 'Bitmain';
+    
+    // Build diagnostic logs from status
+    const logs = [];
+    if (device.status === 'offline') logs.push('Miner offline, ERROR_POWER_LOST');
+    if (device.status === 'error') logs.push('Device error detected');
+    if ((device.temperature || 0) > 80) logs.push(`High temperature: ${device.temperature}°C`);
+    if ((device.hashrate || 0) < 10) logs.push(`Low hashrate: ${device.hashrate} TH/s`);
+    
+    const metrics = {
+        uptime_sec: (device.uptime || 0) * 3600,
+        temperature_avg: device.temperature || 0,
+        hashrate_current: device.hashrate || 0,
+        fan_avg: device.fan_speed || 0
+    };
+    
+    // Only fetch call needed: KB diagnosis API (specialized, allowed for diagnosis like charts)
+    fetch('/api/kb/diagnose', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            miner_id: String(minerId),
+            model_id: device.miner_model || 'generic_asic_miner',
+            brand: brand,
+            timestamp: new Date().toISOString(),
+            logs: logs,
+            metrics: metrics
         })
-        .then(r => r.json())
-        .then(kbResult => {
-            container.innerHTML = renderKBResult(kbResult, lang);
-        })
-        .catch(err => {
-            container.innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>' + (lang === 'en' ? 'Diagnosis failed: ' : '诊断失败: ') + err.message + '</div>';
-        });
+    })
+    .then(r => r.json())
+    .then(kbResult => {
+        container.innerHTML = renderKBResult(kbResult, lang);
+    })
+    .catch(err => {
+        container.innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>' + (lang === 'en' ? 'Diagnosis failed: ' : '诊断失败: ') + err.message + '</div>';
+    });
 }
 
 function renderKBResult(kbResult, lang) {
@@ -716,8 +718,8 @@ function renderKBResult(kbResult, lang) {
         html += '<div class="alert alert-info"><i class="bi bi-check-circle me-2"></i>' + 
                 (lang === 'en' ? 'No issues detected. Device appears healthy.' : '未检测到问题，设备状态正常。') + '</div>';
         
-        // Show prevention tips anyway
-        if (kbResult.prevention) {
+        // Show prevention tips anyway if available
+        if (kbResult.prevention && kbResult.prevention.checks && kbResult.prevention.checks.length > 0) {
             html += '<div class="card bg-dark border-warning mt-3">';
             html += '<div class="card-header" style="background: linear-gradient(135deg, #ffc107, #e0a800); color: #000;"><i class="bi bi-shield-check me-2"></i>' + (lang === 'en' ? 'Preventive Maintenance Tips' : '预防性维护建议') + '</div>';
             html += '<div class="card-body"><ul class="small mb-0">';
@@ -770,9 +772,11 @@ function renderKBResult(kbResult, lang) {
             html += '</ul></small></div>';
         }
         
-        html += '<div class="mb-2"><strong>' + (lang === 'en' ? 'Steps:' : '操作步骤:') + '</strong><ol class="small mb-0">';
-        playbook.steps.forEach(s => { html += '<li>' + s + '</li>'; });
-        html += '</ol></div>';
+        if (playbook.steps && playbook.steps.length > 0) {
+            html += '<div class="mb-2"><strong>' + (lang === 'en' ? 'Steps:' : '操作步骤:') + '</strong><ol class="small mb-0">';
+            playbook.steps.forEach(s => { html += '<li>' + s + '</li>'; });
+            html += '</ol></div>';
+        }
         
         if (playbook.verification && playbook.verification.length > 0) {
             html += '<div class="mt-2"><small class="text-success"><strong><i class="bi bi-check-circle me-1"></i>' + (lang === 'en' ? 'Verification:' : '验证点:') + '</strong> ' + playbook.verification.join('; ') + '</small></div>';
@@ -781,7 +785,7 @@ function renderKBResult(kbResult, lang) {
     }
     
     // Prevention
-    if (prevention && prevention.checks) {
+    if (prevention && prevention.checks && prevention.checks.length > 0) {
         html += '<div class="card bg-dark border-warning">';
         html += '<div class="card-header" style="background: linear-gradient(135deg, #ffc107, #e0a800); color: #000;"><i class="bi bi-shield-check me-2"></i>' + (lang === 'en' ? 'Prevention' : '预防措施') + '</div>';
         html += '<div class="card-body"><ul class="small mb-0">';
