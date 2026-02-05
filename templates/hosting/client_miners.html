@@ -233,6 +233,24 @@
     </div>
 </div>
 
+<!-- KB诊断模态框 -->
+<div class="modal fade" id="kbDiagnosisModal" tabindex="-1" aria-labelledby="kbDiagnosisModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content bg-dark">
+            <div class="modal-header" style="background: linear-gradient(135deg, #17a2b8, #138496); color: #fff;">
+                <h5 class="modal-title" id="kbDiagnosisModalLabel">
+                    <i class="bi bi-journal-medical me-2"></i>
+                    <span data-i18n="kb_diagnosis">{% if current_lang == 'en' %}KB Repair Guide{% else %}KB维修指南{% endif %}</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="kb-diagnosis-content">
+                <div class="text-center py-5"><div class="spinner-border text-info"></div><p class="mt-2">分析中...</p></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -314,6 +332,9 @@ function displayMiners(miners) {
                     <div class="btn-group btn-group-sm" role="group">
                         <button class="btn btn-hosting-outline" onclick="showDeviceDetail(${miner.id})" data-i18n-title="hosting.view_details" title="${getLanguage() === 'en' ? 'View Details' : '查看详情'}">
                             <i class="bi bi-eye"></i>
+                        </button>
+                        <button class="btn btn-hosting-outline" onclick="showKBDiagnosis(${miner.id}, ${miner.site_id || 0})" data-i18n-title="hosting.kb_diagnosis" title="${getLanguage() === 'en' ? 'KB Diagnosis' : 'KB诊断'}">
+                            <i class="bi bi-journal-medical"></i>
                         </button>
                         <button class="btn btn-hosting-outline" onclick="restartDevice(${miner.id})" data-i18n-title="hosting.restart" title="${getLanguage() === 'en' ? 'Restart' : '重启'}">
                             <i class="bi bi-arrow-clockwise"></i>
@@ -630,6 +651,145 @@ function getLanguage() {
 
 function showToast(message, type) {
     console.log(`[${type.toUpperCase()}] ${message}`);
+}
+
+// ===== KB Diagnosis Integration =====
+function showKBDiagnosis(minerId, siteId) {
+    const modal = new bootstrap.Modal(document.getElementById('kbDiagnosisModal'));
+    modal.show();
+    const container = document.getElementById('kb-diagnosis-content');
+    const lang = getLanguage();
+    container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-info"></div><p class="mt-2">' + (lang === 'en' ? 'Analyzing with Knowledge Base...' : '正在使用知识库分析...') + '</p></div>';
+    
+    // First fetch miner data
+    fetch(`/hosting/api/client/miners/${minerId}`)
+        .then(r => r.json())
+        .then(minerData => {
+            if (!minerData.success) {
+                throw new Error(lang === 'en' ? 'Failed to fetch miner data' : '获取矿机数据失败');
+            }
+            
+            const device = minerData.device;
+            const brand = (device.miner_model || '').toLowerCase().includes('whatsminer') ? 'WhatsMiner' : 
+                          (device.miner_model || '').toLowerCase().includes('avalon') ? 'Avalon' : 'Bitmain';
+            
+            // Build diagnostic logs from status
+            const logs = [];
+            if (device.status === 'offline') logs.push('Miner offline, ERROR_POWER_LOST');
+            if (device.status === 'error') logs.push('Device error detected');
+            if ((device.temperature || 0) > 80) logs.push(`High temperature: ${device.temperature}°C`);
+            if ((device.hashrate || 0) < 10) logs.push(`Low hashrate: ${device.hashrate} TH/s`);
+            
+            const metrics = {
+                uptime_sec: (device.uptime || 0) * 3600,
+                temperature_avg: device.temperature || 0,
+                hashrate_current: device.hashrate || 0,
+                fan_avg: device.fan_speed || 0
+            };
+            
+            return fetch('/api/kb/diagnose', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    miner_id: String(minerId),
+                    model_id: device.miner_model || 'generic_asic_miner',
+                    brand: brand,
+                    timestamp: new Date().toISOString(),
+                    logs: logs,
+                    metrics: metrics
+                })
+            });
+        })
+        .then(r => r.json())
+        .then(kbResult => {
+            container.innerHTML = renderKBResult(kbResult, lang);
+        })
+        .catch(err => {
+            container.innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>' + (lang === 'en' ? 'Diagnosis failed: ' : '诊断失败: ') + err.message + '</div>';
+        });
+}
+
+function renderKBResult(kbResult, lang) {
+    let html = '';
+    
+    if (!kbResult.success || !kbResult.selected) {
+        html += '<div class="alert alert-info"><i class="bi bi-check-circle me-2"></i>' + 
+                (lang === 'en' ? 'No issues detected. Device appears healthy.' : '未检测到问题，设备状态正常。') + '</div>';
+        
+        // Show prevention tips anyway
+        if (kbResult.prevention) {
+            html += '<div class="card bg-dark border-warning mt-3">';
+            html += '<div class="card-header" style="background: linear-gradient(135deg, #ffc107, #e0a800); color: #000;"><i class="bi bi-shield-check me-2"></i>' + (lang === 'en' ? 'Preventive Maintenance Tips' : '预防性维护建议') + '</div>';
+            html += '<div class="card-body"><ul class="small mb-0">';
+            kbResult.prevention.checks.forEach(c => { html += '<li>' + c + '</li>'; });
+            html += '</ul></div></div>';
+        }
+        return html;
+    }
+    
+    const sel = kbResult.selected;
+    const playbook = kbResult.playbook;
+    const prevention = kbResult.prevention;
+    
+    // Confidence badge
+    const confPct = Math.round(kbResult.confidence * 100);
+    const confClass = confPct >= 80 ? 'success' : confPct >= 50 ? 'warning' : 'secondary';
+    
+    // Main diagnosis card
+    html += '<div class="card bg-dark border-danger mb-3">';
+    html += '<div class="card-header d-flex justify-content-between align-items-center bg-danger text-white">';
+    html += '<span><i class="bi bi-exclamation-triangle me-2"></i>' + (lang === 'en' ? 'Issue Detected' : '检测到问题') + '</span>';
+    html += '<span class="badge bg-light text-dark">' + confPct + '% ' + (lang === 'en' ? 'Confidence' : '置信度') + '</span>';
+    html += '</div>';
+    html += '<div class="card-body">';
+    
+    // Fault title
+    html += '<h5 class="text-warning mb-2">' + sel.title + '</h5>';
+    html += '<div class="mb-2"><span class="badge bg-' + (sel.severity === 'critical' ? 'danger' : sel.severity === 'high' ? 'warning' : 'info') + ' me-2">' + sel.severity.toUpperCase() + '</span>';
+    html += '<span class="badge bg-secondary">' + sel.category + '</span></div>';
+    
+    // Evidence
+    if (sel.reasons && sel.reasons.length > 0) {
+        html += '<div class="mb-2"><small class="text-muted">' + (lang === 'en' ? 'Evidence:' : '匹配证据:') + '</small><ul class="mb-0 small">';
+        sel.reasons.forEach(r => { html += '<li class="text-success">' + r + '</li>'; });
+        html += '</ul></div>';
+    }
+    html += '</div></div>';
+    
+    // Playbook (SOP)
+    if (playbook) {
+        html += '<div class="card bg-dark border-success mb-3">';
+        html += '<div class="card-header bg-success text-white"><i class="bi bi-journal-check me-2"></i>' + (lang === 'en' ? 'Repair SOP' : '维修SOP') + '</div>';
+        html += '<div class="card-body">';
+        html += '<h6 class="text-info">' + playbook.title + '</h6>';
+        html += '<p class="small text-muted mb-2">' + playbook.goal + '</p>';
+        
+        if (playbook.safety && playbook.safety.length > 0) {
+            html += '<div class="alert alert-danger py-2 mb-2"><small><strong><i class="bi bi-shield-exclamation me-1"></i>' + (lang === 'en' ? 'Safety Warning:' : '安全警告:') + '</strong><ul class="mb-0 mt-1">';
+            playbook.safety.forEach(s => { html += '<li>' + s + '</li>'; });
+            html += '</ul></small></div>';
+        }
+        
+        html += '<div class="mb-2"><strong>' + (lang === 'en' ? 'Steps:' : '操作步骤:') + '</strong><ol class="small mb-0">';
+        playbook.steps.forEach(s => { html += '<li>' + s + '</li>'; });
+        html += '</ol></div>';
+        
+        if (playbook.verification && playbook.verification.length > 0) {
+            html += '<div class="mt-2"><small class="text-success"><strong><i class="bi bi-check-circle me-1"></i>' + (lang === 'en' ? 'Verification:' : '验证点:') + '</strong> ' + playbook.verification.join('; ') + '</small></div>';
+        }
+        html += '</div></div>';
+    }
+    
+    // Prevention
+    if (prevention && prevention.checks) {
+        html += '<div class="card bg-dark border-warning">';
+        html += '<div class="card-header" style="background: linear-gradient(135deg, #ffc107, #e0a800); color: #000;"><i class="bi bi-shield-check me-2"></i>' + (lang === 'en' ? 'Prevention' : '预防措施') + '</div>';
+        html += '<div class="card-body"><ul class="small mb-0">';
+        prevention.checks.forEach(c => { html += '<li>' + c + '</li>'; });
+        html += '</ul></div></div>';
+    }
+    
+    return html;
 }
 </script>
 {% endblock %}
