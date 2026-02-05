@@ -4886,6 +4886,16 @@ except ImportError as e:
 except Exception as e:
     logging.error(f"Failed to register Legacy API Adapter: {e}")
 
+# Miner Knowledge Base API (AI维修建议系统)
+try:
+    from routes.kb_routes import kb_bp
+    app.register_blueprint(kb_bp)
+    logging.info("Miner Knowledge Base API registered successfully")
+except ImportError as e:
+    logging.warning(f"Miner KB API not available: {e}")
+except Exception as e:
+    logging.error(f"Failed to register Miner KB API: {e}")
+
 # Register calculator module blueprint for modular architecture
 try:
     from modules.config import register_modules
