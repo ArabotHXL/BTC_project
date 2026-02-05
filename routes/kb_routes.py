@@ -107,34 +107,61 @@ def kb_diagnose():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@kb_bp.route('/error-explain', methods=['GET'])
+@kb_bp.route('/error-explain', methods=['GET', 'POST'])
 def kb_error_explain():
     """
-    Explain an error code
+    Explain error code(s)
     
-    Query params:
+    GET Query params:
     - brand: Bitmain, WhatsMiner, Avalon
     - code: ERROR_POWER_LOST, 206, etc.
+    
+    POST JSON body:
+    - brand: Bitmain, WhatsMiner, Avalon
+    - codes: ["ERROR_POWER_LOST", "206", ...]
     """
     try:
         kb = get_kb_service()
-        brand = request.args.get("brand", "")
-        code = request.args.get("code", "")
         
-        if not brand or not code:
-            return jsonify({"success": False, "error": "Missing brand or code parameter"}), 400
-        
-        explanation = kb.explain_error_code(brand, code)
-        
-        if not explanation:
-            return jsonify({"success": False, "error": f"Unknown code: {brand}/{code}"}), 404
-        
-        return jsonify({
-            "success": True,
-            "brand": brand,
-            "code": code,
-            "explanation": explanation
-        })
+        if request.method == 'POST':
+            # Handle POST with JSON body (multiple codes)
+            data = request.get_json() or {}
+            brand = data.get("brand", "")
+            codes = data.get("codes", [])
+            
+            if not brand or not codes:
+                return jsonify({"success": False, "error": "Missing brand or codes parameter"}), 400
+            
+            explanations = []
+            for code in codes:
+                explanation = kb.explain_error_code(brand, code)
+                if explanation:
+                    explanations.append(explanation)
+            
+            return jsonify({
+                "success": True,
+                "brand": brand,
+                "explanations": explanations
+            })
+        else:
+            # Handle GET with query params (single code)
+            brand = request.args.get("brand", "")
+            code = request.args.get("code", "")
+            
+            if not brand or not code:
+                return jsonify({"success": False, "error": "Missing brand or code parameter"}), 400
+            
+            explanation = kb.explain_error_code(brand, code)
+            
+            if not explanation:
+                return jsonify({"success": False, "error": f"Unknown code: {brand}/{code}"}), 404
+            
+            return jsonify({
+                "success": True,
+                "brand": brand,
+                "code": code,
+                "explanation": explanation
+            })
     except Exception as e:
         logger.error(f"KB error-explain error: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
