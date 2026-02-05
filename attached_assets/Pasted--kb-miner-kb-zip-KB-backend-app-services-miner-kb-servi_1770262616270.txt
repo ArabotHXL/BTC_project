@@ -1,0 +1,117 @@
+里面包含：
+
+kb/miner_kb.zip（你的 KB 包）
+
+backend/app/services/miner_kb_service.py（MinerKnowledgeBaseService：加载 KB + 匹配引擎 + ticket draft）
+
+backend/app/api/kb_routes.py（故障匹配 API：/kb/diagnose、/kb/ticket-draft、/kb/error-explain）
+
+backend/scripts/unpack_kb.py（可选：CI/构建阶段解压 KB）
+
+backend/docs_ui_integration.md（事件监控 & 工单页面怎么接）
+
+1) 解压 KB 到项目目录（两种方式）
+方式 A：服务启动自动解压（推荐）
+
+kb_routes.py 里已经实现：
+
+读取 kb/miner_kb.zip
+
+自动解压到 kb/cache/<zip_sha12>/
+
+然后从缓存目录加载 JSON
+
+你只要把 kb/miner_kb.zip 放到项目 kb/ 目录即可。
+
+方式 B：构建时解压
+python backend/scripts/unpack_kb.py --kb_zip kb/miner_kb.zip --out_dir kb/unpacked
+
+2) 创建 MinerKnowledgeBaseService 并加载数据
+
+核心类：backend/app/services/miner_kb_service.py
+
+它会加载：
+
+signatures.json / playbooks.json / preventions.json / tunings.json
+
+error_codes/*.json（含 WhatsMiner、Avalon、Bitmain Antminer log-codes v1）
+
+并做 4 件事：
+
+从日志中抽取 code（如 ERROR_POWER_LOST、Sweep error string = V:1）
+
+signatures 匹配（keyword/regex/metric_rules/code）
+
+组装 playbook/prevention/tuning
+
+生成工单草稿（ticket draft）
+
+3) 实现故障匹配 API（FastAPI）
+
+已提供路由：backend/app/api/kb_routes.py
+
+可用接口
+
+GET /kb/version：查看 KB 版本/统计
+
+POST /kb/diagnose：返回诊断结果 + Top hits + playbook
+
+POST /kb/ticket-draft：直接生成工单草稿（SOP + 验证点）
+
+GET /kb/error-explain?brand=Bitmain&code=ERROR_POWER_LOST
+
+请求示例（你前端直接用）
+{
+  "miner_id": "MINER-0001",
+  "model_id": "bitmain_antminer_generic",
+  "brand": "Bitmain",
+  "timestamp": "2026-02-04T12:34:56Z",
+  "logs": [
+    "ERROR_POWER_LOST: power voltage read failed, pls check!",
+    "Sweep error string = V:1"
+  ],
+  "metrics": {
+    "uptime_sec": 120,
+    "reboot_count_1h": 3,
+    "avg_hashrate_12h": 0
+  }
+}
+
+4) 集成到事件监控 & 工单页面（你 App 的落点）
+事件监控页（Event Monitor）
+
+事件触发/刷新时调用：POST /kb/diagnose
+
+UI 展示：
+
+selected.title / selected.category / selected.severity / confidence
+
+selected.reasons（命中证据：keyword/regex/metric/code）
+
+工单页面（Ticket）
+
+“一键生成工单”按钮调用：POST /kb/ticket-draft
+
+自动填充：
+
+标题（miner + 结论）
+
+SOP（playbook.steps）
+
+安全注意（playbook.safety）
+
+证据包（错误码解释、命中原因）
+
+验证点（playbook.verification）
+
+你需要做的最少改动
+
+把 kb/miner_kb.zip 放进你的项目目录（或用我这个样例包直接合并）
+
+把 MinerKnowledgeBaseService 和 kb_routes 合进你现有后端
+
+前端两处调用：
+
+Event Monitor：diagnose
+
+Ticket：ticket-draft
