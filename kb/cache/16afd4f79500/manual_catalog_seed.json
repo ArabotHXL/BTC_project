@@ -1,0 +1,58 @@
+[
+  {
+    "url": "https://www.zeusbtc.com/Support-Manuals.asp",
+    "title": "Repair guide & user-manuals (index)",
+    "source_id": "zeusbtc_support_manuals",
+    "doc_type": "index",
+    "brand": "Multi",
+    "content_type": "html"
+  },
+  {
+    "url": "https://support.bitmain.com/hc/en-us/categories/115000999127-Product-Manuals",
+    "title": "BITMAIN Product Manuals (index)",
+    "source_id": "bitmain_product_manuals",
+    "doc_type": "index",
+    "brand": "Bitmain",
+    "content_type": "html"
+  },
+  {
+    "url": "https://www.whatsminer.com/src/views/product_manual.html",
+    "title": "WhatsMiner Product Manual (index)",
+    "source_id": "microbt_whatsminer_manuals",
+    "doc_type": "index",
+    "brand": "MicroBT",
+    "content_type": "html"
+  },
+  {
+    "url": "https://static.canaan.io/uploads/supports_file/1_Miner_Log_Technical_Guidance.pdf",
+    "title": "Miner Log Technical Guidance (PDF)",
+    "source_id": "canaan_technical_docs",
+    "doc_type": "log_guidance",
+    "brand": "Canaan",
+    "content_type": "pdf"
+  },
+  {
+    "url": "https://whatsminer.net/wp-content/uploads/2021/11/Whatsminer-Error-Code-Description-20210930.pdf",
+    "title": "WhatsMiner Error Code Description (PDF)",
+    "source_id": "microbt_whatsminer_manuals",
+    "doc_type": "error_codes",
+    "brand": "MicroBT",
+    "content_type": "pdf"
+  },
+  {
+    "url": "https://www.zeusbtc.com/manuals/Antminer-S19-Hash-Board-Repair-Guide.asp",
+    "title": "Antminer S19 Hash Board Repair Guide (EN)",
+    "source_id": "zeusbtc_support_manuals",
+    "doc_type": "repair_guide",
+    "brand": "Bitmain",
+    "content_type": "html"
+  },
+  {
+    "url": "https://www.iceriver.io/support-article/",
+    "title": "IceRiver Support Articles (index)",
+    "source_id": "iceriver_support",
+    "doc_type": "index",
+    "brand": "IceRiver",
+    "content_type": "html"
+  }
+]

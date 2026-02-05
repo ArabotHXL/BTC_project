@@ -1,0 +1,64 @@
+{
+  "dict_id": "avalon_cgminer_api_codes_seed",
+  "brand": "Canaan",
+  "source_id": "canaan_avalon_troubleshooting_repair_guide_2018",
+  "entries": [
+    {
+      "code": "64",
+      "title": "CODE_TOOHOT",
+      "meaning": "控制板或哈希板温度过高",
+      "quick_fix": "检查风扇/更换过热模块；改善风道与环境温度。",
+      "category": "thermal",
+      "severity": "critical"
+    },
+    {
+      "code": "256",
+      "title": "CODE_LOOPFAILED",
+      "meaning": "回环测试失败",
+      "quick_fix": "若算力正常可忽略；否则检查相关板/线缆。",
+      "category": "control_board",
+      "severity": "warn"
+    },
+    {
+      "code": "1024",
+      "title": "CODE_INVALIDPMU",
+      "meaning": "PMU固件版本无效或PMU损坏",
+      "quick_fix": "更换PMU板。",
+      "category": "power",
+      "severity": "critical"
+    },
+    {
+      "code": "2048",
+      "title": "CODE_PGFAILED",
+      "meaning": "供电不良",
+      "quick_fix": "检查PMU板与供电链路。",
+      "category": "power",
+      "severity": "critical"
+    },
+    {
+      "code": "4096",
+      "title": "CODE_NTC_ERR",
+      "meaning": "温度传感器检测失败",
+      "quick_fix": "更换出现该code的板。",
+      "category": "thermal",
+      "severity": "critical"
+    },
+    {
+      "code": "16384",
+      "title": "CODE_VCORE_ERR",
+      "meaning": "电压输出传感器检测失败",
+      "quick_fix": "更换出现该code的板。",
+      "category": "power",
+      "severity": "critical"
+    },
+    {
+      "code": "65536",
+      "title": "CODE_INVALID_PLL_VALUE",
+      "meaning": "PLL配置校验失败",
+      "quick_fix": "重启；不恢复则更换相关板。",
+      "category": "hash_board",
+      "severity": "warn"
+    }
+  ],
+  "notes": "Seeded from AvalonMiner repair guide CGMiner API Log error codes table."
+}

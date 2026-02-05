@@ -1,0 +1,68 @@
+# Root sources to crawl for manuals/repair docs.
+# Each source entry provides:
+# - source_id: stable ID used in KB
+# - root_urls: list of entry pages to crawl
+# - allow_domains: safety guard for crawler
+# - link_allow_regex: only keep links that match these patterns (manuals, pdf, articles, support)
+# - link_deny_regex: drop links that match these patterns (login pages, account, cart, etc.)
+# - max_pages: crawl depth/pages per root (keep conservative)
+sources:
+  - source_id: zeusbtc_support_manuals
+    name: ZeusBTC Repair guide & user-manuals index
+    root_urls:
+      - https://www.zeusbtc.com/Support-Manuals.asp
+      - https://www.zeusbtc.com/information/repair-tutorials/
+    allow_domains: [zeusbtc.com]
+    link_allow_regex:
+      - '(?i)(manual|repair|hash\s*board|power\s*supply|APW|WhatsMiner|Antminer|Avalon|Innosilicon|IceRiver)'
+      - '(?i)\.(pdf)$'
+    link_deny_regex:
+      - '(?i)(/account|/login|/cart|/checkout)'
+    max_pages: 4
+
+  - source_id: bitmain_product_manuals
+    name: BITMAIN Support Product Manuals
+    root_urls:
+      - https://support.bitmain.com/hc/en-us/categories/115000999127-Product-Manuals
+      - https://support.bitmain.com/hc/en-us/sections/360001811894-ANTMINER
+    allow_domains: [support.bitmain.com]
+    link_allow_regex:
+      - '(?i)(manual|repair|PSU|ANTMINER|APW|instructions|specifications)'
+    link_deny_regex:
+      - '(?i)(/sign_in|/requests|/profiles|/search)'
+    max_pages: 4
+
+  - source_id: microbt_whatsminer_manuals
+    name: WhatsMiner manuals index
+    root_urls:
+      - https://www.whatsminer.com/src/views/product_manual.html
+      - https://support.whatsminer.com/
+    allow_domains: [whatsminer.com, support.whatsminer.com]
+    link_allow_regex:
+      - '(?i)(manual|operation\s*guide|firmware|tools|document|pdf)'
+      - '(?i)\.(pdf)$'
+    link_deny_regex:
+      - '(?i)(/shop|/cart|/checkout)'
+    max_pages: 4
+
+  - source_id: canaan_technical_docs
+    name: Canaan technical documentation
+    root_urls:
+      - https://help.canaan.io/hc/en-us/sections/39087979671705-Technical-Documentation
+      - https://static.canaan.io/uploads/supports_file/1_Miner_Log_Technical_Guidance.pdf
+    allow_domains: [help.canaan.io, static.canaan.io]
+    link_allow_regex:
+      - '(?i)(technical|log|manual|guide|pdf)'
+      - '(?i)\.(pdf)$'
+    link_deny_regex: []
+    max_pages: 4
+
+  - source_id: iceriver_support
+    name: IceRiver support articles
+    root_urls:
+      - https://www.iceriver.io/support-article/
+    allow_domains: [iceriver.io]
+    link_allow_regex:
+      - '(?i)(support|article|manual|operation|troubleshooting|pdf)'
+    link_deny_regex: []
+    max_pages: 4

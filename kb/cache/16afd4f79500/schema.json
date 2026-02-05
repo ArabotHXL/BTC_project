@@ -1,0 +1,91 @@
+{
+  "version": "0.3.2",
+  "description": "Normalized playbook-based knowledge base for cryptocurrency miners (ASIC/GPU). Expanded signatures and brand error-code dictionaries. Added Bitmain Antminer log-code dictionary (seed). Expanded Bitmain log-code coverage and added extractor.",
+  "entities": {
+    "Model": {
+      "fields": {
+        "model_id": "string",
+        "brand": "string",
+        "family": "string",
+        "cooling": "enum(air|hydro|immersion|other|unknown)",
+        "device_type": "enum(asic|gpu_rig|other)",
+        "notes": "string",
+        "telemetry_interfaces": "array<string>",
+        "common_psu": "array<string>",
+        "sources": "array<SourceRef>"
+      }
+    },
+    "FaultSignature": {
+      "fields": {
+        "signature_id": "string",
+        "title": "string",
+        "category": "enum(power|thermal|network|control_board|hash_board|firmware|pool|environment|storage|time|unknown)",
+        "severity": "enum(info|warn|critical)",
+        "priority": "integer (lower = higher priority)",
+        "evidence": {
+          "log_keywords": "array<string>",
+          "log_regex": "array<string>",
+          "metric_rules": "array<string> (simple DSL)",
+          "codes": "array<string|int> (vendor error codes if applicable)",
+          "notes": "string"
+        },
+        "applies_to": "array<string> (model_id or brand/family wildcard)",
+        "playbook_id": "string",
+        "prevention_id": "string",
+        "tuning_id": "string",
+        "sources": "array<SourceRef>"
+      }
+    },
+    "Playbook": {
+      "fields": {
+        "playbook_id": "string",
+        "title": "string",
+        "goal": "string",
+        "safety": "array<string>",
+        "steps": "array<string>",
+        "escalation": "array<string>",
+        "verification": "array<string>",
+        "artifacts": "array<string>",
+        "sources": "array<SourceRef>"
+      }
+    },
+    "Prevention": {
+      "fields": {
+        "prevention_id": "string",
+        "title": "string",
+        "checks": "array<string>",
+        "maintenance_schedule": "array<string>",
+        "sources": "array<SourceRef>"
+      }
+    },
+    "Tuning": {
+      "fields": {
+        "tuning_id": "string",
+        "title": "string",
+        "actions": "array<string>",
+        "rollback": "array<string>",
+        "sources": "array<SourceRef>"
+      }
+    },
+    "ErrorCodeDictionary": {
+      "fields": {
+        "dict_id": "string",
+        "brand": "string",
+        "source_id": "string",
+        "entries": "array<{code:string, title:string, meaning:string, quick_fix:string, category:string, severity:string}>",
+        "notes": "string"
+      }
+    },
+    "SourceRef": {
+      "fields": {
+        "source_id": "string",
+        "title": "string",
+        "url": "string",
+        "publisher": "string",
+        "type": "enum(pdf|html|video|forum)",
+        "published_or_updated": "string (ISO date if known)",
+        "notes": "string"
+      }
+    }
+  }
+}

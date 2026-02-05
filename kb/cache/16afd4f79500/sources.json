@@ -1,0 +1,182 @@
+[
+  {
+    "source_id": "bitmain_antminer_failures_troubleshooting",
+    "title": "Troubleshooting and solutions for ANTMINER failures",
+    "url": "https://support.bitmain.com/hc/en-us/articles/18237912339097-Troubleshooting-and-solutions-for-ANTMINER-failures",
+    "publisher": "BITMAIN Support",
+    "type": "html",
+    "published_or_updated": "2023-05-06",
+    "notes": "Official high-level failure categories and recommended actions (PSU, hashrate zero, fan error, firmware exception, etc.)."
+  },
+  {
+    "source_id": "bitmain_cant_find_ip",
+    "title": "Can't connect to the Internet or find IP of miner",
+    "url": "https://support.bitmain.com/hc/en-us/articles/360005467154-Can-t-connect-to-the-Internet-or-find-IP-of-miner",
+    "publisher": "BITMAIN Support",
+    "type": "html",
+    "published_or_updated": "2018-06-08",
+    "notes": "Official network/DHCP troubleshooting for miners not obtaining IP."
+  },
+  {
+    "source_id": "bitmain_cant_connect_pool",
+    "title": "What if the miner can't connect to the mining pool?",
+    "url": "https://support.bitmain.com/hc/en-us/articles/12355079880473-What-if-the-miner-can-t-connect-to-the-mining-pool",
+    "publisher": "BITMAIN Support",
+    "type": "html",
+    "published_or_updated": "2022-11-09",
+    "notes": "Official pool connectivity checklist (worker name, control board abnormal, network abnormal)."
+  },
+  {
+    "source_id": "bitmain_hashrate_zero",
+    "title": "Hashrate showing ZERO",
+    "url": "https://support.bitmain.com/hc/en-us/articles/360024172333-Hashrate-showing-ZERO",
+    "publisher": "BITMAIN Support",
+    "type": "html",
+    "published_or_updated": "2019-06-02",
+    "notes": "Official hashrate zero troubleshooting including fan fatal error kernel log hint."
+  },
+  {
+    "source_id": "whatsminer_error_codes_pdf_20210930",
+    "title": "WhatsMiner Error Code Description (2021-09-30) (PDF)",
+    "url": "https://whatsminer.net/wp-content/uploads/2021/11/Whatsminer-Error-Code-Description-20210930.pdf",
+    "publisher": "WhatsMiner (MicroBT)",
+    "type": "pdf",
+    "published_or_updated": "2021-09-30",
+    "notes": "Official error code list covering PSU, temperature sensors, EEPROM, miner type errors, etc."
+  },
+  {
+    "source_id": "whatsminer_product_manuals",
+    "title": "WhatsMiner – Product Manual index",
+    "url": "https://www.whatsminer.com/src/views/product_manual.html",
+    "publisher": "MicroBT",
+    "type": "html",
+    "published_or_updated": "",
+    "notes": "Official manuals index."
+  },
+  {
+    "source_id": "canaan_miner_log_tech_guidance",
+    "title": "Miner Log Technical Guidance (PDF)",
+    "url": "https://static.canaan.io/uploads/supports_file/1_Miner_Log_Technical_Guidance.pdf",
+    "publisher": "Canaan",
+    "type": "pdf",
+    "published_or_updated": "2022-03-08",
+    "notes": "Explains log fields, HW error thresholds, PS codes, and interpretation."
+  },
+  {
+    "source_id": "canaan_avalon_troubleshooting_repair_guide_2018",
+    "title": "Troubleshooting and repair guide for AvalonMiner models 721/741/761/821/841 (PDF)",
+    "url": "https://canaan-io-static.s3.amazonaws.com/wp-content/uploads/2019/09/Troubleshooting-and-repair-guide-for-AvalonMiner-models-721-741-761-821-and-841-release-v1.4-14.05.2018.pdf",
+    "publisher": "Canaan",
+    "type": "pdf",
+    "published_or_updated": "2018-05-14",
+    "notes": "Includes CGMiner API log error codes and troubleshooting guidance."
+  },
+  {
+    "source_id": "zeus_s21_xp_hashboard_repair",
+    "title": "Antminer S21 XP A3HB70501 Hash Board Repair Guide",
+    "url": "https://www.zeusbtc.com/articles/information/5773-antminer-s21-xp-a3hb70501-hash-board-repair-guide",
+    "publisher": "Zeus Mining",
+    "type": "html",
+    "published_or_updated": "2025-09-28",
+    "notes": "Board-level repair guide and tool list for Antminer S21 XP hashboard."
+  },
+  {
+    "source_id": "zeus_iceriver_ks5l_troubleshooting",
+    "title": "IceRiver KS5L Operation Manual and Troubleshooting",
+    "url": "https://www.zeusbtc.com/articles/information/5048-iceriver-ks5l-operation-manual-and-troubleshooting",
+    "publisher": "Zeus Mining",
+    "type": "html",
+    "published_or_updated": "2024-05-20",
+    "notes": "KS-series operation and troubleshooting (fan, temperature protection, hashrate fluctuations)."
+  },
+  {
+    "source_id": "iceriver_support_articles",
+    "title": "IceRiver – Support Articles Index",
+    "url": "https://www.iceriver.io/support-article/",
+    "publisher": "IceRiver",
+    "type": "html",
+    "published_or_updated": "",
+    "notes": "Official troubleshooting article index."
+  },
+  {
+    "source_id": "bitmain_19_series_common_problems",
+    "title": "Common Problems and Solutions for ANTMINER(19 series)",
+    "url": "https://support.bitmain.com/hc/en-us/articles/4406645619097-Common-Problems-and-Solutions-for-ANTMINER-19-series",
+    "publisher": "BITMAIN Support",
+    "type": "html",
+    "published_or_updated": "2021-09-17",
+    "notes": "Shows log strings such as ERROR_FAN_LOST for fan issues; examples for 19 series."
+  },
+  {
+    "source_id": "bitmain_tips_miners_restart",
+    "title": "TIPS for Common Scenario of Miners Restart",
+    "url": "https://support.bitmain.com/hc/en-us/articles/27245455307033-TIPS-for-Common-Scenario-of-Miners-Restart",
+    "publisher": "BITMAIN Support",
+    "type": "html",
+    "published_or_updated": "2024-01-04",
+    "notes": "Includes ERROR_POWER_LOST examples and restart troubleshooting guidance."
+  },
+  {
+    "source_id": "bitmain_s19xp_log_diagnosis",
+    "title": "S19 XP log diagnosis and processing methods",
+    "url": "https://support.bitmain.com/hc/en-us/articles/10845468564633-S19-XP-log-diagnosis-and-processing-methods",
+    "publisher": "BITMAIN Support",
+    "type": "html",
+    "published_or_updated": "2022-09-25",
+    "notes": "Maps specific log prompts like 'Sweep error string = V:1' to PSU issues and actions."
+  },
+  {
+    "source_id": "bitmain_l7_diagnostic_logs",
+    "title": "L7 Diagnostic logs and solutions",
+    "url": "https://support.bitmain.com/hc/en-us/articles/10632905907737-L7-Diagnostic-logs-and-solutions",
+    "publisher": "BITMAIN Support",
+    "type": "html",
+    "published_or_updated": "2022-09-18",
+    "notes": "Lists diagnostic log strings (e.g., ERROR FAN LOST) with recommended fixes."
+  },
+  {
+    "source_id": "bitmain_s9_kernel_log_common_problems",
+    "title": "[For S9series] Common Problems Indicated by Miner's Kernel Log and Ways to Resolve them",
+    "url": "https://support.bitmain.com/hc/en-us/articles/360025531034--For-S9series-Common-Problems-Indicated-by-Miner-s-Kernel-Log-and-Ways-to-Resolve-them",
+    "publisher": "BITMAIN Support",
+    "type": "html",
+    "published_or_updated": "2019-06-26",
+    "notes": "Kernel log strings for S9 series (fan error etc.) and resolution steps."
+  },
+  {
+    "source_id": "bitmain_ka3_log_diagnosis",
+    "title": "KA3 log diagnosis and processing",
+    "url": "https://support.bitmain.com/hc/en-us/articles/13277184969881-KA3-log-diagnosis-and-processing",
+    "publisher": "BITMAIN Support",
+    "type": "html",
+    "published_or_updated": "2022-12-07",
+    "notes": "Provides typical KA3 errors: sweep error string F:1, drop board, high temp poweroff message, PSU related notes."
+  },
+  {
+    "source_id": "bitmain_s17_kernel_log_common_problems",
+    "title": "[For S17series] Common Problems Indicated by Miner's Kernel Log and Ways to Resolve them",
+    "url": "https://support.bitmain.com/hc/en-us/articles/900000245886--For-S17series-Common-Problems-Indicated-by-Miner-s-Kernel-Log-and-Ways-to-Resolve-them",
+    "publisher": "BITMAIN Support",
+    "type": "html",
+    "published_or_updated": "2020-02-24",
+    "notes": "Covers kernel log patterns: EEPROM Error, Missing chips/boards, Read Temp Sensor Failed, Overtemp Protection etc."
+  },
+  {
+    "source_id": "bitmain_miners_restart_tips",
+    "title": "TIPS for Common Scenario of Miners Restart",
+    "url": "https://support.bitmain.com/hc/en-us/articles/27245455307033-TIPS-for-Common-Scenario-of-Miners-Restart",
+    "publisher": "BITMAIN Support",
+    "type": "html",
+    "published_or_updated": "2024-01-04",
+    "notes": "Contains ERROR_SOC_INIT, Sweep error string P:2, ERROR_TEMP_TOO_LOW, and multiple ERROR_POWER_LOST variants with guidance."
+  },
+  {
+    "source_id": "bitmain_s9_t9_no_hardware_version_found",
+    "title": "S9 & T9 Series Miners: No Hardware Version Found or BMMiner",
+    "url": "https://support.bitmain.com/hc/en-us/articles/360002457754-S9-T9-Series-Miners-No-Hardware-Version-Found-or-BMMiner",
+    "publisher": "BITMAIN Support",
+    "type": "html",
+    "published_or_updated": "2018-03-27",
+    "notes": "Mentions kernel log 'Fatal Error: some Fan lost or Fan speed low' and fan voltage swapping check."
+  }
+]

@@ -1,0 +1,293 @@
+{
+  "dict_id": "bitmain_antminer_log_codes_v1",
+  "brand": "Bitmain",
+  "source_id": "bitmain_support_log_articles",
+  "entries": [
+    {
+      "code": "ERROR_FAN_LOST",
+      "title": "Fan lost / fan speed low",
+      "meaning": "风扇丢失或转速过低，触发保护/降频",
+      "quick_fix": "检查风扇插头与线束；对比各风扇转速，异常风扇更换；必要时恢复默认风扇策略或更换控制板。",
+      "category": "thermal",
+      "severity": "critical"
+    },
+    {
+      "code": "ERROR_POWER_LOST",
+      "title": "Power status/voltage read failed",
+      "meaning": "电源状态/电压读取异常，可能是供电链路或PSU问题",
+      "quick_fix": "检查电源线、稳压线（如有）、铜排/螺丝是否松动；确认市电电压稳定；必要时更换PSU。",
+      "category": "power",
+      "severity": "critical"
+    },
+    {
+      "code": "V:1",
+      "title": "Sweep error string = V:1 (Power failure)",
+      "meaning": "日志提示电源异常（示例：S19 XP）",
+      "quick_fix": "检查电源线/铜排/电压调节线是否松动；排除供电波动；必要时更换PSU。",
+      "category": "power",
+      "severity": "critical"
+    },
+    {
+      "code": "Read Temp Sensor Failed",
+      "title": "Temperature sensor read failed",
+      "meaning": "温度传感器读取失败/通信异常",
+      "quick_fix": "检查传感器线缆与接插件；重插后复测；升级/回滚固件验证；仍异常进入板级检修。",
+      "category": "thermal",
+      "severity": "critical"
+    },
+    {
+      "code": "Chain X only found Y ASICs",
+      "title": "ASIC count mismatch / missing chips",
+      "meaning": "某链/某板识别到的芯片数量不足，可能短路/断路/信号异常",
+      "quick_fix": "检查信号线/供电线与接插件；互换板位确认是否随板迁移；做单板测试定位缺失芯片域并维修。",
+      "category": "hash_board",
+      "severity": "critical"
+    },
+    {
+      "code": "ERROR FAN LOST: fan lost",
+      "title": "Fan lost (L7)",
+      "meaning": "风扇丢失/异常（L7 诊断日志示例）",
+      "quick_fix": "检查该风扇转速是否为 0 或显著低于其他风扇；更换异常风扇。",
+      "category": "thermal",
+      "severity": "critical",
+      "sources": [
+        "bitmain_l7_diagnostic_logs"
+      ]
+    },
+    {
+      "code": "Fatal Error: some Fan lost or Fan speed low",
+      "title": "Fan lost / speed low (S9/T9)",
+      "meaning": "风扇丢失或转速过低（S9/T9 提示）",
+      "quick_fix": "检查风扇电压与线束；互换前后风扇验证；更换风扇套件。",
+      "category": "thermal",
+      "severity": "critical",
+      "sources": [
+        "bitmain_s9_t9_no_hardware_version_found",
+        "bitmain_s9_kernel_log_common_problems"
+      ]
+    },
+    {
+      "code": "Sweep error string = F:1",
+      "title": "Fan failure (F:1)",
+      "meaning": "扫频错误码 F:1 表示风扇异常（转速为 0 或异常偏差）",
+      "quick_fix": "逐一用正常风扇替换对比定位；更换确认异常的风扇。",
+      "category": "thermal",
+      "severity": "critical",
+      "sources": [
+        "bitmain_s19xp_log_diagnosis",
+        "bitmain_ka3_log_diagnosis"
+      ]
+    },
+    {
+      "code": "Sweep error string = P:1",
+      "title": "High temperature protection (P:1)",
+      "meaning": "扫频错误码 P:1 表示高温保护触发",
+      "quick_fix": "检查环境温度与进风口是否堵塞；确认风道通畅；必要时降功率/限频后再恢复。",
+      "category": "thermal",
+      "severity": "critical",
+      "sources": [
+        "bitmain_s19xp_log_diagnosis"
+      ]
+    },
+    {
+      "code": "Sweep error string = P:2",
+      "title": "Low temperature protection (P:2)",
+      "meaning": "扫频错误码 P:2 表示低温环境保护相关",
+      "quick_fix": "低于 -20℃ 不建议启动/重启；先对矿机加热至 > -20℃（建议 > 0℃）后再启动。",
+      "category": "environment",
+      "severity": "critical",
+      "sources": [
+        "bitmain_miners_restart_tips"
+      ]
+    },
+    {
+      "code": "ERROR_TEMP_TOO_LOW: temp too low!",
+      "title": "Temp too low",
+      "meaning": "温度过低（低温保护）",
+      "quick_fix": "按低温流程：先升温到建议范围；检查温度传感器是否异常漂移；避免低温频繁重启。",
+      "category": "environment",
+      "severity": "critical",
+      "sources": [
+        "bitmain_miners_restart_tips"
+      ]
+    },
+    {
+      "code": "Sweep error string = J:6",
+      "title": "Temperature sensing failure (J:6)",
+      "meaning": "扫频错误码 J:6 表示温度感知/温度异常（通常需维修）",
+      "quick_fix": "检查温度线束与接口；重插后复测；固件恢复/刷机排除软件；持续异常则板级维修。",
+      "category": "thermal",
+      "severity": "critical",
+      "sources": [
+        "bitmain_s19xp_log_diagnosis"
+      ]
+    },
+    {
+      "code": "level=error pid=* chain=* error=\"temp lost\" msg=check_temp",
+      "title": "Temp lost / check_temp",
+      "meaning": "温度传感器丢失/读取失败（L7 诊断日志）",
+      "quick_fix": "断电后重插温度线/线束；若不恢复，可能为哈希板温度传感器故障需返修。",
+      "category": "thermal",
+      "severity": "critical",
+      "sources": [
+        "bitmain_l7_diagnostic_logs"
+      ]
+    },
+    {
+      "code": "Chain 0 only find 0 asic,will power off hash board 0",
+      "title": "Chip not found / power off hashboard",
+      "meaning": "芯片未找到，矿机会关闭对应哈希板供电",
+      "quick_fix": "断电后重插排线/信号线；互换板位确认是否随板迁移；单板测试定位缺失芯片域后维修。",
+      "category": "hash_board",
+      "severity": "critical",
+      "sources": [
+        "bitmain_s19xp_log_diagnosis",
+        "bitmain_miners_restart_tips"
+      ]
+    },
+    {
+      "code": "chain=* msg=\"ChipSetting_get_addr_LTC detect 0 chips\"",
+      "title": "Detect 0 chips",
+      "meaning": "未检测到芯片（L7 诊断日志）",
+      "quick_fix": "断电重插线束；不恢复则可能为板级故障需维修。",
+      "category": "hash_board",
+      "severity": "critical",
+      "sources": [
+        "bitmain_l7_diagnostic_logs"
+      ]
+    },
+    {
+      "code": "EEPROM eeprom_key_version or eeprom_encryption_algorithm error!",
+      "title": "EEPROM error (L7)",
+      "meaning": "哈希板存储芯片/EEPROM 异常（L7 诊断日志）",
+      "quick_fix": "尝试卡刷/固件恢复；若仍异常，通常需要板级维修（存储芯片异常）。",
+      "category": "hash_board",
+      "severity": "critical",
+      "sources": [
+        "bitmain_l7_diagnostic_logs"
+      ]
+    },
+    {
+      "code": "level=error pid=* msg=\"chain_offset 1, chain 1, get_sw_version error!\"",
+      "title": "Board software version error",
+      "meaning": "哈希板版本信息异常（L7 诊断日志）",
+      "quick_fix": "重插线束；尝试卡刷；不恢复则返修。",
+      "category": "hash_board",
+      "severity": "critical",
+      "sources": [
+        "bitmain_l7_diagnostic_logs"
+      ]
+    },
+    {
+      "code": "fail to read pic temp",
+      "title": "PIC temp read failed",
+      "meaning": "PIC 温度读取失败，通常为操作板/控制板异常（19 系列示例）",
+      "quick_fix": "交叉检查线束；升级固件或 SD 卡刷机；仍异常建议返修或更换控制板。",
+      "category": "control_board",
+      "severity": "critical",
+      "sources": [
+        "bitmain_19_series_common_problems"
+      ]
+    },
+    {
+      "code": "stratum connection timeout",
+      "title": "Stratum timeout",
+      "meaning": "矿池连接超时（网络/矿池不稳定）",
+      "quick_fix": "检查网络延迟、DNS、出口端口；启用矿池 failover；排除矿池侧故障。",
+      "category": "pool",
+      "severity": "critical",
+      "sources": [
+        "bitmain_l7_diagnostic_logs"
+      ]
+    },
+    {
+      "code": "...retry after 30 seconds failures 1",
+      "title": "Stratum retry failures",
+      "meaning": "矿池连接重试失败（间歇性断连）",
+      "quick_fix": "同矿池超时处理；重点检查网络抖动与路由器/交换机稳定性。",
+      "category": "pool",
+      "severity": "warn",
+      "sources": [
+        "bitmain_l7_diagnostic_logs"
+      ]
+    },
+    {
+      "code": "level=fatal pid=* error=\"net lost\" msg=\"lost internet 1200 seconds > 20 minutes, poweroff.\"",
+      "title": "Net lost poweroff",
+      "meaning": "网络丢失超过阈值导致强制断电保护（L7 示例）",
+      "quick_fix": "检查网络设置/网线/交换机端口；排除长时间断网；必要时设置更稳的网络路径与监控。",
+      "category": "network",
+      "severity": "critical",
+      "sources": [
+        "bitmain_l7_diagnostic_logs"
+      ]
+    },
+    {
+      "code": "Most likely you have input the wrong URL, forgotten to add a port, have not set up workers, or the network was disconnected.",
+      "title": "Pool setting error",
+      "meaning": "矿池 URL/端口/worker 配置错误或网络断开",
+      "quick_fix": "核对 URL+端口、worker 名称与密码；检查网络连通；设置备用矿池。",
+      "category": "pool",
+      "severity": "critical",
+      "sources": [
+        "bitmain_l7_diagnostic_logs"
+      ]
+    },
+    {
+      "code": "ERROR_SOC_INIT: soc init failed",
+      "title": "SoC init failed",
+      "meaning": "SoC 初始化失败（提示与重启场景相关）",
+      "quick_fix": "检查是否出现全板 0 芯片；先排查哈希板短路风险（有短路禁止重启）；无短路可重启验证，仍异常建议返修。",
+      "category": "control_board",
+      "severity": "critical",
+      "sources": [
+        "bitmain_miners_restart_tips"
+      ]
+    },
+    {
+      "code": "ERROR_POWER_LOST: power voltage rise or drop",
+      "title": "Power abnormal (ERROR_POWER_LOST)",
+      "meaning": "电源电压升降/状态/读取异常（重启场景典型错误）",
+      "quick_fix": "若哈希板存在短路风险禁止重启；否则检查供电波动、铜排/螺丝/线束；必要时更换 PSU。",
+      "category": "power",
+      "severity": "critical",
+      "sources": [
+        "bitmain_miners_restart_tips"
+      ]
+    },
+    {
+      "code": "ERROR_POWER_LOST: power voltage abnormity, pls check!",
+      "title": "Power abnormal (ERROR_POWER_LOST)",
+      "meaning": "电源电压升降/状态/读取异常（重启场景典型错误）",
+      "quick_fix": "若哈希板存在短路风险禁止重启；否则检查供电波动、铜排/螺丝/线束；必要时更换 PSU。",
+      "category": "power",
+      "severity": "critical",
+      "sources": [
+        "bitmain_miners_restart_tips"
+      ]
+    },
+    {
+      "code": "ERROR_POWER_LOST: power status error!",
+      "title": "Power abnormal (ERROR_POWER_LOST)",
+      "meaning": "电源电压升降/状态/读取异常（重启场景典型错误）",
+      "quick_fix": "若哈希板存在短路风险禁止重启；否则检查供电波动、铜排/螺丝/线束；必要时更换 PSU。",
+      "category": "power",
+      "severity": "critical",
+      "sources": [
+        "bitmain_miners_restart_tips"
+      ]
+    },
+    {
+      "code": "ERROR_POWER_LOST: power voltage read failed, pls check!",
+      "title": "Power abnormal (ERROR_POWER_LOST)",
+      "meaning": "电源电压升降/状态/读取异常（重启场景典型错误）",
+      "quick_fix": "若哈希板存在短路风险禁止重启；否则检查供电波动、铜排/螺丝/线束；必要时更换 PSU。",
+      "category": "power",
+      "severity": "critical",
+      "sources": [
+        "bitmain_miners_restart_tips"
+      ]
+    }
+  ],
+  "notes": "Bitmain uses kernel/diagnostic log strings (not a unified numeric table). v1 aggregates common strings across official support articles for S9/S17/19/S19XP/L7/KA3 and restart tips."
+}

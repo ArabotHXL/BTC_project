@@ -1,0 +1,87 @@
+{
+  "version": "0.2.0",
+  "categories": [
+    {
+      "id": "power",
+      "name": "供电/PSU"
+    },
+    {
+      "id": "thermal",
+      "name": "散热/温控"
+    },
+    {
+      "id": "network",
+      "name": "网络/IP"
+    },
+    {
+      "id": "pool",
+      "name": "矿池/协议/认证"
+    },
+    {
+      "id": "firmware",
+      "name": "固件/配置"
+    },
+    {
+      "id": "control_board",
+      "name": "控制板"
+    },
+    {
+      "id": "hash_board",
+      "name": "哈希板/ASIC/EEPROM/传感器"
+    },
+    {
+      "id": "time",
+      "name": "NTP/时间"
+    },
+    {
+      "id": "storage",
+      "name": "存储/日志"
+    },
+    {
+      "id": "environment",
+      "name": "机房环境/运维流程"
+    }
+  ],
+  "severity_scale": [
+    {
+      "id": "info",
+      "meaning": "提示/对产出影响小"
+    },
+    {
+      "id": "warn",
+      "meaning": "影响效率/稳定性，需尽快处理"
+    },
+    {
+      "id": "critical",
+      "meaning": "停机或有烧毁/数据损坏风险，立即处理"
+    }
+  ],
+  "metrics_common": [
+    "uptime_sec",
+    "reboot_count_1h",
+    "avg_hashrate_12h",
+    "hashrate_stddev_1h",
+    "target_hashrate",
+    "chip_temp_c",
+    "pcb_temp_c",
+    "exhaust_temp_c",
+    "water_temp_c",
+    "water_flow_lpm",
+    "fans_rpm",
+    "fan_lost_count",
+    "hw_error_rate",
+    "reject_rate",
+    "stale_rate",
+    "chain_ok_count",
+    "chain_total",
+    "asic_found",
+    "asic_expected",
+    "web_reachable",
+    "ip_address",
+    "dns_fail_count",
+    "pool_disconnect_count_1h",
+    "ntp_offset_ms",
+    "disk_free_mb"
+  ],
+  "rule_dsl": "metric_rules uses a simple expression DSL (AND/OR, comparisons, arithmetic)."
+}

@@ -1,0 +1,96 @@
+{
+  "dict_id": "whatsminer_error_codes_seed_20210930",
+  "brand": "MicroBT",
+  "source_id": "whatsminer_error_codes_pdf_20210930",
+  "entries": [
+    {
+      "code": "206",
+      "title": "Power input voltage is low",
+      "meaning": "输入电压过低",
+      "quick_fix": "检查市电电压/相位/插座与线缆；避免长距离压降。",
+      "category": "power",
+      "severity": "critical"
+    },
+    {
+      "code": "233",
+      "title": "Power output over temperature protection",
+      "meaning": "电源输出过温保护",
+      "quick_fix": "改善通风/降功率；检查PSU风扇与散热器。",
+      "category": "power",
+      "severity": "critical"
+    },
+    {
+      "code": "236",
+      "title": "Overcurrent Protection of Power Output",
+      "meaning": "电源输出过流保护",
+      "quick_fix": "检查铜排螺丝紧固与接触；排除短路；必要时更换/送修PSU。",
+      "category": "power",
+      "severity": "critical"
+    },
+    {
+      "code": "253",
+      "title": "Power Fan Error",
+      "meaning": "电源风扇故障",
+      "quick_fix": "检查风扇线/风扇；必要时更换PSU或维修。",
+      "category": "power",
+      "severity": "critical"
+    },
+    {
+      "code": "300",
+      "title": "SM0 temperature sensor detection error",
+      "meaning": "哈希板0温度传感器检测异常",
+      "quick_fix": "检查传感器/线缆；若复现则升级到板级检修。",
+      "category": "thermal",
+      "severity": "critical"
+    },
+    {
+      "code": "320",
+      "title": "SM0 temperature reading error",
+      "meaning": "哈希板0温度读取异常",
+      "quick_fix": "检查传感器/线缆；刷机/恢复；仍异常则维修。",
+      "category": "thermal",
+      "severity": "critical"
+    },
+    {
+      "code": "350",
+      "title": "SM0 temperature protecting",
+      "meaning": "哈希板0温度保护触发",
+      "quick_fix": "按过温流程处理：清洁风道/检查风扇与环境；必要时降功率。",
+      "category": "thermal",
+      "severity": "critical"
+    },
+    {
+      "code": "410",
+      "title": "SM0 detect eeprom error",
+      "meaning": "哈希板0 EEPROM 检测失败",
+      "quick_fix": "检查EEPROM供电与器件；可能需板级维修/更换。",
+      "category": "hash_board",
+      "severity": "critical"
+    },
+    {
+      "code": "420",
+      "title": "SM0 parser eeprom error",
+      "meaning": "哈希板0 EEPROM 解析错误",
+      "quick_fix": "检查EEPROM内容/器件；刷机无效则维修。",
+      "category": "hash_board",
+      "severity": "critical"
+    },
+    {
+      "code": "510",
+      "title": "SM0 miner type error",
+      "meaning": "哈希板0机型/类型信息异常",
+      "quick_fix": "确认固件与板型匹配；必要时刷机或更换板。",
+      "category": "firmware",
+      "severity": "critical"
+    },
+    {
+      "code": "530",
+      "title": "SM0 not found",
+      "meaning": "未检测到哈希板0",
+      "quick_fix": "检查信号线/供电线；互换验证；进入缺链/缺芯片流程。",
+      "category": "hash_board",
+      "severity": "critical"
+    }
+  ],
+  "notes": "Seeded subset of codes. Use sources.pdf + ingestion tooling to expand to full list."
+}

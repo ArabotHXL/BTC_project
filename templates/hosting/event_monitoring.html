@@ -419,11 +419,14 @@ function updateAlertsGrid(alerts) {
                         <div class="d-flex justify-content-between align-items-center mt-2">
                             <small class="text-muted">${alert.site_name || 'Global'}</small>
                             <div class="btn-group">
-                                <button class="btn btn-outline-success btn-sm px-3" onclick="acknowledgeAlert(${alert.id})" title="${getLanguage() === 'en' ? 'Acknowledge Alert' : '确认告警'}">
-                                    <span style="font-size: 14px;">✓</span> ${getLanguage() === 'en' ? 'Ack' : '确认'}
+                                <button class="btn btn-outline-success btn-sm px-2" onclick="acknowledgeAlert(${alert.id})" title="${getLanguage() === 'en' ? 'Acknowledge Alert' : '确认告警'}">
+                                    <span style="font-size: 14px;">✓</span>
                                 </button>
                                 ${(alert.miner_id && alert.site_id) ? 
-                                    `<button class="btn btn-outline-info btn-sm px-3" onclick="openAIDiagnosis('${alert.id}', '${alert.alert_type || 'offline'}', '${alert.miner_id}', ${alert.site_id})" title="${getLanguage() === 'en' ? 'AI Diagnosis' : 'AI智能诊断'}">
+                                    `<button class="btn btn-outline-warning btn-sm px-2" onclick="openAIDiagnosisEnhanced('${alert.id}', '${alert.alert_type || 'offline'}', '${alert.miner_id}', ${alert.site_id})" title="${getLanguage() === 'en' ? 'KB Repair Guide' : 'KB维修指南'}">
+                                        <span style="font-size: 14px;">📋</span> KB
+                                    </button>
+                                    <button class="btn btn-outline-info btn-sm px-2" onclick="openAIDiagnosis('${alert.id}', '${alert.alert_type || 'offline'}', '${alert.miner_id}', ${alert.site_id})" title="${getLanguage() === 'en' ? 'AI Diagnosis' : 'AI智能诊断'}">
                                         <span style="font-size: 14px;">🤖</span> AI
                                     </button>` : ''}
                             </div>
@@ -1269,6 +1272,244 @@ function renderAIDiagnosis(diagnosis) {
     }
     
     document.getElementById('ai-diagnosis-content').innerHTML = html;
+}
+
+// ===== KB-Based Diagnosis Integration =====
+function fetchKBDiagnosis(minerId, siteId, alertType) {
+    // First fetch miner telemetry data
+    return fetch(`/hosting/api/client/miners/${minerId}`)
+        .then(r => r.json())
+        .then(minerData => {
+            if (!minerData.success) {
+                throw new Error('Failed to fetch miner data');
+            }
+            
+            const device = minerData.device;
+            const brand = (device.miner_model || '').toLowerCase().includes('whatsminer') ? 'WhatsMiner' : 
+                          (device.miner_model || '').toLowerCase().includes('avalon') ? 'Avalon' : 'Bitmain';
+            
+            // Build logs from alert type and status
+            const logs = [];
+            if (alertType === 'offline') logs.push('Miner offline, no response from device');
+            if (alertType === 'temperature') logs.push(`High temperature detected: ${device.temperature || 0}°C`);
+            if (alertType === 'hashrate') logs.push(`Low hashrate detected: ${device.hashrate || 0} TH/s`);
+            if (alertType === 'power') logs.push('Power anomaly detected');
+            if (device.status === 'offline') logs.push('ERROR_POWER_LOST: device not responding');
+            
+            // Build metrics from telemetry
+            const metrics = {
+                uptime_sec: (device.uptime || 0) * 3600,
+                temperature_avg: device.temperature || 0,
+                hashrate_current: device.hashrate || 0,
+                fan_avg: device.fan_speed || 0
+            };
+            
+            // Call KB diagnose API
+            return fetch('/api/kb/diagnose', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    miner_id: minerId,
+                    model_id: device.miner_model || 'generic_asic_miner',
+                    brand: brand,
+                    timestamp: new Date().toISOString(),
+                    logs: logs,
+                    metrics: metrics
+                })
+            });
+        })
+        .then(r => r.json());
+}
+
+function renderKBDiagnosis(kbResult) {
+    const lang = getLanguage();
+    let html = '';
+    
+    if (!kbResult.success || !kbResult.selected) {
+        html += '<div class="alert alert-secondary"><i class="bi bi-info-circle me-2"></i>' + 
+                (lang === 'en' ? 'No matching fault signature found in Knowledge Base' : '知识库中未找到匹配的故障签名') + '</div>';
+        return html;
+    }
+    
+    const sel = kbResult.selected;
+    const playbook = kbResult.playbook;
+    const prevention = kbResult.prevention;
+    
+    // Confidence badge
+    const confPct = Math.round(kbResult.confidence * 100);
+    const confClass = confPct >= 80 ? 'success' : confPct >= 50 ? 'warning' : 'secondary';
+    
+    // Main diagnosis card
+    html += '<div class="card bg-dark border-info mb-3">';
+    html += '<div class="card-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #17a2b8, #138496);">';
+    html += '<span><i class="bi bi-cpu me-2"></i>' + (lang === 'en' ? 'KB Fault Match' : 'KB故障匹配') + '</span>';
+    html += '<span class="badge bg-' + confClass + '">' + confPct + '% ' + (lang === 'en' ? 'Confidence' : '置信度') + '</span>';
+    html += '</div>';
+    html += '<div class="card-body">';
+    
+    // Fault signature
+    html += '<h5 class="text-warning mb-2"><i class="bi bi-exclamation-triangle me-2"></i>' + sel.title + '</h5>';
+    html += '<div class="mb-2"><span class="badge bg-' + (sel.severity === 'critical' ? 'danger' : sel.severity === 'high' ? 'warning' : 'info') + ' me-2">' + sel.severity.toUpperCase() + '</span>';
+    html += '<span class="badge bg-secondary">' + sel.category + '</span></div>';
+    
+    // Evidence/Reasons
+    if (sel.reasons && sel.reasons.length > 0) {
+        html += '<div class="mb-3"><small class="text-muted">' + (lang === 'en' ? 'Evidence:' : '匹配证据:') + '</small><ul class="mb-0 small">';
+        sel.reasons.forEach(r => { html += '<li class="text-success">' + r + '</li>'; });
+        html += '</ul></div>';
+    }
+    html += '</div></div>';
+    
+    // Playbook (SOP)
+    if (playbook) {
+        html += '<div class="card bg-dark border-success mb-3">';
+        html += '<div class="card-header" style="background: linear-gradient(135deg, #28a745, #218838);"><i class="bi bi-journal-check me-2"></i>' + (lang === 'en' ? 'Repair Playbook' : '维修SOP') + '</div>';
+        html += '<div class="card-body">';
+        html += '<h6 class="text-info">' + playbook.title + '</h6>';
+        html += '<p class="small text-muted mb-2">' + playbook.goal + '</p>';
+        
+        // Safety warnings
+        if (playbook.safety && playbook.safety.length > 0) {
+            html += '<div class="alert alert-danger py-2 mb-2"><small><strong><i class="bi bi-shield-exclamation me-1"></i>' + (lang === 'en' ? 'Safety:' : '安全警告:') + '</strong><ul class="mb-0 mt-1">';
+            playbook.safety.forEach(s => { html += '<li>' + s + '</li>'; });
+            html += '</ul></small></div>';
+        }
+        
+        // Steps
+        html += '<div class="mb-2"><strong>' + (lang === 'en' ? 'Steps:' : '操作步骤:') + '</strong><ol class="small mb-0">';
+        playbook.steps.forEach(s => { html += '<li>' + s + '</li>'; });
+        html += '</ol></div>';
+        
+        // Verification
+        if (playbook.verification && playbook.verification.length > 0) {
+            html += '<div class="mt-2"><small class="text-success"><strong><i class="bi bi-check-circle me-1"></i>' + (lang === 'en' ? 'Verification:' : '验证点:') + '</strong> ' + playbook.verification.join('; ') + '</small></div>';
+        }
+        html += '</div></div>';
+    }
+    
+    // Prevention tips
+    if (prevention && prevention.checks) {
+        html += '<div class="card bg-dark border-warning mb-3">';
+        html += '<div class="card-header" style="background: linear-gradient(135deg, #ffc107, #e0a800); color: #000;"><i class="bi bi-shield-check me-2"></i>' + (lang === 'en' ? 'Prevention' : '预防措施') + '</div>';
+        html += '<div class="card-body"><ul class="small mb-0">';
+        prevention.checks.forEach(c => { html += '<li>' + c + '</li>'; });
+        html += '</ul></div></div>';
+    }
+    
+    // Error code explanations
+    if (kbResult.error_code_explanations && kbResult.error_code_explanations.length > 0) {
+        html += '<div class="card bg-dark border-secondary">';
+        html += '<div class="card-header"><i class="bi bi-code-slash me-2"></i>' + (lang === 'en' ? 'Error Code Reference' : '错误码参考') + '</div>';
+        html += '<div class="card-body">';
+        kbResult.error_code_explanations.forEach(e => {
+            html += '<div class="mb-2"><code class="text-danger">' + e.code + '</code> <span class="text-muted">-</span> ' + e.title;
+            html += '<br><small class="text-muted">' + e.meaning + '</small>';
+            html += '<br><small class="text-success">' + (lang === 'en' ? 'Quick fix: ' : '快速修复: ') + e.quick_fix + '</small></div>';
+        });
+        html += '</div></div>';
+    }
+    
+    return html;
+}
+
+// Enhanced openAIDiagnosis to include KB
+function openAIDiagnosisEnhanced(alertId, alertType, minerId, siteId) {
+    if (!minerId || !siteId) {
+        alert(getLanguage() === 'en' ? 'AI diagnosis requires miner and site information' : 'AI诊断需要矿机和站点信息');
+        return;
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('aiDiagnosisModal'));
+    modal.show();
+    const container = document.getElementById('ai-diagnosis-content');
+    container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-info"></div><p class="mt-2">' + (getLanguage() === 'en' ? 'Analyzing with Knowledge Base...' : '正在使用知识库分析...') + '</p></div>';
+    
+    // Fetch KB diagnosis first (it's faster)
+    fetchKBDiagnosis(minerId, siteId, alertType)
+        .then(kbResult => {
+            let html = '<div class="mb-4">';
+            html += '<h5 class="text-info mb-3"><i class="bi bi-database me-2"></i>' + (getLanguage() === 'en' ? 'Knowledge Base Diagnosis' : '知识库诊断') + '</h5>';
+            html += renderKBDiagnosis(kbResult);
+            html += '</div>';
+            
+            // Add button to generate ticket
+            if (kbResult.success && kbResult.selected) {
+                html += '<div class="d-grid gap-2 mb-4">';
+                html += '<button class="btn btn-success" onclick="generateKBTicket(\'' + minerId + '\', ' + siteId + ', \'' + alertType + '\')"><i class="bi bi-ticket-detailed me-2"></i>' + (getLanguage() === 'en' ? 'Generate Repair Ticket' : '生成维修工单') + '</button>';
+                html += '</div>';
+            }
+            
+            container.innerHTML = html;
+        })
+        .catch(err => {
+            container.innerHTML = '<div class="alert alert-warning"><i class="bi bi-exclamation-triangle me-2"></i>' + (getLanguage() === 'en' ? 'KB diagnosis failed: ' : 'KB诊断失败: ') + err.message + '</div>';
+        });
+}
+
+// Generate ticket from KB diagnosis
+function generateKBTicket(minerId, siteId, alertType) {
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>' + (getLanguage() === 'en' ? 'Generating...' : '生成中...');
+    
+    // First get miner data, then call ticket-draft
+    fetch(`/hosting/api/client/miners/${minerId}`)
+        .then(r => r.json())
+        .then(minerData => {
+            const device = minerData.device || {};
+            const brand = (device.miner_model || '').toLowerCase().includes('whatsminer') ? 'WhatsMiner' : 
+                          (device.miner_model || '').toLowerCase().includes('avalon') ? 'Avalon' : 'Bitmain';
+            
+            const logs = [];
+            if (alertType === 'offline') logs.push('Miner offline');
+            if (device.status === 'offline') logs.push('ERROR_POWER_LOST');
+            
+            return fetch('/api/kb/ticket-draft', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    miner_id: minerId,
+                    model_id: device.miner_model || 'generic_asic_miner',
+                    brand: brand,
+                    logs: logs,
+                    metrics: { uptime_sec: (device.uptime || 0) * 3600 }
+                })
+            });
+        })
+        .then(r => r.json())
+        .then(draft => {
+            if (draft.success) {
+                // Show generated ticket in modal
+                const lang = getLanguage();
+                let html = '<div class="alert alert-success mb-3"><i class="bi bi-check-circle me-2"></i>' + (lang === 'en' ? 'Ticket draft generated!' : '工单草稿已生成！') + '</div>';
+                html += '<div class="card bg-dark">';
+                html += '<div class="card-header"><strong>' + (draft.title || 'Repair Ticket') + '</strong></div>';
+                html += '<div class="card-body"><pre class="small text-light mb-0" style="white-space: pre-wrap;">' + (draft.body || draft.description || JSON.stringify(draft, null, 2)) + '</pre></div>';
+                html += '</div>';
+                html += '<div class="d-grid gap-2 mt-3"><button class="btn btn-primary" onclick="copyTicketToClipboard()"><i class="bi bi-clipboard me-2"></i>' + (lang === 'en' ? 'Copy to Clipboard' : '复制到剪贴板') + '</button></div>';
+                document.getElementById('ai-diagnosis-content').innerHTML = html;
+            } else {
+                throw new Error(draft.error || 'Failed to generate ticket');
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-ticket-detailed me-2"></i>' + (getLanguage() === 'en' ? 'Generate Repair Ticket' : '生成维修工单');
+            alert((getLanguage() === 'en' ? 'Error: ' : '错误: ') + err.message);
+        });
+}
+
+function copyTicketToClipboard() {
+    const pre = document.querySelector('#ai-diagnosis-content pre');
+    if (pre) {
+        navigator.clipboard.writeText(pre.textContent).then(() => {
+            const btn = event.target;
+            btn.innerHTML = '<i class="bi bi-check me-2"></i>' + (getLanguage() === 'en' ? 'Copied!' : '已复制！');
+            setTimeout(() => {
+                btn.innerHTML = '<i class="bi bi-clipboard me-2"></i>' + (getLanguage() === 'en' ? 'Copy to Clipboard' : '复制到剪贴板');
+            }, 2000);
+        });
+    }
 }
 </script>
 {% endblock %}

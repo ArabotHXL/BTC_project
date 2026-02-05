@@ -1,0 +1,65 @@
+[
+  {
+    "tuning_id": "tune_downclock_powercap",
+    "title": "降频/限功率：快速恢复稳定运行",
+    "actions": [
+      "遇到过温、升频后掉算力、HW error 飙升时：先回退到默认或已知稳定 profile。",
+      "一次只改一个参数（频率/功率/风扇策略）；每次改动后观察 30–60 分钟。",
+      "把触发阈值（温度、功率、频点）记录下来，写成自动回滚规则。"
+    ],
+    "rollback": [
+      "保留“默认/稳定 profile”一键回滚；回滚后跑 12h 平均算力验证。"
+    ],
+    "sources": [
+      "bitmain_antminer_failures_troubleshooting",
+      "canaan_miner_log_tech_guidance"
+    ]
+  },
+  {
+    "tuning_id": "tune_pool_failover",
+    "title": "矿池与网络：Failover/重连策略",
+    "actions": [
+      "配置主矿池 + 至少 1–2 个备用矿池；监控拒绝率、延迟与断连次数。",
+      "出现授权失败/连接失败：先核对 worker/密码/端口/协议，再排 DNS/NTP/网关。",
+      "把“连接失败次数阈值”与“自动切换矿池”绑定，避免长时间掉算力。"
+    ],
+    "rollback": [
+      "大规模断连时回滚到已验证的矿池列表与网络配置（DNS/NTP/网关）。"
+    ],
+    "sources": [
+      "bitmain_cant_connect_pool"
+    ]
+  },
+  {
+    "tuning_id": "tune_thermal_policy",
+    "title": "温控策略：风扇/环境/功率三联动",
+    "actions": [
+      "设定分层温控：进风温度越高，最大功率越低；风扇策略与功率绑定。",
+      "水冷/浸没：建立水温/流量阈值，触发自动降功率或停机保护。",
+      "避免用“拉满风扇”掩盖散热接触不良；先解决风道与导热问题。"
+    ],
+    "rollback": [
+      "出现异常噪声/风扇掉速/温度上升：回到厂商默认风扇策略并检查风扇硬件。"
+    ],
+    "sources": [
+      "bitmain_antminer_failures_troubleshooting",
+      "zeus_iceriver_ks5l_troubleshooting"
+    ]
+  },
+  {
+    "tuning_id": "tune_ntp_dns_baseline",
+    "title": "NTP/DNS 基线：时间正确 + 域名可解析",
+    "actions": [
+      "矿机侧启用 NTP（或在局域网提供本地 NTP）；确保时间正确避免统计偏差与证书问题。",
+      "为矿机网段指定可靠 DNS（或本地缓存 DNS）；避免解析失败导致断连。",
+      "把 NTP offset / DNS failure 纳入监控告警。"
+    ],
+    "rollback": [
+      "出现异常：临时切换为 IP 直连矿池（若矿池提供），同时修复 DNS/NTP。"
+    ],
+    "sources": [
+      "canaan_miner_log_tech_guidance",
+      "whatsminer_product_manuals"
+    ]
+  }
+]

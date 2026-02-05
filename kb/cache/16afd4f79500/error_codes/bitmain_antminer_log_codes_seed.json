@@ -1,0 +1,48 @@
+{
+  "dict_id": "bitmain_antminer_log_codes_seed",
+  "brand": "Bitmain",
+  "source_id": "bitmain_19_series_common_problems",
+  "entries": [
+    {
+      "code": "ERROR_FAN_LOST",
+      "title": "Fan lost / fan speed low",
+      "meaning": "风扇丢失或转速过低，触发保护/降频",
+      "quick_fix": "检查风扇插头与线束；对比各风扇转速，异常风扇更换；必要时恢复默认风扇策略或更换控制板。",
+      "category": "thermal",
+      "severity": "critical"
+    },
+    {
+      "code": "ERROR_POWER_LOST",
+      "title": "Power status/voltage read failed",
+      "meaning": "电源状态/电压读取异常，可能是供电链路或PSU问题",
+      "quick_fix": "检查电源线、稳压线（如有）、铜排/螺丝是否松动；确认市电电压稳定；必要时更换PSU。",
+      "category": "power",
+      "severity": "critical"
+    },
+    {
+      "code": "V:1",
+      "title": "Sweep error string = V:1 (Power failure)",
+      "meaning": "日志提示电源异常（示例：S19 XP）",
+      "quick_fix": "检查电源线/铜排/电压调节线是否松动；排除供电波动；必要时更换PSU。",
+      "category": "power",
+      "severity": "critical"
+    },
+    {
+      "code": "Read Temp Sensor Failed",
+      "title": "Temperature sensor read failed",
+      "meaning": "温度传感器读取失败/通信异常",
+      "quick_fix": "检查传感器线缆与接插件；重插后复测；升级/回滚固件验证；仍异常进入板级检修。",
+      "category": "thermal",
+      "severity": "critical"
+    },
+    {
+      "code": "Chain X only found Y ASICs",
+      "title": "ASIC count mismatch / missing chips",
+      "meaning": "某链/某板识别到的芯片数量不足，可能短路/断路/信号异常",
+      "quick_fix": "检查信号线/供电线与接插件；互换板位确认是否随板迁移；做单板测试定位缺失芯片域并维修。",
+      "category": "hash_board",
+      "severity": "critical"
+    }
+  ],
+  "notes": "Bitmain 以 kernel log / diagnostic log 的字符串为主（非统一数字码）。本文件为种子映射，建议按机型系列补充更多日志提示与处理方法。"
+}

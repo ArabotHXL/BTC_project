@@ -1,0 +1,199 @@
+[
+  {
+    "model_id": "bitmain_antminer_generic",
+    "brand": "Bitmain",
+    "family": "Antminer (generic)",
+    "cooling": "unknown",
+    "device_type": "asic",
+    "notes": "Brand-level fallback for Antminer series (S/L/K etc). Refine to model-specific as you onboard.",
+    "telemetry_interfaces": [
+      "cgminer4028",
+      "web_ui",
+      "kernel_log"
+    ],
+    "common_psu": [
+      "APW12/APW9/APW7"
+    ],
+    "sources": [
+      "bitmain_antminer_failures_troubleshooting",
+      "bitmain_hashrate_zero",
+      "bitmain_cant_find_ip",
+      "bitmain_cant_connect_pool"
+    ]
+  },
+  {
+    "model_id": "antminer_s21_family",
+    "brand": "Bitmain",
+    "family": "S21 (air/hydro/immersion)",
+    "cooling": "unknown",
+    "device_type": "asic",
+    "notes": "S21 family; use official user guides + repair resources for board variants.",
+    "telemetry_interfaces": [
+      "cgminer4028",
+      "web_ui",
+      "kernel_log"
+    ],
+    "common_psu": [
+      "APW12-series"
+    ],
+    "sources": [
+      "bitmain_antminer_failures_troubleshooting",
+      "zeus_s21_xp_hashboard_repair"
+    ]
+  },
+  {
+    "model_id": "microbt_whatsminer_generic",
+    "brand": "MicroBT",
+    "family": "WhatsMiner (generic)",
+    "cooling": "unknown",
+    "device_type": "asic",
+    "notes": "Brand-level coverage with official error codes PDF; refine to M20/M30/M50/M60 series.",
+    "telemetry_interfaces": [
+      "whatsminer_http",
+      "whatsminer_tool",
+      "web_ui",
+      "logs"
+    ],
+    "common_psu": [],
+    "sources": [
+      "whatsminer_error_codes_pdf_20210930",
+      "whatsminer_product_manuals"
+    ]
+  },
+  {
+    "model_id": "canaan_avalon_generic",
+    "brand": "Canaan",
+    "family": "AvalonMiner (generic)",
+    "cooling": "air",
+    "device_type": "asic",
+    "notes": "AvalonMiner family; leverage log technical guidance + older repair guide for cgminer log codes.",
+    "telemetry_interfaces": [
+      "cgminer_api",
+      "web_ui",
+      "logs"
+    ],
+    "common_psu": [],
+    "sources": [
+      "canaan_miner_log_tech_guidance",
+      "canaan_avalon_troubleshooting_repair_guide_2018"
+    ]
+  },
+  {
+    "model_id": "iceriver_ks_generic",
+    "brand": "IceRiver",
+    "family": "KS-series (generic)",
+    "cooling": "air",
+    "device_type": "asic",
+    "notes": "KS family operation and troubleshooting; refine per KS model.",
+    "telemetry_interfaces": [
+      "web_ui",
+      "logs"
+    ],
+    "common_psu": [],
+    "sources": [
+      "iceriver_support_articles",
+      "zeus_iceriver_ks5l_troubleshooting"
+    ]
+  },
+  {
+    "model_id": "goldshell_generic",
+    "brand": "Goldshell",
+    "family": "Goldshell (generic)",
+    "cooling": "air",
+    "device_type": "asic",
+    "notes": "Placeholder for Goldshell miners; use generic signatures until manuals are onboarded.",
+    "telemetry_interfaces": [
+      "web_ui",
+      "logs"
+    ],
+    "common_psu": [],
+    "sources": []
+  },
+  {
+    "model_id": "jasminer_generic",
+    "brand": "Jasminer",
+    "family": "Jasminer (generic)",
+    "cooling": "air",
+    "device_type": "asic",
+    "notes": "Placeholder for Jasminer miners; use generic signatures until manuals are onboarded.",
+    "telemetry_interfaces": [
+      "web_ui",
+      "logs"
+    ],
+    "common_psu": [],
+    "sources": []
+  },
+  {
+    "model_id": "ipollo_generic",
+    "brand": "iPollo",
+    "family": "iPollo (generic)",
+    "cooling": "air",
+    "device_type": "asic",
+    "notes": "Placeholder for iPollo miners; use generic signatures until manuals are onboarded.",
+    "telemetry_interfaces": [
+      "web_ui",
+      "logs"
+    ],
+    "common_psu": [],
+    "sources": []
+  },
+  {
+    "model_id": "innosilicon_generic",
+    "brand": "Innosilicon",
+    "family": "Innosilicon (generic)",
+    "cooling": "air",
+    "device_type": "asic",
+    "notes": "Placeholder for Innosilicon miners; use generic signatures until manuals are onboarded.",
+    "telemetry_interfaces": [
+      "web_ui",
+      "logs"
+    ],
+    "common_psu": [],
+    "sources": []
+  },
+  {
+    "model_id": "ebang_generic",
+    "brand": "Ebang",
+    "family": "Ebang (generic)",
+    "cooling": "air",
+    "device_type": "asic",
+    "notes": "Placeholder for Ebang miners; use generic signatures until manuals are onboarded.",
+    "telemetry_interfaces": [
+      "web_ui",
+      "logs"
+    ],
+    "common_psu": [],
+    "sources": []
+  },
+  {
+    "model_id": "bitdeer_sealminer_generic",
+    "brand": "Bitdeer",
+    "family": "SEALMINER (generic)",
+    "cooling": "air",
+    "device_type": "asic",
+    "notes": "Placeholder for Bitdeer miners; use generic signatures until manuals are onboarded.",
+    "telemetry_interfaces": [
+      "web_ui",
+      "logs"
+    ],
+    "common_psu": [],
+    "sources": []
+  },
+  {
+    "model_id": "gpu_rig_generic",
+    "brand": "Other",
+    "family": "GPU mining rig (generic)",
+    "cooling": "other",
+    "device_type": "gpu_rig",
+    "notes": "GPU rig class (OS/driver/PCIe/power/OC related).",
+    "telemetry_interfaces": [
+      "miner_software_log",
+      "nvidia_smi",
+      "amd_smi"
+    ],
+    "common_psu": [
+      "ATX PSU"
+    ],
+    "sources": []
+  }
+]
