@@ -291,6 +291,85 @@ class MinerKnowledgeBaseService:
 
     # -------- matching engine --------
 
+    @staticmethod
+    def _localize(obj: Dict[str, Any], fields: List[str], lang: str) -> Dict[str, Any]:
+        if lang != 'en':
+            return obj
+        out = dict(obj)
+        for f in fields:
+            en_key = f"{f}_en"
+            if en_key in out and out[en_key]:
+                out[f] = out[en_key]
+        return out
+
+    def localize_result(self, diag: "DiagnosisResult", lang: str) -> "DiagnosisResult":
+        if lang != 'en':
+            return diag
+
+        loc_selected = None
+        if diag.selected:
+            sig_data = None
+            for s in self.signatures:
+                if s.get("signature_id") == diag.selected.signature_id:
+                    sig_data = s
+                    break
+            en_title = (sig_data or {}).get("title_en", diag.selected.title) if sig_data else diag.selected.title
+            loc_selected = SignatureHit(
+                signature_id=diag.selected.signature_id,
+                title=en_title,
+                category=diag.selected.category,
+                severity=diag.selected.severity,
+                priority=diag.selected.priority,
+                score=diag.selected.score,
+                reasons=diag.selected.reasons,
+                playbook_id=diag.selected.playbook_id,
+                prevention_id=diag.selected.prevention_id,
+                tuning_id=diag.selected.tuning_id,
+            )
+
+        loc_top_hits = []
+        for hit in diag.top_hits:
+            sig_data = None
+            for s in self.signatures:
+                if s.get("signature_id") == hit.signature_id:
+                    sig_data = s
+                    break
+            en_title = (sig_data or {}).get("title_en", hit.title) if sig_data else hit.title
+            loc_top_hits.append(SignatureHit(
+                signature_id=hit.signature_id,
+                title=en_title,
+                category=hit.category,
+                severity=hit.severity,
+                priority=hit.priority,
+                score=hit.score,
+                reasons=hit.reasons,
+                playbook_id=hit.playbook_id,
+                prevention_id=hit.prevention_id,
+                tuning_id=hit.tuning_id,
+            ))
+
+        pb_fields = ["title", "goal", "safety", "steps", "escalation", "verification", "artifacts"]
+        prev_fields = ["title", "checks", "maintenance_schedule"]
+
+        loc_playbook = self._localize(diag.playbook, pb_fields, lang) if diag.playbook else None
+        loc_prevention = self._localize(diag.prevention, prev_fields, lang) if diag.prevention else None
+        loc_tuning = diag.tuning
+
+        return DiagnosisResult(
+            miner_id=diag.miner_id,
+            model_id=diag.model_id,
+            brand=diag.brand,
+            timestamp=diag.timestamp,
+            top_hits=loc_top_hits,
+            selected=loc_selected,
+            playbook=loc_playbook,
+            prevention=loc_prevention,
+            tuning=loc_tuning,
+            error_code_explanations=diag.error_code_explanations,
+            confidence=diag.confidence,
+            notes=diag.notes,
+        )
+
     def diagnose(self, snapshot: Dict[str, Any]) -> DiagnosisResult:
         """
         snapshot schema (suggested):

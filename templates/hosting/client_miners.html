@@ -709,7 +709,8 @@ function showKBDiagnosis(minerId, siteId) {
             brand: brand,
             timestamp: new Date().toISOString(),
             logs: logs,
-            metrics: metrics
+            metrics: metrics,
+            lang: lang
         })
     })
     .then(r => r.json())

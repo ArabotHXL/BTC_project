@@ -1,0 +1,79 @@
+[
+  {
+    "prevention_id": "prev_esd_power_safety",
+    "title": "ESD 与供电安全（通用）",
+    "title_en": "ESD and Power Safety (General)",
+    "checks": [
+      "维修台与腕带接地；防静电袋存放板件；避免潮湿环境。",
+      "拆机/拔插哈希板前断电并等待放电；PSU/高压侧谨慎操作。",
+      "检查 AC 线缆、PDU/插排额定；避免松动导致打火与温升。",
+      "任何单板上电测试必须配套散热（散热器/冷板/强制风冷）。"
+    ],
+    "checks_en": [
+      "Ground workbench and wrist strap; store boards in anti-static bags; avoid humid environments.",
+      "Power off and wait for discharge before disassembling/unplugging hash boards; exercise caution with PSU/high-voltage side.",
+      "Check AC cables, PDU/power strip ratings; prevent arcing and temperature rise from loose connections.",
+      "All single-board power-on testing must include cooling (heatsink/cold plate/forced air cooling)."
+    ],
+    "maintenance_schedule": [
+      "每次拆装执行一次安全清单；每季度检查接插件温升与烧蚀。"
+    ],
+    "maintenance_schedule_en": [
+      "Execute safety checklist for each disassembly; quarterly inspection of connector temperature rise and burn marks."
+    ],
+    "sources": [
+      "bitmain_antminer_failures_troubleshooting"
+    ]
+  },
+  {
+    "prevention_id": "prev_thermal_hygiene",
+    "title": "散热卫生与环境管理（通用）",
+    "title_en": "Thermal Hygiene and Environmental Management (General)",
+    "checks": [
+      "保持风道通畅：过滤网/风道定期清洁；进风无遮挡。",
+      "检查风扇转速与异响；水冷检查水温/流量/气堵/漏液。",
+      "避免长期超频在高温环境运行；建立功率-温度边界策略。"
+    ],
+    "checks_en": [
+      "Keep airway clear: regularly clean filters/airways; ensure unobstructed inlet airflow.",
+      "Inspect fan speed and unusual noise; check water temp/flow/air locks/leaks for water cooling.",
+      "Avoid prolonged overclocking in high-temp environments; establish power-temperature boundary policies."
+    ],
+    "maintenance_schedule": [
+      "高粉尘：2–4 周清洁；常规：1–3 月深度清洁；水冷按水质/冷却液周期维护。"
+    ],
+    "maintenance_schedule_en": [
+      "High dust: clean every 2-4 weeks; normal: deep clean every 1-3 months; water cooling maintain per water quality/coolant cycle."
+    ],
+    "sources": [
+      "bitmain_antminer_failures_troubleshooting",
+      "zeus_iceriver_ks5l_troubleshooting"
+    ]
+  },
+  {
+    "prevention_id": "prev_config_firmware_ops",
+    "title": "配置/固件与变更管理（通用）",
+    "title_en": "Configuration/Firmware and Change Management (General)",
+    "checks": [
+      "固件升级前备份配置与矿池；保留可回滚的稳定 profile。",
+      "升级时确保网络稳定、电源稳定；避免同时批量升级全场。",
+      "启用矿池 Failover；定期检查 DNS/NTP/网关与交换机状态。"
+    ],
+    "checks_en": [
+      "Backup configuration and pool settings before firmware upgrade; keep a rollback-ready stable profile.",
+      "Ensure stable network and power during upgrade; avoid batch upgrading the entire farm simultaneously.",
+      "Enable pool failover; regularly check DNS/NTP/gateway and switch status."
+    ],
+    "maintenance_schedule": [
+      "每次升级执行「升级前检查」；每月审查 failover 与矿池可用性。"
+    ],
+    "maintenance_schedule_en": [
+      "Execute pre-upgrade checklist for each upgrade; monthly review of failover and pool availability."
+    ],
+    "sources": [
+      "bitmain_antminer_failures_troubleshooting",
+      "bitmain_cant_connect_pool",
+      "whatsminer_product_manuals"
+    ]
+  }
+]

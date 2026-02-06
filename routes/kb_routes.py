@@ -76,6 +76,8 @@ def kb_diagnose():
         kb = get_kb_service()
         data = request.get_json() or {}
         
+        lang = data.get("lang", "zh")
+        
         snapshot = {
             "miner_id": data.get("miner_id", "unknown"),
             "model_id": data.get("model_id", "generic_asic_miner"),
@@ -86,6 +88,7 @@ def kb_diagnose():
         }
         
         diag = kb.diagnose(snapshot)
+        diag = kb.localize_result(diag, lang)
         
         return jsonify({
             "success": True,
@@ -178,6 +181,8 @@ def kb_ticket_draft():
         kb = get_kb_service()
         data = request.get_json() or {}
         
+        lang = data.get("lang", "zh")
+        
         snapshot = {
             "miner_id": data.get("miner_id", "unknown"),
             "model_id": data.get("model_id", "generic_asic_miner"),
@@ -188,6 +193,7 @@ def kb_ticket_draft():
         }
         
         diag = kb.diagnose(snapshot)
+        diag = kb.localize_result(diag, lang)
         draft = kb.build_ticket_draft(diag)
         
         return jsonify({

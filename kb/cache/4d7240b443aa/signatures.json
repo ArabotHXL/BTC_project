@@ -2,6 +2,7 @@
   {
     "signature_id": "power_no_output_or_shutdown",
     "title": "整机不上电/PSU无输出/频繁掉电重启",
+    "title_en": "No Power / PSU No Output / Frequent Power Cycling",
     "category": "power",
     "severity": "critical",
     "priority": 1,
@@ -33,7 +34,8 @@
         "ERROR_POWER_LOST: power voltage read failed, pls check!",
         "Sweep error string = V:1"
       ],
-      "notes": "优先排查外部供电/线缆/铜排螺丝→PSU→最小系统定位。"
+      "notes": "优先排查外部供电/线缆/铜排螺丝→PSU→最小系统定位。",
+      "notes_en": "Prioritize checking external power/cables/busbar screws → PSU → minimum system isolation."
     },
     "applies_to": [
       "bitmain_antminer_generic",
@@ -54,6 +56,7 @@
   {
     "signature_id": "power_input_undervoltage",
     "title": "输入欠压/低电压保护",
+    "title_en": "Input Undervoltage / Low Voltage Protection",
     "category": "power",
     "severity": "critical",
     "priority": 2,
@@ -75,7 +78,8 @@
         "251",
         "271"
       ],
-      "notes": "电压不足会导致PSU保护或掉算力。"
+      "notes": "电压不足会导致PSU保护或掉算力。",
+      "notes_en": "Insufficient voltage causes PSU protection or hashrate drops."
     },
     "applies_to": [
       "microbt_whatsminer_generic",
@@ -91,6 +95,7 @@
   {
     "signature_id": "power_overcurrent_or_overpower",
     "title": "PSU过流/过功率保护",
+    "title_en": "PSU Overcurrent / Over-Power Protection",
     "category": "power",
     "severity": "critical",
     "priority": 3,
@@ -117,7 +122,8 @@
         "269",
         "2273"
       ],
-      "notes": "检查铜排/接插件温升、短路、异常负载。"
+      "notes": "检查铜排/接插件温升、短路、异常负载。",
+      "notes_en": "Check busbar/connector temperature rise, short circuits, and abnormal loads."
     },
     "applies_to": [
       "microbt_whatsminer_generic",
@@ -133,6 +139,7 @@
   {
     "signature_id": "power_psu_fan_error",
     "title": "PSU风扇错误/风扇告警",
+    "title_en": "PSU Fan Error / Fan Alert",
     "category": "power",
     "severity": "critical",
     "priority": 4,
@@ -151,7 +158,8 @@
         "254",
         "274"
       ],
-      "notes": "PSU散热异常会触发保护。"
+      "notes": "PSU散热异常会触发保护。",
+      "notes_en": "PSU cooling anomaly will trigger protection."
     },
     "applies_to": [
       "microbt_whatsminer_generic",
@@ -167,6 +175,7 @@
   {
     "signature_id": "no_ip_or_unreachable",
     "title": "无IP/无法访问Web/无法升级",
+    "title_en": "No IP / Web Unreachable / Upgrade Failed",
     "category": "network",
     "severity": "critical",
     "priority": 10,
@@ -185,7 +194,8 @@
         "ip_address == null OR web_reachable == false"
       ],
       "codes": [],
-      "notes": "优先排DHCP/MAC绑定/线缆/交换机→浏览器缓存→刷机/控制板。"
+      "notes": "优先排DHCP/MAC绑定/线缆/交换机→浏览器缓存→刷机/控制板。",
+      "notes_en": "Prioritize DHCP/MAC binding/cable/switch → browser cache → reflash/control board."
     },
     "applies_to": [
       "bitmain_antminer_generic",
@@ -205,6 +215,7 @@
   {
     "signature_id": "web_login_or_ui_bug",
     "title": "Web后台异常/页面打不开/兼容性问题",
+    "title_en": "Web UI Abnormal / Page Inaccessible / Compatibility Issue",
     "category": "network",
     "severity": "warn",
     "priority": 20,
@@ -222,7 +233,8 @@
         "web_reachable == false AND ip_address != null"
       ],
       "codes": [],
-      "notes": "通常与浏览器缓存/协议(http/https)/重置有关。"
+      "notes": "通常与浏览器缓存/协议(http/https)/重置有关。",
+      "notes_en": "Usually related to browser cache/protocol (http/https)/reset."
     },
     "applies_to": [
       "bitmain_antminer_generic",
@@ -238,6 +250,7 @@
   {
     "signature_id": "pool_connect_failed",
     "title": "矿池连接失败/超时/拒绝连接",
+    "title_en": "Pool Connection Failed / Timeout / Refused",
     "category": "pool",
     "severity": "critical",
     "priority": 30,
@@ -262,7 +275,8 @@
         "stratum connection timeout",
         "...retry after 30 seconds failures 1"
       ],
-      "notes": "先核对配置与端口，再排网络/DNS/出口端口限制。"
+      "notes": "先核对配置与端口，再排网络/DNS/出口端口限制。",
+      "notes_en": "First verify config and ports, then check network/DNS/egress port restrictions."
     },
     "applies_to": [
       "bitmain_antminer_generic",
@@ -282,6 +296,7 @@
   {
     "signature_id": "pool_auth_failed",
     "title": "矿池授权失败/worker不正确/未授权",
+    "title_en": "Pool Auth Failed / Invalid Worker / Unauthorized",
     "category": "pool",
     "severity": "critical",
     "priority": 31,
@@ -299,7 +314,8 @@
         "avg_hashrate_12h == 0 AND pool_disconnect_count_1h >= 1"
       ],
       "codes": [],
-      "notes": "常见原因：worker/密码含空格、大小写、矿池端口/协议不匹配。"
+      "notes": "常见原因：worker/密码含空格、大小写、矿池端口/协议不匹配。",
+      "notes_en": "Common causes: worker/password with spaces, case sensitivity, pool port/protocol mismatch."
     },
     "applies_to": [
       "bitmain_antminer_generic",
@@ -318,6 +334,7 @@
   {
     "signature_id": "pool_high_reject_rate",
     "title": "拒绝率高/无效份额/时间差导致 stale",
+    "title_en": "High Reject Rate / Invalid Shares / Stale Due to Time Drift",
     "category": "pool",
     "severity": "warn",
     "priority": 40,
@@ -335,7 +352,8 @@
         "reject_rate > 0.03 OR stale_rate > 0.02"
       ],
       "codes": [],
-      "notes": "优先看网络延迟与NTP同步，再看超频导致错误率。"
+      "notes": "优先看网络延迟与NTP同步，再看超频导致错误率。",
+      "notes_en": "First check network latency and NTP sync, then overclocking error rates."
     },
     "applies_to": [
       "generic_asic_miner",
@@ -349,6 +367,7 @@
   {
     "signature_id": "dns_resolution_fail",
     "title": "DNS解析失败/域名无法解析",
+    "title_en": "DNS Resolution Failed / Domain Unresolvable",
     "category": "network",
     "severity": "warn",
     "priority": 41,
@@ -366,7 +385,8 @@
         "dns_fail_count >= 3"
       ],
       "codes": [],
-      "notes": "DNS问题会表现为矿池连接失败。"
+      "notes": "DNS问题会表现为矿池连接失败。",
+      "notes_en": "DNS issues manifest as pool connection failures."
     },
     "applies_to": [
       "generic_asic_miner",
@@ -380,6 +400,7 @@
   {
     "signature_id": "firmware_upgrade_failed",
     "title": "固件升级失败/刷机失败/固件不匹配",
+    "title_en": "Firmware Upgrade Failed / Flash Failed / Firmware Mismatch",
     "category": "firmware",
     "severity": "critical",
     "priority": 50,
@@ -397,7 +418,8 @@
         "reboot_count_1h >= 2 AND avg_hashrate_12h == 0"
       ],
       "codes": [],
-      "notes": "Bitmain官方将固件不匹配/文件损坏归为常见原因。"
+      "notes": "Bitmain官方将固件不匹配/文件损坏归为常见原因。",
+      "notes_en": "Bitmain officially lists firmware mismatch/file corruption as common causes."
     },
     "applies_to": [
       "bitmain_antminer_generic",
@@ -414,6 +436,7 @@
   {
     "signature_id": "config_error_or_factory_reset_needed",
     "title": "配置错误/需要恢复出厂",
+    "title_en": "Configuration Error / Factory Reset Required",
     "category": "firmware",
     "severity": "warn",
     "priority": 55,
@@ -430,7 +453,8 @@
         "avg_hashrate_12h == 0 AND web_reachable == true"
       ],
       "codes": [],
-      "notes": "配置错误会导致无法连接矿池或异常运行。"
+      "notes": "配置错误会导致无法连接矿池或异常运行。",
+      "notes_en": "Configuration errors cause pool connection failure or abnormal operation."
     },
     "applies_to": [
       "bitmain_antminer_generic",
@@ -447,6 +471,7 @@
   {
     "signature_id": "thermal_overheat_protection",
     "title": "过温保护触发/环境温度过高",
+    "title_en": "Overheat Protection Triggered / Ambient Temp Too High",
     "category": "thermal",
     "severity": "critical",
     "priority": 60,
@@ -469,7 +494,8 @@
         "352",
         "64"
       ],
-      "notes": "官方与手册均强调过温保护与风扇/环境检查。"
+      "notes": "官方与手册均强调过温保护与风扇/环境检查。",
+      "notes_en": "Official docs and manuals emphasize overheat protection and fan/environment checks."
     },
     "applies_to": [
       "bitmain_antminer_generic",
@@ -490,6 +516,7 @@
   {
     "signature_id": "thermal_fan_lost_or_speed_low",
     "title": "风扇丢失/转速低/Fatal fan lost",
+    "title_en": "Fan Lost / Fan Speed Low / Fatal Fan Lost",
     "category": "thermal",
     "severity": "critical",
     "priority": 61,
@@ -509,7 +536,8 @@
       "codes": [
         "ERROR_FAN_LOST"
       ],
-      "notes": "Bitmain官方提示 kernel log 出现 Fan lost 需检查风扇。"
+      "notes": "Bitmain官方提示 kernel log 出现 Fan lost 需检查风扇。",
+      "notes_en": "Bitmain official notice: Fan lost in kernel log requires fan inspection."
     },
     "applies_to": [
       "bitmain_antminer_generic",
@@ -527,6 +555,7 @@
   {
     "signature_id": "thermal_sensor_read_fail",
     "title": "温度传感器读取失败/通信异常",
+    "title_en": "Temp Sensor Read Failed / Communication Error",
     "category": "thermal",
     "severity": "critical",
     "priority": 62,
@@ -550,7 +579,8 @@
         "4096",
         "Read Temp Sensor Failed"
       ],
-      "notes": "温度读取异常可能导致保护停机。"
+      "notes": "温度读取异常可能导致保护停机。",
+      "notes_en": "Abnormal temp readings may cause protective shutdown."
     },
     "applies_to": [
       "bitmain_antminer_generic",
@@ -570,6 +600,7 @@
   {
     "signature_id": "thermal_water_flow_issue",
     "title": "水冷流量不足/水温过高/气堵风险",
+    "title_en": "Water Cooling Flow Insufficient / Water Temp High / Air Lock Risk",
     "category": "thermal",
     "severity": "critical",
     "priority": 63,
@@ -587,7 +618,8 @@
         "water_flow_lpm < 5 OR water_temp_c > 40"
       ],
       "codes": [],
-      "notes": "水冷需把水温/流量与功率联动，异常时快速降功率。"
+      "notes": "水冷需把水温/流量与功率联动，异常时快速降功率。",
+      "notes_en": "Water cooling must link water temp/flow with power; reduce power quickly on anomaly."
     },
     "applies_to": [
       "antminer_s21_family",
@@ -601,6 +633,7 @@
   {
     "signature_id": "missing_chain_or_find_x_asic",
     "title": "缺链/找不全芯片（missing chain / find X asic）",
+    "title_en": "Missing Chain / Incomplete ASIC Detection",
     "category": "hash_board",
     "severity": "critical",
     "priority": 70,
@@ -623,7 +656,8 @@
         "530",
         "Chain X only found Y ASICs"
       ],
-      "notes": "先定位 chain/板位，再做互换与单板测试。"
+      "notes": "先定位 chain/板位，再做互换与单板测试。",
+      "notes_en": "First locate chain/board position, then perform swap and single-board testing."
     },
     "applies_to": [
       "bitmain_antminer_generic",
@@ -643,6 +677,7 @@
   {
     "signature_id": "eeprom_error_hashboard",
     "title": "EEPROM 检测/解析错误（哈希板）",
+    "title_en": "EEPROM Detection / Parse Error (Hash Board)",
     "category": "hash_board",
     "severity": "critical",
     "priority": 71,
@@ -664,7 +699,8 @@
         "421",
         "422"
       ],
-      "notes": "多为板级器件或内容异常，刷机不一定能解决。"
+      "notes": "多为板级器件或内容异常，刷机不一定能解决。",
+      "notes_en": "Usually board-level component or data anomaly; reflashing may not resolve it."
     },
     "applies_to": [
       "microbt_whatsminer_generic",
@@ -680,6 +716,7 @@
   {
     "signature_id": "hw_error_rate_high",
     "title": "硬件错误率(HW/MH)过高",
+    "title_en": "Hardware Error Rate (HW/MH) Too High",
     "category": "hash_board",
     "severity": "warn",
     "priority": 80,
@@ -696,7 +733,8 @@
         "hw_error_rate > 0.02"
       ],
       "codes": [],
-      "notes": "Canaan技术指导提到 HW error 指标阈值。"
+      "notes": "Canaan技术指导提到 HW error 指标阈值。",
+      "notes_en": "Canaan technical guidance mentions HW error threshold metrics."
     },
     "applies_to": [
       "canaan_avalon_generic",
@@ -713,6 +751,7 @@
   {
     "signature_id": "pll_config_invalid",
     "title": "PLL 配置异常/锁相失败（Avalon/部分矿机）",
+    "title_en": "PLL Config Invalid / Lock Failed (Avalon/Some Miners)",
     "category": "hash_board",
     "severity": "warn",
     "priority": 81,
@@ -729,7 +768,8 @@
       "codes": [
         "65536"
       ],
-      "notes": "Avalon repair guide: invalid PLL value 可通过重启或更换板解决。"
+      "notes": "Avalon repair guide: invalid PLL value 可通过重启或更换板解决。",
+      "notes_en": "Avalon repair guide: invalid PLL value can be resolved by reboot or board replacement."
     },
     "applies_to": [
       "canaan_avalon_generic",
@@ -745,6 +785,7 @@
   {
     "signature_id": "control_board_temp_sensor_fail",
     "title": "控制板温度传感器通信错误",
+    "title_en": "Control Board Temp Sensor Communication Error",
     "category": "control_board",
     "severity": "critical",
     "priority": 90,
@@ -759,7 +800,8 @@
       "codes": [
         "329"
       ],
-      "notes": "可能导致温控失效或保护。"
+      "notes": "可能导致温控失效或保护。",
+      "notes_en": "May cause temperature control failure or protection triggering."
     },
     "applies_to": [
       "microbt_whatsminer_generic",
@@ -775,6 +817,7 @@
   {
     "signature_id": "control_board_config_error",
     "title": "控制板配置错误/需要刷机恢复",
+    "title_en": "Control Board Config Error / Reflash Required",
     "category": "control_board",
     "severity": "warn",
     "priority": 95,
@@ -787,7 +830,8 @@
       ],
       "metric_rules": [],
       "codes": [],
-      "notes": "Bitmain建议使用SD卡刷机恢复控制板程序。"
+      "notes": "Bitmain建议使用SD卡刷机恢复控制板程序。",
+      "notes_en": "Bitmain recommends using SD card to reflash and restore control board firmware."
     },
     "applies_to": [
       "bitmain_antminer_generic",
@@ -803,6 +847,7 @@
   {
     "signature_id": "ntp_unsync_or_time_drift",
     "title": "NTP不同步/时间漂移",
+    "title_en": "NTP Out of Sync / Time Drift",
     "category": "time",
     "severity": "warn",
     "priority": 110,
@@ -820,7 +865,8 @@
         "abs(ntp_offset_ms) > 2000"
       ],
       "codes": [],
-      "notes": "手册指出矿机运行时间与算力统计依赖 NTP。"
+      "notes": "手册指出矿机运行时间与算力统计依赖 NTP。",
+      "notes_en": "Manual states miner uptime and hashrate stats depend on NTP."
     },
     "applies_to": [
       "microbt_whatsminer_generic",
@@ -837,6 +883,7 @@
   {
     "signature_id": "disk_full_or_log_overflow",
     "title": "磁盘满/日志过大导致服务异常",
+    "title_en": "Disk Full / Log Overflow Causing Service Failure",
     "category": "storage",
     "severity": "warn",
     "priority": 120,
@@ -853,7 +900,8 @@
         "disk_free_mb < 200"
       ],
       "codes": [],
-      "notes": "适用于自定义固件/边缘采集器等场景；App侧应监控。"
+      "notes": "适用于自定义固件/边缘采集器等场景；App侧应监控。",
+      "notes_en": "Applies to custom firmware/edge collector scenarios; app-side monitoring recommended."
     },
     "applies_to": [
       "generic_asic_miner",
@@ -867,6 +915,7 @@
   {
     "signature_id": "humidity_dust_corrosion_risk",
     "title": "粉尘/湿度导致故障风险升高",
+    "title_en": "Dust / Humidity Causing Increased Failure Risk",
     "category": "environment",
     "severity": "warn",
     "priority": 200,
@@ -883,7 +932,8 @@
         "humidity_pct > 70"
       ],
       "codes": [],
-      "notes": "环境因素通常是复发根因，需纳入巡检与策略。"
+      "notes": "环境因素通常是复发根因，需纳入巡检与策略。",
+      "notes_en": "Environmental factors are usually recurring root causes; include in inspection and policy."
     },
     "applies_to": [
       "generic_asic_miner"
@@ -896,6 +946,7 @@
   {
     "signature_id": "tpl_future_001",
     "title": "[模板] GPU: 驱动崩溃/显卡掉卡",
+    "title_en": "[Template] GPU: Driver Crash / GPU Dropout",
     "category": "unknown",
     "severity": "info",
     "priority": 999,
@@ -904,7 +955,8 @@
       "log_regex": [],
       "metric_rules": [],
       "codes": [],
-      "notes": "模板：需要补充具体日志/指标/机型映射后启用。"
+      "notes": "模板：需要补充具体日志/指标/机型映射后启用。",
+      "notes_en": "Template: Enable after adding specific logs/metrics/model mappings."
     },
     "applies_to": [
       "template_only"
@@ -917,6 +969,7 @@
   {
     "signature_id": "tpl_future_002",
     "title": "[模板] GPU: 过度超频导致 invalid share",
+    "title_en": "[Template] GPU: Excessive OC Causing Invalid Shares",
     "category": "unknown",
     "severity": "info",
     "priority": 999,
@@ -925,7 +978,8 @@
       "log_regex": [],
       "metric_rules": [],
       "codes": [],
-      "notes": "模板：需要补充具体日志/指标/机型映射后启用。"
+      "notes": "模板：需要补充具体日志/指标/机型映射后启用。",
+      "notes_en": "Template: Enable after adding specific logs/metrics/model mappings."
     },
     "applies_to": [
       "template_only"
@@ -938,6 +992,7 @@
   {
     "signature_id": "tpl_future_003",
     "title": "[模板] GPU: PCIe 链路/供电问题",
+    "title_en": "[Template] GPU: PCIe Link / Power Issue",
     "category": "unknown",
     "severity": "info",
     "priority": 999,
@@ -946,7 +1001,8 @@
       "log_regex": [],
       "metric_rules": [],
       "codes": [],
-      "notes": "模板：需要补充具体日志/指标/机型映射后启用。"
+      "notes": "模板：需要补充具体日志/指标/机型映射后启用。",
+      "notes_en": "Template: Enable after adding specific logs/metrics/model mappings."
     },
     "applies_to": [
       "template_only"
@@ -959,6 +1015,7 @@
   {
     "signature_id": "tpl_future_004",
     "title": "[模板] 浸没: 介质污染/粘度变化",
+    "title_en": "[Template] Immersion: Medium Contamination / Viscosity Change",
     "category": "unknown",
     "severity": "info",
     "priority": 999,
@@ -967,7 +1024,8 @@
       "log_regex": [],
       "metric_rules": [],
       "codes": [],
-      "notes": "模板：需要补充具体日志/指标/机型映射后启用。"
+      "notes": "模板：需要补充具体日志/指标/机型映射后启用。",
+      "notes_en": "Template: Enable after adding specific logs/metrics/model mappings."
     },
     "applies_to": [
       "template_only"
@@ -980,6 +1038,7 @@
   {
     "signature_id": "tpl_future_005",
     "title": "[模板] 网络: 端口被封/出口限速",
+    "title_en": "[Template] Network: Port Blocked / Egress Rate Limited",
     "category": "unknown",
     "severity": "info",
     "priority": 999,
@@ -988,7 +1047,8 @@
       "log_regex": [],
       "metric_rules": [],
       "codes": [],
-      "notes": "模板：需要补充具体日志/指标/机型映射后启用。"
+      "notes": "模板：需要补充具体日志/指标/机型映射后启用。",
+      "notes_en": "Template: Enable after adding specific logs/metrics/model mappings."
     },
     "applies_to": [
       "template_only"
@@ -1001,6 +1061,7 @@
   {
     "signature_id": "tpl_future_006",
     "title": "[模板] 固件: 证书过期/HTTPS错误",
+    "title_en": "[Template] Firmware: Certificate Expired / HTTPS Error",
     "category": "unknown",
     "severity": "info",
     "priority": 999,
@@ -1009,7 +1070,8 @@
       "log_regex": [],
       "metric_rules": [],
       "codes": [],
-      "notes": "模板：需要补充具体日志/指标/机型映射后启用。"
+      "notes": "模板：需要补充具体日志/指标/机型映射后启用。",
+      "notes_en": "Template: Enable after adding specific logs/metrics/model mappings."
     },
     "applies_to": [
       "template_only"
@@ -1022,6 +1084,7 @@
   {
     "signature_id": "tpl_future_007",
     "title": "[模板] 控制板: 存储损坏/无法启动",
+    "title_en": "[Template] Control Board: Storage Corrupt / Boot Failed",
     "category": "unknown",
     "severity": "info",
     "priority": 999,
@@ -1030,7 +1093,8 @@
       "log_regex": [],
       "metric_rules": [],
       "codes": [],
-      "notes": "模板：需要补充具体日志/指标/机型映射后启用。"
+      "notes": "模板：需要补充具体日志/指标/机型映射后启用。",
+      "notes_en": "Template: Enable after adding specific logs/metrics/model mappings."
     },
     "applies_to": [
       "template_only"
@@ -1043,6 +1107,7 @@
   {
     "signature_id": "tpl_future_008",
     "title": "[模板] 哈希板: 单域欠压/过流",
+    "title_en": "[Template] Hash Board: Domain Undervoltage / Overcurrent",
     "category": "unknown",
     "severity": "info",
     "priority": 999,
@@ -1051,7 +1116,8 @@
       "log_regex": [],
       "metric_rules": [],
       "codes": [],
-      "notes": "模板：需要补充具体日志/指标/机型映射后启用。"
+      "notes": "模板：需要补充具体日志/指标/机型映射后启用。",
+      "notes_en": "Template: Enable after adding specific logs/metrics/model mappings."
     },
     "applies_to": [
       "template_only"
@@ -1064,6 +1130,7 @@
   {
     "signature_id": "tpl_future_009",
     "title": "[模板] 哈希板: 温度传感器坏",
+    "title_en": "[Template] Hash Board: Temp Sensor Failure",
     "category": "unknown",
     "severity": "info",
     "priority": 999,
@@ -1072,7 +1139,8 @@
       "log_regex": [],
       "metric_rules": [],
       "codes": [],
-      "notes": "模板：需要补充具体日志/指标/机型映射后启用。"
+      "notes": "模板：需要补充具体日志/指标/机型映射后启用。",
+      "notes_en": "Template: Enable after adding specific logs/metrics/model mappings."
     },
     "applies_to": [
       "template_only"
@@ -1085,6 +1153,7 @@
   {
     "signature_id": "tpl_future_010",
     "title": "[模板] 哈希板: PIC/MCU异常",
+    "title_en": "[Template] Hash Board: PIC/MCU Anomaly",
     "category": "unknown",
     "severity": "info",
     "priority": 999,
@@ -1093,7 +1162,8 @@
       "log_regex": [],
       "metric_rules": [],
       "codes": [],
-      "notes": "模板：需要补充具体日志/指标/机型映射后启用。"
+      "notes": "模板：需要补充具体日志/指标/机型映射后启用。",
+      "notes_en": "Template: Enable after adding specific logs/metrics/model mappings."
     },
     "applies_to": [
       "template_only"
@@ -1106,6 +1176,7 @@
   {
     "signature_id": "thermal_temp_too_low",
     "title": "低温保护/温度过低（P:2 / ERROR_TEMP_TOO_LOW）",
+    "title_en": "Low Temp Protection / Temp Too Low (P:2 / ERROR_TEMP_TOO_LOW)",
     "category": "environment",
     "severity": "critical",
     "priority": 58,
@@ -1123,7 +1194,8 @@
         "Sweep error string = P:2",
         "ERROR_TEMP_TOO_LOW: temp too low!"
       ],
-      "notes": "低温情况下启动/重启可能损伤设备；先升温再处理。"
+      "notes": "低温情况下启动/重启可能损伤设备；先升温再处理。",
+      "notes_en": "Starting/restarting in low temp may damage equipment; warm up first."
     },
     "applies_to": [
       "bitmain_antminer_generic",
@@ -1139,6 +1211,7 @@
   {
     "signature_id": "control_board_soc_init_failed",
     "title": "控制板/SoC 初始化失败（ERROR_SOC_INIT）",
+    "title_en": "Control Board / SoC Init Failed (ERROR_SOC_INIT)",
     "category": "control_board",
     "severity": "critical",
     "priority": 57,
@@ -1154,7 +1227,8 @@
       "codes": [
         "ERROR_SOC_INIT: soc init failed"
       ],
-      "notes": "官方建议先排查短路风险；有短路禁止重启。"
+      "notes": "官方建议先排查短路风险；有短路禁止重启。",
+      "notes_en": "Official recommendation: check for short circuit risk first; do not restart if short detected."
     },
     "applies_to": [
       "bitmain_antminer_generic",
@@ -1170,6 +1244,7 @@
   {
     "signature_id": "network_net_lost_poweroff",
     "title": "网络丢失过久导致断电保护（net lost poweroff）",
+    "title_en": "Network Lost Too Long Causing Power-Off Protection",
     "category": "network",
     "severity": "critical",
     "priority": 12,
@@ -1186,7 +1261,8 @@
       "codes": [
         "level=fatal pid=* error=\"net lost\" msg=\"lost internet 1200 seconds > 20 minutes, poweroff.\""
       ],
-      "notes": "长时间断网会触发保护；需要网络侧稳定性治理。"
+      "notes": "长时间断网会触发保护；需要网络侧稳定性治理。",
+      "notes_en": "Prolonged network loss triggers protection; requires network-side stability remediation."
     },
     "applies_to": [
       "bitmain_antminer_generic",
