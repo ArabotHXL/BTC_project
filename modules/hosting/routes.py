@@ -1970,25 +1970,20 @@ def get_miners():
             
             miners_data.append(miner_data)
         
-        # 性能优化：使用单次聚合查询获取所有计数，替代3次单独查询
         count_query = db.session.query(
             db.func.count(HostingMiner.id).label('total'),
             db.func.sum(db.case((HostingMiner.status == 'active', 1), else_=0)).label('active'),
             db.func.sum(db.case((HostingMiner.approval_status == 'pending_approval', 1), else_=0)).label('pending')
         )
-        if user_role not in ['owner', 'admin', 'mining_site_owner']:
-            count_query = count_query.filter(HostingMiner.customer_id == user_id)
-        elif user_role == 'mining_site_owner':
-            user_email = session.get('email', '')
-            managed_sites = HostingSite.query.filter(
-                or_(
-                    HostingSite.owner_id == user_id,
-                    HostingSite.contact_email == user_email
-                )
-            ).all()
-            managed_site_ids = [s.id for s in managed_sites]
-            if managed_site_ids:
-                count_query = count_query.filter(HostingMiner.site_id.in_(managed_site_ids))
+        count_query = filter_by_site_access(count_query, HostingMiner.site_id)
+        if status:
+            count_query = count_query.filter(HostingMiner.status == status)
+        if site_id:
+            count_query = count_query.filter(HostingMiner.site_id == site_id)
+        if customer_id and user_role in ['admin', 'mining_site_owner']:
+            count_query = count_query.filter(HostingMiner.customer_id == customer_id)
+        if model_id:
+            count_query = count_query.filter(HostingMiner.miner_model_id == model_id)
         
         count_result = count_query.first()
         counts = {
@@ -5155,8 +5150,10 @@ def get_miners_stats():
         user_role = session.get('role', 'guest')
         user_email = session.get('email', '')
         
-        # 获取筛选参数
         site_id = request.args.get('site_id', type=int)
+        customer_id = request.args.get('customer_id', type=int)
+        status_filter = request.args.get('status')
+        model_id = request.args.get('model_id', type=int)
         
         # 权限控制 - 确定可访问的站点范围
         allowed_site_ids = None  # None表示不限制
@@ -5182,75 +5179,46 @@ def get_miners_stats():
             # owner/customer - 不使用站点限制，而是使用customer_id
             pass
         
-        # 基础查询
-        query = HostingMiner.query
-        
-        # 应用权限过滤
-        if user_role == 'admin':
-            if site_id:
-                query = query.filter_by(site_id=site_id)
-        elif user_role == 'mining_site_owner':
-            if allowed_site_ids:
-                if site_id and site_id in allowed_site_ids:
-                    query = query.filter_by(site_id=site_id)
+        def apply_access_and_filters(q):
+            if user_role == 'admin':
+                if site_id:
+                    q = q.filter(HostingMiner.site_id == site_id)
+            elif user_role == 'mining_site_owner':
+                if allowed_site_ids:
+                    if site_id and site_id in allowed_site_ids:
+                        q = q.filter(HostingMiner.site_id == site_id)
+                    else:
+                        q = q.filter(HostingMiner.site_id.in_(allowed_site_ids))
+                        if site_id:
+                            q = q.filter(HostingMiner.site_id == site_id)
                 else:
-                    query = query.filter(HostingMiner.site_id.in_(allowed_site_ids))
+                    q = q.filter(HostingMiner.id == -1)
             else:
-                # 没有管理任何站点
-                query = query.filter(HostingMiner.id == -1)
-        else:
-            # owner/customer 只能查看自己的矿机
-            query = query.filter_by(customer_id=user_id)
-            if site_id:
-                query = query.filter_by(site_id=site_id)
+                q = q.filter(HostingMiner.customer_id == user_id)
+                if site_id:
+                    q = q.filter(HostingMiner.site_id == site_id)
+            if customer_id and user_role in ['admin', 'mining_site_owner']:
+                q = q.filter(HostingMiner.customer_id == customer_id)
+            if status_filter:
+                q = q.filter(HostingMiner.status == status_filter)
+            if model_id:
+                q = q.filter(HostingMiner.miner_model_id == model_id)
+            return q
         
-        # 使用聚合函数进行高效统计
-        stats_query = db.session.query(
+        query = apply_access_and_filters(HostingMiner.query)
+        
+        stats_query = apply_access_and_filters(db.session.query(
             func.count(HostingMiner.id).label('total_miners'),
             func.sum(HostingMiner.actual_hashrate).label('total_hashrate_th'),
             func.sum(HostingMiner.actual_power).label('total_power_w'),
             func.avg(HostingMiner.health_score).label('avg_health_score')
-        )
-        
-        # 应用相同的权限过滤到统计查询
-        if user_role == 'admin':
-            if site_id:
-                stats_query = stats_query.filter(HostingMiner.site_id == site_id)
-        elif user_role == 'mining_site_owner':
-            if allowed_site_ids:
-                if site_id and site_id in allowed_site_ids:
-                    stats_query = stats_query.filter(HostingMiner.site_id == site_id)
-                else:
-                    stats_query = stats_query.filter(HostingMiner.site_id.in_(allowed_site_ids))
-            else:
-                stats_query = stats_query.filter(HostingMiner.id == -1)
-        else:
-            stats_query = stats_query.filter(HostingMiner.customer_id == user_id)
-            if site_id:
-                stats_query = stats_query.filter(HostingMiner.site_id == site_id)
-        
+        ))
         stats = stats_query.first()
         
-        # 状态分布统计 - 也需要应用权限过滤
-        status_distribution = db.session.query(
+        status_distribution = apply_access_and_filters(db.session.query(
             HostingMiner.status,
             func.count(HostingMiner.id).label('count')
-        )
-        if user_role == 'admin':
-            if site_id:
-                status_distribution = status_distribution.filter(HostingMiner.site_id == site_id)
-        elif user_role == 'mining_site_owner':
-            if allowed_site_ids:
-                if site_id and site_id in allowed_site_ids:
-                    status_distribution = status_distribution.filter(HostingMiner.site_id == site_id)
-                else:
-                    status_distribution = status_distribution.filter(HostingMiner.site_id.in_(allowed_site_ids))
-            else:
-                status_distribution = status_distribution.filter(HostingMiner.id == -1)
-        else:
-            status_distribution = status_distribution.filter(HostingMiner.customer_id == user_id)
-            if site_id:
-                status_distribution = status_distribution.filter(HostingMiner.site_id == site_id)
+        ))
         status_distribution = status_distribution.group_by(HostingMiner.status).all()
         
         # 在线率统计（cgminer_online）

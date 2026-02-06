@@ -1572,6 +1572,9 @@ function setupFilterForm() {
         const filters = getFilters();
         currentPage = 1;
         loadMiners(currentPage, filters);
+        if (typeof loadKPIStats === 'function') {
+            loadKPIStats();
+        }
     });
 }
 
@@ -2239,8 +2242,9 @@ let selectedMiners = [];
 // 加载KPI统计数据
 async function loadKPIStats() {
     try {
-        const siteId = document.getElementById('site-filter').value;
-        const url = siteId ? `/hosting/api/miners/stats?site_id=${siteId}` : '/hosting/api/miners/stats';
+        const filters = typeof getFilters === 'function' ? getFilters() : {};
+        const params = new URLSearchParams(filters);
+        const url = '/hosting/api/miners/stats?' + params.toString();
         
         const response = await fetch(url);
         const result = await response.json();
@@ -2759,10 +2763,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
     
-    // 站点筛选器变化时也更新KPI
-    document.getElementById('site-filter').addEventListener('change', function() {
-        loadKPIStats();
-    });
 });
 
 
