@@ -214,50 +214,9 @@
                     <i class="bi bi-arrow-left-right me-2"></i><span data-i18n="change_status">Change Status</span>
                 </a></li>
                 <li><hr class="dropdown-divider"></li>
-                <!-- Remote Commands Submenu -->
-                <li class="dropdown-submenu">
-                    <a class="dropdown-item dropdown-toggle" href="javascript:void(0)" data-bs-toggle="dropdown">
-                        <i class="bi bi-terminal me-2"></i><span data-i18n="hosting.remote_commands">Remote Commands</span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchRemoteCommand('change_pools')">
-                            <i class="bi bi-shuffle me-2"></i><span data-i18n="hosting.change_pools">Change Pools</span>
-                        </a></li>
-                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchRemoteCommand('reboot')">
-                            <i class="bi bi-arrow-clockwise me-2"></i><span data-i18n="hosting.reboot">Reboot</span>
-                        </a></li>
-                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchRemoteCommand('fetch_logs')">
-                            <i class="bi bi-file-text me-2"></i><span data-i18n="hosting.fetch_logs">Fetch Logs</span>
-                        </a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchRemoteCommand('power_mode')">
-                            <i class="bi bi-lightning me-2"></i><span data-i18n="hosting.power_mode">Power Mode</span>
-                        </a></li>
-                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchRemoteCommand('power_target')">
-                            <i class="bi bi-speedometer2 me-2"></i><span data-i18n="hosting.power_target">Power Target</span>
-                        </a></li>
-                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchRemoteCommand('overclock')">
-                            <i class="bi bi-cpu me-2"></i><span data-i18n="hosting.overclock">Overclock</span>
-                        </a></li>
-                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchRemoteCommand('fan_mode')">
-                            <i class="bi bi-fan me-2"></i><span data-i18n="hosting.fan_mode">Fan Mode</span>
-                        </a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchRemoteCommand('static_ip')">
-                            <i class="bi bi-ethernet me-2"></i><span data-i18n="hosting.assign_static_ip">Assign Static IP</span>
-                        </a></li>
-                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchRemoteCommand('change_password')">
-                            <i class="bi bi-key me-2"></i><span data-i18n="hosting.change_password">Change Password</span>
-                        </a></li>
-                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchRemoteCommand('blink_led')">
-                            <i class="bi bi-lightbulb me-2"></i><span data-i18n="hosting.blink_leds">Blink LEDs</span>
-                        </a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="batchRemoteCommand('factory_reset')">
-                            <i class="bi bi-exclamation-triangle me-2"></i><span data-i18n="hosting.factory_reset">Factory Reset</span>
-                        </a></li>
-                    </ul>
-                </li>
+                <li><a class="dropdown-item text-warning" href="javascript:void(0)" onclick="openBatchRemoteCommandsModal()">
+                    <i class="bi bi-terminal me-2"></i><span data-i18n="hosting.remote_commands">Remote Commands</span>
+                </a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="batchDelete()">
                     <i class="bi bi-trash me-2"></i><span data-i18n="delete">Delete</span>
@@ -934,8 +893,58 @@
     </div>
 </div>
 
+<!-- Remote Commands Modal -->
+<div class="modal fade" id="remoteCommandsModal" tabindex="-1" aria-labelledby="remoteCommandsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
+                <h5 class="modal-title" id="remoteCommandsModalLabel">
+                    <i class="bi bi-terminal me-2"></i>
+                    <span id="remoteCommandsModalTitle">Remote Commands</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <input type="hidden" id="remoteCommandMinerId" value="">
+                <div class="list-group list-group-flush" id="remoteCommandsList">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- CSS样式 -->
 <style>
+#remoteCommandsModal .list-group-item {
+    background: transparent;
+    color: #e0e0e0;
+    border-color: rgba(255,255,255,0.1);
+    cursor: pointer;
+    padding: 0.75rem 1.25rem;
+    transition: background 0.15s;
+}
+#remoteCommandsModal .list-group-item:hover {
+    background: rgba(247, 147, 26, 0.15);
+    color: #f7931a;
+}
+#remoteCommandsModal .list-group-item.text-danger:hover {
+    background: rgba(220, 53, 69, 0.15);
+    color: #dc3545;
+}
+#remoteCommandsModal .cmd-section-label {
+    background: rgba(255,255,255,0.03);
+    color: #888;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.5rem 1.25rem;
+    cursor: default;
+    border-color: rgba(255,255,255,0.1);
+}
+#remoteCommandsModal .cmd-section-label:hover {
+    background: rgba(255,255,255,0.03);
+    color: #888;
+}
 .kpi-card {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-radius: 12px;
@@ -1033,49 +1042,6 @@
     content: "\F127";
 }
 
-/* Dropdown Submenu Styles for Bootstrap 5 */
-.dropdown-submenu {
-    position: relative;
-}
-.dropdown-submenu > .dropdown-menu {
-    top: 0;
-    left: 100%;
-    margin-top: -6px;
-    margin-left: -1px;
-    display: none;
-}
-.dropdown-submenu:hover > .dropdown-menu,
-.dropdown-submenu.show > .dropdown-menu {
-    display: block;
-}
-/* Submenu opens left when near right edge */
-.dropdown-submenu.dropdown-submenu-left > .dropdown-menu {
-    left: auto;
-    right: 100%;
-    margin-left: 0;
-    margin-right: -1px;
-}
-.dropdown-submenu > .dropdown-toggle::after {
-    display: inline-block;
-    margin-left: 0.5em;
-    vertical-align: 0.1em;
-    content: "";
-    border-top: 0.3em solid transparent;
-    border-right: 0;
-    border-bottom: 0.3em solid transparent;
-    border-left: 0.3em solid;
-}
-/* Flip arrow for left-opening submenu */
-.dropdown-submenu.dropdown-submenu-left > .dropdown-toggle::after {
-    border-left: 0;
-    border-right: 0.3em solid;
-    margin-left: 0;
-    margin-right: 0.5em;
-    float: left;
-}
-.dropdown-submenu:hover > a.dropdown-item {
-    background-color: rgba(247, 147, 26, 0.15);
-}
 /* Per-row actions dropdown styling */
 .miner-actions-dropdown .dropdown-menu {
     min-width: 200px;
@@ -1375,49 +1341,9 @@ function displayMiners(miners) {
                                 <i class="bi bi-list-task me-2"></i>${getLanguage() === 'en' ? 'View Tickets' : '查看工单'}
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li class="dropdown-submenu">
-                                <a class="dropdown-item dropdown-toggle" href="javascript:void(0)">
-                                    <i class="bi bi-terminal me-2"></i>${getLanguage() === 'en' ? 'Remote Commands' : '远程命令'}
-                                </a>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><a class="dropdown-item" href="javascript:void(0)" onclick="singleRemoteCommand(${miner.id}, 'change_pools')">
-                                        <i class="bi bi-shuffle me-2"></i>${getLanguage() === 'en' ? 'Change Pools' : '更换矿池'}
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="javascript:void(0)" onclick="singleRemoteCommand(${miner.id}, 'reboot')">
-                                        <i class="bi bi-arrow-clockwise me-2"></i>${getLanguage() === 'en' ? 'Reboot' : '重启'}
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="javascript:void(0)" onclick="singleRemoteCommand(${miner.id}, 'fetch_logs')">
-                                        <i class="bi bi-file-text me-2"></i>${getLanguage() === 'en' ? 'Fetch Logs' : '获取日志'}
-                                    </a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="javascript:void(0)" onclick="singleRemoteCommand(${miner.id}, 'power_mode')">
-                                        <i class="bi bi-lightning me-2"></i>${getLanguage() === 'en' ? 'Power Mode' : '电源模式'}
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="javascript:void(0)" onclick="singleRemoteCommand(${miner.id}, 'power_target')">
-                                        <i class="bi bi-speedometer2 me-2"></i>${getLanguage() === 'en' ? 'Power Target' : '功率目标'}
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="javascript:void(0)" onclick="singleRemoteCommand(${miner.id}, 'overclock')">
-                                        <i class="bi bi-cpu me-2"></i>${getLanguage() === 'en' ? 'Overclock' : '超频'}
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="javascript:void(0)" onclick="singleRemoteCommand(${miner.id}, 'fan_mode')">
-                                        <i class="bi bi-fan me-2"></i>${getLanguage() === 'en' ? 'Fan Mode' : '风扇模式'}
-                                    </a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="javascript:void(0)" onclick="singleRemoteCommand(${miner.id}, 'static_ip')">
-                                        <i class="bi bi-ethernet me-2"></i>${getLanguage() === 'en' ? 'Static IP' : '静态IP'}
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="javascript:void(0)" onclick="singleRemoteCommand(${miner.id}, 'change_password')">
-                                        <i class="bi bi-key me-2"></i>${getLanguage() === 'en' ? 'Password' : '密码'}
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="javascript:void(0)" onclick="singleRemoteCommand(${miner.id}, 'blink_led')">
-                                        <i class="bi bi-lightbulb me-2"></i>${getLanguage() === 'en' ? 'Blink LEDs' : '闪烁LED'}
-                                    </a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="singleRemoteCommand(${miner.id}, 'factory_reset')">
-                                        <i class="bi bi-exclamation-triangle me-2"></i>${getLanguage() === 'en' ? 'Factory Reset' : '恢复出厂'}
-                                    </a></li>
-                                </ul>
-                            </li>
+                            <li><a class="dropdown-item text-warning" href="javascript:void(0)" onclick="openRemoteCommandsModal(${miner.id}, '${(miner.serial_number || '').replace(/'/g, "\\'")}')">
+                                <i class="bi bi-terminal me-2"></i>${getLanguage() === 'en' ? 'Remote Commands' : '远程命令'}
+                            </a></li>
                             <li><hr class="dropdown-divider"></li>
                             ${miner.status === 'active' ? `
                             <li><a class="dropdown-item" href="javascript:void(0)" onclick="toggleMinerStatus(${miner.id}, 'disable')">
@@ -3237,35 +3163,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Initialize dropdown submenus for Bootstrap 5 with viewport detection
-    initDropdownSubmenus();
 });
 
-// Initialize dropdown submenus with viewport boundary detection
-function initDropdownSubmenus() {
-    document.querySelectorAll('.dropdown-submenu').forEach(function(submenu) {
-        submenu.addEventListener('mouseenter', function(e) {
-            const rect = this.getBoundingClientRect();
-            const submenuEl = this.querySelector('.dropdown-menu');
-            if (submenuEl) {
-                const submenuWidth = 220; // Approximate submenu width
-                const rightSpace = window.innerWidth - rect.right;
-                
-                // If not enough space on right, open to left
-                if (rightSpace < submenuWidth) {
-                    this.classList.add('dropdown-submenu-left');
-                } else {
-                    this.classList.remove('dropdown-submenu-left');
-                }
-            }
-        });
-        
-        submenu.addEventListener('click', function(e) {
-            e.stopPropagation();
-            this.classList.toggle('show');
-        });
-    });
-}
 
 // Position dropdown menu to stay within viewport
 function positionDropdownInViewport(dropdownEl, buttonEl) {
@@ -3300,24 +3199,9 @@ function positionDropdownInViewport(dropdownEl, buttonEl) {
     }
 }
 
-// Re-initialize submenus after table reload (event delegation for dynamic content)
 document.addEventListener('shown.bs.dropdown', function(e) {
     const dropdown = e.target.closest('.dropdown, .btn-group');
     if (dropdown) {
-        // Reinitialize submenus within this dropdown
-        dropdown.querySelectorAll('.dropdown-submenu').forEach(function(submenu) {
-            const rect = submenu.getBoundingClientRect();
-            const submenuWidth = 220;
-            const rightSpace = window.innerWidth - rect.right;
-            
-            if (rightSpace < submenuWidth) {
-                submenu.classList.add('dropdown-submenu-left');
-            } else {
-                submenu.classList.remove('dropdown-submenu-left');
-            }
-        });
-        
-        // Position the main dropdown menu
         const menu = dropdown.querySelector('.dropdown-menu');
         const button = dropdown.querySelector('[data-bs-toggle="dropdown"]');
         if (menu && button) {
@@ -3335,6 +3219,85 @@ const PARAMETERIZED_COMMANDS = ['change_pools', 'power_mode', 'power_target', 'o
 
 // Commands that require confirmation
 const DANGEROUS_COMMANDS = ['factory_reset', 'overclock', 'reboot'];
+
+function getRemoteCommandsList(isEn) {
+    return [
+        { section: isEn ? 'Common' : '常用操作' },
+        { type: 'reboot', icon: 'bi-arrow-clockwise', label: isEn ? 'Reboot' : '重启' },
+        { type: 'fetch_logs', icon: 'bi-file-text', label: isEn ? 'Fetch Logs' : '获取日志' },
+        { type: 'blink_led', icon: 'bi-lightbulb', label: isEn ? 'Blink LEDs' : '闪烁LED' },
+        { type: 'change_pools', icon: 'bi-shuffle', label: isEn ? 'Change Pools' : '更换矿池' },
+        { section: isEn ? 'Power & Performance' : '电源与性能' },
+        { type: 'power_mode', icon: 'bi-lightning', label: isEn ? 'Power Mode' : '电源模式' },
+        { type: 'power_target', icon: 'bi-speedometer2', label: isEn ? 'Power Target' : '功率目标' },
+        { type: 'overclock', icon: 'bi-cpu', label: isEn ? 'Overclock' : '超频', cls: 'text-warning' },
+        { type: 'fan_mode', icon: 'bi-fan', label: isEn ? 'Fan Mode' : '风扇模式' },
+        { section: isEn ? 'Configuration' : '配置' },
+        { type: 'static_ip', icon: 'bi-ethernet', label: isEn ? 'Static IP' : '静态IP' },
+        { type: 'change_password', icon: 'bi-key', label: isEn ? 'Change Password' : '更改密码' },
+        { section: isEn ? 'Dangerous' : '危险操作' },
+        { type: 'factory_reset', icon: 'bi-exclamation-triangle', label: isEn ? 'Factory Reset' : '恢复出厂', cls: 'text-danger' }
+    ];
+}
+
+function renderRemoteCommandsList(commands, onSelect) {
+    const listEl = document.getElementById('remoteCommandsList');
+    listEl.innerHTML = '';
+    
+    commands.forEach(cmd => {
+        if (cmd.section) {
+            const sectionEl = document.createElement('div');
+            sectionEl.className = 'list-group-item cmd-section-label';
+            sectionEl.textContent = cmd.section;
+            listEl.appendChild(sectionEl);
+            return;
+        }
+        const itemEl = document.createElement('a');
+        itemEl.href = 'javascript:void(0)';
+        itemEl.className = 'list-group-item list-group-item-action' + (cmd.cls ? ' ' + cmd.cls : '');
+        itemEl.innerHTML = '<i class="bi ' + cmd.icon + ' me-2"></i>' + cmd.label;
+        itemEl.onclick = function() {
+            const modalEl = document.getElementById('remoteCommandsModal');
+            bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+            onSelect(cmd.type);
+        };
+        listEl.appendChild(itemEl);
+    });
+}
+
+function openRemoteCommandsModal(minerId, serialNumber) {
+    const isEn = getLanguage() === 'en';
+    
+    document.getElementById('remoteCommandMinerId').value = minerId;
+    document.getElementById('remoteCommandsModalTitle').textContent = 
+        (isEn ? 'Remote Commands - ' : '远程命令 - ') + serialNumber;
+    
+    renderRemoteCommandsList(getRemoteCommandsList(isEn), function(cmdType) {
+        singleRemoteCommand(minerId, cmdType);
+    });
+    
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('remoteCommandsModal')).show();
+}
+
+function openBatchRemoteCommandsModal() {
+    const isEn = getLanguage() === 'en';
+    const selectedIds = getSelectedMinerIds();
+    
+    if (selectedIds.length === 0) {
+        alert(isEn ? 'Please select at least one miner' : '请至少选择一台矿机');
+        return;
+    }
+    
+    document.getElementById('remoteCommandMinerId').value = selectedIds.join(',');
+    document.getElementById('remoteCommandsModalTitle').textContent = 
+        (isEn ? 'Remote Commands - ' : '远程命令 - ') + selectedIds.length + (isEn ? ' miners selected' : ' 台矿机已选');
+    
+    renderRemoteCommandsList(getRemoteCommandsList(isEn), function(cmdType) {
+        batchRemoteCommand(cmdType);
+    });
+    
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('remoteCommandsModal')).show();
+}
 
 // Single miner remote command handler
 function singleRemoteCommand(minerId, commandType) {
