@@ -78,6 +78,15 @@ The architecture emphasizes modularity with page-isolated components and databas
 
 ## Recent Changes
 
+### 2026-02-06: Security - Remove ecdsa CVE Dependency
+- **Removed `bitcoinlib` dependency** which pulled in vulnerable `ecdsa@0.19.1`
+- Replaced BTC HD wallet/key functionality with custom BIP32/BIP44 implementation
+  - Uses `eth_keys` (already installed via eth-account) for secp256k1 operations
+  - Uses standard library `hmac`/`hashlib`/`struct` for BIP32 derivation
+  - Generates identical BTC P2PKH addresses (verified against BIP32 test vectors)
+- Removed unused `bitcoinlib` imports from `payment_monitor_service.py`
+- `ecdsa` and `fastecdsa` also removed from lock file as a result
+
 ### 2026-02-02: P0 Enterprise Features Implementation
 - **Audit Chain Verification Script** (`scripts/verify_audit_chain.py`)
   - CLI tool to verify hash chain integrity
