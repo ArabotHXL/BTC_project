@@ -267,23 +267,6 @@ wheels = [
 ]
 
 [[package]]
-name = "bitcoinlib"
-version = "0.7.3"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "ecdsa", marker = "sys_platform == 'win32'" },
-    { name = "fastecdsa", marker = "sys_platform != 'win32'" },
-    { name = "numpy" },
-    { name = "pycryptodome" },
-    { name = "requests" },
-    { name = "sqlalchemy" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/ca/03/66dc5c360e27b2326e053a1214f7a0344da72366463f306d63798c1ccbe6/bitcoinlib-0.7.3.tar.gz", hash = "sha256:1f582da96dc687258ed957ec41c69ab8d2db47a8404f7159ac5565639d0e624f", size = 4205316, upload-time = "2025-04-12T15:48:20.416Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/da/0a/cc70c94bb7246c8ffc1a049c7cebb6694b3ff1b5897463cef006e5108a35/bitcoinlib-0.7.3-py3-none-any.whl", hash = "sha256:d8fa26e91e3711ccc8bda5704f31a06b5b2c4c62d45ff6b69b5f78f59dfb4223", size = 4263497, upload-time = "2025-04-12T15:48:18.423Z" },
-]
-
-[[package]]
 name = "blinker"
 version = "1.9.0"
 source = { registry = "https://pypi.org/simple" }
@@ -798,18 +781,6 @@ wheels = [
 ]
 
 [[package]]
-name = "ecdsa"
-version = "0.19.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "six" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/c0/1f/924e3caae75f471eae4b26bd13b698f6af2c44279f67af317439c2f4c46a/ecdsa-0.19.1.tar.gz", hash = "sha256:478cba7b62555866fcb3bb3fe985e06decbdb68ef55713c4e5ab98c57d508e61", size = 201793, upload-time = "2025-03-13T11:52:43.25Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/cb/a3/460c57f094a4a165c84a1341c373b0a4f5ec6ac244b998d5021aade89b77/ecdsa-0.19.1-py2.py3-none-any.whl", hash = "sha256:30638e27cf77b7e15c4c4cc1973720149e1033827cfd00661ca5c8cc0cdb24c3", size = 150607, upload-time = "2025-03-13T11:52:41.757Z" },
-]
-
-[[package]]
 name = "et-xmlfile"
 version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -949,26 +920,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/52/08/8c8508db6c7b9aae8f7175046af41baad690771c9bcde676419965e338c7/fastapi-0.128.0.tar.gz", hash = "sha256:1cc179e1cef10a6be60ffe429f79b829dce99d8de32d7acb7e6c8dfdf7f2645a", size = 365682, upload-time = "2025-12-27T15:21:13.714Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5c/05/5cbb59154b093548acd0f4c7c474a118eda06da25aa75c616b72d8fcd92a/fastapi-0.128.0-py3-none-any.whl", hash = "sha256:aebd93f9716ee3b4f4fcfe13ffb7cf308d99c9f3ab5622d8877441072561582d", size = 103094, upload-time = "2025-12-27T15:21:12.154Z" },
-]
-
-[[package]]
-name = "fastecdsa"
-version = "3.0.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/b2/88/3a4a4c4b6143fe0e4c20fe4b5bb0142e6fa5f2d8763710b1f3d7dff9d5e3/fastecdsa-3.0.1.tar.gz", hash = "sha256:f4b4a50fd5e346c4949aba365c061c3f6b25eee7983c973e1d31de7672ba48ea", size = 47583, upload-time = "2025-01-28T00:23:25.549Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/2b/88/edc752ef1b0f4cd2de95b055037a6e86b9fe9a548cd85543f772ad99a17f/fastecdsa-3.0.1-cp311-cp311-macosx_13_0_x86_64.whl", hash = "sha256:dad6e7dc1048f538e8de8d9abfabf6198b34be4cb03f1f7919c6386e9412bdde", size = 274243, upload-time = "2025-01-28T00:22:52.535Z" },
-    { url = "https://files.pythonhosted.org/packages/14/29/41529815d1d40e477b386005bc0f1f731b534568f869b946e7507042baab/fastecdsa-3.0.1-cp311-cp311-macosx_14_0_arm64.whl", hash = "sha256:5ea3e874316689d4101edd3527056a07f3c6f4d684142368f1f062dda174022a", size = 254796, upload-time = "2025-01-28T00:22:54.28Z" },
-    { url = "https://files.pythonhosted.org/packages/1a/f5/a5cef9a6d1f30f5c8a08a02e2c0fe8494dadc3a75a1dd73fa6919065e527/fastecdsa-3.0.1-cp311-cp311-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:9537ec297a899c2cfbd9cf596bac73a8677d15cddca19487edf2be47145ec6d1", size = 287529, upload-time = "2025-01-28T00:22:56.255Z" },
-    { url = "https://files.pythonhosted.org/packages/8f/df/90859d232fa4b8a075c706684f4fc0f8e108384677d60fd82b87b91bdfb5/fastecdsa-3.0.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:cacb1a0486ed62d09ec2eb4cb6c97910956c9dc6f9af220e1632b35cf2e6fcd7", size = 302620, upload-time = "2025-01-28T00:22:58.684Z" },
-    { url = "https://files.pythonhosted.org/packages/a3/f1/37413a26a8b664b53d959c5744064b7b95a67721f926ddd3c4d77e743429/fastecdsa-3.0.1-cp312-cp312-macosx_13_0_x86_64.whl", hash = "sha256:2dab30e3eceb773244baadb6dbc8977f0a28741e8d2ea790f529cc1f8419b265", size = 274252, upload-time = "2025-01-28T00:23:01.466Z" },
-    { url = "https://files.pythonhosted.org/packages/16/ba/647a3d2ce818738e6ff1f107f1a7c662696d13e205ce3ad4ee591e596e61/fastecdsa-3.0.1-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:82272ca3c91e20433e0ca66c2d96f4d4997850846586f9ff7a9533a5c3f6e253", size = 254797, upload-time = "2025-01-28T00:23:03.283Z" },
-    { url = "https://files.pythonhosted.org/packages/97/73/22afe3500d674d817ce5f0ec51e043965076503fced6af3468a869a9e8c3/fastecdsa-3.0.1-cp312-cp312-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:6f16d79411ea8a3cb467da53b75e10d66db3a0f716e4d56a9d7e77e5f3ad9f71", size = 287534, upload-time = "2025-01-28T00:23:05.085Z" },
-    { url = "https://files.pythonhosted.org/packages/09/51/f0a03480d932c487587d3effd34c9481d279f624d4b303af91932a4b5216/fastecdsa-3.0.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:abeb065ce8fb3b2765ac7a1f7d693d5785e584629ff83ad271c02c1d55789bb1", size = 302623, upload-time = "2025-01-28T00:23:07.734Z" },
-    { url = "https://files.pythonhosted.org/packages/a5/6a/543251ee857c1defeea386e4640f11207304a67dcb46968ff27dde383e2a/fastecdsa-3.0.1-cp313-cp313-macosx_13_0_x86_64.whl", hash = "sha256:7b1c1cb4fd9a9d9999cffc20b223b1f805d423d2105e93742ccd2938fb82d0d4", size = 274259, upload-time = "2025-01-28T00:23:09.529Z" },
-    { url = "https://files.pythonhosted.org/packages/47/c4/913974857f98942d2cf488efe207a95ae3a3672b252b75030d9a23cdcac0/fastecdsa-3.0.1-cp313-cp313-macosx_14_0_arm64.whl", hash = "sha256:c3e5b8a41ea620739628990fe90ef38f8a4a62bcdd2ce28c62d165f0863373f7", size = 254817, upload-time = "2025-01-28T00:23:11.349Z" },
-    { url = "https://files.pythonhosted.org/packages/41/4f/e15f00dc747f5febcb50601054a537101fc00bf56dcb1118cc9bf5678569/fastecdsa-3.0.1-cp313-cp313-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:4a4bb5b7bc01cef888142b47b764086a6ac2d0632630f07a83444e5f976d3aa6", size = 287538, upload-time = "2025-01-28T00:23:13.212Z" },
-    { url = "https://files.pythonhosted.org/packages/d7/b8/ddef975efa12a74591135d5bb575fe1eeaafb69bce9b6854e4876506e81e/fastecdsa-3.0.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:53680c1791f1f74e13005941c97b7f38a2f45016027a5b648b93488e50773563", size = 302626, upload-time = "2025-01-28T00:23:15.188Z" },
 ]
 
 [[package]]
@@ -2815,7 +2766,6 @@ dependencies = [
     { name = "aiohttp" },
     { name = "alembic" },
     { name = "apscheduler" },
-    { name = "bitcoinlib" },
     { name = "brotli" },
     { name = "cryptography" },
     { name = "eth-abi" },
@@ -2889,7 +2839,6 @@ requires-dist = [
     { name = "aiohttp", specifier = ">=3.13.3" },
     { name = "alembic", specifier = ">=1.18.3" },
     { name = "apscheduler", specifier = ">=3.11.1" },
-    { name = "bitcoinlib", specifier = ">=0.7.3" },
     { name = "brotli", specifier = ">=1.2.0" },
     { name = "cryptography", specifier = ">=46.0.1" },
     { name = "eth-abi", specifier = ">=5.2.0" },

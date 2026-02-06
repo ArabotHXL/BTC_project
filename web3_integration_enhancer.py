@@ -15,6 +15,8 @@ import os
 import json
 import logging
 import hashlib
+import hmac
+import struct
 import time
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Tuple
@@ -23,8 +25,70 @@ from web3 import Web3
 from web3.middleware import geth_poa_middleware
 from eth_account import Account
 from eth_account.hdaccount import generate_mnemonic, seed_from_mnemonic
-from bitcoinlib.keys import HDKey
-from bitcoinlib.wallets import HDWallet
+from eth_keys import keys as eth_keys_module
+
+SECP256K1_ORDER = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+
+
+def _base58_encode(data: bytes) -> str:
+    num = int.from_bytes(data, 'big')
+    result = ''
+    while num > 0:
+        num, remainder = divmod(num, 58)
+        result = BASE58_ALPHABET[remainder] + result
+    for byte in data:
+        if byte == 0:
+            result = '1' + result
+        else:
+            break
+    return result
+
+
+def _bip32_master_key_from_seed(seed: bytes) -> tuple:
+    h = hmac.new(b"Bitcoin seed", seed, hashlib.sha512).digest()
+    private_key = int.from_bytes(h[:32], 'big')
+    chain_code = h[32:]
+    return private_key, chain_code
+
+
+def _bip32_derive_hardened_child(parent_key: int, chain_code: bytes, index: int) -> tuple:
+    index_with_flag = index + 0x80000000
+    data = b'\x00' + parent_key.to_bytes(32, 'big') + struct.pack('>I', index_with_flag)
+    h = hmac.new(chain_code, data, hashlib.sha512).digest()
+    child_key = (int.from_bytes(h[:32], 'big') + parent_key) % SECP256K1_ORDER
+    child_chain_code = h[32:]
+    return child_key, child_chain_code
+
+
+def _bip32_derive_normal_child(parent_key: int, chain_code: bytes, index: int) -> tuple:
+    pk = eth_keys_module.PrivateKey(parent_key.to_bytes(32, 'big'))
+    compressed_pub = pk.public_key.to_compressed_bytes()
+    data = compressed_pub + struct.pack('>I', index)
+    h = hmac.new(chain_code, data, hashlib.sha512).digest()
+    child_key = (int.from_bytes(h[:32], 'big') + parent_key) % SECP256K1_ORDER
+    child_chain_code = h[32:]
+    return child_key, child_chain_code
+
+
+def _derive_bip44_btc_key(seed: bytes, address_index: int) -> int:
+    key, chain = _bip32_master_key_from_seed(seed)
+    key, chain = _bip32_derive_hardened_child(key, chain, 44)
+    key, chain = _bip32_derive_hardened_child(key, chain, 0)
+    key, chain = _bip32_derive_hardened_child(key, chain, 0)
+    key, chain = _bip32_derive_normal_child(key, chain, 0)
+    key, chain = _bip32_derive_normal_child(key, chain, address_index)
+    return key
+
+
+def _private_key_to_btc_address(private_key: int) -> str:
+    pk = eth_keys_module.PrivateKey(private_key.to_bytes(32, 'big'))
+    compressed_pub = pk.public_key.to_compressed_bytes()
+    sha256_hash = hashlib.sha256(compressed_pub).digest()
+    ripemd160_hash = hashlib.new('ripemd160', sha256_hash).digest()
+    versioned = b'\x00' + ripemd160_hash
+    checksum = hashlib.sha256(hashlib.sha256(versioned).digest()).digest()[:4]
+    return _base58_encode(versioned + checksum)
 
 # 本地导入
 from blockchain_integration import BlockchainIntegration
@@ -84,14 +148,7 @@ class Web3IntegrationEnhancer:
             'coinbase': 'https://api.coinbase.com/v2'
         }
         
-        # HD钱包配置
         self.hd_wallet_mnemonic = os.environ.get('HD_WALLET_MNEMONIC')
-        if self.hd_wallet_mnemonic:
-            self.hd_wallet = HDWallet.create(
-                name='payment_wallet',
-                keys=self.hd_wallet_mnemonic,
-                network='bitcoin'
-            )
         
         logger.info("Web3IntegrationEnhancer initialized")
     
@@ -227,21 +284,13 @@ class Web3IntegrationEnhancer:
         """生成BTC地址"""
         try:
             if not self.hd_wallet_mnemonic:
-                # 如果没有HD钱包，返回配置的地址
                 return os.environ.get('BTC_WALLET_ADDRESS')
-            
-            # 使用HD钱包生成确定性地址
-            # 派生路径: m/44'/0'/0'/0/{payment_id}
-            derivation_path = f"m/44'/0'/0'/0/{payment_id % 1000}"  # 限制在1000个地址内
-            
-            hd_key = HDKey.from_seed(
-                seed_from_mnemonic(self.hd_wallet_mnemonic),
-                network='bitcoin'
-            )
-            
-            derived_key = hd_key.subkey_for_path(derivation_path)
-            return derived_key.address()
-            
+
+            seed = seed_from_mnemonic(self.hd_wallet_mnemonic)
+            address_index = payment_id % 1000
+            private_key = _derive_bip44_btc_key(seed, address_index)
+            return _private_key_to_btc_address(private_key)
+
         except Exception as e:
             logger.error(f"生成BTC地址失败: {e}")
             return os.environ.get('BTC_WALLET_ADDRESS')

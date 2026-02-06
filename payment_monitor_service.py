@@ -27,8 +27,6 @@ from sqlalchemy import text
 # 区块链相关导入
 from web3 import Web3
 from web3.exceptions import TransactionNotFound, BlockNotFound
-import bitcoinlib
-from bitcoinlib.services.services import ServiceError
 
 # 本地导入
 from models_subscription import (
