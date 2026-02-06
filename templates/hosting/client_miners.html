@@ -675,18 +675,28 @@ function showKBDiagnosis(minerId, siteId) {
     const brand = (device.miner_model || '').toLowerCase().includes('whatsminer') ? 'WhatsMiner' : 
                   (device.miner_model || '').toLowerCase().includes('avalon') ? 'Avalon' : 'Bitmain';
     
-    // Build diagnostic logs from status
     const logs = [];
     if (device.status === 'offline') logs.push('Miner offline, ERROR_POWER_LOST');
     if (device.status === 'error') logs.push('Device error detected');
-    if ((device.temperature || 0) > 80) logs.push(`High temperature: ${device.temperature}°C`);
+    if ((device.temperature || 0) > 80) logs.push(`High temperature: ${device.temperature}°C, overheat`);
     if ((device.hashrate || 0) < 10) logs.push(`Low hashrate: ${device.hashrate} TH/s`);
+    if (device.notes) logs.push(device.notes);
+    if ((device.fan_speed || 0) > 0 && device.fan_speed < 2000) logs.push('Fan speed low, Fan lost');
+    if ((device.hardware_errors || 0) > 100) logs.push('HW error rate high');
+    if ((device.reject_rate || 0) > 3) logs.push('High reject rate, rejected, stale');
     
+    const uptimeSec = device.uptime || 0;
     const metrics = {
-        uptime_sec: (device.uptime || 0) * 3600,
+        uptime_sec: uptimeSec,
         temperature_avg: device.temperature || 0,
         hashrate_current: device.hashrate || 0,
-        fan_avg: device.fan_speed || 0
+        fan_avg: device.fan_speed || 0,
+        chip_temp_c: device.temperature || 0,
+        pcb_temp_c: device.temperature || 0,
+        fans_rpm: device.fan_speed || 0,
+        hw_error_rate: (device.hardware_errors || 0) > 0 && (device.accepted_shares || 0) > 0 ? device.hardware_errors / device.accepted_shares : 0,
+        reject_rate: (device.reject_rate || 0) / 100,
+        avg_hashrate_12h: device.hashrate || 0
     };
     
     // Only fetch call needed: KB diagnosis API (specialized, allowed for diagnosis like charts)

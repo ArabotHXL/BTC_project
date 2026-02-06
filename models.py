@@ -1759,7 +1759,14 @@ class HostingMiner(db.Model):
             'encryption_scope': self.encryption_scope,
             'ip_encryption_mode': self.ip_encryption_mode,
             'capability_level': self.capability_level,
-            'bound_device_id': self.bound_device_id
+            'bound_device_id': self.bound_device_id,
+            'miner_model': self.miner_model.model_name if self.miner_model else None,
+            'hashrate': self.actual_hashrate,
+            'power_consumption': self.actual_power,
+            'temperature': self.temperature_avg,
+            'fan_speed': self.fan_avg,
+            'uptime': self.uptime_seconds,
+            'notes': self.notes,
         }
 
 class HostingOwnerEncryption(db.Model):

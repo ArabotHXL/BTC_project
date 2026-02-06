@@ -138,11 +138,22 @@ def _safe_eval_expr(expr: str, vars_map: Dict[str, Any]) -> bool:
             return op(left, right)
 
         if isinstance(node, ast.BoolOp):
-            vals = [bool(ev(v)) for v in node.values]
-            if isinstance(node.op, ast.And):
-                return all(vals)
             if isinstance(node.op, ast.Or):
-                return any(vals)
+                for v in node.values:
+                    try:
+                        if bool(ev(v)):
+                            return True
+                    except (KeyError, ValueError, TypeError):
+                        continue
+                return False
+            if isinstance(node.op, ast.And):
+                for v in node.values:
+                    try:
+                        if not bool(ev(v)):
+                            return False
+                    except (KeyError, ValueError, TypeError):
+                        return False
+                return True
             raise ValueError("Bool op not allowed")
 
         if isinstance(node, ast.Compare):
@@ -378,7 +389,7 @@ class MinerKnowledgeBaseService:
                 tuning_id=sig.get("tuning_id",""),
             ))
 
-        hits.sort(key=lambda h: (h.priority, -h.score))
+        hits.sort(key=lambda h: -h.score)
 
         selected = hits[0] if hits else None
         confidence = 0.0
