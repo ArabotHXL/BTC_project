@@ -6,7 +6,7 @@
 agent_id = a1b2c3d4-e5f6-7890-abcd-ef1234567890
 
 # 访问令牌（由管理员在云端创建时生成，仅显示一次，请妥善保管）
-access_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+access_token = YOUR_ACCESS_TOKEN_HERE
 
 [cloud]
 # 云端 API 地址
