@@ -1049,20 +1049,14 @@
     overflow-y: auto;
     background-color: #1a1a2e;
     border: 1px solid rgba(247, 147, 26, 0.3);
+    position: fixed !important;
+    z-index: 1050;
 }
-/* Auto-position dropdown to stay within viewport */
-.miner-actions-dropdown.dropstart .dropdown-menu {
-    right: 100%;
-    left: auto;
-}
-/* Ensure dropdown stays within table container */
+/* Ensure table scrolls horizontally without clipping dropdowns */
 .hosting-table {
     position: relative;
     overflow-x: auto;
-}
-.hosting-table .dropdown-menu {
-    position: fixed;
-    z-index: 1050;
+    overflow-y: visible;
 }
 .miner-actions-dropdown .dropdown-item {
     color: #e0e0e0;
@@ -3167,47 +3161,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 // Position dropdown menu to stay within viewport
-function positionDropdownInViewport(dropdownEl, buttonEl) {
-    if (!dropdownEl || !buttonEl) return;
-    
-    const buttonRect = buttonEl.getBoundingClientRect();
-    const menuWidth = dropdownEl.offsetWidth || 200;
-    const menuHeight = dropdownEl.offsetHeight || 300;
-    
-    // Calculate available space
-    const rightSpace = window.innerWidth - buttonRect.right;
-    const bottomSpace = window.innerHeight - buttonRect.bottom;
-    
-    // Horizontal positioning
-    if (rightSpace < menuWidth) {
-        // Open to the left
-        dropdownEl.style.left = 'auto';
-        dropdownEl.style.right = '0';
-    } else {
-        dropdownEl.style.left = '0';
-        dropdownEl.style.right = 'auto';
-    }
-    
-    // Vertical positioning
-    if (bottomSpace < menuHeight && buttonRect.top > menuHeight) {
-        // Open upward
-        dropdownEl.style.top = 'auto';
-        dropdownEl.style.bottom = '100%';
-    } else {
-        dropdownEl.style.top = '100%';
-        dropdownEl.style.bottom = 'auto';
-    }
-}
-
 document.addEventListener('shown.bs.dropdown', function(e) {
     const dropdown = e.target.closest('.dropdown, .btn-group');
-    if (dropdown) {
-        const menu = dropdown.querySelector('.dropdown-menu');
-        const button = dropdown.querySelector('[data-bs-toggle="dropdown"]');
-        if (menu && button) {
-            positionDropdownInViewport(menu, button);
-        }
+    if (!dropdown) return;
+    
+    const menu = dropdown.querySelector('.dropdown-menu');
+    const button = dropdown.querySelector('[data-bs-toggle="dropdown"]');
+    if (!menu || !button) return;
+    
+    const buttonRect = button.getBoundingClientRect();
+    const menuWidth = menu.offsetWidth || 200;
+    const menuHeight = menu.offsetHeight || 300;
+    
+    let top = buttonRect.bottom + 2;
+    let left = buttonRect.right - menuWidth;
+    
+    if (left < 0) left = buttonRect.left;
+    if (left + menuWidth > window.innerWidth) left = window.innerWidth - menuWidth - 8;
+    
+    if (top + menuHeight > window.innerHeight) {
+        top = buttonRect.top - menuHeight - 2;
+        if (top < 0) top = 8;
     }
+    
+    menu.style.position = 'fixed';
+    menu.style.top = top + 'px';
+    menu.style.left = left + 'px';
+    menu.style.right = 'auto';
+    menu.style.bottom = 'auto';
+    menu.style.transform = 'none';
 });
 
 // ============================================
