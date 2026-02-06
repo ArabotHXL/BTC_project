@@ -187,15 +187,59 @@
             }
             .navbar-nav {
                 margin-top: 1rem;
+                gap: 0.5rem !important;
+            }
+            .hero-section {
+                padding: 4rem 0 2rem;
             }
             .hero-title {
-                font-size: 2.5rem;
+                font-size: 2rem;
             }
             .hero-subtitle {
-                font-size: 1.2rem;
+                font-size: 1rem;
+                padding: 0 1rem;
+            }
+            .btc-logo {
+                width: 70px;
+                height: 70px;
+                line-height: 70px;
+                font-size: 2.5rem;
             }
             .feature-card {
-                margin-bottom: 2rem;
+                margin-bottom: 1.5rem;
+                padding: 1.5rem;
+            }
+            .feature-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+            .cta-button {
+                display: block;
+                margin: 0 1rem 1rem;
+                padding: 0.75rem 2rem;
+                font-size: 1rem;
+            }
+            .stat-number {
+                font-size: 2rem;
+            }
+            .stat-label {
+                font-size: 0.9rem;
+            }
+            .features-section, .cta-section, .stats-section {
+                padding: 2.5rem 0;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-title {
+                font-size: 1.6rem;
+            }
+            .hero-subtitle {
+                font-size: 0.9rem;
+            }
+            .hero-section {
+                padding: 3.5rem 0 1.5rem;
             }
         }
     </style>
@@ -206,23 +250,28 @@
             <a class="navbar-brand" href="/" style="color: #f7931a; font-weight: bold; font-size: 1.3rem;">
                 <span style="font-size: 1.5rem;">₿</span> <span data-i18n="btc_mining_calculator">HashInsight Enterprise</span>
             </a>
-            <div class="navbar-nav ms-auto d-flex align-items-center gap-3">
-                <a class="nav-link" href="#features" style="color: #adb5bd; transition: color 0.3s;" data-i18n="landing_features">
-                    {% if current_lang == 'zh' %}功能特性{% else %}Features{% endif %}
-                </a>
-                <div class="d-flex align-items-center gap-1">
-                    <i class="fas fa-globe" style="color: #f7931a;"></i>
-                    <button type="button" data-lang-switch="zh" data-lang="zh" 
-                            class="btn btn-link nav-link {{ 'active' if current_lang == 'zh' else '' }}" 
-                            style="color: #f7931a; padding: 0;">
-                        中文
-                    </button>
-                    <span style="color: #666; margin: 0 0.3rem;">|</span>
-                    <button type="button" data-lang-switch="en" data-lang="en" 
-                            class="btn btn-link nav-link {{ 'active' if current_lang == 'en' else '' }}" 
-                            style="color: #f7931a; padding: 0;">
-                        EN
-                    </button>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#landingNav" aria-controls="landingNav" aria-expanded="false" aria-label="Toggle navigation" style="border-color: rgba(247, 147, 26, 0.4);">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="landingNav">
+                <div class="navbar-nav ms-auto d-flex align-items-center gap-3">
+                    <a class="nav-link" href="#features" style="color: #adb5bd; transition: color 0.3s;" data-i18n="landing_features">
+                        {% if current_lang == 'zh' %}功能特性{% else %}Features{% endif %}
+                    </a>
+                    <div class="d-flex align-items-center gap-1">
+                        <i class="fas fa-globe" style="color: #f7931a;"></i>
+                        <button type="button" data-lang-switch="zh" data-lang="zh" 
+                                class="btn btn-link nav-link {{ 'active' if current_lang == 'zh' else '' }}" 
+                                style="color: #f7931a; padding: 0;">
+                            中文
+                        </button>
+                        <span style="color: #666; margin: 0 0.3rem;">|</span>
+                        <button type="button" data-lang-switch="en" data-lang="en" 
+                                class="btn btn-link nav-link {{ 'active' if current_lang == 'en' else '' }}" 
+                                style="color: #f7931a; padding: 0;">
+                            EN
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
