@@ -3608,23 +3608,24 @@ async function executeRemoteCommand(minerIds, commandType, params) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 miner_ids: minerIds,
-                command: commandType,
-                params: params
+                command_type: commandType,
+                parameters: params,
+                confirmed: true
             })
         });
         
         const data = await response.json();
         
         if (response.ok && data.success) {
-            const successCount = data.results?.filter(r => r.success)?.length || minerIds.length;
-            const failCount = data.results?.filter(r => !r.success)?.length || 0;
+            const queuedCount = data.commands_queued || 0;
+            const skippedCount = data.skipped_no_collector || 0;
             
-            let message = lang === 'en'
-                ? `Command sent successfully! Success: ${successCount}`
-                : `命令发送成功！成功: ${successCount}`;
+            let message = data.message || (lang === 'en'
+                ? `Command sent successfully! Queued: ${queuedCount}`
+                : `命令发送成功！已排队: ${queuedCount}`);
             
-            if (failCount > 0) {
-                message += lang === 'en' ? `, Failed: ${failCount}` : `，失败: ${failCount}`;
+            if (skippedCount > 0 && !data.message) {
+                message += lang === 'en' ? `, Skipped: ${skippedCount} (no collector)` : `，跳过: ${skippedCount}（无采集器）`;
             }
             
             alert(message);

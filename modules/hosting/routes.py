@@ -5476,7 +5476,7 @@ def batch_start_miners():
                     
                     if has_collector:
                         command = MinerCommand(
-                            miner_id=miner.miner_id or str(miner.id),
+                            miner_id=miner.serial_number or str(miner.id),
                             site_id=miner.site_id,
                             ip_address=miner.ip_address,
                             command_type='enable',
@@ -5565,7 +5565,7 @@ def batch_shutdown_miners():
                     
                     if has_collector:
                         command = MinerCommand(
-                            miner_id=miner.miner_id or str(miner.id),
+                            miner_id=miner.serial_number or str(miner.id),
                             site_id=miner.site_id,
                             ip_address=miner.ip_address,
                             command_type='disable',
@@ -5715,7 +5715,7 @@ def batch_remote_command():
             
             # 创建命令记录
             command = MinerCommand(
-                miner_id=miner.miner_id or str(miner.id),
+                miner_id=miner.serial_number or str(miner.id),
                 site_id=miner.site_id,
                 ip_address=miner.ip_address,
                 command_type=command_type,
@@ -6126,7 +6126,7 @@ def single_remote_command(miner_id):
         
         # 创建命令记录
         command = MinerCommand(
-            miner_id=miner.miner_id or str(miner.id),
+            miner_id=miner.serial_number or str(miner.id),
             site_id=miner.site_id,
             ip_address=miner.ip_address,
             command_type=command_type,
@@ -6190,7 +6190,7 @@ def start_single_miner(miner_id):
             if collector_key:
                 collector_available = True
                 command = MinerCommand(
-                    miner_id=miner.miner_id or str(miner.id),
+                    miner_id=miner.serial_number or str(miner.id),
                     site_id=miner.site_id,
                     ip_address=miner.ip_address,
                     command_type='enable',
@@ -6262,7 +6262,7 @@ def shutdown_single_miner(miner_id):
             if collector_key:
                 collector_available = True
                 command = MinerCommand(
-                    miner_id=miner.miner_id or str(miner.id),
+                    miner_id=miner.serial_number or str(miner.id),
                     site_id=miner.site_id,
                     ip_address=miner.ip_address,
                     command_type='disable',
@@ -6331,7 +6331,7 @@ def restart_single_miner(miner_id):
             if collector_key:
                 collector_available = True
                 command = MinerCommand(
-                    miner_id=miner.miner_id or str(miner.id),
+                    miner_id=miner.serial_number or str(miner.id),
                     site_id=miner.site_id,
                     ip_address=miner.ip_address,
                     command_type='restart',
