@@ -243,7 +243,7 @@ def kb_playbooks():
                     "title": p.get("title"),
                     "goal": p.get("goal"),
                 }
-                for p in kb.playbooks
+                for p in kb.playbooks.values()
             ]
         })
     except Exception as e:
