@@ -1,6 +1,7 @@
 # 标准库导入
 import logging
 import json
+import math
 import os
 import secrets
 import requests
@@ -1408,8 +1409,7 @@ def get_profit_chart_data():
                     client_electricity_cost = 0
                 else:
                     client_electricity_cost = float(client_electricity_cost_raw)
-                    # Additional check for NaN/Infinity after conversion
-                    if not (client_electricity_cost == client_electricity_cost) or abs(client_electricity_cost) == float('inf'):
+                    if not math.isfinite(client_electricity_cost):
                         logging.warning(f"Blocked NaN/Infinity value after conversion: {client_electricity_cost}")
                         client_electricity_cost = 0
         except (ValueError, TypeError) as e:
