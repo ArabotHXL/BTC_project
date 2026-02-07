@@ -5505,7 +5505,13 @@ def next_sell_indicator_api():
         
         # 计算建议数量 - 获取用户选择的配额比例
         # 优先使用URL参数，其次使用会话存储的值，最后使用默认值
-        layer_quota = float(request.args.get('quota', session.get('selected_quota', 0.08)))
+        raw_quota = request.args.get('quota', session.get('selected_quota', 0.08))
+        try:
+            layer_quota = float(raw_quota)
+        except (ValueError, TypeError):
+            layer_quota = 0.08
+        if not math.isfinite(layer_quota):
+            layer_quota = 0.08
         daily_cap = portfolio['btc_inventory'] * portfolio['max_daily_sell_pct']
         opex_gap = max(0, portfolio['monthly_opex'] - portfolio['cash_reserves'])
         opex_qty = opex_gap / spot_price if opex_gap > 0 else 0
