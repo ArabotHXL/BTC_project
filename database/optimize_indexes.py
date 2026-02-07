@@ -22,6 +22,7 @@ Targets:
 import logging
 import os
 import sys
+import re
 from sqlalchemy import create_engine, text, inspect
 from datetime import datetime
 
@@ -81,7 +82,11 @@ class DatabaseOptimizer:
                 logger.info(f"⏭️  索引已存在: {index_name} on {table_name}")
                 return False
             
-            # 构建CREATE INDEX语句
+            identifier_re = re.compile(r'^[A-Za-z_][A-Za-z0-9_]*$')
+            for ident in [table_name, index_name] + list(columns):
+                if not identifier_re.match(ident):
+                    raise ValueError(f"Invalid SQL identifier: {ident}")
+            
             columns_str = ', '.join(columns)
             unique_str = 'UNIQUE ' if unique else ''
             sql = f"CREATE {unique_str}INDEX {index_name} ON {table_name} ({columns_str})"
