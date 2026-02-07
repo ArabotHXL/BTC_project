@@ -1260,7 +1260,7 @@
                 const customHashrate = parseFloat(cells[7].querySelector('input').value) || null;
                 const decayRate = parseFloat(cells[8].querySelector('input').value) || 0;
                 
-                if (model && quantity > 0 && power > 0 && electricity > 0 && price > 0) {
+                if (model && quantity > 0 && power > 0 && electricity > 0) {
                     // 使用输入框中的自定义算力，如果没有则使用矿机模型默认值
                     const hashrateValue = customHashrate || minerModels[model]?.hashrate || 0;
                     
@@ -1281,11 +1281,10 @@
                     });
                 } else {
                     console.warn('数据验证失败，跳过矿机:', {
-                        model, quantity, power, electricity, price,
+                        model, quantity, power, electricity,
                         quantityValid: quantity > 0,
                         powerValid: power > 0,
-                        electricityValid: electricity > 0,
-                        priceValid: price > 0
+                        electricityValid: electricity > 0
                     });
                 }
             });
