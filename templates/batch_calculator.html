@@ -681,10 +681,7 @@
                             <div class="d-flex align-items-center gap-3 text-nowrap">
                                 <div class="badge bg-primary">
                                     <span data-i18n="miners_label">{{ t('miners_label') }}</span>
-                                    <span id="currentCount">0</span>/<span>{{ user_plan.max_miners }}</span>
-                                </div>
-                                <div class="progress" style="width: 100px; height: 8px;">
-                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 0%" id="quotaProgress"></div>
+                                    <span id="currentCount">0</span>
                                 </div>
                             </div>
                         </div>
@@ -826,8 +823,8 @@
         let minerRowCount = 0;
         let calculationResults = [];
         let calculationSummary = {};
-        const maxMiners = {{ user_plan.max_miners }};
-        let bypassUsed = false;
+        const maxMiners = 999999;
+        let bypassUsed = true;
 
         // Initialize page
         document.addEventListener('DOMContentLoaded', function() {

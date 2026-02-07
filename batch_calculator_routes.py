@@ -236,24 +236,6 @@ def batch_calculate():
                 logger.error(f"优化处理器失败: {result.get('error', 'Unknown error')}")
                 # 如果优化处理器失败，继续使用标准处理
             
-        # Check quota limits
-        allowed = check_miner_limit(total_miners)
-        
-        if not allowed:
-            user_id = session.get('user_id')
-            plan = get_user_plan(user_id)
-            plan_name = getattr(plan, 'name', 'Free')
-            plan_max = getattr(plan, 'max_miners', 10)
-            logger.warning(f"Quota exceeded: {total_miners} miners (plan={plan_name}, max={plan_max})")
-            return jsonify({
-                'success': False,
-                'error': 'upgrade_required',
-                'message': 'Quota exceeded. Please upgrade your plan.',
-                'current_plan': plan_name,
-                'max_miners': plan_max,
-                'attempted_miners': total_miners
-            }), 402
-        
         # Optimized batch processing
         results = []
         total_daily_profit = 0
