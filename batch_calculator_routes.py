@@ -875,7 +875,9 @@ def get_user_miners():
                 'hashrate': miner.actual_hashrate,
                 'decayRate': miner.decay_rate_monthly,
                 'custom_name': miner.custom_name,
-                'location': miner.location
+                'location': miner.location,
+                'status': miner.status or '',
+                'serial_number': miner.notes or ''
             })
         
         return jsonify({
@@ -938,6 +940,9 @@ def save_user_miners():
                 continue
             
             # 创建用户矿机记录
+            miner_status = miner_data.get('status', '') or 'active'
+            serial_number = miner_data.get('serial_number', '') or None
+            
             user_miner = UserMiner(
                 user_id=user_id,
                 miner_model_id=miner_model.id,
@@ -947,8 +952,9 @@ def save_user_miners():
                 actual_price=float(miner_data.get('price', 0)),
                 electricity_cost=float(miner_data.get('electricity', 0)),
                 decay_rate_monthly=float(miner_data.get('decayRate', 0.5)),
-                custom_name=None,  # 自动保存的配置不设置自定义名称
-                status='active'
+                custom_name=None,
+                status=miner_status,
+                notes=serial_number
             )
             
             db.session.add(user_miner)
@@ -997,7 +1003,7 @@ def import_my_miners():
             }), 400
 
         from models import HostingMiner, HostingSite, MinerModel, User, db
-        from sqlalchemy import func, or_
+        from sqlalchemy import or_
 
         user = User.query.get(str(user_id_int))
         user_email = user.email if user else None
@@ -1008,11 +1014,10 @@ def import_my_miners():
         ) if user_email else (HostingMiner.customer_id == user_id_int)
 
         hosting_results = db.session.query(
+            HostingMiner,
             MinerModel.model_name,
-            func.count(HostingMiner.id).label('count'),
-            func.avg(HostingMiner.actual_hashrate).label('avg_hashrate'),
-            func.avg(HostingMiner.actual_power).label('avg_power'),
-            HostingSite.electricity_rate
+            HostingSite.electricity_rate,
+            HostingSite.name.label('site_name')
         ).join(
             MinerModel, HostingMiner.miner_model_id == MinerModel.id
         ).join(
@@ -1020,20 +1025,26 @@ def import_my_miners():
         ).filter(
             site_filter,
             HostingMiner.status.in_(['active', 'online'])
-        ).group_by(
-            MinerModel.model_name, HostingSite.electricity_rate
+        ).order_by(
+            MinerModel.model_name, HostingMiner.serial_number
         ).all()
 
         miners_data = []
+        total_count = len(hosting_results)
         for row in hosting_results:
+            miner = row[0]
             miners_data.append({
                 'model': row.model_name,
-                'quantity': row.count,
-                'power': round(row.avg_power or 0),
+                'quantity': 1,
+                'power': round(miner.actual_power or 0),
                 'price': 0,
                 'electricity': row.electricity_rate or 0.08,
-                'hashrate': round(row.avg_hashrate or 0, 1),
-                'decayRate': 0.5
+                'hashrate': round(miner.actual_hashrate or 0, 1),
+                'decayRate': 0.5,
+                'status': miner.status or 'active',
+                'health_score': miner.health_score or 100,
+                'serial_number': miner.serial_number or '',
+                'site_name': row.site_name or ''
             })
 
         if not miners_data:
@@ -1047,7 +1058,7 @@ def import_my_miners():
         return jsonify({
             'success': True,
             'miners': miners_data,
-            'count': len(miners_data)
+            'count': total_count
         })
 
     except Exception as e:

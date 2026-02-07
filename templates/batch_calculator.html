@@ -40,7 +40,7 @@
 
 /* 表格最小宽度确保所有列显示完全 */
 #minersTable {
-    min-width: 1000px; /* 确保表格有足够宽度显示所有列 */
+    min-width: 1100px; /* 确保表格有足够宽度显示所有列（含状态列） */
     width: 100%;
 }
 
@@ -53,14 +53,15 @@
 
 /* 具体列宽调整 */
 #minersTable th:nth-child(1), #minersTable td:nth-child(1) { min-width: 50px; }  /* # */
-#minersTable th:nth-child(2), #minersTable td:nth-child(2) { min-width: 180px; } /* Model */
-#minersTable th:nth-child(3), #minersTable td:nth-child(3) { min-width: 70px; }  /* Qty */
-#minersTable th:nth-child(4), #minersTable td:nth-child(4) { min-width: 90px; }  /* Power */
-#minersTable th:nth-child(5), #minersTable td:nth-child(5) { min-width: 90px; }  /* Price */
-#minersTable th:nth-child(6), #minersTable td:nth-child(6) { min-width: 80px; }  /* Electric */
-#minersTable th:nth-child(7), #minersTable td:nth-child(7) { min-width: 90px; }  /* Hashrate */
-#minersTable th:nth-child(8), #minersTable td:nth-child(8) { min-width: 80px; }  /* Decay */
-#minersTable th:nth-child(9), #minersTable td:nth-child(9) { min-width: 60px; }  /* Actions */
+#minersTable th:nth-child(2), #minersTable td:nth-child(2) { min-width: 70px; }  /* Status */
+#minersTable th:nth-child(3), #minersTable td:nth-child(3) { min-width: 180px; } /* Model */
+#minersTable th:nth-child(4), #minersTable td:nth-child(4) { min-width: 70px; }  /* Qty */
+#minersTable th:nth-child(5), #minersTable td:nth-child(5) { min-width: 90px; }  /* Power */
+#minersTable th:nth-child(6), #minersTable td:nth-child(6) { min-width: 90px; }  /* Price */
+#minersTable th:nth-child(7), #minersTable td:nth-child(7) { min-width: 80px; }  /* Electric */
+#minersTable th:nth-child(8), #minersTable td:nth-child(8) { min-width: 90px; }  /* Hashrate */
+#minersTable th:nth-child(9), #minersTable td:nth-child(9) { min-width: 80px; }  /* Decay */
+#minersTable th:nth-child(10), #minersTable td:nth-child(10) { min-width: 60px; }  /* Actions */
 
 /* 表格内输入框和选择框优化 */
 #minersTable select.form-select-sm,
@@ -349,7 +350,7 @@
     
     /* 移动端表格最小宽度调整 */
     #minersTable {
-        min-width: 800px; /* 移动端稍微减少但仍确保列完全显示 */
+        min-width: 900px; /* 移动端稍微减少但仍确保列完全显示 */
     }
     
     /* 移动端输入框优化 */
@@ -722,6 +723,7 @@
                                 <thead>
                                     <tr>
                                         <th class="text-center" data-i18n="row_number">{{ t('row_number') }}</th>
+                                        <th class="text-center">状态</th>
                                         <th data-i18n="model">{{ t('model') }}</th>
                                         <th class="text-center" data-i18n="qty">{{ t('qty') }}</th>
                                         <th class="text-center" data-i18n="power_w">{{ t('power_w') }}</th>
@@ -874,6 +876,9 @@
                 <td class="text-center">
                     <span class="badge bg-secondary auto-number" data-number="${minerRowCount}">${minerRowCount}</span>
                 </td>
+                <td class="text-center">
+                    <span class="badge bg-secondary">手动</span>
+                </td>
                 <td>
                     <select class="form-select form-select-sm" onchange="updateMinerSpecs(this, '${rowId}')">
                         <option value="">${I18n.t('select_model')}</option>
@@ -943,9 +948,9 @@
             const selectedModel = selectElement.value;
             if (selectedModel && minerModels[selectedModel]) {
                 const row = document.getElementById(rowId);
-                const powerInput = row.querySelector('td:nth-child(4) input');
-                const priceInput = row.querySelector('td:nth-child(5) input');
-                const hashrateInput = row.querySelector('td:nth-child(7) input');
+                const powerInput = row.querySelector('td:nth-child(5) input');
+                const priceInput = row.querySelector('td:nth-child(6) input');
+                const hashrateInput = row.querySelector('td:nth-child(8) input');
                 
                 if (powerInput) {
                     powerInput.value = minerModels[selectedModel].power;
@@ -968,7 +973,7 @@
             // 只从当前表格DOM计算实际显示的矿机数
             const rows = document.querySelectorAll('#minersTableBody tr');
             rows.forEach(row => {
-                const quantityInput = row.querySelector('td:nth-child(3) input');
+                const quantityInput = row.querySelector('td:nth-child(4) input');
                 if (quantityInput && quantityInput.value) {
                     totalMiners += parseInt(quantityInput.value) || 0;
                 }
@@ -1078,7 +1083,7 @@
             let totalMinersForQuota = 0;
             const domRows = document.querySelectorAll('#minersTableBody tr');
             domRows.forEach(row => {
-                const quantityInput = row.querySelector('td:nth-child(3) input');
+                const quantityInput = row.querySelector('td:nth-child(4) input');
                 if (quantityInput && quantityInput.value) {
                     totalMinersForQuota += parseInt(quantityInput.value) || 0;
                 }
@@ -1247,13 +1252,13 @@
             rows.forEach((row, index) => {
                 const cells = row.querySelectorAll('td');
                 const minerNumber = cells[0].querySelector('.auto-number')?.getAttribute('data-number') || (index + 1).toString();  // 获取自动编号
-                const model = cells[1].querySelector('select').value;  // 第2列（编号后）
-                const quantity = parseInt(cells[2].querySelector('input').value) || 0;
-                const power = parseFloat(cells[3].querySelector('input').value) || 0;
-                const price = parseFloat(cells[4].querySelector('input').value) || 0;
-                const electricity = parseFloat(cells[5].querySelector('input').value) || 0;
-                const customHashrate = parseFloat(cells[6].querySelector('input').value) || null;
-                const decayRate = parseFloat(cells[7].querySelector('input').value) || 0;
+                const model = cells[2].querySelector('select').value;  // 第3列（编号+状态后）
+                const quantity = parseInt(cells[3].querySelector('input').value) || 0;
+                const power = parseFloat(cells[4].querySelector('input').value) || 0;
+                const price = parseFloat(cells[5].querySelector('input').value) || 0;
+                const electricity = parseFloat(cells[6].querySelector('input').value) || 0;
+                const customHashrate = parseFloat(cells[7].querySelector('input').value) || null;
+                const decayRate = parseFloat(cells[8].querySelector('input').value) || 0;
                 
                 if (model && quantity > 0 && power > 0 && electricity > 0 && price > 0) {
                     // 使用输入框中的自定义算力，如果没有则使用矿机模型默认值
@@ -1715,6 +1720,9 @@
                                 <td class="text-center">
                                     <span class="badge bg-secondary auto-number" data-number="${minerRowCount}">${minerRowCount}</span>
                                 </td>
+                                <td class="text-center">
+                                    <span class="badge bg-secondary">手动</span>
+                                </td>
                                 <td>
                                     <select class="form-select form-select-sm" onchange="updateMinerSpecs(this, 'minerRow${minerRowCount}')">
                                         ${Object.keys(minerModels).map(m => 
@@ -1773,6 +1781,9 @@
                                     <tr id="minerRow${index + 1}">
                                         <td class="text-center">
                                             <span class="badge bg-secondary auto-number" data-number="${index + 1}">${index + 1}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-secondary">手动</span>
                                         </td>
                                         <td>
                                             <select class="form-select form-select-sm" onchange="updateMinerSpecs(this, 'minerRow${index + 1}'); autoSaveUserMiners();">
@@ -1852,19 +1863,34 @@
         }
 
         function createMinerRowElement(data) {
-            const {model, quantity, power, price, electricity, decayRate, hashrate} = data;
+            const {model, quantity, power, price, electricity, decayRate, hashrate, status, health_score, serial_number, site_name} = data;
             
             minerRowCount++;
             const tr = document.createElement('tr');
             tr.id = `minerRow${minerRowCount}`;
             
-            // 优化的算力值
             const finalHashrate = hashrate || (minerModels[model]?.hashrate || 110);
             
-            // 直接构建完整的HTML字符串
+            let statusBadge = '<span class="badge bg-secondary">手动</span>';
+            if (status === 'online' || status === 'active') {
+                statusBadge = '<span class="badge bg-success">在线</span>';
+            } else if (status === 'offline') {
+                statusBadge = '<span class="badge bg-danger">离线</span>';
+            } else if (status === 'maintenance') {
+                statusBadge = '<span class="badge bg-warning text-dark">维护</span>';
+            } else if (status === 'error') {
+                statusBadge = '<span class="badge bg-danger"><i class="bi bi-exclamation-triangle me-1"></i>故障</span>';
+            }
+            
+            const serialDisplay = serial_number ? `<small class="d-block text-muted" style="font-size:0.7em">${serial_number}</small>` : '';
+            
             tr.innerHTML = `
                 <td class="text-center">
                     <span class="badge bg-secondary auto-number" data-number="${minerRowCount}">${minerRowCount}</span>
+                </td>
+                <td class="text-center">
+                    ${statusBadge}
+                    ${serialDisplay}
                 </td>
                 <td>
                     <select class="form-select form-select-sm" onchange="updateMinerSpecs(this, 'minerRow${minerRowCount}'); autoSaveUserMiners();">
@@ -2202,14 +2228,25 @@ Antminer S19j Pro,9,3068,2300,0.08,100,0.5`;
             
             rows.forEach((row) => {
                 const cells = row.querySelectorAll('td');
-                if (cells.length >= 8) {
-                    const modelSelect = cells[1].querySelector('select');
-                    const quantityInput = cells[2].querySelector('input');
-                    const powerInput = cells[3].querySelector('input');
-                    const priceInput = cells[4].querySelector('input');
-                    const electricityInput = cells[5].querySelector('input');
-                    const hashrateInput = cells[6].querySelector('input');
-                    const decayInput = cells[7].querySelector('input');
+                if (cells.length >= 9) {
+                    const statusBadge = cells[1].querySelector('.badge');
+                    const statusText = statusBadge ? statusBadge.textContent.trim() : '';
+                    let statusValue = '';
+                    if (statusText === '在线') statusValue = 'online';
+                    else if (statusText === '离线') statusValue = 'offline';
+                    else if (statusText === '维护') statusValue = 'maintenance';
+                    else if (statusText === '故障') statusValue = 'error';
+                    
+                    const serialEl = cells[1].querySelector('small');
+                    const serialNumber = serialEl ? serialEl.textContent.trim() : '';
+                    
+                    const modelSelect = cells[2].querySelector('select');
+                    const quantityInput = cells[3].querySelector('input');
+                    const powerInput = cells[4].querySelector('input');
+                    const priceInput = cells[5].querySelector('input');
+                    const electricityInput = cells[6].querySelector('input');
+                    const hashrateInput = cells[7].querySelector('input');
+                    const decayInput = cells[8].querySelector('input');
                     
                     if (modelSelect && quantityInput && powerInput && priceInput && 
                         electricityInput && hashrateInput && decayInput) {
@@ -2221,7 +2258,9 @@ Antminer S19j Pro,9,3068,2300,0.08,100,0.5`;
                             price: parseFloat(priceInput.value) || 0,
                             electricity: parseFloat(electricityInput.value) || 0,
                             hashrate: parseFloat(hashrateInput.value) || 0,
-                            decayRate: parseFloat(decayInput.value) || 0
+                            decayRate: parseFloat(decayInput.value) || 0,
+                            status: statusValue,
+                            serial_number: serialNumber
                         });
                     }
                 }
@@ -2253,7 +2292,11 @@ Antminer S19j Pro,9,3068,2300,0.08,100,0.5`;
                             price: miner.price,
                             electricity: miner.electricity,
                             hashrate: miner.hashrate,
-                            decayRate: miner.decayRate
+                            decayRate: miner.decayRate,
+                            status: miner.status,
+                            health_score: miner.health_score,
+                            serial_number: miner.serial_number,
+                            site_name: miner.site_name
                         });
                     });
                     
@@ -2261,8 +2304,7 @@ Antminer S19j Pro,9,3068,2300,0.08,100,0.5`;
                     updateTotalCount();
                     autoSaveUserMiners();
                     
-                    const totalCount = result.miners.reduce((sum, m) => sum + m.quantity, 0);
-                    showAutoSaveNotification(true, '已导入 ' + totalCount + ' 台托管矿机 (' + result.miners.length + ' 组)');
+                    showAutoSaveNotification(true, '已导入 ' + result.count + ' 台托管矿机');
                 } else if (result.success && result.miners && result.miners.length === 0) {
                     showAutoSaveNotification(false, '托管系统中没有找到活跃矿机');
                 } else {
@@ -2303,11 +2345,12 @@ Antminer S19j Pro,9,3068,2300,0.08,100,0.5`;
                             price: miner.price,
                             electricity: miner.electricity,
                             hashrate: miner.hashrate,
-                            decayRate: miner.decayRate
+                            decayRate: miner.decayRate,
+                            status: miner.status || '',
+                            serial_number: miner.serial_number || ''
                         });
                     });
                     
-                    // 更新界面状态
                     updateEmptyState();
                     updateTotalCount();
                     
