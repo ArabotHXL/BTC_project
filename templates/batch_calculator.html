@@ -1391,15 +1391,13 @@
                             const worst = sortedForSummary[sortedForSummary.length - 1];
                             
                             if (best && worst && best.daily_profit !== worst.daily_profit) {
-                                return \`
-                                <div class="mt-3 p-2 bg-info bg-opacity-10 border border-info rounded">
-                                    <div class="small">
-                                        <strong>\${I18n.t('performance_analysis')}</strong><br>
-                                        <span class="text-success">🏆 \${I18n.t('best_miner_prefix')}\${best.miner_number} - $\${(best.daily_profit || 0).toFixed(2)}\${I18n.t('per_day')}</span><br>
-                                        <span class="text-warning">📊 \${I18n.t('lowest_miner_prefix')}\${worst.miner_number} - $\${(worst.daily_profit || 0).toFixed(2)}\${I18n.t('per_day')}</span>
-                                    </div>
-                                </div>
-                                \`;
+                                return '<div class="mt-3 p-2 bg-info bg-opacity-10 border border-info rounded">'
+                                    + '<div class="small">'
+                                    + '<strong>' + I18n.t('performance_analysis') + '</strong><br>'
+                                    + '<span class="text-success">🏆 ' + I18n.t('best_miner_prefix') + best.miner_number + ' - $' + (best.daily_profit || 0).toFixed(2) + I18n.t('per_day') + '</span><br>'
+                                    + '<span class="text-warning">📊 ' + I18n.t('lowest_miner_prefix') + worst.miner_number + ' - $' + (worst.daily_profit || 0).toFixed(2) + I18n.t('per_day') + '</span>'
+                                    + '</div>'
+                                    + '</div>';
                             }
                         }
                         return '';
