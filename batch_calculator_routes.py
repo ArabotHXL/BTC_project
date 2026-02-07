@@ -28,8 +28,6 @@ logger = logging.getLogger(__name__)
 
 @batch_calculator_bp.route('/batch-calculator')
 @login_required
-@requires_module_access(Module.ANALYTICS_BATCH_CALC)
-@require_feature('batch_calculator')
 def batch_calculator():
     """Display the batch calculator interface."""
     try:
