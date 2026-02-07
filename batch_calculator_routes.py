@@ -993,7 +993,7 @@ def save_user_miners():
 @batch_calculator_bp.route('/api/import-my-miners', methods=['GET'])
 @login_required
 def import_my_miners():
-    """从用户账号导入所有活跃矿机到批量计算器（包括托管矿机）"""
+    """从托管系统导入所有活跃矿机到批量计算器"""
     try:
         user_id = session.get('user_id')
         if not user_id:
@@ -1003,36 +1003,8 @@ def import_my_miners():
                 'message': 'Please login first'
             }), 401
 
-        from models import UserMiner, HostingMiner, HostingSite, MinerModel, db
+        from models import HostingMiner, HostingSite, MinerModel, db
         from sqlalchemy import func
-
-        miners_by_model = {}
-
-        user_miners = UserMiner.query.filter_by(
-            user_id=user_id,
-            status='active'
-        ).all()
-
-        for miner in user_miners:
-            model_name = ''
-            if miner.miner_model and miner.miner_model.model_name:
-                model_name = miner.miner_model.model_name
-            if not model_name:
-                continue
-
-            elec = miner.electricity_cost or 0
-            key = f"{model_name}@{elec}"
-            if key not in miners_by_model:
-                miners_by_model[key] = {
-                    'model': model_name,
-                    'quantity': 0,
-                    'power': miner.actual_power or 0,
-                    'price': miner.actual_price or 0,
-                    'electricity': elec,
-                    'hashrate': miner.actual_hashrate or 0,
-                    'decayRate': miner.decay_rate_monthly or 0.5
-                }
-            miners_by_model[key]['quantity'] += (miner.quantity or 1)
 
         hosting_results = db.session.query(
             MinerModel.model_name,
@@ -1051,31 +1023,24 @@ def import_my_miners():
             MinerModel.model_name, HostingSite.electricity_rate
         ).all()
 
+        miners_data = []
         for row in hosting_results:
-            model_name = row.model_name
-            elec = row.electricity_rate or 0.08
-            key = f"{model_name}@{elec}"
-            if key in miners_by_model:
-                miners_by_model[key]['quantity'] += row.count
-            else:
-                miners_by_model[key] = {
-                    'model': model_name,
-                    'quantity': row.count,
-                    'power': round(row.avg_power or 0),
-                    'price': 0,
-                    'electricity': elec,
-                    'hashrate': round(row.avg_hashrate or 0, 1),
-                    'decayRate': 0.5
-                }
-
-        miners_data = list(miners_by_model.values())
+            miners_data.append({
+                'model': row.model_name,
+                'quantity': row.count,
+                'power': round(row.avg_power or 0),
+                'price': 0,
+                'electricity': row.electricity_rate or 0.08,
+                'hashrate': round(row.avg_hashrate or 0, 1),
+                'decayRate': 0.5
+            })
 
         if not miners_data:
             return jsonify({
                 'success': True,
                 'miners': [],
                 'count': 0,
-                'message': 'No active miners found in your account'
+                'message': '托管系统中没有找到活跃矿机'
             })
 
         return jsonify({
