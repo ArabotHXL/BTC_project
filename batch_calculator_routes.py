@@ -240,13 +240,17 @@ def batch_calculate():
         allowed = check_miner_limit(total_miners)
         
         if not allowed:
-            logger.warning(f"Quota exceeded: {total_miners} miners")
+            user_id = session.get('user_id')
+            plan = get_user_plan(user_id)
+            plan_name = getattr(plan, 'name', 'Free')
+            plan_max = getattr(plan, 'max_miners', 10)
+            logger.warning(f"Quota exceeded: {total_miners} miners (plan={plan_name}, max={plan_max})")
             return jsonify({
                 'success': False,
                 'error': 'upgrade_required',
                 'message': 'Quota exceeded. Please upgrade your plan.',
-                'current_plan': 'Free',
-                'max_miners': 10,
+                'current_plan': plan_name,
+                'max_miners': plan_max,
                 'attempted_miners': total_miners
             }), 402
         
@@ -1018,7 +1022,7 @@ def import_my_miners():
             HostingSite, HostingMiner.site_id == HostingSite.id
         ).filter(
             HostingMiner.customer_id == user_id,
-            HostingMiner.status == 'active'
+            HostingMiner.status.in_(['active', 'online'])
         ).group_by(
             MinerModel.model_name, HostingSite.electricity_rate
         ).all()

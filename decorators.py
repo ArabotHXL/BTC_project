@@ -210,25 +210,30 @@ def get_user_plan(user_id=None):
         return get_default_free_plan()
     
     try:
-        from models_subscription import UserSubscription, SubscriptionPlan
+        from models_subscription import UserSubscription, SubscriptionPlan, SubscriptionStatus
         
-        # 查找用户当前的有效订阅
-        subscription = UserSubscription.query.filter_by(
-            user_id=user_id,
-            status='active'
+        subscription = UserSubscription.query.filter(
+            UserSubscription.user_id == str(user_id),
+            UserSubscription.status == SubscriptionStatus.ACTIVE
         ).first()
         
         if subscription and subscription.is_active():
             return subscription.plan
         
-        # 特殊处理：如果是测试账户，直接基于邮箱给予相应权限
         user_email = session.get('email', '').lower()
+        user_role = session.get('role', '')
+        
         if user_email == 'test_pro@test.com':
             return SubscriptionPlan.query.filter_by(id='pro').first()
         elif user_email == 'test_basic@test.com':
             return SubscriptionPlan.query.filter_by(id='basic').first()
         elif user_email == 'test_free@test.com':
             return SubscriptionPlan.query.filter_by(id='free').first()
+        elif user_role == 'mining_site_owner':
+            plan = SubscriptionPlan.query.filter_by(name='Professional').first()
+            if plan:
+                return plan
+            return get_default_free_plan()
         else:
             return get_default_free_plan()
             

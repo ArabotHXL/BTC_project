@@ -142,8 +142,11 @@ class UserSubscription(Base):
     @property
     def is_active(self):
         """检查订阅是否有效"""
-        return (self.status == SubscriptionStatus.ACTIVE and 
-                self.expires_at and self.expires_at > datetime.utcnow())
+        if self.status != SubscriptionStatus.ACTIVE:
+            return False
+        if self.expires_at is None:
+            return True
+        return self.expires_at > datetime.utcnow()
     
     @property
     def days_remaining(self):
