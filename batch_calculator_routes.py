@@ -992,8 +992,6 @@ def save_user_miners():
 
 @batch_calculator_bp.route('/api/import-my-miners', methods=['GET'])
 @login_required
-@requires_module_access(Module.ANALYTICS_BATCH_CALC)
-@require_feature('batch_calculator')
 def import_my_miners():
     """从用户账号导入所有活跃矿机到批量计算器"""
     try:
