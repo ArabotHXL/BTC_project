@@ -975,24 +975,10 @@
             });
             console.log('从DOM计算当前表格总矿机数:', totalMiners);
             
-            // Update quota display
             const currentCountSpan = document.getElementById('currentCount');
-            const progressBar = document.getElementById('quotaProgress');
             
-            if (currentCountSpan && progressBar) {
+            if (currentCountSpan) {
                 currentCountSpan.textContent = totalMiners.toLocaleString();
-                
-                const progressPercent = Math.min((totalMiners / maxMiners) * 100, 100);
-                progressBar.style.width = progressPercent + '%';
-                
-                // Update progress bar color based on usage
-                if (progressPercent >= 100) {
-                    progressBar.className = 'progress-bar bg-danger';
-                } else if (progressPercent >= 80) {
-                    progressBar.className = 'progress-bar bg-warning';
-                } else {
-                    progressBar.className = 'progress-bar bg-success';
-                }
             }
             
             // Update calculate button state
@@ -2273,8 +2259,10 @@ Antminer S19j Pro,9,3068,2300,0.08,100,0.5`;
                     
                     updateEmptyState();
                     updateTotalCount();
+                    autoSaveUserMiners();
                     
-                    showAutoSaveNotification(true, '已导入 ' + result.count + ' 台托管矿机');
+                    const totalCount = result.miners.reduce((sum, m) => sum + m.quantity, 0);
+                    showAutoSaveNotification(true, '已导入 ' + totalCount + ' 台托管矿机 (' + result.miners.length + ' 组)');
                 } else if (result.success && result.miners && result.miners.length === 0) {
                     showAutoSaveNotification(false, '托管系统中没有找到活跃矿机');
                 } else {
