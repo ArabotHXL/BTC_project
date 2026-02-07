@@ -996,8 +996,16 @@ def import_my_miners():
                 'message': 'Invalid user ID'
             }), 400
 
-        from models import HostingMiner, HostingSite, MinerModel, db
-        from sqlalchemy import func
+        from models import HostingMiner, HostingSite, MinerModel, User, db
+        from sqlalchemy import func, or_
+
+        user = User.query.get(str(user_id_int))
+        user_email = user.email if user else None
+
+        site_filter = or_(
+            HostingMiner.customer_id == user_id_int,
+            HostingSite.contact_email == user_email
+        ) if user_email else (HostingMiner.customer_id == user_id_int)
 
         hosting_results = db.session.query(
             MinerModel.model_name,
@@ -1010,7 +1018,7 @@ def import_my_miners():
         ).join(
             HostingSite, HostingMiner.site_id == HostingSite.id
         ).filter(
-            HostingMiner.customer_id == user_id_int,
+            site_filter,
             HostingMiner.status.in_(['active', 'online'])
         ).group_by(
             MinerModel.model_name, HostingSite.electricity_rate
