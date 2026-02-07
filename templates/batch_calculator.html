@@ -666,6 +666,10 @@
                                         <i class="bi bi-plus-circle me-1"></i>
                                         <span data-i18n="add_miner">{{ t('add_miner') }}</span>
                                     </button>
+                                    <button type="button" class="btn btn-success btn-sm" onclick="importMyMiners()" id="importMinersBtn">
+                                        <i class="bi bi-cloud-download me-1"></i>
+                                        导入我的矿机
+                                    </button>
                                     <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearAllMiners()">
                                         <i class="bi bi-trash me-1"></i>
                                         <span data-i18n="clear_all">{{ t('clear_all') }}</span>
@@ -1401,6 +1405,53 @@
                         return '';
                     })()}
                 </div>
+
+                <!-- Performance Ranking -->
+                ${(() => {
+                    if (results.length >= 2) {
+                        const ranked = [...results].sort((a, b) => (b.daily_profit || 0) - (a.daily_profit || 0));
+                        const byRoi = [...results].filter(r => r.roi_days && r.roi_days < 999999).sort((a, b) => (a.roi_days || 999999) - (b.roi_days || 999999));
+                        const byEfficiency = [...results].sort((a, b) => {
+                            const effA = (a.daily_profit || 0) / Math.max(1, a.quantity || 1);
+                            const effB = (b.daily_profit || 0) / Math.max(1, b.quantity || 1);
+                            return effB - effA;
+                        });
+                        
+                        let rankHtml = '<div class="mb-4 p-3 bg-dark rounded border border-success">';
+                        rankHtml += '<h6 class="text-success mb-3"><i class="bi bi-trophy me-2"></i>性能排名 Performance Ranking</h6>';
+                        rankHtml += '<div class="row g-2">';
+                        
+                        rankHtml += '<div class="col-md-4"><div class="p-2 rounded" style="background: rgba(25,135,84,0.15);">';
+                        rankHtml += '<div class="small text-success fw-bold mb-1"><i class="bi bi-cash-stack me-1"></i>日收益最高 Top Profit</div>';
+                        ranked.slice(0, 3).forEach((r, i) => {
+                            const medal = ['🥇', '🥈', '🥉'][i];
+                            rankHtml += '<div class="small">' + medal + ' #' + (r.miner_number || '-') + ' ' + r.model + ' <span class="text-success">$' + (r.daily_profit || 0).toFixed(2) + '/天</span></div>';
+                        });
+                        rankHtml += '</div></div>';
+                        
+                        rankHtml += '<div class="col-md-4"><div class="p-2 rounded" style="background: rgba(13,110,253,0.15);">';
+                        rankHtml += '<div class="small text-primary fw-bold mb-1"><i class="bi bi-clock-history me-1"></i>回本最快 Fastest ROI</div>';
+                        byRoi.slice(0, 3).forEach((r, i) => {
+                            const medal = ['🥇', '🥈', '🥉'][i];
+                            rankHtml += '<div class="small">' + medal + ' #' + (r.miner_number || '-') + ' ' + r.model + ' <span class="text-primary">' + r.roi_days + '天</span></div>';
+                        });
+                        if (byRoi.length === 0) rankHtml += '<div class="small text-muted">N/A</div>';
+                        rankHtml += '</div></div>';
+                        
+                        rankHtml += '<div class="col-md-4"><div class="p-2 rounded" style="background: rgba(255,193,7,0.15);">';
+                        rankHtml += '<div class="small text-warning fw-bold mb-1"><i class="bi bi-lightning me-1"></i>单台效率最高 Best Efficiency</div>';
+                        byEfficiency.slice(0, 3).forEach((r, i) => {
+                            const medal = ['🥇', '🥈', '🥉'][i];
+                            const perUnit = ((r.daily_profit || 0) / Math.max(1, r.quantity || 1)).toFixed(2);
+                            rankHtml += '<div class="small">' + medal + ' #' + (r.miner_number || '-') + ' ' + r.model + ' <span class="text-warning">$' + perUnit + '/台/天</span></div>';
+                        });
+                        rankHtml += '</div></div>';
+                        
+                        rankHtml += '</div></div>';
+                        return rankHtml;
+                    }
+                    return '';
+                })()}
 
                 <!-- Individual Results -->
                 <div>
@@ -2198,6 +2249,51 @@ Antminer S19j Pro,9,3068,2300,0.08,100,0.5`;
             return miners;
         }
         
+        async function importMyMiners() {
+            const btn = document.getElementById('importMinersBtn');
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>导入中...';
+            
+            try {
+                const response = await fetch('/api/import-my-miners');
+                const result = await response.json();
+                
+                if (result.success && result.miners && result.miners.length > 0) {
+                    const tbody = document.getElementById('minersTableBody');
+                    tbody.innerHTML = '';
+                    minerRowCount = 0;
+                    
+                    result.miners.forEach(miner => {
+                        addMinerRowFromDataOptimized({
+                            model: miner.model,
+                            quantity: miner.quantity,
+                            power: miner.power,
+                            price: miner.price,
+                            electricity: miner.electricity,
+                            hashrate: miner.hashrate,
+                            decayRate: miner.decayRate
+                        });
+                    });
+                    
+                    updateEmptyState();
+                    updateTotalCount();
+                    
+                    showAutoSaveNotification(true, '已导入 ' + result.count + ' 台矿机');
+                } else if (result.success && result.miners && result.miners.length === 0) {
+                    showAutoSaveNotification(false, '账号中没有找到活跃矿机，请先在矿机管理中添加');
+                } else {
+                    showAutoSaveNotification(false, result.message || '导入失败');
+                }
+            } catch (error) {
+                console.error('导入矿机失败:', error);
+                showAutoSaveNotification(false, '网络错误，导入失败');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        }
+
         // 加载用户保存的矿机配置
         async function loadUserMiners() {
             try {

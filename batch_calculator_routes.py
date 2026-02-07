@@ -988,3 +988,66 @@ def save_user_miners():
             'error': 'save_failed',
             'message': 'Failed to save configuration'
         }), 500
+
+
+@batch_calculator_bp.route('/api/import-my-miners', methods=['GET'])
+@login_required
+@requires_module_access(Module.ANALYTICS_BATCH_CALC)
+@require_feature('batch_calculator')
+def import_my_miners():
+    """从用户账号导入所有活跃矿机到批量计算器"""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({
+                'success': False,
+                'error': 'authentication_required',
+                'message': 'Please login first'
+            }), 401
+
+        from models import UserMiner, MinerModel, db
+
+        user_miners = UserMiner.query.filter_by(
+            user_id=user_id,
+            status='active'
+        ).order_by(UserMiner.created_at.desc()).all()
+
+        if not user_miners:
+            return jsonify({
+                'success': True,
+                'miners': [],
+                'count': 0,
+                'message': 'No active miners found in your account'
+            })
+
+        miners_data = []
+        for miner in user_miners:
+            model_name = ''
+            if miner.miner_model and miner.miner_model.model_name:
+                model_name = miner.miner_model.model_name
+            if not model_name:
+                continue
+
+            miners_data.append({
+                'model': model_name,
+                'quantity': miner.quantity or 1,
+                'power': miner.actual_power or 0,
+                'price': miner.actual_price or 0,
+                'electricity': miner.electricity_cost or 0,
+                'hashrate': miner.actual_hashrate or 0,
+                'decayRate': miner.decay_rate_monthly or 0.5
+            })
+
+        return jsonify({
+            'success': True,
+            'miners': miners_data,
+            'count': len(miners_data)
+        })
+
+    except Exception as e:
+        logger.error(f"Failed to import user miners: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': 'import_failed',
+            'message': 'Failed to import miners from your account'
+        }), 500
