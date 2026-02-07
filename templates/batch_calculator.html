@@ -669,7 +669,7 @@
                                     </button>
                                     <button type="button" class="btn btn-success btn-sm" onclick="importMyMiners()" id="importMinersBtn">
                                         <i class="bi bi-cloud-download me-1"></i>
-                                        导入托管矿机
+                                        <span data-i18n="import_hosting_miners">{{ t('import_hosting_miners') }}</span>
                                     </button>
                                     <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearAllMiners()">
                                         <i class="bi bi-trash me-1"></i>
@@ -723,7 +723,7 @@
                                 <thead>
                                     <tr>
                                         <th class="text-center" data-i18n="row_number">{{ t('row_number') }}</th>
-                                        <th class="text-center">状态</th>
+                                        <th class="text-center" data-i18n="batch_status">{{ t('batch_status') }}</th>
                                         <th data-i18n="model">{{ t('model') }}</th>
                                         <th class="text-center" data-i18n="qty">{{ t('qty') }}</th>
                                         <th class="text-center" data-i18n="power_w">{{ t('power_w') }}</th>
@@ -877,7 +877,7 @@
                     <span class="badge bg-secondary auto-number" data-number="${minerRowCount}">${minerRowCount}</span>
                 </td>
                 <td class="text-center">
-                    <span class="badge bg-secondary">手动</span>
+                    <span class="badge bg-secondary" data-status="manual">${I18n.t('status_manual')}</span>
                 </td>
                 <td>
                     <select class="form-select form-select-sm" onchange="updateMinerSpecs(this, '${rowId}')">
@@ -1720,7 +1720,7 @@
                                     <span class="badge bg-secondary auto-number" data-number="${minerRowCount}">${minerRowCount}</span>
                                 </td>
                                 <td class="text-center">
-                                    <span class="badge bg-secondary">手动</span>
+                                    <span class="badge bg-secondary" data-status="manual">${I18n.t('status_manual')}</span>
                                 </td>
                                 <td>
                                     <select class="form-select form-select-sm" onchange="updateMinerSpecs(this, 'minerRow${minerRowCount}')">
@@ -1782,7 +1782,7 @@
                                             <span class="badge bg-secondary auto-number" data-number="${index + 1}">${index + 1}</span>
                                         </td>
                                         <td class="text-center">
-                                            <span class="badge bg-secondary">手动</span>
+                                            <span class="badge bg-secondary" data-status="manual">${I18n.t('status_manual')}</span>
                                         </td>
                                         <td>
                                             <select class="form-select form-select-sm" onchange="updateMinerSpecs(this, 'minerRow${index + 1}'); autoSaveUserMiners();">
@@ -1870,15 +1870,15 @@
             
             const finalHashrate = hashrate || (minerModels[model]?.hashrate || 110);
             
-            let statusBadge = '<span class="badge bg-secondary">手动</span>';
+            let statusBadge = `<span class="badge bg-secondary" data-status="manual">${I18n.t('status_manual')}</span>`;
             if (status === 'online' || status === 'active') {
-                statusBadge = '<span class="badge bg-success">在线</span>';
+                statusBadge = `<span class="badge bg-success" data-status="online">${I18n.t('status_online')}</span>`;
             } else if (status === 'offline') {
-                statusBadge = '<span class="badge bg-danger">离线</span>';
+                statusBadge = `<span class="badge bg-danger" data-status="offline">${I18n.t('status_offline')}</span>`;
             } else if (status === 'maintenance') {
-                statusBadge = '<span class="badge bg-warning text-dark">维护</span>';
+                statusBadge = `<span class="badge bg-warning text-dark" data-status="maintenance">${I18n.t('status_maintenance')}</span>`;
             } else if (status === 'error') {
-                statusBadge = '<span class="badge bg-danger"><i class="bi bi-exclamation-triangle me-1"></i>故障</span>';
+                statusBadge = `<span class="badge bg-danger" data-status="error"><i class="bi bi-exclamation-triangle me-1"></i>${I18n.t('status_error')}</span>`;
             }
             
             const serialDisplay = serial_number ? `<small class="d-block text-muted" style="font-size:0.7em">${serial_number}</small>` : '';
@@ -2208,15 +2208,15 @@ Antminer S19j Pro,9,3068,2300,0.08,100,0.5`;
                 const result = await response.json();
                 if (result.success) {
                     console.log(`✅ 自动保存成功：${result.saved_count}台矿机配置`);
-                    showAutoSaveNotification(true, `已保存 ${result.saved_count} 台矿机配置`);
+                    showAutoSaveNotification(true, I18n.t('config_saved').replace('{count}', result.saved_count));
                 } else {
                     console.error('自动保存失败:', result.message);
-                    showAutoSaveNotification(false, '配置保存失败');
+                    showAutoSaveNotification(false, I18n.t('config_save_failed'));
                 }
                 
             } catch (error) {
                 console.error('自动保存错误:', error);
-                showAutoSaveNotification(false, '网络错误，保存失败');
+                showAutoSaveNotification(false, I18n.t('network_error_save'));
             }
         }
         
@@ -2229,12 +2229,7 @@ Antminer S19j Pro,9,3068,2300,0.08,100,0.5`;
                 const cells = row.querySelectorAll('td');
                 if (cells.length >= 9) {
                     const statusBadge = cells[1].querySelector('.badge');
-                    const statusText = statusBadge ? statusBadge.textContent.trim() : '';
-                    let statusValue = '';
-                    if (statusText === '在线') statusValue = 'online';
-                    else if (statusText === '离线') statusValue = 'offline';
-                    else if (statusText === '维护') statusValue = 'maintenance';
-                    else if (statusText === '故障') statusValue = 'error';
+                    const statusValue = statusBadge ? (statusBadge.getAttribute('data-status') || '') : '';
                     
                     const serialEl = cells[1].querySelector('small');
                     const serialNumber = serialEl ? serialEl.textContent.trim() : '';
@@ -2272,7 +2267,7 @@ Antminer S19j Pro,9,3068,2300,0.08,100,0.5`;
             const btn = document.getElementById('importMinersBtn');
             const originalHtml = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>导入中...';
+            btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>' + I18n.t('importing');
             
             try {
                 const response = await fetch('/api/import-my-miners');
@@ -2303,15 +2298,15 @@ Antminer S19j Pro,9,3068,2300,0.08,100,0.5`;
                     updateTotalCount();
                     autoSaveUserMiners();
                     
-                    showAutoSaveNotification(true, '已导入 ' + result.count + ' 台托管矿机');
+                    showAutoSaveNotification(true, I18n.t('imported_miners_count').replace('{count}', result.count));
                 } else if (result.success && result.miners && result.miners.length === 0) {
-                    showAutoSaveNotification(false, '托管系统中没有找到活跃矿机');
+                    showAutoSaveNotification(false, I18n.t('no_active_miners_found'));
                 } else {
-                    showAutoSaveNotification(false, result.message || '导入失败');
+                    showAutoSaveNotification(false, result.message || I18n.t('import_failed'));
                 }
             } catch (error) {
                 console.error('导入矿机失败:', error);
-                showAutoSaveNotification(false, '网络错误，导入失败');
+                showAutoSaveNotification(false, I18n.t('network_error_import'));
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalHtml;
