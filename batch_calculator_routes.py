@@ -987,6 +987,15 @@ def import_my_miners():
                 'message': 'Please login first'
             }), 401
 
+        try:
+            user_id_int = int(user_id)
+        except (ValueError, TypeError):
+            return jsonify({
+                'success': False,
+                'error': 'invalid_user',
+                'message': 'Invalid user ID'
+            }), 400
+
         from models import HostingMiner, HostingSite, MinerModel, db
         from sqlalchemy import func
 
@@ -1001,7 +1010,7 @@ def import_my_miners():
         ).join(
             HostingSite, HostingMiner.site_id == HostingSite.id
         ).filter(
-            HostingMiner.customer_id == user_id,
+            HostingMiner.customer_id == user_id_int,
             HostingMiner.status.in_(['active', 'online'])
         ).group_by(
             MinerModel.model_name, HostingSite.electricity_rate
