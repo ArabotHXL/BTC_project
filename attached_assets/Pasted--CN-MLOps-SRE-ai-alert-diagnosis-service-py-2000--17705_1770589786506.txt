@@ -1,0 +1,145 @@
+[中文 CN]
+你是资深后端架构师 + MLOps + SRE 产品工程负责人。请在不推翻现有规则诊断（ai_alert_diagnosis_service.py）的前提下，为 2000+ 台比特币矿机运维系统实现“一次到位版”的 Problem Registry（问题事件中心）+ Fleet 对照异常检测 + 弱监督预测维护 + 运维闭环。要求可落地到代码与数据库迁移，并能在 5 分钟批处理节奏下稳定运行。
+
+【已查清的事实（必须遵守）】
+1) 数据库当前不存在 problem_events 表。
+   现有事件相关表有：audit_events, safety_events, thermal_events,
+   event_queue / event_outbox, event_failures, device_audit_events。
+   你需要新建 problem_events 表存储检测到的异常事件与聚合结果。
+
+2) 字段来源（来自 TelemetryService.get_live() 返回结构）：
+   - site_id：顶层 site_id
+   - miner_model：hardware.model
+   - firmware：hardware.firmware
+   - boards_healthy/boards_total：hardware.boards_healthy, hardware.boards_total
+   - hashrate.value 与 hashrate.expected_ths：hashrate.value, hashrate.expected_ths
+   - temperature.avg 与 temperature.max：temperature.avg, temperature.max
+   - power/fan/reject/hw_error 若存在请用字段映射表适配；不存在要优雅降级（不报错）。
+
+3) mode 字段在系统中不存在：
+   - V1 必须实现 inferred_mode（用 unsupervised 聚类推断 eco/normal/perf），并允许 mode=unknown 降级。
+   - 后续可扩展为真实 mode 采集写库，但本次以 inferred_mode 为主。
+
+【系统目标（必须实现）】
+A) 站点运维能看到场地所有有问题机器：
+   - 全量可见：所有 open 的问题事件写入 problem_events，并在站点接口全量返回。
+   - 不扰民：通知/工单预算化（只推 P0/P1；P2 仅 Top p 或 TopK + 持续门控）。
+B) 提升准确性：
+   - per-miner 动态基线（EWMA 或 median+MAD）用于 residual 特征，解决每台矿机 unique。
+   - fleet baseline（peer group percentile + robust z）用于相对异常与解释。
+   - 弱监督输出 p_fail_24h，用于排序与 P2->P1 升级（弱标签来自 ops signals 和事件定义）。
+C) 与现有规则诊断兼容：
+   - 不删除现有 if/else 规则，只新增 evidence providers 并注入 hypotheses/health object。
+D) 运维闭环：
+   - 支持事件去抖、去重、cooldown、复发、maintenance suppression（suppress_until）。
+   - 动作回灌：remote command -> post verify -> action_effect_log -> 用于阈值/模型校准。
+
+【必须交付的内容（工程落地）】
+1) 数据库迁移（SQL）：
+   - 新建 problem_events（Postgres，jsonb 推荐）字段至少包括：
+     id(uuid), site_id, miner_id, issue_code, severity, status,
+     start_ts, last_seen_ts, resolved_ts, recurrence_count,
+     dedup_key, evidence_json(jsonb), actions_json(jsonb),
+     peer_metrics_json(jsonb), ml_json(jsonb),
+     suppress_until, maintenance_flag,
+     created_at, updated_at
+   - 索引：(site_id, status, severity), (miner_id, status), (site_id, issue_code, status), (start_ts)
+   - 部分唯一索引：dedup_key 在活跃状态(open/ack/in_progress)唯一，避免重复开事件。
+
+2) 5 分钟批处理 Job：
+   - 每 5 分钟按 site 拉取 live 与必要窗口数据，产出 feature_store_5min（可先内存或 DB）：
+     hashrate_ratio(value/expected_ths)
+     boards_healthy_ratio(boards_healthy/boards_total)
+     residual_temp（可选）
+     residual_eff（若 power 缺失则跳过）
+     trend_slope/volatility/cross-check（可选）
+   - Baseline State Store：每台 miner 增量维护 baseline 状态，禁止每次扫全量历史重算。
+
+3) Fleet Baseline（peer group）：
+   - group_key 默认：site_id + model + firmware + inferred_mode（缺字段降级；inferred_mode 不可用则 unknown）
+   - 计算 percentile 与 robust z（median+MAD），缓存 5-10 分钟。
+   - 输出 peer_metrics_json 供解释与排序使用。
+
+4) inferred_mode 推断（必须）：
+   - 用 unsupervised 聚类在每个 site 或每个 model+firmware 组内推断 eco/normal/perf。
+   - 特征优先：hashrate_ratio, power(if exists), temperature.max, fan(if exists)
+   - cluster -> label 映射：按 hashrate_ratio 均值从低到高映射 eco/normal/perf，输出 confidence（与中心距离等）
+   - 写入 feature 或单表 miner_mode_state 均可，但必须可被 group_key 使用。
+
+5) Rules：
+   - Hard rules 生成 P0/P1（如 overheat_crit, offline, fan_zero, hashrate_zero）
+   - Soft rules 基于 residual 与持续性生成 P2/P3（eff_degradation, slow_hashrate_degradation, trend_anomaly）
+   - 必须实现去抖：连续 N 次异常才 open（默认 N=2）。
+
+6) 弱监督（第一版必须实现）：
+   - WeakLabelBuilder：用 ops signals 与事件定义生成 event_in_24h；严禁时间泄漏（只用 t 之前特征预测 t+24h）
+   - 模型：LightGBM 或 XGBoost，输出 p_fail_24h + top_features
+   - model_registry：版本化与回滚；推理结果写入 ml_json
+
+7) Diagnosis Fusion（接入现有 ai_alert_diagnosis_service.py）：
+   - 不删除原规则 hypotheses；新增一个 peer_outlier_or_risk hypothesis（peer_metrics + p_fail_24h）
+   - 统一输出 Health Object：
+     site_id, miner_id, health_state(P0..P3),
+     issues[{issue_code,severity,evidence[],recommended_actions[],confidence}],
+     p_fail_24h, last_seen_ts
+   - 写入 problem_events（通过 EventEngine 管理生命周期与去重）。
+
+8) EventEngine（必须）：
+   - dedup_key 合并、cooldown、resolve（连续 M 次恢复才关闭，默认 M=3）、recurrence、maintenance suppression（suppress_until）
+
+9) Policy Engine（通知与工单预算化）：
+   - 站点接口全量返回 open 事件
+   - Notify：P0/P1 必推；P2 仅 Top p 或 TopK 且持续触发
+   - Ticket：P1 自动；P2 仅预算内且可行动（持续或高 p_fail_24h）
+   - 可复用 event_outbox 做异步派发
+
+10) API（必须）：
+   - GET /sites/{site_id}/health_summary
+   - GET /sites/{site_id}/problems?severity=&issue_code=&status=&model=&firmware=
+   - GET /miners/{miner_id}/problems
+   - 排序：severity desc, p_fail_24h desc, last_seen_ts desc
+
+11) 测试（至少 8 个）：
+   baseline 增量更新、inferred_mode 稳定与降级、peer metrics 缓存命中、事件去抖去重 cooldown、resolve 与 recurrence、maintenance suppression、弱监督无泄漏、budget policy 生效。
+
+【输出格式要求】
+- 双语输出：每个章节先中文后英文（CN then EN）
+- 先给：数据库迁移 SQL
+- 再给：模块目录结构与关键类/函数签名
+- 再给：关键代码（可运行优先；缺上下文时用清晰伪代码）
+- 再给：API 响应样例 JSON（包含 evidence_json, peer_metrics_json, ml_json）
+- 最后给：分阶段上线计划（V1 一次到位 + V1.1 真实 mode 采集 + V2 更强无监督）
+
+开始输出。
+
+
+[English EN]
+You are a senior backend architect + MLOps + SRE product engineering lead. Implement a “one-shot” end-to-end Problem Registry (problem_events) + fleet-relative anomaly detection + weakly-supervised predictive maintenance + ops feedback loop for a Bitcoin miner fleet (2000+ miners), without ripping out the existing rule-based diagnosis (ai_alert_diagnosis_service.py). Deliver database migrations, code-level design, APIs, and tests that run reliably on a 5-minute batch cadence.
+
+Facts you must respect:
+1) problem_events table does not exist. Existing tables include audit_events, safety_events, thermal_events, event_queue/event_outbox, event_failures, device_audit_events. You must create problem_events to store detected problem events and aggregations.
+2) Fields come from TelemetryService.get_live() structure:
+   site_id (top-level), model=hardware.model, firmware=hardware.firmware, boards_healthy/total, hashrate.value and expected_ths, temperature.avg/max. power/fan/reject/hw_error may or may not exist; use a mapping table and degrade gracefully.
+3) mode does not exist system-wide. V1 must implement inferred_mode via unsupervised clustering (eco/normal/perf) with fallback unknown.
+
+Goals:
+A) Full site visibility: all open issues must be written to problem_events and fully returned by site APIs. Avoid alert spam via budgeted notifications/tickets (always push P0/P1; budget P2 via Top%/TopK + duration gate).
+B) Accuracy: per-miner baselines -> residual features; fleet baselines -> percentiles/robust z; weak supervision -> p_fail_24h for ranking and P2->P1 escalation, with weak labels from ops signals and event definitions.
+C) Compatibility: do not delete existing if/else hypotheses; inject additional evidence providers and a unified health object.
+D) Ops loop: debounce/dedup/cooldown/recurrence/maintenance suppression, plus action-effect feedback to recalibrate thresholds/models.
+
+Deliverables:
+- Postgres migration SQL for problem_events with JSONB fields, indexes, and a partial unique index on dedup_key for active statuses.
+- 5-minute batch job pipeline with baseline state store and feature store outputs.
+- Fleet baseline service with caching and peer metrics.
+- inferred_mode clustering and labeling strategy with confidence and fallback.
+- Hard/soft rules taxonomy with debounce.
+- WeakLabelBuilder, model training (LightGBM/XGBoost), model registry, inference to ml_json.
+- Diagnosis fusion integrated with ai_alert_diagnosis_service.py producing a Health Object written via EventEngine into problem_events.
+- Policy engine for notifications/tickets leveraging event_outbox if available.
+- APIs: site summary, site problems query, miner problems; sorting rules.
+- At least 8 tests: baseline incrementality, inferred_mode stability, peer metrics caching, event engine behaviors, suppression, leakage checks, budget policy.
+
+Output format: bilingual per section (CN then EN), SQL first, then module layout + signatures, then code/pseudocode, then sample JSON responses, then phased rollout plan.
+
+Start now.
