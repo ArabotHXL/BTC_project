@@ -11,9 +11,14 @@ import uuid
 import pytest
 from datetime import datetime, timedelta
 
-os.environ['SESSION_SECRET'] = 'test-secret-key-for-testing-only'
-os.environ['DATABASE_URL'] = 'sqlite:///:memory:'
+_original_database_url = os.environ.get('DATABASE_URL')
+os.environ.setdefault('SESSION_SECRET', 'test-secret-key-for-testing-only')
 os.environ['TESTING'] = 'true'
+
+@pytest.fixture
+def real_db_url():
+    """Provide the original DATABASE_URL for tests that need real Postgres"""
+    return _original_database_url
 
 
 @pytest.fixture(scope='function')

@@ -1,7 +1,7 @@
 # BTC Mining Calculator System
 
 ## Overview
-HashInsight Enterprise is an enterprise-grade web application designed for Bitcoin mining farm owners and clients. It provides real-time Bitcoin mining profitability analysis, comprehensive operational management, and an AI-powered intelligence layer. The system aims to optimize Bitcoin mining investments, enhance transparency through dual-algorithm verification, real-time data integration, and multi-language support. Key capabilities include CRM, Web3 integration, technical analysis, professional reporting, and an advanced AI closed-loop system for recommendations and automated actions.
+HashInsight Enterprise is an enterprise-grade web application for Bitcoin mining farm owners and clients. It provides real-time Bitcoin mining profitability analysis, comprehensive operational management, and an AI-powered intelligence layer. The system aims to optimize Bitcoin mining investments, enhance transparency through dual-algorithm verification, real-time data integration, and multi-language support. Key capabilities include CRM, Web3 integration, technical analysis, professional reporting, and an advanced AI closed-loop system for recommendations and automated actions, with a vision to become the leading platform for Bitcoin mining optimization and management.
 
 ## User Preferences
 - **Communication style**: Simple, everyday language (中文/English)
@@ -11,10 +11,10 @@ HashInsight Enterprise is an enterprise-grade web application designed for Bitco
 ## System Architecture
 
 ### UI/UX Decisions
-The front-end uses Jinja2 with Bootstrap 5 for a mobile-first, responsive, BTC-themed dark design, supporting dynamic English and Chinese language switching via i18n.js. Chart.js and CountUp.js are used for data visualization and animations.
+The front-end uses Jinja2 with Bootstrap 5 for a mobile-first, responsive, BTC-themed dark design. It supports dynamic English and Chinese language switching via i18n.js and utilizes Chart.js and CountUp.js for data visualization and animations.
 
 ### Technical Implementations
-The system is built on a Flask backend utilizing Blueprints, custom email authentication, and robust session management. It features an enterprise RBAC v2.0 system and uses SQLAlchemy with PostgreSQL for data persistence. Redis is employed for caching and task queuing. Performance-critical routes leverage SQL aggregation. Device Envelope Encryption provides zero-knowledge E2EE for miner credentials. A 4-layer telemetry storage system (raw_24h, live, history_5min, daily) is managed by APScheduler jobs. All command operations are routed through a single control plane API. The architecture includes a unified telemetry service, a feature gating system, and an integrated AI closed-loop system for recommendations, feedback, and auto-execution.
+The system is built on a Flask backend using Blueprints, custom email authentication, and robust session management. It incorporates an enterprise RBAC v2.0 system and uses SQLAlchemy with PostgreSQL for data persistence. Redis is used for caching and task queuing. Performance-critical routes leverage SQL aggregation. Device Envelope Encryption provides zero-knowledge E2EE for miner credentials. A 4-layer telemetry storage system (raw_24h, live, history_5min, daily) is managed by APScheduler jobs. All command operations are routed through a single control plane API. The architecture includes a unified telemetry service, a feature gating system, and an integrated AI closed-loop system for recommendations, feedback, and auto-execution. It employs an Application Factory Pattern for robust environment configuration and supports Alembic for database migrations.
 
 ### Feature Specifications
 - **Calculator Module**: Dual-algorithm profitability analysis, real-time BTC price/difficulty integration, ROI analysis, batch calculation.
@@ -25,15 +25,16 @@ The system is built on a Flask backend utilizing Blueprints, custom email authen
 - **User Management**: Admin backend for user creation, role assignment, RBAC, and access period management.
 - **Web3 Configuration Wizard**: Secure interface for blockchain credential setup.
 - **Hosting Services Module**: Real-time miner monitoring, operational ticketing, hosting management, KPI dashboard, and White Label Branding.
-- **Smart Power Curtailment Module**: Automated scheduler for energy management, supporting manual curtailment and automatic miner recovery.
+- **Smart Power Curtailment Module**: Automated scheduler for energy management.
 - **Treasury Management**: BTC inventory tracking, cost basis analysis, cash coverage, sell strategy templates, and backtesting.
 - **Multi-Format Reporting**: Professional reports (PDF, Excel, PowerPoint) and role-specific dashboards.
 - **Landing Page**: Enterprise-focused homepage with dynamic real-time statistics.
 - **Edge Collector Architecture**: Real-time miner telemetry via Python-based edge collector, cloud receiver API, management UI, alert rules engine, and bidirectional command control.
-- **IP Scanner & Miner Discovery**: Automatic network scanning for Bitcoin miners via CGMiner API.
-- **Control Plane System**: Enterprise-grade system for large mining operations featuring zone partitioning, ABAC for customer isolation, dual-approval workflow, price plan versioning, 15-minute demand calculation, blockchain-style immutable audit event hash chain, a Portal Lite API, zone-bound device security, a robust remote command flow with production-grade reliability (atomic lease dispatch, idempotent ACK, retry, rate limiting, deduplication, HMAC signatures, Prometheus metrics), and three-tier credential protection.
+- **IP Scanner & Miner Discovery**: Automatic network scanning for Bitcoin miners.
+- **Control Plane System**: Enterprise-grade system for large mining operations featuring zone partitioning, ABAC for customer isolation, dual-approval workflow, price plan versioning, 15-minute demand calculation, blockchain-style immutable audit event hash chain, robust remote command flow, and three-tier credential protection.
 - **SOC2 Security Compliance Module**: Enterprise security features for SOC2 Type II compliance including log retention, login security, password policy, session security, security alerts, data access logging, and PII data masking.
-- **AI Closed-Loop System**: Detects, diagnoses, recommends, approves, acts, audits, and learns from mining operations, integrating with a Control Plane v1 via RemoteCommand. Features include AI-powered alert diagnosis, ticket drafting, and curtailment advisory. UI integrations provide AI assistance in event monitoring, ticket creation, and curtailment management, with an auto-execution system featuring multi-dimensional risk assessment and rule-based auto-approval.
+- **AI Closed-Loop System**: Detects, diagnoses, recommends, approves, acts, audits, and learns from mining operations, integrating with a Control Plane v1 via RemoteCommand. Features include AI-powered alert diagnosis, ticket drafting, and curtailment advisory, with auto-execution based on multi-dimensional risk assessment and rule-based auto-approval.
+- **Problem Registry & Anomaly Detection**: Centralized system for detecting, tracking, and resolving miner issues, including per-miner baselining, mode inference, fleet baseline analysis, and a health rules engine for anomaly detection.
 
 ### System Design Choices
 The architecture emphasizes modularity with page-isolated components and database-centric communication. Authentication is custom email-based with session management and RBAC. API integrations follow intelligent fallback, Stale-While-Revalidate (SWR) caching, batch API calls, and robust error handling. The system is optimized for deployment on the Replit platform using Gunicorn.
@@ -63,6 +64,7 @@ The architecture emphasizes modularity with page-isolated components and databas
 - **Gunicorn**: WSGI server.
 - **psycopg2-binary**: PostgreSQL adapter.
 - **cryptography**: For E2EE decryption.
+- **eth_keys**: For secp256k1 operations in custom BIP32/BIP44 implementation.
 
 ### JavaScript Libraries
 - **Bootstrap 5**: UI framework.
@@ -75,104 +77,3 @@ The architecture emphasizes modularity with page-isolated components and databas
 - **Redis**: In-memory data store (cache + task queue).
 - **Python 3.9+**: Runtime.
 - **Replit Platform**: Deployment and hosting.
-
-## Recent Changes
-
-### 2026-02-06: Security - Remove ecdsa CVE Dependency
-- **Removed `bitcoinlib` dependency** which pulled in vulnerable `ecdsa@0.19.1`
-- Replaced BTC HD wallet/key functionality with custom BIP32/BIP44 implementation
-  - Uses `eth_keys` (already installed via eth-account) for secp256k1 operations
-  - Uses standard library `hmac`/`hashlib`/`struct` for BIP32 derivation
-  - Generates identical BTC P2PKH addresses (verified against BIP32 test vectors)
-- Removed unused `bitcoinlib` imports from `payment_monitor_service.py`
-- `ecdsa` and `fastecdsa` also removed from lock file as a result
-
-### 2026-02-02: P0 Enterprise Features Implementation
-- **Audit Chain Verification Script** (`scripts/verify_audit_chain.py`)
-  - CLI tool to verify hash chain integrity
-  - Outputs PASS/FAIL with broken link details
-  - Supports filtering by site_id and date range
-  
-- **Tenant Isolation Verification Script** (`scripts/verify_tenant_isolation.py`)
-  - Tests RBAC check_site_access function
-  - Verifies customer role cannot access non-owned resources
-  - Supports --rbac-only mode for direct function testing
-  
-- **Telemetry Idempotency Verification Script** (`scripts/verify_telemetry_idempotency.py`)
-  - Tests live table upsert behavior
-  - Tests history table idempotency
-  - Tests out-of-order data handling
-  - Uses unique TEST_MINER_ prefix and cleans up after tests
-  
-- **Evidence Package Service** (`services/evidence_package_service.py`)
-  - Generates evidence packages for SLA reconciliation
-  - Includes downtime analysis, event timelines, audit chain verification
-  - Exports to ZIP with CSV files
-  - API endpoint: GET `/hosting/api/sites/{site_id}/evidence-package`
-  
-- **Alembic Migration System**
-  - `alembic.ini` configuration
-  - `alembic/env.py` with Flask integration
-  - Baseline migration for existing schema
-  - Database stamped to baseline_001
-  - Documentation: `docs/DATABASE_MIGRATIONS.md`
-
-- **Application Factory Pattern** (P0-5)
-  - `main.py` contains `create_app()` with environment validation
-  - Required variables check: DATABASE_URL, SESSION_SECRET
-  - Fail-fast on missing critical security variables
-  
-- **Environment Configuration** (P0-7)
-  - `.env.example` with REQUIRED/RECOMMENDED sections
-  - Clear documentation for all environment variables
-  - Security notes for SESSION_SECRET generation
-  
-- **Docker Compose & Deployment Docs** (P0-8)
-  - `docker-compose.yml` with web/worker/scheduler/postgres/redis
-  - `docs/DEPLOYMENT.md` comprehensive deployment guide
-  - Supports Replit (primary) and Docker Compose (private) modes
-
-- **Ticket System Enhancement**
-  - Miner snapshot captured at ticket creation
-  - Support tickets section in event monitoring page
-  - Ticket status management (mark resolved/reopen)
-  - API: PATCH `/hosting/api/tickets/{id}/status`
-
-### 2026-02-02: Site Access & Pagination Fixes
-- **Critical Site Access Bug Fix**
-  - Updated 19 API endpoints to check BOTH owner_id OR contact_email
-  - Mining site owners now correctly see all their sites via either identifier
-  - Affected endpoints: /api/sites, /api/client/miners, /api/client/dashboard, etc.
-
-- **Client Miners Pagination** (`/hosting/api/client/miners`)
-  - Added pagination support for 6500+ miners (max 100 per page)
-  - Returns stats: total, active, offline, pending counts
-  - Returns pagination metadata: page, per_page, total, pages
-  - Frontend pagination UI with Previous/Next navigation
-  - Edge case handling for pages <= 1
-
-### 2026-02-02: Miner Management Dropdown Menu Fixes
-- **Miner Status Toggle API** (`POST /hosting/api/miners/{id}/status`)
-  - New endpoint to enable/disable miners
-  - Supports action: 'enable' or 'disable'
-  - Includes site access check for authorization
-  
-- **Ticket Creation Fix**
-  - Changed from page navigation to in-page prompt dialogs
-  - Direct POST to /hosting/api/tickets endpoint
-  - API accepts both 'subject' and 'title' fields
-  
-- **View Tickets Fix**
-  - Changed from page navigation to in-page alert display
-  - Fetches tickets by site_id (HostingTicket model doesn't have miner_id)
-  - Shows ticket list with status, subject, and priority
-
-### 2026-02-01: Remote Control API Bug Fix
-- **Issue**: mining_site_owner users were getting 500 errors when executing remote control commands (REBOOT, etc.)
-- **Root Cause**: Server process was not restarting properly, causing old code to run
-- **Fix Applied**:
-  - Added error handling wrapper to `create_command` endpoint with proper exception logging
-  - Added debug-level request logging to remote_control_bp blueprint
-  - Added `credentials: 'same-origin'` to frontend fetch requests for session cookie handling
-  - Sanitized error responses to avoid leaking internal details (returns generic error message to client)
-- **Verification**: Tested with test@test.com user, commands now successfully queue in database

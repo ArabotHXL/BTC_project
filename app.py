@@ -4895,6 +4895,16 @@ except ImportError as e:
 except Exception as e:
     logging.error(f"Failed to register Miner KB API: {e}")
 
+# Problem Registry API (Problem event tracking and health summary)
+try:
+    from routes.problem_registry_routes import problem_registry_bp
+    app.register_blueprint(problem_registry_bp)
+    logging.info("Problem Registry API registered successfully")
+except ImportError as e:
+    logging.warning(f"Problem Registry API not available: {e}")
+except Exception as e:
+    logging.error(f"Failed to register Problem Registry API: {e}")
+
 # Register calculator module blueprint for modular architecture
 try:
     from modules.config import register_modules
