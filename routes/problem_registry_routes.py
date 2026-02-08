@@ -9,7 +9,7 @@ All endpoints require authentication via session.
 import logging
 import json
 from datetime import datetime
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify, session, redirect, render_template
 from app import db
 from sqlalchemy import text
 from services.event_engine import EventEngine
@@ -25,6 +25,23 @@ def check_auth():
     if not user_id:
         return None
     return user_id
+
+
+@problem_registry_bp.route('/hosting/problem-registry/demo')
+def problem_registry_demo():
+    """Demo page for Problem Registry system."""
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect('/login')
+
+    from sqlalchemy import text
+    site_result = db.session.execute(
+        text("SELECT DISTINCT site_id FROM miner_telemetry_live LIMIT 1")
+    ).fetchone()
+    default_site_id = site_result[0] if site_result else 1
+
+    return render_template('hosting/problem_registry_demo.html',
+                           default_site_id=default_site_id)
 
 
 # =========================================================================
