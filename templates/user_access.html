@@ -265,9 +265,11 @@
                 <select class="form-select" id="roleFilter">
                     <option value="">{% if current_lang == 'en' %}All Roles{% else %}所有角色{% endif %}</option>
                     <option value="owner">{% if current_lang == 'en' %}Owner{% else %}拥有者{% endif %}</option>
-                    <option value="admin">{% if current_lang == 'en' %}Administrator{% else %}管理员{% endif %}</option>
-                    <option value="mining_site">{% if current_lang == 'en' %}Mining Manager{% else %}矿场管理{% endif %}</option>
-                    <option value="guest">{% if current_lang == 'en' %}Guest{% else %}客人{% endif %}</option>
+                    <option value="admin">{% if current_lang == 'en' %}Admin{% else %}管理员{% endif %}</option>
+                    <option value="mining_site_owner">{% if current_lang == 'en' %}Mining Site Owner{% else %}矿场站点负责人{% endif %}</option>
+                    <option value="operator">{% if current_lang == 'en' %}Operator{% else %}运维人员{% endif %}</option>
+                    <option value="client">{% if current_lang == 'en' %}Client{% else %}客户{% endif %}</option>
+                    <option value="guest">{% if current_lang == 'en' %}Guest{% else %}访客{% endif %}</option>
                 </select>
             </div>
             <div class="col-md-3">
@@ -294,7 +296,9 @@
                      style="
                      {% if user.role == 'owner' %}background: rgba(220, 53, 69, 0.06); border-left: 3px solid #dc3545;
                      {% elif user.role == 'admin' %}background: rgba(253, 126, 20, 0.06); border-left: 3px solid #fd7e14;
-                     {% elif user.role == 'mining_site' %}background: rgba(32, 201, 151, 0.06); border-left: 3px solid #20c997;
+                     {% elif user.role in ['mining_site_owner', 'mining_site'] %}background: rgba(32, 201, 151, 0.06); border-left: 3px solid #20c997;
+                     {% elif user.role == 'operator' %}background: rgba(13, 202, 240, 0.06); border-left: 3px solid #0dcaf0;
+                     {% elif user.role == 'client' %}background: rgba(13, 110, 253, 0.06); border-left: 3px solid #0d6efd;
                      {% else %}background: rgba(111, 66, 193, 0.06); border-left: 3px solid #6f42c1;
                      {% endif %}
                      padding: 12px 15px; border-bottom: 1px solid #333; transition: all 0.2s ease;
@@ -307,7 +311,9 @@
                             justify-content: center; font-weight: bold; font-size: 14px; color: white; margin-right: 12px;
                             {% if user.role == 'owner' %}background: linear-gradient(135deg, #dc3545, #c82333);
                             {% elif user.role == 'admin' %}background: linear-gradient(135deg, #fd7e14, #e55a00);
-                            {% elif user.role == 'mining_site' %}background: linear-gradient(135deg, #20c997, #17a085);
+                            {% elif user.role in ['mining_site_owner', 'mining_site'] %}background: linear-gradient(135deg, #20c997, #17a085);
+                            {% elif user.role == 'operator' %}background: linear-gradient(135deg, #0dcaf0, #0aa2c0);
+                            {% elif user.role == 'client' %}background: linear-gradient(135deg, #0d6efd, #0a58ca);
                             {% else %}background: linear-gradient(135deg, #6f42c1, #59359a);
                             {% endif %}
                             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
@@ -316,7 +322,9 @@
                             ">
                             {% if user.role == 'owner' %}<i class="bi bi-crown-fill"></i>
                             {% elif user.role == 'admin' %}<i class="bi bi-shield-fill-check"></i>
-                            {% elif user.role == 'mining_site' %}<i class="bi bi-cpu-fill"></i>
+                            {% elif user.role in ['mining_site_owner', 'mining_site'] %}<i class="bi bi-cpu-fill"></i>
+                            {% elif user.role == 'operator' %}<i class="bi bi-tools"></i>
+                            {% elif user.role == 'client' %}<i class="bi bi-person-badge-fill"></i>
                             {% else %}<i class="bi bi-person-fill"></i>
                             {% endif %}
                         </div>
@@ -341,15 +349,19 @@
                                     <span style="
                                         {% if user.role == 'owner' %}background: #dc3545; 
                                         {% elif user.role == 'admin' %}background: #fd7e14;
-                                        {% elif user.role == 'mining_site' %}background: #20c997;
+                                        {% elif user.role in ['mining_site_owner', 'mining_site'] %}background: #20c997;
+                                        {% elif user.role == 'operator' %}background: #0dcaf0; color: #000;
+                                        {% elif user.role == 'client' %}background: #0d6efd;
                                         {% else %}background: #6f42c1;
                                         {% endif %}
                                         color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;
                                         ">
                                         {% if user.role == 'owner' %}{% if current_lang == 'en' %}Owner{% else %}拥有者{% endif %}
                                         {% elif user.role == 'admin' %}{% if current_lang == 'en' %}Admin{% else %}管理员{% endif %}
-                                        {% elif user.role == 'mining_site' %}{% if current_lang == 'en' %}Mining{% else %}矿场{% endif %}
-                                        {% else %}{% if current_lang == 'en' %}Guest{% else %}客人{% endif %}
+                                        {% elif user.role in ['mining_site_owner', 'mining_site'] %}{% if current_lang == 'en' %}Site Owner{% else %}站点负责人{% endif %}
+                                        {% elif user.role == 'operator' %}{% if current_lang == 'en' %}Operator{% else %}运维人员{% endif %}
+                                        {% elif user.role == 'client' %}{% if current_lang == 'en' %}Client{% else %}客户{% endif %}
+                                        {% else %}{% if current_lang == 'en' %}Guest{% else %}访客{% endif %}
                                         {% endif %}
                                     </span>
                                     {% if user.subscription_plan and user.subscription_plan != 'free' %}
@@ -476,9 +488,11 @@
                                 {% if current_lang == 'en' %}User Role{% else %}用户角色{% endif %}
                             </label>
                             <select class="form-select" name="role" required>
-                                <option value="guest">{% if current_lang == 'en' %}Mining Site Guest{% else %}矿场客人{% endif %}</option>
-                                <option value="mining_site">{% if current_lang == 'en' %}Mining Site Manager{% else %}矿场管理{% endif %}</option>
-                                <option value="admin">{% if current_lang == 'en' %}Administrator{% else %}管理员{% endif %}</option>
+                                <option value="guest">{% if current_lang == 'en' %}Guest{% else %}访客{% endif %}</option>
+                                <option value="client" selected>{% if current_lang == 'en' %}Client{% else %}客户{% endif %}</option>
+                                <option value="operator">{% if current_lang == 'en' %}Operator{% else %}运维人员{% endif %}</option>
+                                <option value="mining_site_owner">{% if current_lang == 'en' %}Mining Site Owner{% else %}矿场站点负责人{% endif %}</option>
+                                <option value="admin">{% if current_lang == 'en' %}Admin{% else %}管理员{% endif %}</option>
                                 {% if session.get('role') == 'owner' %}
                                 <option value="owner">{% if current_lang == 'en' %}Owner{% else %}拥有者{% endif %}</option>
                                 {% endif %}
@@ -574,7 +588,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const matchesSearch = name.includes(searchTerm) || 
                                 email.includes(searchTerm) || 
                                 company.includes(searchTerm);
-            const matchesRole = !roleValue || role === roleValue;
+            const matchesRole = !roleValue || role === roleValue || (roleValue === 'mining_site_owner' && role === 'mining_site');
             const matchesStatus = !statusValue || status === statusValue;
 
             if (matchesSearch && matchesRole && matchesStatus) {

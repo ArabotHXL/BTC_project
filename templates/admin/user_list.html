@@ -73,7 +73,13 @@
                                                 {% elif user.role in ['client', 'customer', 'user'] %}bg-primary
                                                 {% else %}bg-secondary
                                                 {% endif %}">
-                                                {{ user.role.upper() }}
+                                                {% if user.role == 'owner' %}Owner
+                                                {% elif user.role == 'admin' %}Admin
+                                                {% elif user.role in ['mining_site_owner', 'mining_site'] %}Site Owner
+                                                {% elif user.role == 'operator' %}Operator
+                                                {% elif user.role in ['client', 'customer', 'user'] %}Client
+                                                {% else %}Guest
+                                                {% endif %}
                                             </span>
                                         </td>
                                         <td>
