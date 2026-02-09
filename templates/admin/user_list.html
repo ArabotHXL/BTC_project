@@ -68,7 +68,9 @@
                                             <span class="badge 
                                                 {% if user.role == 'owner' %}bg-danger
                                                 {% elif user.role == 'admin' %}bg-warning
-                                                {% elif user.role == 'user' %}bg-primary
+                                                {% elif user.role in ['mining_site_owner', 'mining_site'] %}bg-info
+                                                {% elif user.role == 'operator' %}bg-success
+                                                {% elif user.role in ['client', 'customer', 'user'] %}bg-primary
                                                 {% else %}bg-secondary
                                                 {% endif %}">
                                                 {{ user.role.upper() }}

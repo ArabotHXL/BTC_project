@@ -3,7 +3,7 @@ RBAC权限矩阵系统 v2.0
 Role-Based Access Control (RBAC) Permission Matrix
 
 基于推荐的权限重新分配方案:
-- 6个用户角色: Owner, Admin, Mining_Site_Owner, Client, Customer, Guest
+- 6个用户角色: Owner, Admin, Mining_Site_Owner, Operator, Client, Guest
 - 11个功能模块: 基础功能、托管服务、智能限电、CRM系统、分析工具、智能层、用户管理、系统监控、Web3功能、财务管理、报表系统
 - 3种访问级别: FULL(完全访问), READ(只读), NONE(无权限)
 """
@@ -31,8 +31,8 @@ class Role(Enum):
     OWNER = "owner"                         # 所有者 - 最高权限
     ADMIN = "admin"                         # 管理员
     MINING_SITE_OWNER = "mining_site_owner" # 矿场站点负责人
-    CLIENT = "client"                       # 矿场客户端 (mining site client)
-    CUSTOMER = "customer"                   # 应用客户 (App customer)
+    OPERATOR = "operator"                   # 运维人员
+    CLIENT = "client"                       # 矿业客户 (mining client, merged Client+Customer)
     GUEST = "guest"                         # 未登录访客
     
     # 保留旧角色映射兼容性
@@ -41,12 +41,12 @@ class Role(Enum):
     TENANT_OWNER = "tenant_owner"
     MINING_SITE = "mining_site"
     USER = "user"
+    CUSTOMER = "customer"                   # 旧角色，映射到CLIENT
     
     # 旧版功能角色（向后兼容）
     DEVELOPER = "developer"                 # 开发者
     API_CLIENT = "api_client"               # API客户端
     INVESTOR = "investor"                   # 投资人
-    OPERATOR = "operator"                   # 运维人员
     FINANCE = "finance"                     # 财务人员
     TRADER = "trader"                       # 交易员
     READONLY = "readonly"                   # 只读用户
@@ -58,21 +58,21 @@ ROLE_MIGRATION_MAP = {
     'tenant_owner': Role.OWNER,
     'tenant_admin': Role.ADMIN,
     'mining_site': Role.MINING_SITE_OWNER,
-    'user': Role.CUSTOMER,
+    'user': Role.CLIENT,           # 旧user映射到client
     'guest': Role.GUEST,
     'owner': Role.OWNER,
     'admin': Role.ADMIN,
     'mining_site_owner': Role.MINING_SITE_OWNER,
     'client': Role.CLIENT,
-    'customer': Role.CUSTOMER,
+    'customer': Role.CLIENT,      # 旧customer映射到client
+    'operator': Role.OPERATOR,    # 运维人员
     # 旧功能角色映射
     'developer': Role.ADMIN,      # 开发者 -> 管理员权限
     'api_client': Role.CLIENT,    # API客户端 -> 客户端权限
     'investor': Role.CLIENT,      # 投资人 -> 客户端权限
-    'operator': Role.MINING_SITE_OWNER,  # 运维人员 -> 矿场站点负责人
     'finance': Role.ADMIN,        # 财务人员 -> 管理员权限
     'trader': Role.CLIENT,        # 交易员 -> 客户端权限
-    'readonly': Role.CUSTOMER,    # 只读用户 -> 应用客户
+    'readonly': Role.CLIENT,      # 只读用户 -> 客户
     'site_manager': Role.MINING_SITE_OWNER,  # 站点经理 -> 矿场站点负责人
 }
 
@@ -185,24 +185,24 @@ PERMISSION_MATRIX: Dict[Module, Dict[Role, AccessLevel]] = {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.READ,
         Role.CLIENT: AccessLevel.FULL,
-        Role.CUSTOMER: AccessLevel.FULL,
         Role.GUEST: AccessLevel.FULL,  # 所有人可用，可做引流工具
     },
     Module.BASIC_SETTINGS: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.READ,  # 需登录
         Role.CLIENT: AccessLevel.FULL,
-        Role.CUSTOMER: AccessLevel.FULL,
         Role.GUEST: AccessLevel.NONE,  # 需登录
     },
     Module.BASIC_DASHBOARD: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.READ,
         Role.CLIENT: AccessLevel.FULL,
-        Role.CUSTOMER: AccessLevel.FULL,
         Role.GUEST: AccessLevel.READ,  # 登录后为个人站点视觉，未登录为公共看板
     },
     
@@ -211,48 +211,48 @@ PERMISSION_MATRIX: Dict[Module, Dict[Role, AccessLevel]] = {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,  # 矿场负责人可管理自己站点
+        Role.OPERATOR: AccessLevel.READ,  # 运维人员只读
         Role.CLIENT: AccessLevel.NONE,
-        Role.CUSTOMER: AccessLevel.NONE,
         Role.GUEST: AccessLevel.NONE,
     },
     Module.HOSTING_BATCH_CREATE: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,  # 运营功能，只给平台/矿场
+        Role.OPERATOR: AccessLevel.NONE,
         Role.CLIENT: AccessLevel.NONE,
-        Role.CUSTOMER: AccessLevel.NONE,
         Role.GUEST: AccessLevel.NONE,
     },
     Module.HOSTING_STATUS_MONITOR: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.FULL,  # 运维人员完全管理矿机状态监控
         Role.CLIENT: AccessLevel.READ,  # Client只看自己矿机运行状态
-        Role.CUSTOMER: AccessLevel.READ,  # Customer可查看自己矿机状态
         Role.GUEST: AccessLevel.NONE,
     },
     Module.HOSTING_TICKET: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
-        Role.CLIENT: AccessLevel.FULL,  # Client/App Customer可提自己工单
-        Role.CUSTOMER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.FULL,  # 运维人员完全管理工单
+        Role.CLIENT: AccessLevel.FULL,  # Client可提自己工单
         Role.GUEST: AccessLevel.NONE,
     },
     Module.HOSTING_USAGE_TRACKING: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.READ,  # 运维人员只读使用记录
         Role.CLIENT: AccessLevel.READ,  # 包含机位使用、电费、服务记录等
-        Role.CUSTOMER: AccessLevel.READ,  # Customer可查看自己使用记录
         Role.GUEST: AccessLevel.NONE,
     },
     Module.HOSTING_RECONCILIATION: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.READ,  # 运维人员只读对账
         Role.CLIENT: AccessLevel.READ,  # 财务对账: 平台 vs 矿场 vs 客户
-        Role.CUSTOMER: AccessLevel.READ,  # Customer可查看自己对账信息
         Role.GUEST: AccessLevel.NONE,
     },
     
@@ -261,40 +261,40 @@ PERMISSION_MATRIX: Dict[Module, Dict[Role, AccessLevel]] = {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,  # 矿场负责人可完全管理限电策略
+        Role.OPERATOR: AccessLevel.FULL,  # 运维人员完全管理限电策略
         Role.CLIENT: AccessLevel.READ,  # Client只读
-        Role.CUSTOMER: AccessLevel.READ,  # Customer可查看限电策略
         Role.GUEST: AccessLevel.NONE,
     },
     Module.CURTAILMENT_AI_PREDICT: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,  # 矿场负责人可使用AI预测
+        Role.OPERATOR: AccessLevel.FULL,  # 运维人员完全管理AI预测
         Role.CLIENT: AccessLevel.NONE,
-        Role.CUSTOMER: AccessLevel.NONE,
         Role.GUEST: AccessLevel.NONE,
     },
     Module.CURTAILMENT_EXECUTE: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,  # 敏感操作，只能运维方执行
+        Role.OPERATOR: AccessLevel.FULL,  # 运维人员可执行限电
         Role.CLIENT: AccessLevel.NONE,
-        Role.CUSTOMER: AccessLevel.NONE,
         Role.GUEST: AccessLevel.NONE,
     },
     Module.CURTAILMENT_EMERGENCY: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,  # 应急功能，通常运维触发
+        Role.OPERATOR: AccessLevel.FULL,  # 运维人员可触发紧急恢复
         Role.CLIENT: AccessLevel.NONE,
-        Role.CUSTOMER: AccessLevel.NONE,
         Role.GUEST: AccessLevel.NONE,
     },
     Module.CURTAILMENT_HISTORY: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.FULL,  # 运维人员完全管理限电历史
         Role.CLIENT: AccessLevel.READ,  # Client只看影响自己机队的限电记录
-        Role.CUSTOMER: AccessLevel.READ,  # Customer可查看限电历史
         Role.GUEST: AccessLevel.NONE,
     },
     
@@ -303,48 +303,48 @@ PERMISSION_MATRIX: Dict[Module, Dict[Role, AccessLevel]] = {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.NONE,
         Role.CLIENT: AccessLevel.NONE,  # 销售运营后台功能
-        Role.CUSTOMER: AccessLevel.NONE,
         Role.GUEST: AccessLevel.NONE,
     },
     Module.CRM_CUSTOMER_VIEW: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.NONE,
         Role.CLIENT: AccessLevel.NONE,  # 新增：矿场查看关联客户；Client只看自己的档案
-        Role.CUSTOMER: AccessLevel.NONE,
         Role.GUEST: AccessLevel.NONE,
     },
     Module.CRM_TRANSACTION: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
-        Role.CLIENT: AccessLevel.READ,  # Client/App只能查看自己交易与结算
-        Role.CUSTOMER: AccessLevel.READ,
+        Role.OPERATOR: AccessLevel.NONE,
+        Role.CLIENT: AccessLevel.READ,  # Client只能查看自己交易与结算
         Role.GUEST: AccessLevel.NONE,
     },
     Module.CRM_INVOICE: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.NONE,
         Role.CLIENT: AccessLevel.READ,  # 平台开具，客户可下载自己发票
-        Role.CUSTOMER: AccessLevel.READ,
         Role.GUEST: AccessLevel.NONE,
     },
     Module.CRM_BROKER_COMMISSION: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,  # 矿场负责人可管理佣金
+        Role.OPERATOR: AccessLevel.NONE,
         Role.CLIENT: AccessLevel.NONE,
-        Role.CUSTOMER: AccessLevel.NONE,
         Role.GUEST: AccessLevel.NONE,
     },
     Module.CRM_ACTIVITY_LOG: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,  # 矿场负责人可管理活动记录
+        Role.OPERATOR: AccessLevel.NONE,
         Role.CLIENT: AccessLevel.NONE,  # 营销/客户经营相关记录
-        Role.CUSTOMER: AccessLevel.NONE,
         Role.GUEST: AccessLevel.NONE,
     },
     
@@ -353,32 +353,32 @@ PERMISSION_MATRIX: Dict[Module, Dict[Role, AccessLevel]] = {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
-        Role.CLIENT: AccessLevel.FULL,  # 企业功能：Client/App导入自己列表批算
-        Role.CUSTOMER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.NONE,
+        Role.CLIENT: AccessLevel.FULL,  # 企业功能：Client导入自己列表批算
         Role.GUEST: AccessLevel.NONE,
     },
     Module.ANALYTICS_NETWORK: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.READ,
         Role.CLIENT: AccessLevel.READ,  # Client看到市场级数据但不可改
-        Role.CUSTOMER: AccessLevel.READ,  # Customer可查看网络分析
         Role.GUEST: AccessLevel.NONE,
     },
     Module.ANALYTICS_TECHNICAL: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.READ,
         Role.CLIENT: AccessLevel.READ,  # 可视化K线/指标，Guest看Demo
-        Role.CUSTOMER: AccessLevel.READ,
         Role.GUEST: AccessLevel.READ,
     },
     Module.ANALYTICS_DERIBIT: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.NONE,
         Role.CLIENT: AccessLevel.READ,  # 需对衍生品分析，可做高级付费层
-        Role.CUSTOMER: AccessLevel.NONE,
         Role.GUEST: AccessLevel.NONE,
     },
     
@@ -387,32 +387,32 @@ PERMISSION_MATRIX: Dict[Module, Dict[Role, AccessLevel]] = {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.READ,
         Role.CLIENT: AccessLevel.READ,  # Client看自己的预测，Guest看公开预测
-        Role.CUSTOMER: AccessLevel.READ,
         Role.GUEST: AccessLevel.READ,
     },
     Module.AI_ROI_EXPLAIN: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.READ,
         Role.CLIENT: AccessLevel.READ,  # 基于各自机器/投资组合做解释，Guest看Demo
-        Role.CUSTOMER: AccessLevel.READ,
         Role.GUEST: AccessLevel.READ,
     },
     Module.AI_ANOMALY_DETECT: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.FULL,  # 运维人员完全管理异常检测
         Role.CLIENT: AccessLevel.READ,  # Client看到自己矿机异常
-        Role.CUSTOMER: AccessLevel.NONE,
         Role.GUEST: AccessLevel.NONE,
     },
     Module.AI_POWER_OPTIMIZE: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.FULL,  # 运维人员完全管理功耗优化
         Role.CLIENT: AccessLevel.READ,  # Client获得针对自己机队的建议
-        Role.CUSTOMER: AccessLevel.NONE,
         Role.GUEST: AccessLevel.NONE,
     },
     
@@ -421,48 +421,48 @@ PERMISSION_MATRIX: Dict[Module, Dict[Role, AccessLevel]] = {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.NONE,  # Owner/Admin全局创建用户
+        Role.OPERATOR: AccessLevel.NONE,
         Role.CLIENT: AccessLevel.NONE,
-        Role.CUSTOMER: AccessLevel.NONE,
         Role.GUEST: AccessLevel.NONE,
     },
     Module.USER_EDIT: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.NONE,
+        Role.OPERATOR: AccessLevel.NONE,
         Role.CLIENT: AccessLevel.NONE,
-        Role.CUSTOMER: AccessLevel.NONE,
         Role.GUEST: AccessLevel.NONE,
     },
     Module.USER_DISABLE: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,  # Owner/Admin可禁用/停用用户
         Role.MINING_SITE_OWNER: AccessLevel.NONE,
+        Role.OPERATOR: AccessLevel.NONE,
         Role.CLIENT: AccessLevel.NONE,
-        Role.CUSTOMER: AccessLevel.NONE,
         Role.GUEST: AccessLevel.NONE,
     },
     Module.USER_DELETE: {
         Role.OWNER: AccessLevel.FULL,  # 只有Owner可永久删除用户
         Role.ADMIN: AccessLevel.NONE,
         Role.MINING_SITE_OWNER: AccessLevel.NONE,
+        Role.OPERATOR: AccessLevel.NONE,
         Role.CLIENT: AccessLevel.NONE,
-        Role.CUSTOMER: AccessLevel.NONE,
         Role.GUEST: AccessLevel.NONE,
     },
     Module.USER_ROLE_ASSIGN: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.NONE,
+        Role.OPERATOR: AccessLevel.NONE,
         Role.CLIENT: AccessLevel.NONE,
-        Role.CUSTOMER: AccessLevel.NONE,
         Role.GUEST: AccessLevel.NONE,
     },
     Module.USER_LIST_VIEW: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
-        Role.MINING_SITE_OWNER: AccessLevel.READ,  # Client/App仅看到自己公司内部账号
-        Role.CLIENT: AccessLevel.READ,
-        Role.CUSTOMER: AccessLevel.READ,
+        Role.MINING_SITE_OWNER: AccessLevel.READ,
+        Role.OPERATOR: AccessLevel.READ,
+        Role.CLIENT: AccessLevel.READ,  # Client仅看到自己公司内部账号
         Role.GUEST: AccessLevel.NONE,
     },
     
@@ -471,24 +471,24 @@ PERMISSION_MATRIX: Dict[Module, Dict[Role, AccessLevel]] = {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.NONE,  # 运维功能，矿场仅做只读观察
+        Role.OPERATOR: AccessLevel.READ,
         Role.CLIENT: AccessLevel.NONE,
-        Role.CUSTOMER: AccessLevel.NONE,
         Role.GUEST: AccessLevel.NONE,
     },
     Module.SYSTEM_PERFORMANCE: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.NONE,  # 同上
+        Role.OPERATOR: AccessLevel.READ,
         Role.CLIENT: AccessLevel.NONE,
-        Role.CUSTOMER: AccessLevel.NONE,
         Role.GUEST: AccessLevel.NONE,
     },
     Module.SYSTEM_EVENT: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
-        Role.MINING_SITE_OWNER: AccessLevel.READ,  # 同上
+        Role.MINING_SITE_OWNER: AccessLevel.READ,
+        Role.OPERATOR: AccessLevel.FULL,  # 运维人员完全管理事件监控
         Role.CLIENT: AccessLevel.NONE,
-        Role.CUSTOMER: AccessLevel.NONE,
         Role.GUEST: AccessLevel.NONE,
     },
     
@@ -497,24 +497,24 @@ PERMISSION_MATRIX: Dict[Module, Dict[Role, AccessLevel]] = {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,  # 矿场负责人可管理区块链验证
-        Role.CLIENT: AccessLevel.READ,  # Client/App仅验证自己的记录
-        Role.CUSTOMER: AccessLevel.READ,
+        Role.OPERATOR: AccessLevel.READ,
+        Role.CLIENT: AccessLevel.READ,  # Client仅验证自己的记录
         Role.GUEST: AccessLevel.NONE,
     },
     Module.WEB3_TRANSPARENCY: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,  # 矿场负责人可管理透明版本
+        Role.OPERATOR: AccessLevel.READ,
         Role.CLIENT: AccessLevel.READ,
-        Role.CUSTOMER: AccessLevel.READ,
         Role.GUEST: AccessLevel.NONE,
     },
     Module.WEB3_SLA_NFT: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,  # 矿场负责人可管理SLA NFT
+        Role.OPERATOR: AccessLevel.NONE,
         Role.CLIENT: AccessLevel.READ,  # 客户领取/查看自己的SLA NFT
-        Role.CUSTOMER: AccessLevel.READ,
         Role.GUEST: AccessLevel.NONE,
     },
     
@@ -523,24 +523,24 @@ PERMISSION_MATRIX: Dict[Module, Dict[Role, AccessLevel]] = {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.NONE,
         Role.CLIENT: AccessLevel.READ,  # 财务功能：客户只看自己的账单
-        Role.CUSTOMER: AccessLevel.READ,
         Role.GUEST: AccessLevel.NONE,
     },
     Module.FINANCE_BTC_SETTLE: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.NONE,
         Role.CLIENT: AccessLevel.READ,  # 支付/提现入口，需KYC
-        Role.CUSTOMER: AccessLevel.READ,
         Role.GUEST: AccessLevel.NONE,
     },
     Module.FINANCE_CRYPTO_PAY: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.NONE,
         Role.CLIENT: AccessLevel.FULL,  # 支付功能，可支持多种加密货币
-        Role.CUSTOMER: AccessLevel.FULL,
         Role.GUEST: AccessLevel.NONE,
     },
     
@@ -549,24 +549,24 @@ PERMISSION_MATRIX: Dict[Module, Dict[Role, AccessLevel]] = {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.READ,  # 运维人员只读/下载报表
         Role.CLIENT: AccessLevel.FULL,  # Client可生成自己的报表，Guest下载Demo
-        Role.CUSTOMER: AccessLevel.FULL,
         Role.GUEST: AccessLevel.READ,
     },
     Module.REPORT_EXCEL: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.NONE,
         Role.CLIENT: AccessLevel.FULL,  # 详细数据导出，仅登录用户
-        Role.CUSTOMER: AccessLevel.FULL,
         Role.GUEST: AccessLevel.NONE,
     },
     Module.REPORT_PPT: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.NONE,
         Role.CLIENT: AccessLevel.FULL,  # 给老板投资人用的展示型报表
-        Role.CUSTOMER: AccessLevel.FULL,
         Role.GUEST: AccessLevel.NONE,
     },
     
@@ -575,24 +575,24 @@ PERMISSION_MATRIX: Dict[Module, Dict[Role, AccessLevel]] = {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.FULL,  # 运维人员完全管理远程控制请求
         Role.CLIENT: AccessLevel.FULL,  # Client可提交远程控制请求
-        Role.CUSTOMER: AccessLevel.NONE,
         Role.GUEST: AccessLevel.NONE,
     },
     Module.REMOTE_CONTROL_AUDIT: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.FULL,  # 运维人员完全管理远控审计
         Role.CLIENT: AccessLevel.READ,  # Client可查看审计与执行结果
-        Role.CUSTOMER: AccessLevel.READ,  # Customer可查看审计记录
         Role.GUEST: AccessLevel.NONE,
     },
     Module.REMOTE_CONTROL_EXECUTE: {
         Role.OWNER: AccessLevel.FULL,
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,  # 只有运维方可执行远程控制
+        Role.OPERATOR: AccessLevel.FULL,  # 运维人员可执行远程控制
         Role.CLIENT: AccessLevel.NONE,  # Client不能直接执行
-        Role.CUSTOMER: AccessLevel.NONE,
         Role.GUEST: AccessLevel.NONE,
     },
 }
@@ -634,20 +634,20 @@ ROLE_DEFINITIONS: Dict[Role, RoleDefinition] = {
         description_zh="矿场运营者，管理站点运营和矿机",
         priority=3
     ),
+    Role.OPERATOR: RoleDefinition(
+        name=Role.OPERATOR,
+        display_name_en="Operator",
+        display_name_zh="运维人员",
+        description_en="Operations staff, manages monitoring, curtailment, and remote control",
+        description_zh="运维人员，管理监控、限电和远程控制",
+        priority=4
+    ),
     Role.CLIENT: RoleDefinition(
         name=Role.CLIENT,
         display_name_en="Client",
-        display_name_zh="矿场客户端",
-        description_en="Mining site client, views own miners and operations",
-        description_zh="矿场客户端，查看自己的矿机和运营",
-        priority=4
-    ),
-    Role.CUSTOMER: RoleDefinition(
-        name=Role.CUSTOMER,
-        display_name_en="Customer",
-        display_name_zh="应用客户",
-        description_en="App customer, uses calculator and basic features",
-        description_zh="应用客户，使用计算器和基础功能",
+        display_name_zh="客户",
+        description_en="Mining client, views own miners, reports, and operations",
+        description_zh="矿业客户，查看自己的矿机、报告和运营数据",
         priority=5
     ),
     Role.GUEST: RoleDefinition(
@@ -775,7 +775,7 @@ class RBACManager:
             module_key = module.value
             matrix[module_key] = {}
             for role in [Role.OWNER, Role.ADMIN, Role.MINING_SITE_OWNER, 
-                        Role.CLIENT, Role.CUSTOMER, Role.GUEST]:
+                        Role.OPERATOR, Role.CLIENT, Role.GUEST]:
                 access = self.get_access_level(role, module)
                 matrix[module_key][role.value] = access.value
         return matrix
@@ -784,7 +784,7 @@ class RBACManager:
         """导出角色摘要（用于管理界面）"""
         summary = []
         for role in [Role.OWNER, Role.ADMIN, Role.MINING_SITE_OWNER, 
-                    Role.CLIENT, Role.CUSTOMER, Role.GUEST]:
+                    Role.OPERATOR, Role.CLIENT, Role.GUEST]:
             definition = self.role_definitions.get(role)
             if definition:
                 full_count = len([m for m in Module if self.has_full_access(role, m)])

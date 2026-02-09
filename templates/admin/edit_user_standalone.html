@@ -284,16 +284,22 @@
                             </label>
                             <select class="form-select" name="role">
                                 <option value="guest" {{ 'selected' if user.role == 'guest' else '' }}>
-                                    {% if current_lang == 'en' %}Mining Site Guest{% else %}矿场客人{% endif %}
+                                    {% if current_lang == 'en' %}Guest{% else %}访客{% endif %}
                                 </option>
-                                <option value="mining_site" {{ 'selected' if user.role == 'mining_site' else '' }}>
-                                    {% if current_lang == 'en' %}Mining Site Manager{% else %}矿场管理员{% endif %}
+                                <option value="client" {{ 'selected' if user.role in ['client', 'customer', 'user'] else '' }}>
+                                    {% if current_lang == 'en' %}Client{% else %}客户{% endif %}
+                                </option>
+                                <option value="operator" {{ 'selected' if user.role == 'operator' else '' }}>
+                                    {% if current_lang == 'en' %}Operator{% else %}运维人员{% endif %}
+                                </option>
+                                <option value="mining_site_owner" {{ 'selected' if user.role in ['mining_site_owner', 'mining_site'] else '' }}>
+                                    {% if current_lang == 'en' %}Mining Site Owner{% else %}矿场站点负责人{% endif %}
                                 </option>
                                 <option value="admin" {{ 'selected' if user.role == 'admin' else '' }}>
-                                    {% if current_lang == 'en' %}System Admin{% else %}系统管理员{% endif %}
+                                    {% if current_lang == 'en' %}Admin{% else %}管理员{% endif %}
                                 </option>
                                 <option value="owner" {{ 'selected' if user.role == 'owner' else '' }}>
-                                    {% if current_lang == 'en' %}System Owner{% else %}系统拥有者{% endif %}
+                                    {% if current_lang == 'en' %}Owner{% else %}拥有者{% endif %}
                                 </option>
                             </select>
                         </div>

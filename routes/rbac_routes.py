@@ -68,7 +68,7 @@ def get_permission_matrix():
                 'roles': [
                     {'value': r.value, 'label_zh': ROLE_DEFINITIONS[r].display_name_zh if r in ROLE_DEFINITIONS else r.value,
                      'label_en': ROLE_DEFINITIONS[r].display_name_en if r in ROLE_DEFINITIONS else r.value}
-                    for r in [Role.OWNER, Role.ADMIN, Role.MINING_SITE_OWNER, Role.CLIENT, Role.CUSTOMER, Role.GUEST]
+                    for r in [Role.OWNER, Role.ADMIN, Role.MINING_SITE_OWNER, Role.OPERATOR, Role.CLIENT, Role.GUEST]
                 ],
                 'access_levels': [
                     {'value': 'full', 'label_zh': '完全访问', 'label_en': 'Full Access', 'icon': '✓', 'color': 'success'},
@@ -362,7 +362,7 @@ def get_module_access(module_name):
         lang = request.args.get('lang', 'zh')
         
         access_list = []
-        for role in [Role.OWNER, Role.ADMIN, Role.MINING_SITE_OWNER, Role.CLIENT, Role.CUSTOMER, Role.GUEST]:
+        for role in [Role.OWNER, Role.ADMIN, Role.MINING_SITE_OWNER, Role.OPERATOR, Role.CLIENT, Role.GUEST]:
             access = rbac_manager.get_access_level(role, target_module)
             role_def = ROLE_DEFINITIONS.get(role)
             

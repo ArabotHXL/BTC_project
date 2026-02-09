@@ -1194,7 +1194,7 @@ class User(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # 用户角色
-    role = db.Column(db.String(20), default='user')  # user, admin, manager
+    role = db.Column(db.String(20), default='client')  # guest, client, operator, mining_site_owner, admin, owner
 
     def __repr__(self):
         return f'<User {self.email}>'
