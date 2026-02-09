@@ -452,6 +452,7 @@ def login_dashboard():
 @log_access_attempt('用户访问管理')
 def user_access():
     """管理员管理用户访问权限 - 需要Pro订阅"""
+    logger.info(f"[user_access] 进入路由, session role={session.get('role')}, email={session.get('email')}")
     if session.get('role') != 'owner':
         try:
             from decorators import get_user_plan
@@ -465,10 +466,16 @@ def user_access():
         except ImportError:
             pass
     
-    users = get_user_list()
+    try:
+        users = get_user_list()
+        logger.info(f"[user_access] 获取到 {len(users)} 个用户")
+    except Exception as e:
+        logger.error(f"[user_access] 获取用户列表失败: {e}")
+        flash('加载用户列表失败，请刷新重试', 'danger')
+        return redirect(url_for('index'))
     
     current_user_role = session.get('role', '未设置')
-    logger.debug(f"当前用户角色: {current_user_role}")
+    logger.info(f"[user_access] 准备渲染模板, 角色: {current_user_role}")
     
     return render_template('user_access.html', users=users)
 
