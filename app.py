@@ -1583,12 +1583,6 @@ def add_mine_customer():
         # 检查是否授予计算器访问权限
         grant_calculator_access = request.form.get('grant_calculator_access') == 'yes'
         
-        # 获取访问天数（如果不授予访问权限，将使用默认值，但不会实际创建用户）
-        try:
-            access_days = int(request.form['access_days']) if grant_calculator_access else 30
-        except (ValueError, KeyError):
-            access_days = 30  # 默认30天
-            
         company = request.form.get('company')
         position = request.form.get('position')
         notes = request.form.get('notes')
@@ -1603,11 +1597,10 @@ def add_mine_customer():
             user_access = UserAccess(
                 name=name,
                 email=email,
-                access_days=access_days,
                 company=company,
                 position=position,
                 notes=notes,
-                role='guest'  # 客户角色设为guest
+                role='client'
             )
             
             # 设置创建者ID（关联到当前矿场主）
@@ -1654,7 +1647,7 @@ def add_mine_customer():
                 assigned_to_id=user_id,
                 created_by_id=user_id,
                 description=f"由矿场主 {session.get('email')} 添加的客户。" + 
-                          (f"授权使用挖矿计算器 {access_days} 天。" if grant_calculator_access else "未授权使用计算器。")
+                          ("已授权使用挖矿计算器（永久有效）。" if grant_calculator_access else "未授权使用计算器。")
             )
             db.session.add(lead)
             db.session.commit()
@@ -1681,7 +1674,7 @@ def add_mine_customer():
         
         success_message = f'已成功添加客户: {name}。'
         if grant_calculator_access:
-            success_message += f'已授权访问计算器 {access_days} 天。'
+            success_message += '已授权访问计算器（永久有效）。'
         else:
             success_message += f'未授权使用计算器。'
         success_message += '同时已在CRM系统中创建客户记录。'

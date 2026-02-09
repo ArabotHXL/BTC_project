@@ -96,14 +96,6 @@
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="access_days" class="form-label">
-                                            <i class="bi bi-calendar-check me-1"></i>访问天数
-                                        </label>
-                                        <input type="number" class="form-control" id="access_days" name="access_days" value="30" min="1">
-                                    </div>
-                                </div>
                             </div>
 
                             <div class="mb-4">
@@ -169,7 +161,6 @@
             document.getElementById('name').value = `Test ${type.charAt(0).toUpperCase() + type.slice(1)}`;
             document.getElementById('password').value = 'test123';
             document.getElementById('role').value = type;
-            document.getElementById('access_days').value = type === 'guest' ? '7' : '30';
             document.getElementById('skip_email_verification').checked = true;
         }
     </script>

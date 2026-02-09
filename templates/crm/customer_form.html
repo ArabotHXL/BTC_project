@@ -98,17 +98,7 @@
                         </div>
                     </div>
                     
-                    <div class="mb-3 calculator-access-option">
-                        <label for="access_days" class="form-label">访问期限（天）</label>
-                        <input type="number" class="form-control" id="access_days" name="access_days" value="30" min="1" max="365" required>
-                        <div class="form-text">
-                            {% if has_calculator_access %}
-                                将延长客户的访问期限天数。
-                            {% else %}
-                                客户可以访问计算器的天数。
-                            {% endif %}
-                        </div>
-                    </div>
+                    
                 </div>
             </div>
             
@@ -132,26 +122,6 @@
     // Initialize form validation
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.querySelector('form');
-        const calculatorAccessSwitch = document.getElementById('grant_calculator_access');
-        const accessDaysField = document.querySelector('.calculator-access-option');
-        
-        // 控制访问天数字段的显示/隐藏
-        function toggleAccessDaysField() {
-            if (calculatorAccessSwitch.checked) {
-                accessDaysField.style.display = 'block';
-                document.getElementById('access_days').required = true;
-            } else {
-                accessDaysField.style.display = 'none';
-                document.getElementById('access_days').required = false;
-            }
-        }
-        
-        // 初始化时调用一次
-        toggleAccessDaysField();
-        
-        // 添加切换事件
-        calculatorAccessSwitch.addEventListener('change', toggleAccessDaysField);
-        
         form.addEventListener('submit', function(event) {
             if (!form.checkValidity()) {
                 event.preventDefault();

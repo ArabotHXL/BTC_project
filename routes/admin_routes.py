@@ -488,17 +488,12 @@ def add_user_access():
         name = request.form['name']
         email = request.form['email']
         
-        try:
-            access_days = int(request.form['access_days'])
-        except (ValueError, KeyError):
-            access_days = 30
-            
         company = request.form.get('company')
         position = request.form.get('position')
         notes = request.form.get('notes')
         role = request.form.get('role', 'guest')
         
-        valid_roles = ['owner', 'admin', 'mining_site_owner', 'guest']
+        valid_roles = ['owner', 'admin', 'mining_site_owner', 'operator', 'client', 'guest']
         if role not in valid_roles:
             role = 'guest'
             
@@ -515,7 +510,6 @@ def add_user_access():
         new_user = UserAccess(
             name=name,
             email=email,
-            access_days=access_days,
             company=company,
             position=position,
             notes=notes,
@@ -525,16 +519,12 @@ def add_user_access():
         db.session.add(new_user)
         db.session.commit()
         
-        
-        if role == "owner":
-            role_name = "拥有者"
-        elif role == "admin":
-            role_name = "管理员"
-        elif role == "mining_site":
-            role_name = "矿场管理"
-        else:
-            role_name = "矿场客人"
-        flash(f'用户 {name} ({email}) 已成功添加，角色为"{role_name}"，访问权限 {access_days} 天', 'success')
+        role_names = {
+            "owner": "拥有者", "admin": "管理员", "mining_site_owner": "矿场站点负责人",
+            "operator": "运维人员", "client": "客户", "guest": "访客"
+        }
+        role_name = role_names.get(role, role)
+        flash(f'用户 {name} ({email}) 已成功添加，角色为"{role_name}"，永久有效', 'success')
     except Exception as e:
         db.session.rollback()
         logger.error(f"添加用户访问权限时出错: {str(e)}")
@@ -883,8 +873,7 @@ def migrate_to_crm():
                 type="创建",
                 summary="从用户访问系统迁移",
                 details=f"用户数据已从访问管理系统迁移到CRM系统。\n原始角色: {user.role}\n"
-                        f"访问期限: {user.access_days} 天\n"
-                        f"到期日期: {user.expires_at.strftime('%Y-%m-%d')}\n"
+                        f"访问状态: {'永久有效' if user.expires_at is None else user.expires_at.strftime('%Y-%m-%d')}\n"
                         f"最后登录: {user.last_login.strftime('%Y-%m-%d') if user.last_login else '从未登录'}",
                 created_by="系统管理员"
             )
@@ -922,8 +911,7 @@ def admin_create_user():
         username = request.form.get('username', '').strip().lower()
         password = request.form.get('password', '')
         name = request.form.get('name', '').strip()
-        role = request.form.get('role', 'user')
-        access_days = int(request.form.get('access_days', 30))
+        role = request.form.get('role', 'guest')
         skip_email_verification = request.form.get('skip_email_verification') == 'on'
         
         if not email:
@@ -942,7 +930,6 @@ def admin_create_user():
             name=name or username or email.split('@')[0],
             email=email,
             username=username if username else None,
-            access_days=access_days,
             role=role
         )
         
@@ -957,8 +944,7 @@ def admin_create_user():
         db.session.add(new_user)
         db.session.commit()
         
-        
-        flash(f'用户 {email} 创建成功！角色: {role}, 访问天数: {access_days}', 'success')
+        flash(f'用户 {email} 创建成功！角色: {role}，永久有效', 'success')
         return redirect(url_for('admin.admin_create_user'))
         
     except Exception as e:
@@ -1088,8 +1074,7 @@ def create_site_owner():
             name=name,
             email=email,
             company=company,
-            role='mining_site_owner',
-            access_days=365
+            role='mining_site_owner'
         )
         
         if password:

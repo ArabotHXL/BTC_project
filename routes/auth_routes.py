@@ -607,8 +607,7 @@ def register():
             name=username or email.split('@')[0],
             email=email.lower(),
             username=username.lower() if username else None,
-            access_days=7,
-            role='user'
+            role='client'
         )
         
         new_user.set_password(password)

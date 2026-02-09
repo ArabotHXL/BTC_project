@@ -156,9 +156,8 @@ def verify_email(email):
             # 检查用户是否已存在
             if not UserAccess.query.filter_by(email=email).first():
                 new_user = UserAccess(
-                    name=email.split('@')[0],  # 使用邮箱前缀作为用户名
+                    name=email.split('@')[0],
                     email=email,
-                    access_days=90,  # 默认给予90天访问权限
                     notes="通过授权列表自动添加"
                 )
                 db.session.add(new_user)
@@ -287,10 +286,9 @@ def create_or_get_user_by_wallet(wallet_address):
         
         new_user = UserAccess(
             name=f"Wallet User {wallet_address[:8]}",
-            email=f"wallet_{wallet_address[:8]}@wallet.local",  # 虚拟邮箱
+            email=f"wallet_{wallet_address[:8]}@wallet.local",
             username=username,
             wallet_address=wallet_address,
-            access_days=90,  # 默认90天访问权限
             role="guest",
             subscription_plan="free",
             notes="通过Web3钱包创建的用户"

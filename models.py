@@ -959,8 +959,8 @@ class UserAccess(db.Model):
     company = db.Column(db.String(200), nullable=True)
     position = db.Column(db.String(100), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    access_days = db.Column(db.Integer, default=30, nullable=False)
-    expires_at = db.Column(db.DateTime, nullable=False)
+    access_days = db.Column(db.Integer, default=0, nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=True)
     notes = db.Column(db.Text, nullable=True)
     last_login = db.Column(db.DateTime, nullable=True)
     role = db.Column(db.String(20), default="guest", nullable=False)
@@ -982,7 +982,7 @@ class UserAccess(db.Model):
     # 账户状态
     is_active = db.Column(db.Boolean, default=True, nullable=False)
 
-    def __init__(self, name, email, access_days=30, company=None, position=None, notes=None, role="guest", 
+    def __init__(self, name, email, access_days=0, company=None, position=None, notes=None, role="guest", 
                  username=None, password_hash=None, subscription_plan="free", wallet_address=None):
         self.name = name
         self.email = email
@@ -991,7 +991,7 @@ class UserAccess(db.Model):
         self.company = company
         self.position = position
         self.access_days = access_days
-        self.expires_at = datetime.utcnow() + timedelta(days=access_days)
+        self.expires_at = None
         self.notes = notes
         self.role = role
         self.subscription_plan = subscription_plan
@@ -1000,14 +1000,17 @@ class UserAccess(db.Model):
     @property
     def has_access(self):
         """检查用户是否有访问权限"""
-        # Free 订阅计划没有时间限制
-        if self.subscription_plan == 'free':
+        if not self.is_active:
+            return False
+        if self.expires_at is None:
             return True
         return datetime.utcnow() <= self.expires_at
 
     @property
     def access_status(self):
         """获取用户访问状态"""
+        if not self.is_active:
+            return "已停用"
         if self.has_access:
             return "授权访问"
         else:
@@ -1018,20 +1021,23 @@ class UserAccess(db.Model):
         """获取剩余访问天数"""
         if not self.has_access:
             return 0
+        if self.expires_at is None:
+            return -1
         delta = self.expires_at - datetime.utcnow()
         return max(0, delta.days)
 
     def extend_access(self, days):
         """延长访问期限"""
-        if self.has_access:
-            self.expires_at = self.expires_at + timedelta(days=days)
+        if self.expires_at is None or self.has_access:
+            base = self.expires_at if self.expires_at else datetime.utcnow()
+            self.expires_at = base + timedelta(days=days)
         else:
             self.expires_at = datetime.utcnow() + timedelta(days=days)
         self.access_days += days
 
     def revoke_access(self):
-        """撤销访问权限"""
-        self.expires_at = datetime.utcnow() - timedelta(days=1)
+        """撤销访问权限（停用账户）"""
+        self.is_active = False
 
     def set_password(self, password):
         """设置密码哈希"""
@@ -1063,8 +1069,11 @@ class UserAccess(db.Model):
         self.email_verification_token = None
 
     def calculate_expiry(self):
-        """重新计算到期时间（基于access_days）"""
-        self.expires_at = self.created_at + timedelta(days=self.access_days)
+        """重新计算到期时间（基于access_days，0表示永久有效）"""
+        if self.access_days and self.access_days > 0:
+            self.expires_at = self.created_at + timedelta(days=self.access_days)
+        else:
+            self.expires_at = None
 
     def generate_wallet_nonce(self):
         """生成钱包签名随机数"""

@@ -2044,18 +2044,14 @@ def new_customer_page():
         
         # Handle calculator access if granted
         if request.form.get('grant_calculator_access') == 'yes':
-            access_days = int(request.form.get('access_days', 30))
-            # Create user access for calculator
             from models import UserAccess
             
-            # Check if user already exists with this email
             existing_user = UserAccess.query.filter_by(email=email).first()
             if not existing_user:
                 user_access = UserAccess(
                     name=name,
                     email=email,
-                    access_days=access_days,
-                    role='customer',
+                    role='client',
                     notes=f'CRM客户: {name}'
                 )
                 db.session.add(user_access)

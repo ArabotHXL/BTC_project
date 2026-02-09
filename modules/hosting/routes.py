@@ -9243,8 +9243,7 @@ def create_customer_account(customer_id):
             name=customer.name,
             email=customer.email,
             company=customer.company,
-            role='client',
-            access_days=365
+            role='client'
         )
         user_account.password_hash = generate_password_hash(temp_password)
         user_account.managed_by_site_id = customer.site_id
