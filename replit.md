@@ -24,7 +24,7 @@ The system is built on a Flask backend using Blueprints, custom email authentica
 - **Intelligence Layer**: Event-driven system with ARIMA forecasting, anomaly detection, power optimization, and intelligent ROI explanations.
 - **User Management**: Admin backend for user creation, role assignment, RBAC, and access period management.
 - **Web3 Configuration Wizard**: Secure interface for blockchain credential setup.
-- **Hosting Services Module**: Real-time miner monitoring, operational ticketing, hosting management, KPI dashboard, and White Label Branding.
+- **Hosting Services Module**: Real-time miner monitoring, operational ticketing, hosting management, KPI dashboard, White Label Branding, and **site-level feature toggles** for Remote Control and AI Auto-Execute (dual-layer safety controls).
 - **Smart Power Curtailment Module**: Automated scheduler for energy management.
 - **Treasury Management**: BTC inventory tracking, cost basis analysis, cash coverage, sell strategy templates, and backtesting.
 - **Multi-Format Reporting**: Professional reports (PDF, Excel, PowerPoint) and role-specific dashboards.

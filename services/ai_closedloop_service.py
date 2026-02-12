@@ -17,6 +17,7 @@ from models_ai_closedloop import (
     RecommendationStatus, RiskLevel, ActionType
 )
 from models_control_plane import AuditEvent
+from models_hosting import HostingSite
 from models_remote_control import RemoteCommand
 
 logger = logging.getLogger(__name__)
@@ -209,6 +210,15 @@ class AIClosedLoopService:
         
         if not rec.can_execute():
             raise ValueError(f"Recommendation cannot be executed (status={rec.status})")
+        
+        # Check site-level feature toggles
+        if rec.site_id:
+            site = HostingSite.query.get(rec.site_id)
+            if site:
+                if not site.remote_control_enabled:
+                    raise ValueError(f"Remote control is disabled for site {rec.site_id}")
+                if not site.ai_auto_execute_enabled:
+                    raise ValueError(f"AI auto-execute is disabled for site {rec.site_id}")
         
         rec.status = RecommendationStatus.EXECUTING
         rec.execution_started_at = datetime.utcnow()

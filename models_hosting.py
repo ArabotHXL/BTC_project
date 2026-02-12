@@ -7,12 +7,7 @@ from datetime import datetime
 from db import db
 import enum
 
-class HostingSiteStatus(enum.Enum):
-    """托管站点状态"""
-    ONLINE = "在线"
-    OFFLINE = "离线"
-    MAINTENANCE = "维护中"
-    EMERGENCY = "紧急状态"
+from models import HostingSite
 
 class DeviceStatus(enum.Enum):
     """设备状态"""
@@ -20,66 +15,6 @@ class DeviceStatus(enum.Enum):
     STOPPED = "已停止"
     ERROR = "故障"
     MAINTENANCE = "维护中"
-
-class HostingSite(db.Model):
-    """托管站点信息"""
-    __tablename__ = 'hosting_sites'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(200), nullable=False)
-    slug = db.Column(db.String(100), unique=True, nullable=True)  # 添加缺失的slug字段
-    location = db.Column(db.String(500), nullable=False)
-    operator_name = db.Column(db.String(200), nullable=True)  # 添加运营商名称字段
-    capacity_mw = db.Column(db.Float, nullable=False)  # 总容量(MW)
-    used_capacity_mw = db.Column(db.Float, default=0.0)  # 已用容量(MW)
-    electricity_rate = db.Column(db.Float, nullable=False)  # 电费单价
-    status = db.Column(db.Enum(HostingSiteStatus), default=HostingSiteStatus.ONLINE)
-    
-    # 联系信息
-    contact_name = db.Column(db.String(100))
-    contact_phone = db.Column(db.String(50))
-    contact_email = db.Column(db.String(256))
-    
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    # 关联设备 - 修正为实际使用的HostingMiner模型
-    hosted_miners = db.relationship('HostingMiner', backref='hosting_site', lazy=True)
-    
-    @property
-    def utilization_rate(self):
-        """计算利用率"""
-        if self.capacity_mw <= 0:
-            return 0
-        return round((self.used_capacity_mw / self.capacity_mw) * 100, 1)
-    
-    @property
-    def available_capacity_mw(self):
-        """可用容量"""
-        return max(0, self.capacity_mw - self.used_capacity_mw)
-        
-    def to_dict(self):
-        """转换为字典格式"""
-        return {
-            'id': self.id,
-            'name': self.name,
-            'slug': getattr(self, 'slug', f'site-{self.id}'),
-            'location': self.location,
-            'capacity_mw': self.capacity_mw,
-            'used_capacity_mw': self.used_capacity_mw,
-            'utilization_rate': self.utilization_rate,
-            'available_capacity_mw': self.available_capacity_mw,
-            'electricity_rate': self.electricity_rate,
-            'status': self.status.value if hasattr(self.status, 'value') else str(self.status),
-            'operator_name': getattr(self, 'operator_name', getattr(self, 'contact_name', '')),
-            'contact_email': self.contact_email,
-            'contact_phone': self.contact_phone,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None
-        }
-    
-    def __repr__(self):
-        return f"<HostingSite {self.name} - {self.capacity_mw}MW>"
 
 class HostedDevice(db.Model):
     """托管设备信息"""

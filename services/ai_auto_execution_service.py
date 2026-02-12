@@ -20,6 +20,7 @@ from models_ai_closedloop import (
     AIRecommendation, AutoApproveRule,
     RecommendationStatus, RiskLevel, ActionType
 )
+from models_hosting import HostingSite
 from services.ai_closedloop_service import AIClosedLoopService
 
 logger = logging.getLogger(__name__)
@@ -310,6 +311,12 @@ class AIAutoExecutionService:
             recommendation.status == RecommendationStatus.APPROVED and
             recommendation.risk_level == RiskLevel.LOW
         )
+        # Check site-level AI auto-execute toggle
+        if is_auto_approved and operator_id:
+            site = HostingSite.query.get(recommendation.site_id) if recommendation.site_id else None
+            if site and not site.ai_auto_execute_enabled:
+                logger.info(f"AI auto-execute disabled for site {site.id} ({site.name}), skipping auto-execution for recommendation {recommendation.id}")
+                is_auto_approved = False
         if is_auto_approved and operator_id:
             try:
                 result = AIClosedLoopService.execute_recommendation(
@@ -459,6 +466,17 @@ class AIAutoExecutionService:
         
         results = []
         for rec in approved_recs:
+            # Check site-level AI auto-execute toggle
+            if rec.site_id:
+                site = HostingSite.query.get(rec.site_id)
+                if site and not site.ai_auto_execute_enabled:
+                    logger.info(f"AI auto-execute disabled for site {site.id} ({site.name}), skipping auto-execution for recommendation {rec.id}")
+                    results.append({
+                        'success': False,
+                        'recommendation_id': rec.id,
+                        'error': f"AI auto-execute disabled for site {rec.site_id}",
+                    })
+                    continue
             try:
                 result = AIClosedLoopService.execute_recommendation(rec.id, operator_id)
                 results.append(result)

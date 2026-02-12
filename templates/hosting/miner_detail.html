@@ -217,6 +217,7 @@
 </div>
 
 <!-- 6. Remote Control Section -->
+{% if not site or site.remote_control_enabled %}
 <div class="hosting-card mt-4">
     <div class="hosting-card-header" data-bs-toggle="collapse" data-bs-target="#remote-control-collapse" role="button" aria-expanded="false" aria-controls="remote-control-collapse">
         <h5 class="hosting-card-title">
@@ -312,6 +313,21 @@
         </div>
     </div>
 </div>
+{% else %}
+<div class="hosting-card mt-4">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-sliders me-2"></i><span data-i18n="hosting.remote_control">Remote Control</span>
+        </h5>
+    </div>
+    <div class="hosting-card-body">
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            {% if current_lang == 'en' %}Remote control is disabled for this site. Enable it in Site Settings to use remote commands.{% else %}该站点已关闭远程控制功能。请在站点设置中启用后使用远程命令。{% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <!-- Loading Overlay -->
 <div id="loading-overlay" class="loading-overlay">

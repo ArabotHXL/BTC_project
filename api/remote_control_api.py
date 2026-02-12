@@ -256,6 +256,14 @@ def _create_command_impl(site_id):
         logger.warning(f"User {session.get('email')} attempted to control site {site_id} without access")
         return jsonify({'error': 'Access denied: You do not have permission to control this site'}), 403
     
+    if not site.remote_control_enabled:
+        logger.warning(f"Remote control disabled for site {site_id} ({site.name}), rejecting command from user {session.get('email')}")
+        return jsonify({
+            'error': 'Remote control is disabled for this site',
+            'error_code': 'SITE_RC_DISABLED',
+            'message_zh': '该站点已关闭远程控制功能'
+        }), 403
+    
     data = request.get_json() or {}
     
     command_type = data.get('command_type')
@@ -448,6 +456,15 @@ def approve_command(command_id):
     command = RemoteCommand.query.get(command_id)
     if not command:
         return make_deprecated_response({'error': 'Command not found'}, 404)
+    
+    site = HostingSite.query.get(command.site_id)
+    if site and not site.remote_control_enabled:
+        logger.warning(f"Remote control disabled for site {command.site_id} ({site.name}), rejecting approval from user {session.get('email')}")
+        return jsonify({
+            'error': 'Remote control is disabled for this site',
+            'error_code': 'SITE_RC_DISABLED',
+            'message_zh': '该站点已关闭远程控制功能'
+        }), 403
     
     if command.status != 'PENDING_APPROVAL':
         return make_deprecated_response({'error': f'Command not pending approval (status={command.status})'}, 400)

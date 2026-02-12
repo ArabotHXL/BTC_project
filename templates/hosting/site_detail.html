@@ -159,6 +159,54 @@
     </div>
 </div>
 
+<!-- 功能开关设置 / Feature Toggles -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-toggles me-2"></i>{% if current_lang == 'en' %}Feature Settings{% else %}功能开关设置{% endif %}
+        </h5>
+    </div>
+    <div class="hosting-card-body">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="d-flex justify-content-between align-items-center p-3 rounded" style="background: rgba(255,255,255,0.05);">
+                    <div>
+                        <h6 class="mb-1">
+                            <i class="bi bi-sliders me-2 text-warning"></i>{% if current_lang == 'en' %}Remote Control{% else %}远程控制{% endif %}
+                        </h6>
+                        <small class="text-muted">
+                            {% if current_lang == 'en' %}Allow remote commands (reboot, power mode, pool change, etc.) for miners at this site{% else %}允许对该站点的矿机执行远程命令（重启、功率模式、切换矿池等）{% endif %}
+                        </small>
+                    </div>
+                    <div class="form-check form-switch ms-3">
+                        <input class="form-check-input" type="checkbox" role="switch" id="toggle-remote-control" 
+                               {% if site.remote_control_enabled %}checked{% endif %}
+                               onchange="toggleSiteFeature({{ site.id }}, 'remote_control_enabled', this.checked)">
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex justify-content-between align-items-center p-3 rounded" style="background: rgba(255,255,255,0.05);">
+                    <div>
+                        <h6 class="mb-1">
+                            <i class="bi bi-robot me-2 text-info"></i>{% if current_lang == 'en' %}AI Auto-Execute{% else %}AI 自动执行{% endif %}
+                        </h6>
+                        <small class="text-muted">
+                            {% if current_lang == 'en' %}Allow AI to automatically execute commands (when disabled, AI will only monitor and suggest, not act){% else %}允许 AI 自动执行命令（关闭后 AI 仅监测和建议，不会自动操作矿机）{% endif %}
+                        </small>
+                    </div>
+                    <div class="form-check form-switch ms-3">
+                        <input class="form-check-input" type="checkbox" role="switch" id="toggle-ai-auto-execute"
+                               {% if site.ai_auto_execute_enabled %}checked{% endif %}
+                               onchange="toggleSiteFeature({{ site.id }}, 'ai_auto_execute_enabled', this.checked)">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="toggle-status-message" class="mt-3" style="display: none;"></div>
+    </div>
+</div>
+
 <!-- 设备列表预览 -->
 <div class="hosting-card">
     <div class="hosting-card-header">
@@ -321,6 +369,40 @@ function getStatusText(status) {
 
 function getLanguage() {
     return document.querySelector('meta[name="language"]').content;
+}
+
+function toggleSiteFeature(siteId, featureName, enabled) {
+    const statusDiv = document.getElementById('toggle-status-message');
+    statusDiv.style.display = 'block';
+    
+    const lang = getLanguage();
+    statusDiv.innerHTML = `<div class="alert alert-info py-2"><i class="bi bi-hourglass-split me-1"></i>${lang === 'en' ? 'Saving...' : '保存中...'}</div>`;
+    
+    fetch(`/hosting/api/sites/${siteId}/feature-toggle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ feature: featureName, enabled: enabled })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const featureLabel = featureName === 'remote_control_enabled' 
+                ? (lang === 'en' ? 'Remote Control' : '远程控制')
+                : (lang === 'en' ? 'AI Auto-Execute' : 'AI 自动执行');
+            const stateLabel = enabled 
+                ? (lang === 'en' ? 'enabled' : '已开启') 
+                : (lang === 'en' ? 'disabled' : '已关闭');
+            statusDiv.innerHTML = `<div class="alert alert-success py-2"><i class="bi bi-check-circle me-1"></i>${featureLabel} ${stateLabel}</div>`;
+            setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
+        } else {
+            statusDiv.innerHTML = `<div class="alert alert-danger py-2"><i class="bi bi-exclamation-circle me-1"></i>${data.error || 'Failed'}</div>`;
+        }
+    })
+    .catch(error => {
+        statusDiv.innerHTML = `<div class="alert alert-danger py-2"><i class="bi bi-exclamation-circle me-1"></i>${lang === 'en' ? 'Network error' : '网络错误'}</div>`;
+        console.error('Toggle error:', error);
+    });
 }
 </script>
 {% endblock %}

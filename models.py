@@ -1554,6 +1554,10 @@ class HostingSite(db.Model):
     # 站点描述
     description = db.Column(db.Text, nullable=True)
     
+    # 功能开关 (Feature Toggles)
+    remote_control_enabled = db.Column(db.Boolean, default=True, nullable=False)
+    ai_auto_execute_enabled = db.Column(db.Boolean, default=True, nullable=False)
+    
     # 多租户：站点归属的矿场主
     owner_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True, index=True)
     owner = db.relationship('UserAccess', foreign_keys=[owner_id], backref='owned_sites')
@@ -1604,6 +1608,8 @@ class HostingSite(db.Model):
             'operator_name': self.operator_name,
             'electricity_rate': self.electricity_rate,
             'ip_mode': self.ip_mode,
+            'remote_control_enabled': self.remote_control_enabled,
+            'ai_auto_execute_enabled': self.ai_auto_execute_enabled,
             'created_at': self.created_at.isoformat()
         }
 

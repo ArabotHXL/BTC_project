@@ -643,6 +643,46 @@ def get_site_detail(site_id):
         logger.error(f"获取站点详情失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@hosting_bp.route('/api/sites/<int:site_id>/feature-toggle', methods=['POST'])
+@login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT, require_full=True)
+def toggle_site_feature(site_id):
+    """切换站点功能开关 / Toggle site feature"""
+    try:
+        site = HostingSite.query.get_or_404(site_id)
+        
+        if not check_site_access(site_id):
+            return jsonify({'success': False, 'error': 'Access denied'}), 403
+        
+        data = request.get_json() or {}
+        feature = data.get('feature')
+        enabled = data.get('enabled')
+        
+        if feature not in ('remote_control_enabled', 'ai_auto_execute_enabled'):
+            return jsonify({'success': False, 'error': 'Invalid feature name'}), 400
+        
+        if not isinstance(enabled, bool):
+            return jsonify({'success': False, 'error': 'Invalid value'}), 400
+        
+        setattr(site, feature, enabled)
+        site.updated_at = datetime.utcnow()
+        db.session.commit()
+        
+        feature_label = 'Remote Control' if feature == 'remote_control_enabled' else 'AI Auto-Execute'
+        state_label = 'enabled' if enabled else 'disabled'
+        logger.info(f"Site {site_id} ({site.name}): {feature_label} {state_label} by user {session.get('email')}")
+        
+        return jsonify({
+            'success': True,
+            'feature': feature,
+            'enabled': enabled,
+            'message': f'{feature_label} has been {state_label}'
+        })
+    except Exception as e:
+        logger.error(f"Failed to toggle site feature: {e}")
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @hosting_bp.route('/api/tickets', methods=['GET'])
 @login_required
 @requires_module_access(Module.HOSTING_TICKET)
@@ -2361,7 +2401,8 @@ def miner_detail_page(miner_id):
             flash('无权限访问' if session.get('language', 'zh') == 'zh' else 'Access denied', 'error')
             return redirect(url_for('hosting_service_bp.host_view', view_type='devices'))
         
-        return render_template('hosting/miner_detail.html', miner=miner, current_lang=session.get('language', 'zh'))
+        site = HostingSite.query.get(miner.site_id) if miner.site_id else None
+        return render_template('hosting/miner_detail.html', miner=miner, site=site, current_lang=session.get('language', 'zh'))
     except Exception as e:
         logger.error(f"矿机详情页面错误: {e}")
         flash('矿机未找到' if session.get('language', 'zh') == 'zh' else 'Miner not found', 'error')
