@@ -470,7 +470,11 @@
                 <span class="ms-3 text-muted d-none d-lg-inline" id="lastUpdate">
                     {% if current_lang == 'en' %}Last update: --{% else %}更新: --{% endif %}
                 </span>
-                <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm ms-2">
+                
+                <button class="btn btn-warning btn-sm ms-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidecarCanvas" aria-controls="sidecarCanvas">
+                    <i class="bi bi-grid-3x3-gap"></i> <span class="d-none d-md-inline">{% if current_lang == 'en' %}Sidecar{% else %}辅助界面{% endif %}</span>
+                </button>
+<a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm ms-2">
                     <i class="bi bi-house-door"></i> <span class="d-none d-md-inline">{% if current_lang == 'en' %}Home{% else %}主页{% endif %}</span>
                 </a>
             </div>
@@ -5739,6 +5743,20 @@
             setInterval(updateDeribitTabData, 30000);
         });
     </script>
+
+
+    <!-- Sidecar Offcanvas (辅助界面) -->
+    <div class="offcanvas offcanvas-end text-bg-dark" tabindex="-1" id="sidecarCanvas" aria-labelledby="sidecarCanvasLabel" style="width: 38vw; min-width: 360px;">
+        <div class="offcanvas-header border-bottom" style="border-color:#2d3748 !important;">
+            <h5 class="offcanvas-title" id="sidecarCanvasLabel">
+                <i class="bi bi-grid-3x3-gap me-2"></i>{% if current_lang == 'en' %}Aux Sidecar{% else %}辅助界面{% endif %}
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body p-0" style="overflow:hidden;">
+            <iframe src="/analytics/sidecar" style="border:0;width:100%;height:100vh;" referrerpolicy="no-referrer"></iframe>
+        </div>
+    </div>
 
     <!-- Legal Footer -->
     <footer class="py-4 mt-5 border-top" style="background-color: #1a2332; border-color: #2d3748 !important;">
