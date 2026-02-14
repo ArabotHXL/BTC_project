@@ -139,7 +139,10 @@ def apply_security_headers(response):
     if os.environ.get('FLASK_ENV') == 'production':
         response.headers['Strict-Transport-Security'] = f'max-age={app.config.get("HSTS_MAX_AGE", 31536000)}; includeSubDomains'
     
-    
+    # Default iframe policy (same-origin sidecar)
+    if 'X-Frame-Options' not in response.headers:
+        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+
     return response
 
 def get_latest_market_data():
@@ -4152,6 +4155,27 @@ def analytics_main():
     }
     
     return render_template('analytics_main.html', technical_indicators=technical_indicators)
+
+# Analytics Sidecar (辅助界面)
+@app.route('/analytics/sidecar')
+@login_required
+def analytics_sidecar():
+    """Auxiliary sidecar UI (same-domain) - embedded via iframe in analytics pages."""
+    if not os.path.exists(os.path.join('static', 'sidecar')):
+        return "Sidecar not built yet. See SIDE_CAR_SETUP.md", 404
+    entry = 'app.html' if os.path.exists(os.path.join('static', 'sidecar', 'app.html')) else 'index.html'
+    return send_from_directory('static/sidecar', entry)
+
+@app.route('/analytics/sidecar/<path:path>')
+@login_required
+def analytics_sidecar_assets(path):
+    """Static assets for sidecar UI.
+    Serves files from static/sidecar/ directory, falling back to SPA entry point."""
+    full_path = os.path.join('static', 'sidecar', path)
+    if os.path.isfile(full_path):
+        return send_from_directory('static/sidecar', path)
+    entry = 'app.html' if os.path.exists(os.path.join('static', 'sidecar', 'app.html')) else 'index.html'
+    return send_from_directory('static/sidecar', entry)
 
 @app.route('/technical-analysis')
 @app.route('/technical_analysis')
