@@ -85,7 +85,11 @@ def _calculate_daily_revenue(hashrate_th: float, btc_price: float,
         blocks_per_day = 144
         hashrate_hash_per_sec = hashrate_th * 1e12
         
-        btc_per_day = (hashrate_hash_per_sec / (network_difficulty * (2**32) / 600)) * blocks_per_day * block_reward
+        actual_difficulty = network_difficulty
+        if network_difficulty < 1e6:
+            actual_difficulty = network_difficulty * 1e12
+        
+        btc_per_day = (hashrate_hash_per_sec / (actual_difficulty * (2**32) / 600)) * blocks_per_day * block_reward
         daily_revenue_usd = btc_per_day * btc_price
         
         return daily_revenue_usd

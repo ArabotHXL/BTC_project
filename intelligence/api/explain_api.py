@@ -133,16 +133,16 @@ def get_roi_change_analysis(user_id):
                 'message': 'Unable to calculate ROI factors'
             }), 500
         
-        current_roi = roi_factors['current_metrics']['annual_roi']
+        current_roi = roi_factors['current_metrics']['annual_roi_percent']
         
         scenario_map = {
-            'price_up': roi_factors['factor_impacts']['btc_price_impact'],
-            'price_down': -roi_factors['factor_impacts']['btc_price_impact'],
-            'difficulty_up': -roi_factors['factor_impacts']['difficulty_impact'],
-            'difficulty_down': roi_factors['factor_impacts']['difficulty_impact'],
-            'offline_increase': -roi_factors['factor_impacts']['offline_impact'],
-            'electricity_up': -roi_factors['factor_impacts']['electricity_impact'],
-            'electricity_down': roi_factors['factor_impacts']['electricity_impact']
+            'price_up': roi_factors['factor_impacts']['btc_price']['impact_per_10pct_change'],
+            'price_down': -roi_factors['factor_impacts']['btc_price']['impact_per_10pct_change'],
+            'difficulty_up': -roi_factors['factor_impacts']['difficulty']['impact_per_10pct_change'],
+            'difficulty_down': roi_factors['factor_impacts']['difficulty']['impact_per_10pct_change'],
+            'offline_increase': -roi_factors['factor_impacts']['offline_rate']['impact_per_5pct_offline'],
+            'electricity_up': -roi_factors['factor_impacts']['electricity_cost']['impact_per_10pct_change'],
+            'electricity_down': roi_factors['factor_impacts']['electricity_cost']['impact_per_10pct_change']
         }
         
         impact = scenario_map.get(scenario, 0)
@@ -204,7 +204,12 @@ def get_recommendations(user_id):
             }), 500
         
         recommendations = []
-        factor_contributions = roi_factors['factor_contributions']
+        factor_contributions = {
+            'electricity_contribution': roi_factors['factor_impacts']['electricity_cost']['contribution_percent'],
+            'difficulty_contribution': roi_factors['factor_impacts']['difficulty']['contribution_percent'],
+            'btc_price_contribution': roi_factors['factor_impacts']['btc_price']['contribution_percent'],
+            'offline_contribution': roi_factors['factor_impacts']['offline_rate']['contribution_percent']
+        }
         current_metrics = roi_factors['current_metrics']
         
         if factor_contributions['electricity_contribution'] > 30:
@@ -247,12 +252,12 @@ def get_recommendations(user_id):
                 'action': 'Implement automated monitoring and rapid response protocols'
             })
         
-        if current_metrics['annual_roi'] < 20:
+        if current_metrics['annual_roi_percent'] < 20:
             recommendations.append({
                 'priority': 'high',
                 'category': 'general',
                 'title': 'Low ROI Alert',
-                'description': f'Current ROI is {current_metrics["annual_roi"]:.1f}%, which is below industry average. Urgent optimization needed.',
+                'description': f'Current ROI is {current_metrics["annual_roi_percent"]:.1f}%, which is below industry average. Urgent optimization needed.',
                 'potential_impact': 'Critical - Address immediately',
                 'action': 'Review all operational parameters and consider equipment upgrade or relocation'
             })
@@ -266,9 +271,8 @@ def get_recommendations(user_id):
             'user_id': user_id,
             'recommendations': recommendations,
             'roi_context': {
-                'current_roi': current_metrics['annual_roi'],
-                'daily_profit': current_metrics['daily_profit_usd'],
-                'payback_months': current_metrics['payback_months']
+                'current_roi': current_metrics['annual_roi_percent'],
+                'daily_profit': current_metrics['daily_profit_usd']
             },
             'generated_at': roi_factors.get('generated_at')
         }), 200

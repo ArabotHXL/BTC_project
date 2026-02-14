@@ -56,7 +56,7 @@ def get_user_forecast(user_id):
                 'message': f'User {user_id} not found'
             }), 404
         
-        query = ForecastDaily.query.filter_by(user_id=user_id)
+        query = ForecastDaily.query.filter_by(user_id=str(user_id))
         
         if not include_history:
             query = query.filter(ForecastDaily.forecast_date >= date.today())
@@ -81,8 +81,7 @@ def get_user_forecast(user_id):
                     'predicted': float(fc.predicted_daily_revenue) if fc.predicted_daily_revenue else None
                 },
                 'model_accuracy': {
-                    'price_rmse': float(fc.price_rmse) if fc.price_rmse else None,
-                    'difficulty_rmse': float(fc.difficulty_rmse) if fc.difficulty_rmse else None
+                    'price_rmse': float(fc.rmse) if fc.rmse else None
                 },
                 'created_at': fc.created_at.isoformat() if fc.created_at else None
             })
@@ -147,7 +146,7 @@ def refresh_user_forecast(user_id):
             }), 404
         
         if not force:
-            recent_forecast = ForecastDaily.query.filter_by(user_id=user_id).filter(
+            recent_forecast = ForecastDaily.query.filter_by(user_id=str(user_id)).filter(
                 ForecastDaily.created_at >= datetime.utcnow().replace(hour=0, minute=0, second=0)
             ).first()
             
@@ -170,7 +169,7 @@ def refresh_user_forecast(user_id):
             diff_pred = difficulty_forecast['predictions'][i]
             
             forecast = ForecastDaily(
-                user_id=user_id,
+                user_id=str(user_id),
                 forecast_date=price_pred['date'],
                 forecast_horizon=days,
                 predicted_btc_price=price_pred['price'],
@@ -179,8 +178,7 @@ def refresh_user_forecast(user_id):
                 predicted_difficulty=diff_pred['difficulty'],
                 difficulty_lower_bound=diff_pred['lower_bound'],
                 difficulty_upper_bound=diff_pred['upper_bound'],
-                price_rmse=price_forecast['rmse'],
-                difficulty_rmse=difficulty_forecast['rmse'],
+                rmse=price_forecast['rmse'],
                 created_at=datetime.utcnow()
             )
             

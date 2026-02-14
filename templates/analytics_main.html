@@ -4681,11 +4681,19 @@
                 
                 const data = await response.json();
                 
-                if (data.predictions && data.predictions.length > 0) {
+                if (data.forecasts && data.forecasts.length > 0) {
                     document.getElementById('forecastChart').style.display = '';
-                    createForecastChart(data.predictions);
                     
-                    const lastPrediction = data.predictions[data.predictions.length - 1];
+                    const predictions = data.forecasts.map(f => ({
+                        date: f.date,
+                        btc_price_predicted: f.btc_price.predicted,
+                        btc_price_upper: f.btc_price.upper_bound,
+                        btc_price_lower: f.btc_price.lower_bound
+                    }));
+                    
+                    createForecastChart(predictions);
+                    
+                    const lastPrediction = predictions[predictions.length - 1];
                     summaryDiv.innerHTML = `
                         <div class="d-flex justify-content-between">
                             <div>
@@ -4694,22 +4702,57 @@
                             </div>
                             <div>
                                 <small class="text-muted">${currentLang === 'en' ? 'Confidence' : '置信度'}</small>
-                                <h6 class="mb-0">95%</h6>
+                                <h6 class="mb-0">${data.forecasts[0].model_accuracy && data.forecasts[0].model_accuracy.price_rmse ? (100 - data.forecasts[0].model_accuracy.price_rmse).toFixed(0) + '%' : '95%'}</h6>
                             </div>
                         </div>
                     `;
+                } else if (data.count === 0 || (data.forecasts && data.forecasts.length === 0)) {
+                    document.getElementById('forecastChart').style.display = 'none';
+                    summaryDiv.innerHTML = '<div class="intelligence-empty-state">' +
+                        '<i class="bi bi-graph-up-arrow"></i>' +
+                        '<p>' + (currentLang === 'en' ? 'No forecast data yet. Click to generate predictions.' : '暂无预测数据。点击生成预测。') + '</p>' +
+                        '<button class="btn btn-sm btn-outline-warning mt-2" onclick="refreshForecast()">' +
+                        '<i class="bi bi-arrow-clockwise"></i> ' + (currentLang === 'en' ? 'Generate Forecast' : '生成预测') + '</button></div>';
                 } else {
                     document.getElementById('forecastChart').style.display = 'none';
                     summaryDiv.innerHTML = '<div class="intelligence-empty-state">' +
                         '<i class="bi bi-graph-up-arrow"></i>' +
-                        '<p>' + (currentLang === 'en' ? 'No forecast data available. Add miners to generate predictions.' : '暂无预测数据。请添加矿机以生成预测。') + '</p></div>';
+                        '<p>' + (currentLang === 'en' ? 'No forecast data available.' : '暂无预测数据。') + '</p></div>';
                 }
                 
                 console.log('✅ Forecast data loaded:', data);
             } catch (error) {
                 console.error('❌ Failed to load forecast:', error);
+                document.getElementById('forecastChart').style.display = 'none';
                 summaryDiv.innerHTML = '<div class="intel-alert intel-alert-danger">' +
                     (currentLang === 'en' ? 'Failed to load forecast data' : '加载预测数据失败') + '</div>';
+            }
+        }
+
+        async function refreshForecast() {
+            const summaryDiv = document.getElementById('forecastSummary');
+            summaryDiv.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div> ' +
+                (currentLang === 'en' ? 'Generating forecast...' : '正在生成预测...');
+            
+            try {
+                const response = await fetch(`/api/intelligence/forecast/${currentUserId}/refresh`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({days: 7, force: true})
+                });
+                
+                if (response.ok) {
+                    console.log('✅ Forecast refresh triggered');
+                    setTimeout(() => loadForecastData(), 1000);
+                } else {
+                    const data = await response.json();
+                    summaryDiv.innerHTML = '<div class="intel-alert intel-alert-danger">' +
+                        (currentLang === 'en' ? 'Failed to generate forecast: ' : '生成预测失败: ') + (data.message || 'Unknown error') + '</div>';
+                }
+            } catch (error) {
+                console.error('❌ Forecast refresh failed:', error);
+                summaryDiv.innerHTML = '<div class="intel-alert intel-alert-danger">' +
+                    (currentLang === 'en' ? 'Failed to generate forecast' : '生成预测失败') + '</div>';
             }
         }
 
@@ -4798,31 +4841,48 @@
                 
                 const data = await response.json();
                 
-                if (data.factors && data.factors.length > 0) {
+                if (data.status === 'success' && data.roi_analysis) {
+                    const analysis = data.roi_analysis;
+                    const metrics = analysis.current_metrics;
+                    const impacts = analysis.factor_impacts;
+                    
                     document.getElementById('roiFactorChart').style.display = '';
-                    createROIFactorChart(data.factors);
+                    
+                    const factors = [
+                        { factor: currentLang === 'en' ? 'BTC Price' : 'BTC价格', impact_percent: impacts.btc_price.contribution_percent },
+                        { factor: currentLang === 'en' ? 'Difficulty' : '网络难度', impact_percent: impacts.difficulty.contribution_percent },
+                        { factor: currentLang === 'en' ? 'Uptime' : '在线率', impact_percent: impacts.offline_rate.contribution_percent },
+                        { factor: currentLang === 'en' ? 'Electricity' : '电力成本', impact_percent: impacts.electricity_cost.contribution_percent }
+                    ];
+                    
+                    createROIFactorChart(factors);
                     
                     let html = '<div class="mt-2">';
-                    html += `<h6 class="mb-2">${currentLang === 'en' ? 'Current ROI' : '当前ROI'}: <span class="text-success">${data.current_roi_percent}%</span></h6>`;
-                    if (data.actionable_insights && data.actionable_insights.length > 0) {
-                        html += '<small class="text-muted">' + (currentLang === 'en' ? 'Key Insights:' : '关键洞察:') + '</small><ul class="small mt-1">';
-                        data.actionable_insights.slice(0, 3).forEach(insight => {
-                            html += `<li>${insight}</li>`;
-                        });
-                        html += '</ul>';
-                    }
+                    html += `<h6 class="mb-2">${currentLang === 'en' ? 'Annual ROI' : '年化ROI'}: <span class="${metrics.annual_roi_percent >= 0 ? 'text-success' : 'text-danger'}">${metrics.annual_roi_percent.toFixed(1)}%</span></h6>`;
+                    html += `<div class="small mb-2" style="color: rgba(255,255,255,0.6);">`;
+                    html += `${currentLang === 'en' ? 'Daily Revenue' : '日收入'}: $${metrics.daily_revenue_usd.toFixed(2)} | `;
+                    html += `${currentLang === 'en' ? 'Daily Cost' : '日成本'}: $${metrics.daily_cost_usd.toFixed(2)} | `;
+                    html += `${currentLang === 'en' ? 'Daily Profit' : '日利润'}: <span class="${metrics.daily_profit_usd >= 0 ? 'text-success' : 'text-danger'}">$${metrics.daily_profit_usd.toFixed(2)}</span>`;
+                    html += `</div>`;
+                    html += '<small class="text-muted">' + (currentLang === 'en' ? 'Key Factors:' : '关键因素:') + '</small><ul class="small mt-1" style="color: rgba(255,255,255,0.7);">';
+                    Object.values(impacts).forEach(impact => {
+                        html += `<li>${impact.description}</li>`;
+                    });
+                    html += '</ul>';
                     html += '</div>';
                     recommendDiv.innerHTML = html;
                 } else {
                     document.getElementById('roiFactorChart').style.display = 'none';
                     recommendDiv.innerHTML = '<div class="intelligence-empty-state">' +
                         '<i class="bi bi-pie-chart"></i>' +
-                        '<p>' + (currentLang === 'en' ? 'No ROI data available. Add miners to see analysis.' : '暂无ROI数据。请添加矿机以查看分析。') + '</p></div>';
+                        '<p>' + (currentLang === 'en' ? 'No ROI data available. Add miners to see analysis.' : 
+                        '暂无ROI数据。请添加矿机以查看分析。') + '</p></div>';
                 }
                 
                 console.log('✅ ROI explanation loaded:', data);
             } catch (error) {
                 console.error('❌ Failed to load ROI explanation:', error);
+                document.getElementById('roiFactorChart').style.display = 'none';
                 recommendDiv.innerHTML = '<div class="intel-alert intel-alert-danger">' +
                     (currentLang === 'en' ? 'Failed to load ROI analysis' : '加载ROI分析失败') + '</div>';
             }
