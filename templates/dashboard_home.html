@@ -280,6 +280,17 @@ body {
 .treasury-item .bi,
 .treasury-item i { color: #f39c12 !important; }
 
+.skills-item {
+    background: linear-gradient(135deg, rgba(0, 229, 255, 0.12), rgba(0, 176, 255, 0.06));
+}
+
+.skills-item::after {
+    background: linear-gradient(45deg, #00e5ff, #00b0ff, #2979ff);
+}
+
+.skills-item .card-icon,
+.skills-item i { color: #00e5ff !important; }
+
 .sla-nft-item {
     background: linear-gradient(135deg, rgba(106, 13, 173, 0.15), rgba(142, 68, 173, 0.1));
 }
@@ -782,6 +793,22 @@ body {
                 </h3>
                 <p class="card-description" data-i18n="hosting_management_desc">
                     {% if current_lang == 'en' %}Comprehensive hosting platform with client management, device monitoring, and transparent reporting{% else %}全面的托管平台，包含客户管理、设备监控和透明报告{% endif %}
+                </p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- AI Skills Console -->
+        {% if session.role in ['owner', 'admin', 'mining_site', 'mining_site_owner', 'operator', 'client'] %}
+        <div class="dashboard-card skills-item" onclick="location.href='/skills'">
+            <div class="card-stats">AI Skills</div>
+            <div class="card-content">
+                <i class="bi bi-robot card-icon" style="color: #00e5ff;"></i>
+                <h3 class="card-title" data-i18n="ai_skills_console">
+                    {% if current_lang == 'en' %}AI Skills Console{% else %}AI 技能控制台{% endif %}
+                </h3>
+                <p class="card-description" data-i18n="ai_skills_console_desc">
+                    {% if current_lang == 'en' %}Unified toolbox for telemetry snapshots, alert triage, root cause diagnosis, ticket drafting, and curtailment simulation{% else %}统一工具箱：遥测快照、告警分级、根因诊断、工单草拟和限电预演{% endif %}
                 </p>
             </div>
         </div>

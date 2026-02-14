@@ -1,0 +1,912 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if current_lang == 'en' %}AI Skills Console{% else %}AI 技能控制台{% endif %} - HashInsight
+{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --primary-gold: #f7931a;
+    --accent-gold: #ffc107;
+    --accent-cyan: #00e5ff;
+    --bg-gradient: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+    --card-bg: rgba(255, 255, 255, 0.05);
+    --card-border: rgba(255, 255, 255, 0.1);
+    --text-primary: #ffffff;
+    --text-secondary: #b8b8b8;
+    --shadow-glow: 0 8px 32px rgba(0, 229, 255, 0.15);
+}
+
+body {
+    background: var(--bg-gradient);
+    min-height: 100vh;
+}
+
+.skills-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.skills-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.skills-title {
+    font-size: 2.8rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent-cyan), var(--primary-gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+}
+
+.skills-subtitle {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+.back-link {
+    color: var(--accent-cyan);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.3s;
+}
+
+.back-link:hover {
+    color: var(--primary-gold);
+}
+
+.skills-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.skill-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: default;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.skill-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: var(--shadow-glow);
+    border-color: var(--accent-cyan);
+    background: rgba(0, 229, 255, 0.06);
+}
+
+.skill-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, transparent, rgba(0, 229, 255, 0.08), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.skill-card:hover::before {
+    opacity: 1;
+}
+
+.skill-icon {
+    font-size: 3rem;
+    color: var(--accent-cyan);
+    margin-bottom: 1rem;
+    filter: drop-shadow(0 0 15px rgba(0, 229, 255, 0.4));
+    transition: all 0.3s;
+}
+
+.skill-card:hover .skill-icon {
+    transform: scale(1.15);
+    filter: drop-shadow(0 0 25px rgba(0, 229, 255, 0.6));
+}
+
+.skill-name {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.skill-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    line-height: 1.5;
+    min-height: 40px;
+}
+
+.skill-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    justify-content: center;
+    margin-bottom: 0.8rem;
+}
+
+.skill-tag {
+    background: rgba(0, 229, 255, 0.15);
+    color: var(--accent-cyan);
+    padding: 0.15rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.skill-version {
+    background: rgba(247, 147, 26, 0.2);
+    color: var(--primary-gold);
+    padding: 0.15rem 0.6rem;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.btn-run {
+    background: linear-gradient(135deg, var(--accent-cyan), #0097a7);
+    color: #000;
+    border: none;
+    border-radius: 12px;
+    padding: 0.5rem 1.8rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+    position: relative;
+    z-index: 2;
+}
+
+.btn-run:hover {
+    background: linear-gradient(135deg, #00e5ff, #00bcd4);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 229, 255, 0.3);
+    color: #000;
+}
+
+.exec-panel {
+    background: rgba(15, 15, 30, 0.95);
+    border: 1px solid rgba(0, 229, 255, 0.3);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+    animation: slideDown 0.4s ease;
+    display: none;
+}
+
+.exec-panel.active {
+    display: block;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.exec-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(0, 229, 255, 0.2);
+}
+
+.exec-panel-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent-cyan);
+}
+
+.btn-close-panel {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-secondary);
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 1rem;
+}
+
+.btn-close-panel:hover {
+    background: rgba(220, 53, 85, 0.3);
+    border-color: #dc3545;
+    color: #dc3545;
+}
+
+.form-field-label {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-bottom: 0.3rem;
+    font-weight: 600;
+}
+
+.form-field-label .required-star {
+    color: #dc3545;
+    margin-left: 2px;
+}
+
+.exec-form .form-control,
+.exec-form .form-select {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--text-primary);
+    border-radius: 10px;
+    padding: 0.6rem 0.9rem;
+    font-size: 0.9rem;
+}
+
+.exec-form .form-control:focus {
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 0 0.2rem rgba(0, 229, 255, 0.15);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.exec-form .form-check-input {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.exec-form .form-check-input:checked {
+    background-color: var(--accent-cyan);
+    border-color: var(--accent-cyan);
+}
+
+.btn-execute {
+    background: linear-gradient(135deg, var(--primary-gold), #e67e22);
+    color: #000;
+    border: none;
+    border-radius: 12px;
+    padding: 0.65rem 2rem;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: all 0.3s;
+}
+
+.btn-execute:hover {
+    background: linear-gradient(135deg, #ffc107, #f7931a);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(247, 147, 26, 0.3);
+    color: #000;
+}
+
+.btn-execute:disabled {
+    opacity: 0.6;
+    transform: none;
+}
+
+.result-area {
+    display: none;
+    margin-top: 1.5rem;
+    animation: slideDown 0.3s ease;
+}
+
+.result-area.active {
+    display: block;
+}
+
+.result-header-ok {
+    background: rgba(40, 167, 69, 0.15);
+    border-left: 4px solid #28a745;
+    border-radius: 0 12px 12px 0;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.result-header-ok .audit-id {
+    color: #28a745;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.result-header-ok .result-meta {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+.result-data {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(0, 229, 255, 0.15);
+    border-left: 4px solid var(--accent-cyan);
+    border-radius: 0 12px 12px 0;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1rem;
+    overflow-x: auto;
+}
+
+.result-data pre {
+    margin: 0;
+    font-size: 0.85rem;
+    font-family: 'Fira Code', 'Courier New', monospace;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+.json-key { color: var(--accent-cyan); }
+.json-string { color: #4caf50; }
+.json-number { color: var(--primary-gold); }
+.json-boolean { color: #ab47bc; }
+.json-null { color: #78909c; }
+
+.result-warning {
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    border-radius: 10px;
+    padding: 0.8rem 1rem;
+    color: var(--accent-gold);
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+}
+
+.result-error {
+    background: rgba(220, 53, 85, 0.12);
+    border: 1px solid rgba(220, 53, 85, 0.4);
+    border-left: 4px solid #dc3545;
+    border-radius: 0 12px 12px 0;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.result-error .error-code {
+    color: #dc3545;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.result-error .error-msg {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-top: 0.3rem;
+}
+
+.evidence-badge {
+    background: rgba(111, 66, 193, 0.2);
+    color: #ab47bc;
+    padding: 0.2rem 0.6rem;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-right: 0.3rem;
+}
+
+.btn-copy {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-secondary);
+    border-radius: 10px;
+    padding: 0.4rem 1rem;
+    font-size: 0.8rem;
+    transition: all 0.3s;
+}
+
+.btn-copy:hover {
+    background: rgba(0, 229, 255, 0.15);
+    border-color: var(--accent-cyan);
+    color: var(--accent-cyan);
+}
+
+.history-section {
+    margin-top: 2rem;
+}
+
+.history-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.history-table thead th {
+    background: rgba(0, 229, 255, 0.1);
+    color: var(--accent-cyan);
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid rgba(0, 229, 255, 0.2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.history-table thead th:first-child { border-radius: 10px 0 0 0; }
+.history-table thead th:last-child { border-radius: 0 10px 0 0; }
+
+.history-table tbody tr {
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.history-table tbody tr:hover {
+    background: rgba(0, 229, 255, 0.06);
+}
+
+.history-table tbody td {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.badge-ok {
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+    padding: 0.2rem 0.6rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-err {
+    background: rgba(220, 53, 85, 0.2);
+    color: #dc3545;
+    padding: 0.2rem 0.6rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.empty-history {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 2rem;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 1200px) {
+    .skills-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .skills-container { padding: 1rem; }
+    .skills-title { font-size: 2rem; }
+    .skills-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    .skill-card { padding: 1.5rem 1rem; }
+    .skill-icon { font-size: 2.5rem; }
+    .exec-panel { padding: 1.5rem; }
+    .exec-panel-title { font-size: 1.1rem; }
+    .history-table { font-size: 0.8rem; }
+    .history-table thead th,
+    .history-table tbody td { padding: 0.5rem 0.6rem; }
+}
+
+@media (max-width: 576px) {
+    .skills-title { font-size: 1.6rem; }
+    .exec-panel-header { flex-direction: column; gap: 0.8rem; align-items: flex-start; }
+}
+
+.skill-card {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: slideInUp 0.6s ease forwards;
+}
+.skill-card:nth-child(1) { animation-delay: 0.1s; }
+.skill-card:nth-child(2) { animation-delay: 0.2s; }
+.skill-card:nth-child(3) { animation-delay: 0.3s; }
+.skill-card:nth-child(4) { animation-delay: 0.4s; }
+.skill-card:nth-child(5) { animation-delay: 0.5s; }
+
+@keyframes slideInUp {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.15em;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="skills-container">
+    <div class="skills-header">
+        <a href="{{ url_for('dashboard') }}" class="back-link">
+            <i class="bi bi-arrow-left me-1"></i>
+            <span data-i18n="back_to_dashboard">{% if current_lang == 'en' %}Back to Dashboard{% else %}返回仪表板{% endif %}</span>
+        </a>
+        <h1 class="skills-title mt-2" data-i18n="skills_console_title">
+            {% if current_lang == 'en' %}AI Skills Console{% else %}AI 技能控制台{% endif %}
+        </h1>
+        <p class="skills-subtitle">
+            <span data-i18n="skills_role_label">{% if current_lang == 'en' %}Role{% else %}角色{% endif %}</span>:
+            <span class="badge" style="background: rgba(247, 147, 26, 0.2); color: var(--primary-gold);">{{ user_role }}</span>
+            &nbsp;|&nbsp;
+            <span data-i18n="skills_count_label">{% if current_lang == 'en' %}Available Skills{% else %}可用技能{% endif %}</span>:
+            <span style="color: var(--accent-cyan); font-weight: 700;">{{ skills | length }}</span>
+        </p>
+    </div>
+
+    <div class="skills-grid">
+        {% for skill in skills %}
+        <div class="skill-card" data-skill-id="{{ skill.id }}">
+            <i class="bi skill-icon
+                {% if 'telemetry' in skill.id %}bi-activity
+                {% elif 'alert' in skill.id %}bi-bell
+                {% elif 'diagnose' in skill.id or 'rca' in skill.id %}bi-search
+                {% elif 'ticket' in skill.id %}bi-ticket-detailed
+                {% elif 'curtailment' in skill.id %}bi-lightning
+                {% else %}bi-cpu
+                {% endif %}
+            "></i>
+            <div class="skill-name">
+                {% if current_lang == 'en' %}{{ skill.name }}{% else %}{{ skill.name_zh }}{% endif %}
+            </div>
+            <div class="skill-desc">
+                {% if current_lang == 'en' %}{{ skill.desc }}{% else %}{{ skill.desc_zh }}{% endif %}
+            </div>
+            <div class="skill-tags">
+                {% for tag in skill.tags %}
+                <span class="skill-tag">{{ tag }}</span>
+                {% endfor %}
+            </div>
+            <span class="skill-version">v{{ skill.version }}</span>
+            <button class="btn btn-run" onclick="openSkillPanel('{{ skill.id }}')">
+                <i class="bi bi-play-fill me-1"></i>
+                <span data-i18n="run_btn">{% if current_lang == 'en' %}Run{% else %}运行{% endif %}</span>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div id="execPanel" class="exec-panel">
+        <div class="exec-panel-header">
+            <span class="exec-panel-title" id="panelTitle"></span>
+            <button class="btn-close-panel" onclick="closePanel()">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <form class="exec-form" id="execForm" onsubmit="return false;">
+            <div class="row g-3" id="formFields"></div>
+            <div class="mt-3">
+                <button type="button" class="btn btn-execute" id="btnExecute" onclick="executeSkill()">
+                    <span id="execBtnText" data-i18n="execute_btn">{% if current_lang == 'en' %}Execute{% else %}执行{% endif %}</span>
+                    <span id="execSpinner" class="spinner-border spinner-border-sm ms-2" role="status" style="display:none;"></span>
+                </button>
+            </div>
+        </form>
+
+        <div id="resultArea" class="result-area">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0" style="color: var(--text-primary);" data-i18n="result_title">
+                    {% if current_lang == 'en' %}Result{% else %}结果{% endif %}
+                </h6>
+                <button class="btn btn-copy" onclick="copyResult()">
+                    <i class="bi bi-clipboard me-1"></i>
+                    <span data-i18n="copy_btn">{% if current_lang == 'en' %}Copy{% else %}复制{% endif %}</span>
+                </button>
+            </div>
+            <div id="resultContent"></div>
+        </div>
+    </div>
+
+    <div class="history-section">
+        <h5 class="history-title">
+            <i class="bi bi-clock-history me-2" style="color: var(--accent-cyan);"></i>
+            <span data-i18n="history_title">{% if current_lang == 'en' %}Execution History{% else %}执行历史{% endif %}</span>
+        </h5>
+        <div style="overflow-x: auto;">
+            <table class="history-table" id="historyTable">
+                <thead>
+                    <tr>
+                        <th data-i18n="col_time">{% if current_lang == 'en' %}Time{% else %}时间{% endif %}</th>
+                        <th data-i18n="col_skill">{% if current_lang == 'en' %}Skill{% else %}技能{% endif %}</th>
+                        <th data-i18n="col_status">{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                        <th data-i18n="col_duration">{% if current_lang == 'en' %}Duration{% else %}耗时{% endif %}</th>
+                        <th>Audit ID</th>
+                    </tr>
+                </thead>
+                <tbody id="historyBody">
+                </tbody>
+            </table>
+        </div>
+        <div class="empty-history" id="emptyHistory" data-i18n="no_history">
+            {% if current_lang == 'en' %}No executions yet{% else %}暂无执行记录{% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const SKILLS_DATA = {{ skills | tojson }};
+let executionHistory = [];
+let currentSkillId = null;
+let lastResultJson = null;
+
+const ICON_MAP = {
+    'telemetry': 'bi-activity',
+    'alert': 'bi-bell',
+    'diagnose': 'bi-search',
+    'rca': 'bi-search',
+    'ticket': 'bi-ticket-detailed',
+    'curtailment': 'bi-lightning'
+};
+
+function getSkillById(id) {
+    return SKILLS_DATA.find(s => s.id === id);
+}
+
+function openSkillPanel(skillId) {
+    const skill = getSkillById(skillId);
+    if (!skill) return;
+
+    currentSkillId = skillId;
+    const lang = document.documentElement.lang.startsWith('zh') ? 'zh' : 'en';
+    const name = lang === 'zh' ? skill.name_zh : skill.name;
+
+    document.getElementById('panelTitle').textContent = name;
+    document.getElementById('resultArea').classList.remove('active');
+    document.getElementById('resultContent').innerHTML = '';
+
+    const formFields = document.getElementById('formFields');
+    formFields.innerHTML = '';
+
+    const schema = skill.input_schema || {};
+    const properties = schema.properties || {};
+    const required = schema.required || [];
+
+    Object.entries(properties).forEach(([key, spec]) => {
+        const isRequired = required.includes(key);
+        const fieldType = spec.type || 'string';
+        const defaultVal = spec.default !== undefined ? spec.default : '';
+        const desc = spec.description || key;
+
+        const col = document.createElement('div');
+        col.className = fieldType === 'object' ? 'col-12' : 'col-md-6';
+
+        let inputHtml = '';
+
+        if (fieldType === 'boolean') {
+            inputHtml = `
+                <div class="form-check form-switch mt-1">
+                    <input class="form-check-input" type="checkbox" id="field_${key}" name="${key}" ${defaultVal ? 'checked' : ''}>
+                    <label class="form-check-label text-secondary" for="field_${key}">${desc}</label>
+                </div>`;
+        } else if (fieldType === 'object') {
+            inputHtml = `<textarea class="form-control" id="field_${key}" name="${key}" rows="3"
+                placeholder="${defaultVal ? JSON.stringify(defaultVal) : '{}'}">${defaultVal ? JSON.stringify(defaultVal, null, 2) : ''}</textarea>`;
+        } else if (fieldType === 'integer' || fieldType === 'number') {
+            inputHtml = `<input type="number" class="form-control" id="field_${key}" name="${key}"
+                placeholder="${defaultVal !== '' ? defaultVal : ''}" ${fieldType === 'integer' ? 'step="1"' : 'step="any"'}
+                ${spec.minimum !== undefined ? 'min="' + spec.minimum + '"' : ''}
+                ${spec.maximum !== undefined ? 'max="' + spec.maximum + '"' : ''}>`;
+        } else {
+            inputHtml = `<input type="text" class="form-control" id="field_${key}" name="${key}"
+                placeholder="${defaultVal !== '' ? defaultVal : ''}">`;
+        }
+
+        const label = fieldType === 'boolean' ? '' :
+            `<label class="form-field-label">${desc}${isRequired ? '<span class="required-star">*</span>' : ''}</label>`;
+
+        col.innerHTML = (fieldType === 'boolean'
+            ? `<label class="form-field-label">${key}${isRequired ? '<span class="required-star">*</span>' : ''}</label>`
+            : label) + inputHtml;
+
+        formFields.appendChild(col);
+    });
+
+    const panel = document.getElementById('execPanel');
+    panel.classList.add('active');
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function closePanel() {
+    document.getElementById('execPanel').classList.remove('active');
+    currentSkillId = null;
+}
+
+async function executeSkill() {
+    if (!currentSkillId) return;
+
+    const skill = getSkillById(currentSkillId);
+    if (!skill) return;
+
+    const schema = skill.input_schema || {};
+    const properties = schema.properties || {};
+    const payload = {};
+
+    Object.entries(properties).forEach(([key, spec]) => {
+        const el = document.getElementById('field_' + key);
+        if (!el) return;
+
+        const fieldType = spec.type || 'string';
+
+        if (fieldType === 'boolean') {
+            payload[key] = el.checked;
+        } else if (fieldType === 'object') {
+            try { payload[key] = JSON.parse(el.value || '{}'); } catch(e) { payload[key] = {}; }
+        } else if (fieldType === 'integer') {
+            if (el.value !== '') payload[key] = parseInt(el.value, 10);
+        } else if (fieldType === 'number') {
+            if (el.value !== '') payload[key] = parseFloat(el.value);
+        } else {
+            if (el.value !== '') payload[key] = el.value;
+        }
+    });
+
+    const btn = document.getElementById('btnExecute');
+    const spinner = document.getElementById('execSpinner');
+    btn.disabled = true;
+    spinner.style.display = 'inline-block';
+
+    const startTime = Date.now();
+
+    try {
+        const resp = await fetch(`/api/skills/${currentSkillId}/run`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify(payload)
+        });
+        const result = await resp.json();
+        const elapsed = Date.now() - startTime;
+        lastResultJson = result;
+        renderResult(result);
+        addHistory(currentSkillId, skill, result, elapsed);
+    } catch (err) {
+        const errResult = { ok: false, error: { code: 'NETWORK_ERROR', message: err.message } };
+        lastResultJson = errResult;
+        renderResult(errResult);
+        addHistory(currentSkillId, skill, errResult, Date.now() - startTime);
+    } finally {
+        btn.disabled = false;
+        spinner.style.display = 'none';
+    }
+}
+
+function renderResult(result) {
+    const area = document.getElementById('resultArea');
+    const content = document.getElementById('resultContent');
+    content.innerHTML = '';
+    area.classList.add('active');
+
+    if (result.ok) {
+        let headerHtml = `<div class="result-header-ok">
+            <div class="audit-id"><i class="bi bi-check-circle me-1"></i>Audit ID: ${result.audit_id || 'N/A'}</div>
+            <div class="result-meta">`;
+        if (result.elapsed_ms !== undefined) headerHtml += `Duration: ${result.elapsed_ms}ms &nbsp;|&nbsp; `;
+        if (result.received_at) headerHtml += `Received: ${result.received_at}`;
+        headerHtml += `</div></div>`;
+        content.innerHTML += headerHtml;
+
+        if (result.data) {
+            content.innerHTML += `<div class="result-data"><pre>${syntaxHighlight(JSON.stringify(result.data, null, 2))}</pre></div>`;
+        }
+
+        if (result.warnings && result.warnings.length > 0) {
+            result.warnings.forEach(w => {
+                content.innerHTML += `<div class="result-warning"><i class="bi bi-exclamation-triangle me-1"></i>${w}</div>`;
+            });
+        }
+
+        if (result.evidence_refs && result.evidence_refs.length > 0) {
+            let refsHtml = '<div class="mt-2 mb-2">';
+            result.evidence_refs.forEach(ref => {
+                refsHtml += `<span class="evidence-badge"><i class="bi bi-link-45deg me-1"></i>${ref}</span>`;
+            });
+            refsHtml += '</div>';
+            content.innerHTML += refsHtml;
+        }
+    } else {
+        const err = result.error || {};
+        content.innerHTML += `<div class="result-error">
+            <div class="error-code"><i class="bi bi-x-octagon me-1"></i>${err.code || 'ERROR'}</div>
+            <div class="error-msg">${err.message || 'Unknown error'}</div>
+        </div>`;
+    }
+}
+
+function syntaxHighlight(json) {
+    json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+        function(match) {
+            let cls = 'json-number';
+            if (/^"/.test(match)) {
+                cls = /:$/.test(match) ? 'json-key' : 'json-string';
+            } else if (/true|false/.test(match)) {
+                cls = 'json-boolean';
+            } else if (/null/.test(match)) {
+                cls = 'json-null';
+            }
+            return '<span class="' + cls + '">' + match + '</span>';
+        });
+}
+
+function copyResult() {
+    if (!lastResultJson) return;
+    const text = JSON.stringify(lastResultJson, null, 2);
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.querySelector('.btn-copy');
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check me-1"></i>Copied!';
+        setTimeout(() => { btn.innerHTML = orig; }, 2000);
+    });
+}
+
+function addHistory(skillId, skill, result, elapsed) {
+    const lang = document.documentElement.lang.startsWith('zh') ? 'zh' : 'en';
+    const entry = {
+        time: new Date().toLocaleTimeString(),
+        skillId: skillId,
+        skillName: lang === 'zh' ? skill.name_zh : skill.name,
+        ok: !!result.ok,
+        elapsed: (result.elapsed_ms || elapsed) + 'ms',
+        auditId: result.audit_id || '-',
+        result: result
+    };
+
+    executionHistory.unshift(entry);
+    if (executionHistory.length > 10) executionHistory.pop();
+    renderHistory();
+}
+
+function renderHistory() {
+    const body = document.getElementById('historyBody');
+    const empty = document.getElementById('emptyHistory');
+
+    if (executionHistory.length === 0) {
+        body.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+    }
+
+    empty.style.display = 'none';
+    body.innerHTML = executionHistory.map((e, i) => `
+        <tr onclick="showHistoryResult(${i})">
+            <td>${e.time}</td>
+            <td>${e.skillName}</td>
+            <td><span class="${e.ok ? 'badge-ok' : 'badge-err'}">${e.ok ? 'OK' : 'Error'}</span></td>
+            <td>${e.elapsed}</td>
+            <td style="font-family: monospace; font-size: 0.75rem;">${e.auditId}</td>
+        </tr>`).join('');
+}
+
+function showHistoryResult(index) {
+    const entry = executionHistory[index];
+    if (!entry) return;
+    lastResultJson = entry.result;
+    renderResult(entry.result);
+    const panel = document.getElementById('execPanel');
+    panel.classList.add('active');
+    document.getElementById('panelTitle').textContent = entry.skillName;
+    document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+renderHistory();
+</script>
+{% endblock %}

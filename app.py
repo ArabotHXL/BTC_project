@@ -807,6 +807,27 @@ def branding_management():
         flash('加载失败', 'error')
         return redirect(url_for('index'))
 
+# AI Skills Console
+@app.route('/skills')
+@login_required
+def skills_console():
+    """AI Skills Console - unified tool interface for mining operations"""
+    from api.skills_api import _resolve_permissions_from_rbac
+    from skills.registry import SkillRegistry
+
+    user_role = session.get('role', 'guest')
+    role_lower = user_role.lower().replace(' ', '_') if user_role else 'guest'
+    permissions = _resolve_permissions_from_rbac(role_lower)
+    registry = SkillRegistry.instance()
+    available = registry.list_for_permissions(permissions)
+    skills_list = [s.to_dict() for s in available]
+
+    return render_template(
+        'skills_console.html',
+        skills=skills_list,
+        user_role=role_lower
+    )
+
 # Web3 Dashboard - 统一Web3功能界面
 @app.route('/web3-dashboard')
 @app.route('/web3_dashboard')
