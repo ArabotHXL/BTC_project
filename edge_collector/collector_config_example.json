@@ -1,5 +1,5 @@
 {
-    "api_url": "https://calc.hashinsight.net/api/collector/upload",
+    "api_url": "https://calc.hashinsight.net",
     "api_key": "YOUR_API_KEY_HERE",
     "site_id": "site_001",
     "collection_interval": 60,
@@ -16,7 +16,7 @@
         }
     ],
     "notes": {
-        "zh": "请将 api_key 替换为从平台获取的真实密钥，ip_ranges 改为你矿场的实际IP范围",
-        "en": "Replace api_key with your real key from the platform, and ip_ranges with your farm's actual IP range"
+        "zh": "请将 api_key 替换为从平台获取的真实密钥，ip_ranges 改为你矿场的实际IP范围。v1 API 端点: /api/edge/v1/telemetry/ingest",
+        "en": "Replace api_key with your real key from the platform, and ip_ranges with your farm's actual IP range. v1 API endpoint: /api/edge/v1/telemetry/ingest"
     }
 }

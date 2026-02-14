@@ -127,6 +127,52 @@ def require_device_auth(f):
     return decorated
 
 
+def require_edge_auth(f):
+    """Unified edge auth: supports EdgeDevice token OR CollectorKey token"""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        import hashlib
+        auth_header = request.headers.get('Authorization', '')
+        token = None
+        
+        if auth_header.startswith('Bearer '):
+            token = auth_header[7:]
+        
+        if token:
+            token_hash = hashlib.sha256(token.encode()).hexdigest()
+            device = EdgeDevice.query.filter_by(token_hash=token_hash, status='ACTIVE').first()
+            if not device:
+                device = EdgeDevice.query.filter_by(device_token=token, status='ACTIVE').first()
+            if device:
+                device.last_seen_at = datetime.utcnow()
+                db.session.commit()
+                g.device = device
+                g.device_id = device.id
+                g.site_id = device.site_id
+                g.zone_id = device.zone_id
+                g.auth_method = 'edge_device'
+                return f(*args, **kwargs)
+        
+        collector_token = token or request.headers.get('X-Collector-Key')
+        if collector_token:
+            from api.collector_api import CollectorKey
+            key_hash = hashlib.sha256(collector_token.encode()).hexdigest()
+            collector_key = CollectorKey.query.filter_by(key_hash=key_hash, is_active=True).first()
+            if collector_key:
+                collector_key.last_used_at = datetime.utcnow()
+                db.session.commit()
+                g.collector_key = collector_key
+                g.device = None
+                g.device_id = None
+                g.site_id = collector_key.site_id
+                g.zone_id = None
+                g.auth_method = 'collector_key'
+                return f(*args, **kwargs)
+        
+        return jsonify({'error': 'Authentication required. Provide EdgeDevice token or CollectorKey.'}), 401
+    return decorated
+
+
 def require_customer_access(f):
     """ABAC: Ensure customer can only access their own data"""
     @wraps(f)
@@ -232,7 +278,7 @@ def edge_register():
 
 
 @control_plane_bp.route('/api/edge/v1/commands/poll', methods=['GET'])
-@require_device_auth
+@require_edge_auth
 def edge_poll_commands():
     """Poll for queued commands - production-grade with atomic lease dispatch
     
@@ -241,6 +287,7 @@ def edge_poll_commands():
     
     Zone binding: Device token is bound to (site_id, zone_id).
     If zone_id param provided, it must match device's zone_id (validation only).
+    CollectorKey auth bypasses zone binding (zone_id is None).
     
     Features:
     - Atomic lease dispatch using SELECT FOR UPDATE SKIP LOCKED
@@ -248,10 +295,11 @@ def edge_poll_commands():
     - Optional HMAC signature for command integrity
     - Idempotent ACK support via ack_nonce
     - Backward compatibility with both RemoteCommand and MinerCommand
+    - CollectorKey authentication support for Remote compatibility
     """
     site_id = g.site_id
     device_zone_id = g.zone_id
-    device_id = str(g.device_id)
+    device_id = str(g.device_id) if g.device_id else f"collector_key:{getattr(g, 'collector_key', None) and g.collector_key.id or 'unknown'}"
     requested_zone_id = request.args.get('zone_id', type=int)
     limit = min(request.args.get('limit', 10, type=int), 50)
     
@@ -345,7 +393,7 @@ def edge_poll_commands():
         if cmd.remote_command_id:
             command_data['remote_command_id'] = cmd.remote_command_id
         
-        if enable_signature:
+        if enable_signature and getattr(g, 'device', None):
             device = g.device
             hmac_secret = device.device_token or device.token_hash
             
@@ -454,7 +502,7 @@ def edge_poll_commands():
                 'payload': cmd.payload_json or {},
             }
             
-            if enable_signature:
+            if enable_signature and getattr(g, 'device', None):
                 device = g.device
                 hmac_secret = device.device_token or device.token_hash
                 
@@ -594,7 +642,7 @@ def _sync_remote_command_status(remote_command_id):
 
 
 @control_plane_bp.route('/api/edge/v1/commands/<command_id>/ack', methods=['POST'])
-@require_device_auth
+@require_edge_auth
 def edge_ack_command(command_id):
     """Acknowledge command completion - production-grade with idempotency and retry logic
     
@@ -604,8 +652,9 @@ def edge_ack_command(command_id):
     - Automatic retry scheduling on failure
     - Terminal state tracking
     - Structured error codes
+    - CollectorKey authentication support for Remote compatibility
     """
-    device_id = str(g.device_id)
+    device_id = str(g.device_id) if g.device_id else f"collector_key:{getattr(g, 'collector_key', None) and g.collector_key.id or 'unknown'}"
     site_id = g.site_id
     now = datetime.utcnow()
     
@@ -635,7 +684,7 @@ def edge_ack_command(command_id):
     client_signature = data.get('signature')
     result_code = data.get('result_code')
     result_message = data.get('result_message')
-    execution_time_ms = data.get('execution_time_ms')
+    execution_time_ms = data.get('execution_time_ms') or data.get('duration_ms')
     enable_signature = os.environ.get('ENABLE_COMMAND_SIGNATURE', '').lower() == 'true'
     
     # Verify nonce matches dispatch_nonce (replay detection) - only if client sent it
@@ -896,15 +945,16 @@ def _handle_remote_command_ack(command, command_id):
         if existing:
             continue
         
+        ack_device_id = g.device_id if g.device_id else f"collector_key:{getattr(g, 'collector_key', None) and g.collector_key.id or 'unknown'}"
         result = RemoteCommandResult(
             command_id=command_id,
             target_miner_id=str(asset_id),
-            executed_by_device_id=g.device_id,
+            executed_by_device_id=ack_device_id,
             result_status=status,
             before_snapshot=r.get('before_snapshot'),
             after_snapshot=r.get('after_snapshot'),
-            error_code=r.get('error_code'),
-            error_message=r.get('error_message'),
+            error_code=r.get('error_code') or r.get('error_class'),
+            error_message=r.get('error_message') or r.get('error'),
             started_at=datetime.fromisoformat(r['started_at'].replace('Z', '')) if r.get('started_at') else datetime.utcnow(),
             finished_at=datetime.fromisoformat(r['finished_at'].replace('Z', '')) if r.get('finished_at') else datetime.utcnow(),
         )
@@ -925,10 +975,11 @@ def _handle_remote_command_ack(command, command_id):
     
     db.session.commit()
     
+    ack_actor_id = g.device_id if g.device_id else f"collector_key:{getattr(g, 'collector_key', None) and g.collector_key.id or 'unknown'}"
     log_audit_event(
         event_type='command.ack',
         actor_type='edge',
-        actor_id=g.device_id,
+        actor_id=ack_actor_id,
         site_id=command.site_id,
         ref_type='command',
         ref_id=command_id,
@@ -943,35 +994,95 @@ def _handle_remote_command_ack(command, command_id):
 
 
 @control_plane_bp.route('/api/edge/v1/telemetry/ingest', methods=['POST'])
-@control_plane_bp.route('/api/edge/v1/telemetry/batch', methods=['POST'])  # Alias for HashInsight Remote compatibility
-@require_device_auth
+@control_plane_bp.route('/api/edge/v1/telemetry/batch', methods=['POST'])
+@require_edge_auth
 def edge_ingest_telemetry():
-    """Ingest telemetry batch from edge (also available as /batch for Remote compatibility)"""
-    data = request.get_json() or {}
-    telemetry_batch = data.get('telemetry', [])
-    client_timestamp = data.get('client_timestamp')
+    """Ingest telemetry from edge - supports gzip, envelope, and plain JSON"""
+    import gzip as gzip_mod
     
     received_at = datetime.utcnow()
-    is_delayed = False
-    if client_timestamp:
-        try:
-            client_dt = datetime.fromisoformat(client_timestamp.replace('Z', ''))
-            delay_seconds = (received_at - client_dt).total_seconds()
-            is_delayed = delay_seconds > 300
-        except:
-            pass
+    warnings = []
     
-    processed = 0
-    for item in telemetry_batch:
-        asset_id = item.get('asset_id')
-        if not asset_id:
-            continue
-        processed += 1
+    try:
+        if request.headers.get('Content-Encoding') == 'gzip':
+            raw_data = gzip_mod.decompress(request.data)
+            data = json.loads(raw_data.decode('utf-8'))
+        else:
+            data = request.get_json(force=True)
+    except Exception as e:
+        return jsonify({'error': f'Invalid payload: {e}', 'error_code': 'INVALID_PAYLOAD'}), 400
+    
+    if data is None:
+        return jsonify({'error': 'Empty payload', 'error_code': 'EMPTY_PAYLOAD'}), 400
+    
+    source = 'v1'
+    zone_id = g.zone_id
+    device_id = str(g.device_id) if g.device_id else None
+    edge_meta = {'device_id': device_id, 'zone_id': zone_id}
+    
+    if isinstance(data, list):
+        records = data
+        source = 'legacy'
+    elif isinstance(data, dict):
+        schema = data.get('schema', '')
+        
+        if data.get('payload_enc') and not data.get('records'):
+            return jsonify({'error': 'ENCRYPTED_PAYLOAD_UNSUPPORTED', 'error_code': 'ENCRYPTED_PAYLOAD_UNSUPPORTED'}), 422
+        
+        if schema == 'telemetry_envelope.v1' or 'records' in data:
+            records = data.get('records', [])
+            envelope_site_id = data.get('site_id')
+            envelope_zone_id = data.get('zone_id')
+            envelope_record_count = data.get('record_count')
+            
+            if envelope_zone_id:
+                zone_id = envelope_zone_id
+                edge_meta['zone_id'] = zone_id
+            
+            if envelope_site_id and str(envelope_site_id) != str(g.site_id):
+                warnings.append(f'envelope.site_id={envelope_site_id} differs from auth site_id={g.site_id}, using auth site_id')
+            
+            if envelope_record_count is not None and envelope_record_count != len(records):
+                warnings.append(f'envelope.record_count={envelope_record_count} != actual records={len(records)}')
+            
+            edge_meta['sent_at'] = data.get('sent_at')
+            edge_meta['source_seq_start'] = data.get('source_seq_start')
+            edge_meta['source_seq_end'] = data.get('source_seq_end')
+        elif 'telemetry' in data:
+            records = data.get('telemetry', [])
+            source = 'legacy'
+        else:
+            return jsonify({'error': 'Unrecognized payload format', 'error_code': 'UNKNOWN_FORMAT'}), 400
+    else:
+        return jsonify({'error': 'Payload must be JSON array or object', 'error_code': 'INVALID_FORMAT'}), 400
+    
+    if not records:
+        return jsonify({
+            'success': True, 'processed': 0, 'received_at': received_at.isoformat() + 'Z',
+            'source': source, 'site_id': g.site_id, 'zone_id': zone_id,
+            'device_id': device_id, 'warnings': warnings
+        })
+    
+    from services.edge_ingest_service import ingest_miner_records
+    result = ingest_miner_records(
+        site_id=g.site_id,
+        records=records,
+        received_at=received_at,
+        source=source,
+        edge_meta=edge_meta
+    )
+    
+    warnings.extend(result.get('errors', []))
     
     return jsonify({
-        'processed': processed,
+        'success': True,
+        'processed': result['processed_count'],
         'received_at': received_at.isoformat() + 'Z',
-        'is_delayed': is_delayed,
+        'source': source,
+        'site_id': g.site_id,
+        'zone_id': zone_id,
+        'device_id': device_id,
+        'warnings': warnings
     })
 
 

@@ -1,0 +1,157 @@
+你现在是资深后端工程师 + 产品工程师（Mining Ops SaaS）。目标：在我这套 Flask（HashInsight Cloud）代码库里，把“Skills（能力插件）框架 + 5 个 P0 Skills”一次性落地到可在 Replit 上跑起来，并且满足：RBAC 权限、审计日志、统一输入输出 JSON、可测（最小单测）、可扩展。
+
+背景：代码库已有这些关键模块（优先复用，不要重写）：
+- Auth/RBAC：auth.py、api_auth_middleware.py、common/rbac.py、rate_limiting.py
+- Audit：audit/audit_logger.py（或现有 AuditEvent 模型/写入方法）
+- Telemetry：services/telemetry_service.py、services/telemetry_storage.py、api/telemetry_api.py
+- Alerts：services/alert_engine.py、services/health_rules.py（或 problem registry / diagnosis_fusion）
+- Tickets（AI 草拟）：services/ai_ticket_draft_service.py
+- Curtailment：services/curtailment_plan_service.py、services/curtailment_scheduler.py
+- 数据模型：models.py / models_hosting.py 等（别动 DB 结构，除非必要）
+
+你要交付的内容（必须全部完成）：
+
+【A】实现 Skills 框架（Registry + Spec + Runner）
+1) 新建包：skills/
+   - skills/__init__.py
+   - skills/registry.py           # 注册/发现 skills
+   - skills/spec.py               # SkillSpec 元数据与 schema
+   - skills/runner.py             # 统一执行入口：鉴权、校验、审计、返回
+   - skills/errors.py             # 标准错误码与异常
+   - skills/utils.py              # redaction、evidence refs、time utils
+
+2) Skill 的统一规范（强制）
+- 每个 skill 必须有：
+  - id（slug）、name、desc
+  - required_permissions（RBAC 权限字符串数组）
+  - input_schema（最小 JSON Schema 或手写校验规则）
+  - output_schema（约定字段）
+  - run(ctx, payload) -> dict
+
+3) Skills API（新增 routes/api/skills_routes.py 或 api/skills_api.py，任选一致风格）
+- GET  /api/skills
+  返回可用 skills 列表（按当前用户权限过滤）
+- GET  /api/skills/<skill_id>
+  返回 skill spec（同样按权限过滤）
+- POST /api/skills/<skill_id>/run
+  统一执行入口：
+  - 通过 api_auth_middleware.py 提取用户（user_id/tenant_id/site_id/role）
+  - RBAC 检查：common/rbac.py（若没有现成方法，补一个 rbac.can(user, perm)）
+  - 输入校验：缺字段/类型错误返回 400 + 标准错误码
+  - 速率限制：对 run 接口套 rate_limiting.py（例如 30 req/min/user）
+  - 审计：每次 run 必须写入 audit（who/when/skill_id/target_ids/summary）
+  - 输出统一 JSON（见下）
+
+4) 统一输出 JSON（所有 run 必须返回以下结构）
+{
+  "ok": true|false,
+  "skill_id": "telemetry_snapshot",
+  "audit_id": "<string|null>",
+  "received_at": "<iso>",
+  "data": {...},              # 业务输出
+  "warnings": [...],
+  "evidence_refs": [...],     # 例如 telemetry_raw24h ids / alert ids / ticket ids
+  "error": { "code": "...", "message": "...", "details": {...} }   # ok=false 时
+}
+
+5) 标准错误码（skills/errors.py）
+- AUTH_REQUIRED, FORBIDDEN, INVALID_INPUT, NOT_FOUND, RATE_LIMITED
+- UPSTREAM_FAILED（调用 telemetry/alert 服务失败）
+- FEATURE_DISABLED（该 skill 被 feature flag 禁用）
+- INTERNAL_ERROR
+
+6) Feature flags（config.py）
+- SKILLS_ENABLED = True/False
+- SKILLS_ALLOWLIST = ["telemetry_snapshot", ...]（可选）
+- 默认启用 5 个 P0 skills
+
+【B】落地 5 个 P0 Skills（必须可跑通）
+实现为 skills/impl/*.py（你自己定目录，只要 registry 能加载）
+P0-1) telemetry_snapshot（遥测快照）
+- 输入：{ "site_id": "...optional", "miner_id": "...", "window_min": 10 }
+- 行为：调用 services/telemetry_service.py 获取 live + 最近 window 的 history/raw（若 raw 无就退化）
+- 输出 data：当前关键指标 + 小窗口统计（min/max/avg）+ 异常标记（比如温度过高、hashrate 掉）
+- evidence_refs：涉及的 telemetry row ids（若有）
+
+P0-2) alert_triage（告警聚合/分级）
+- 输入：{ "site_id": "...", "since_min": 30, "severity_floor": "P3|P2|P1" }
+- 行为：复用 services/alert_engine.py 或 health_rules 生成/拉取告警，然后做去重聚合（按 miner_id+rule+timebucket）
+- 输出 data：clusters 列表（每簇：cluster_id、severity、count、affected_miners、top_signals）
+- 注意：最小实现可以只对“现有 alerts 表/事件表”做聚合（不要硬造 DB）
+
+P0-3) rca_quick_diagnose（快速根因归因）
+- 输入：{ "site_id": "...", "miner_id": "...", "incident_hint": "...optional" }
+- 行为：基于 telemetry + network（若有）+ pool reject + power（若有）做规则归因：
+  - Hardware / Thermal / Network / Pool / Power 五选一（给 confidence 0-1）
+- 输出 data：{ "root_cause": "...", "confidence": 0.xx, "evidence": {...}, "next_checks":[...] }
+
+P0-4) ticket_draft（工单草拟）
+- 输入：{ "site_id": "...", "miner_id": "...", "issue": "...", "include_snapshot": true }
+- 行为：调用 services/ai_ticket_draft_service.py（若该服务依赖 LLM 不可用，则 fallback：模板化工单）
+- 输出 data：{ "title": "...", "description": "...", "priority":"P1|P2|P3", "tags":[...], "recommended_parts":[...] }
+- evidence_refs：snapshot refs / alert refs
+
+P0-5) curtailment_dry_run（限电预演）
+- 输入：
+  {
+    "site_id": "...",
+    "target_kw_reduction": 500,         # 或 curtailment_pct 二选一
+    "curtailment_pct": 0.10,
+    "strategy": "shutdown|downclock|mixed",
+    "step_size": 50,                    # 每批影响台数/功率
+    "constraints": { "max_hash_loss_pct": 0.12 }
+  }
+- 行为：复用 services/curtailment_plan_service.py 做计划生成，但必须是 dry-run，不落执行
+- 输出 data：分批计划 steps（每步：miners、estimated_kw、estimated_hash_loss）、总计、风险提示
+- 必须写：这是“预演结果（dry-run=true）”，不应触发任何控制动作
+
+【C】权限与审计（必须严格）
+1) RBAC 权限字符串建议（可以按你现有体系映射）：
+- skills:read
+- skills:run:telemetry
+- skills:run:alerts
+- skills:run:diagnose
+- skills:run:ticket
+- skills:run:curtailment
+
+2) 每个 skill 的 required_permissions 要合理：
+- telemetry_snapshot：skills:run:telemetry
+- alert_triage：skills:run:alerts
+- rca_quick_diagnose：skills:run:diagnose
+- ticket_draft：skills:run:ticket
+- curtailment_dry_run：skills:run:curtailment（并且只允许 Ops Manager 级别）
+
+3) 审计写入要求：
+- action_type = "skill_run"
+- actor_user_id / actor_role / tenant_id / site_id
+- skill_id
+- targets（miner_ids / alert_ids）
+- input_redacted（不要存 token、secret、钱包地址）
+- output_summary（不要存过大 payload）
+- status（success/failed）+ error_code
+
+【D】最小测试与验证（必须提供）
+1) 新增 tests/test_skills_api.py（pytest 或你现有测试框架）
+- 测试未登录 -> 401
+- 权限不足 -> 403
+- telemetry_snapshot 正常返回 ok=true 且 data 有关键字段
+- curtailment_dry_run 不产生任何 command record（如果你有 commands 表，就断言无新增）
+
+2) 提供 3 个 curl 示例写在 skills_routes.py 顶部注释：
+- list skills
+- run telemetry_snapshot
+- run curtailment_dry_run
+
+【E】实现约束
+- 不引入重型依赖（能用标准库/现有依赖就用）
+- 不破坏现有 legacy API
+- 返回错误必须结构化（不要 HTML）
+- 代码风格遵循仓库现有结构（routes/api 或 api/* 二选一，坚持一致）
+
+交付时你必须输出：
+- 改动的文件列表
+- 每个 endpoint 的路径与返回样例
+- 如何在 Replit 上跑：环境变量/启动命令/测试命令
+- 手动验收 checklist（5 条以内）
+
+现在开始：先扫描仓库，确认现有 auth/rbac/audit 的最佳复用点，然后按 A→B→C→D 顺序实现。每完成一个阶段输出阶段性 summary。
