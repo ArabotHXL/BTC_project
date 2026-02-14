@@ -173,6 +173,14 @@ class Module(Enum):
     REMOTE_CONTROL_REQUEST = "remote:request"       # 远程控制请求（提交/批准窗口）
     REMOTE_CONTROL_AUDIT = "remote:audit"           # 远控审计与执行结果查看
     REMOTE_CONTROL_EXECUTE = "remote:execute"       # 远控执行（重启/功率/矿池/频率/温控/LED）
+    
+    # Skills 能力插件系统
+    SKILLS_READ = "skills:read"                        # 查看可用 skills
+    SKILLS_RUN_TELEMETRY = "skills:run:telemetry"      # 运行遥测快照
+    SKILLS_RUN_ALERTS = "skills:run:alerts"             # 运行告警聚合
+    SKILLS_RUN_DIAGNOSE = "skills:run:diagnose"         # 运行根因诊断
+    SKILLS_RUN_TICKET = "skills:run:ticket"             # 运行工单草拟
+    SKILLS_RUN_CURTAILMENT = "skills:run:curtailment"   # 运行限电预演
 
 
 # ==================== 权限矩阵定义 ====================
@@ -593,6 +601,56 @@ PERMISSION_MATRIX: Dict[Module, Dict[Role, AccessLevel]] = {
         Role.MINING_SITE_OWNER: AccessLevel.FULL,  # 只有运维方可执行远程控制
         Role.OPERATOR: AccessLevel.FULL,  # 运维人员可执行远程控制
         Role.CLIENT: AccessLevel.NONE,  # Client不能直接执行
+        Role.GUEST: AccessLevel.NONE,
+    },
+    
+    # ==================== Skills 能力插件 ====================
+    Module.SKILLS_READ: {
+        Role.OWNER: AccessLevel.FULL,
+        Role.ADMIN: AccessLevel.FULL,
+        Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.READ,
+        Role.CLIENT: AccessLevel.READ,
+        Role.GUEST: AccessLevel.NONE,
+    },
+    Module.SKILLS_RUN_TELEMETRY: {
+        Role.OWNER: AccessLevel.FULL,
+        Role.ADMIN: AccessLevel.FULL,
+        Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.FULL,
+        Role.CLIENT: AccessLevel.FULL,
+        Role.GUEST: AccessLevel.NONE,
+    },
+    Module.SKILLS_RUN_ALERTS: {
+        Role.OWNER: AccessLevel.FULL,
+        Role.ADMIN: AccessLevel.FULL,
+        Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.FULL,
+        Role.CLIENT: AccessLevel.NONE,
+        Role.GUEST: AccessLevel.NONE,
+    },
+    Module.SKILLS_RUN_DIAGNOSE: {
+        Role.OWNER: AccessLevel.FULL,
+        Role.ADMIN: AccessLevel.FULL,
+        Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.FULL,
+        Role.CLIENT: AccessLevel.NONE,
+        Role.GUEST: AccessLevel.NONE,
+    },
+    Module.SKILLS_RUN_TICKET: {
+        Role.OWNER: AccessLevel.FULL,
+        Role.ADMIN: AccessLevel.FULL,
+        Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.FULL,
+        Role.CLIENT: AccessLevel.NONE,
+        Role.GUEST: AccessLevel.NONE,
+    },
+    Module.SKILLS_RUN_CURTAILMENT: {
+        Role.OWNER: AccessLevel.FULL,
+        Role.ADMIN: AccessLevel.FULL,
+        Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.NONE,
+        Role.CLIENT: AccessLevel.NONE,
         Role.GUEST: AccessLevel.NONE,
     },
 }

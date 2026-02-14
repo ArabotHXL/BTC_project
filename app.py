@@ -66,6 +66,10 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 # SOC2 Compliance: Session timeout configuration (8 hour session lifetime)
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=8)
 
+# Skills framework configuration
+app.config['SKILLS_ENABLED'] = os.environ.get('SKILLS_ENABLED', 'true').lower() == 'true'
+app.config['SKILLS_ALLOWLIST'] = None  # Set to list of skill IDs to restrict, e.g. ['telemetry_snapshot']
+
 # Force disable Flask-WTF global CSRF protection that may auto-activate
 try:
     from flask_wtf.csrf import CSRFProtect
@@ -4909,6 +4913,24 @@ except ImportError as e:
     logging.warning(f"Control Plane API not available: {e}")
 except Exception as e:
     logging.error(f"Failed to register Control Plane API: {e}")
+
+# Skills API (统一能力插件系统)
+try:
+    from api.skills_api import skills_api_bp
+    app.register_blueprint(skills_api_bp)
+    logging.info("Skills API registered successfully")
+except ImportError as e:
+    logging.warning(f"Skills API not available: {e}")
+except Exception as e:
+    logging.error(f"Failed to register Skills API: {e}")
+
+# Load and register all skills
+try:
+    from skills.loader import load_all_skills
+    loaded = load_all_skills()
+    logging.info(f"Skills framework initialized: {loaded} skills loaded")
+except Exception as e:
+    logging.error(f"Failed to initialize skills framework: {e}")
 
 # Portal Lite API (客户门户 - 严格隔离)
 try:
