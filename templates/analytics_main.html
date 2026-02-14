@@ -460,6 +460,86 @@
                 display: block;
             }
         }
+        #intelligence .card {
+            background: rgba(255,255,255,0.05) !important;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1) !important;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        #intelligence .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        #intelligence .card-header {
+            background: rgba(247, 147, 26, 0.08) !important;
+            border-bottom: 1px solid rgba(247,147,26,0.2) !important;
+        }
+        #intelligence .intelligence-empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            color: rgba(255,255,255,0.4);
+        }
+        #intelligence .intelligence-empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: rgba(247,147,26,0.3);
+        }
+        #intelligence .intelligence-empty-state p {
+            font-size: 0.95rem;
+            text-align: center;
+            max-width: 280px;
+        }
+        .intel-alert {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        .intel-alert-info {
+            background: rgba(247, 147, 26, 0.1);
+            border: 1px solid rgba(247, 147, 26, 0.3);
+            color: #f7931a;
+        }
+        .intel-alert-success {
+            background: rgba(72, 187, 120, 0.1);
+            border: 1px solid rgba(72, 187, 120, 0.3);
+            color: #48bb78;
+        }
+        .intel-alert-warning {
+            background: rgba(237, 137, 54, 0.1);
+            border: 1px solid rgba(237, 137, 54, 0.3);
+            color: #ed8936;
+        }
+        .intel-alert-danger {
+            background: rgba(245, 101, 101, 0.1);
+            border: 1px solid rgba(245, 101, 101, 0.3);
+            color: #f56565;
+        }
+        #intelligence .health-card {
+            border-left: 3px solid #48bb78 !important;
+        }
+        #intelligence .health-card.degraded {
+            border-left: 3px solid #ed8936 !important;
+        }
+        #intelligence .health-card.error {
+            border-left: 3px solid #f56565 !important;
+        }
+        #intelligence .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        #intelligence .status-online {
+            background: #48bb78;
+            box-shadow: 0 0 8px rgba(72, 187, 120, 0.6);
+        }
+        #intelligence .status-offline {
+            background: #ed8936;
+            box-shadow: 0 0 8px rgba(237, 137, 54, 0.6);
+        }
     </style>
 </head>
 <body>
@@ -743,7 +823,7 @@
                             <!-- 系统健康状态 -->
                             <div class="row mb-4">
                                 <div class="col-12">
-                                    <div class="card">
+                                    <div class="card health-card">
                                         <div class="card-body">
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <div>
@@ -843,7 +923,7 @@
                                         </div>
                                         <div class="card-body">
                                             <div id="optimizationResults">
-                                                <div class="alert alert-info">
+                                                <div class="intel-alert intel-alert-info">
                                                     <i class="bi bi-info-circle"></i>
                                                     {% if current_lang == 'en' %}
                                                     Click "Calculate" to get power optimization recommendations based on your electricity pricing.
@@ -4558,14 +4638,17 @@
                 const statusText = document.getElementById('healthStatusText');
                 const lastCheck = document.getElementById('healthLastCheck');
                 
+                const healthCard = document.querySelector('#intelligence .health-card');
                 if (data.status === 'healthy') {
                     indicator.className = 'status-indicator status-online';
                     statusText.textContent = currentLang === 'en' ? 'Healthy' : '健康';
                     statusText.className = 'ms-2 text-success';
+                    if (healthCard) healthCard.className = 'card health-card';
                 } else {
                     indicator.className = 'status-indicator status-offline';
                     statusText.textContent = currentLang === 'en' ? 'Degraded' : '降级运行';
                     statusText.className = 'ms-2 text-warning';
+                    if (healthCard) healthCard.className = 'card health-card degraded';
                 }
                 
                 const now = new Date().toLocaleString(currentLang === 'en' ? 'en-US' : 'zh-CN');
@@ -4576,6 +4659,8 @@
                 console.error('❌ Intelligence health check failed:', error);
                 document.getElementById('healthStatusText').textContent = currentLang === 'en' ? 'Error' : '错误';
                 document.getElementById('healthStatusText').className = 'ms-2 text-danger';
+                const healthCard = document.querySelector('#intelligence .health-card');
+                if (healthCard) healthCard.className = 'card health-card error';
             }
         }
 
@@ -4589,7 +4674,7 @@
                 const response = await fetch(`/api/intelligence/forecast/${currentUserId}?days=7`);
                 
                 if (response.status === 401) {
-                    summaryDiv.innerHTML = '<div class="alert alert-warning"><i class="bi bi-lock"></i> ' +
+                    summaryDiv.innerHTML = '<div class="intel-alert intel-alert-warning"><i class="bi bi-lock"></i> ' +
                         (currentLang === 'en' ? 'Please login to view forecast data' : '请登录后查看预测数据') + '</div>';
                     return;
                 }
@@ -4597,10 +4682,9 @@
                 const data = await response.json();
                 
                 if (data.predictions && data.predictions.length > 0) {
-                    // 创建预测图表
+                    document.getElementById('forecastChart').style.display = '';
                     createForecastChart(data.predictions);
                     
-                    // 显示摘要
                     const lastPrediction = data.predictions[data.predictions.length - 1];
                     summaryDiv.innerHTML = `
                         <div class="d-flex justify-content-between">
@@ -4615,15 +4699,16 @@
                         </div>
                     `;
                 } else {
-                    summaryDiv.innerHTML = '<div class="alert alert-info">' +
-                        (currentLang === 'en' ? 'No forecast data available. Add miners to generate predictions.' : 
-                        '暂无预测数据。请添加矿机以生成预测。') + '</div>';
+                    document.getElementById('forecastChart').style.display = 'none';
+                    summaryDiv.innerHTML = '<div class="intelligence-empty-state">' +
+                        '<i class="bi bi-graph-up-arrow"></i>' +
+                        '<p>' + (currentLang === 'en' ? 'No forecast data available. Add miners to generate predictions.' : '暂无预测数据。请添加矿机以生成预测。') + '</p></div>';
                 }
                 
                 console.log('✅ Forecast data loaded:', data);
             } catch (error) {
                 console.error('❌ Failed to load forecast:', error);
-                summaryDiv.innerHTML = '<div class="alert alert-danger">' +
+                summaryDiv.innerHTML = '<div class="intel-alert intel-alert-danger">' +
                     (currentLang === 'en' ? 'Failed to load forecast data' : '加载预测数据失败') + '</div>';
             }
         }
@@ -4706,7 +4791,7 @@
                 const response = await fetch(`/api/intelligence/explain/roi/${currentUserId}`);
                 
                 if (response.status === 401) {
-                    recommendDiv.innerHTML = '<div class="alert alert-warning"><i class="bi bi-lock"></i> ' +
+                    recommendDiv.innerHTML = '<div class="intel-alert intel-alert-warning"><i class="bi bi-lock"></i> ' +
                         (currentLang === 'en' ? 'Please login to view ROI analysis' : '请登录后查看ROI分析') + '</div>';
                     return;
                 }
@@ -4714,10 +4799,9 @@
                 const data = await response.json();
                 
                 if (data.factors && data.factors.length > 0) {
-                    // 创建饼图
+                    document.getElementById('roiFactorChart').style.display = '';
                     createROIFactorChart(data.factors);
                     
-                    // 显示建议
                     let html = '<div class="mt-2">';
                     html += `<h6 class="mb-2">${currentLang === 'en' ? 'Current ROI' : '当前ROI'}: <span class="text-success">${data.current_roi_percent}%</span></h6>`;
                     if (data.actionable_insights && data.actionable_insights.length > 0) {
@@ -4730,15 +4814,16 @@
                     html += '</div>';
                     recommendDiv.innerHTML = html;
                 } else {
-                    recommendDiv.innerHTML = '<div class="alert alert-info">' +
-                        (currentLang === 'en' ? 'No ROI data available. Add miners to see analysis.' : 
-                        '暂无ROI数据。请添加矿机以查看分析。') + '</div>';
+                    document.getElementById('roiFactorChart').style.display = 'none';
+                    recommendDiv.innerHTML = '<div class="intelligence-empty-state">' +
+                        '<i class="bi bi-pie-chart"></i>' +
+                        '<p>' + (currentLang === 'en' ? 'No ROI data available. Add miners to see analysis.' : '暂无ROI数据。请添加矿机以查看分析。') + '</p></div>';
                 }
                 
                 console.log('✅ ROI explanation loaded:', data);
             } catch (error) {
                 console.error('❌ Failed to load ROI explanation:', error);
-                recommendDiv.innerHTML = '<div class="alert alert-danger">' +
+                recommendDiv.innerHTML = '<div class="intel-alert intel-alert-danger">' +
                     (currentLang === 'en' ? 'Failed to load ROI analysis' : '加载ROI分析失败') + '</div>';
             }
         }
@@ -4792,7 +4877,7 @@
         function showOptimizationInput() {
             const resultsDiv = document.getElementById('optimizationResults');
             resultsDiv.innerHTML = `
-                <div class="alert alert-info">
+                <div class="intel-alert intel-alert-info">
                     <i class="bi bi-info-circle"></i> ${currentLang === 'en' ? 'This feature requires user-specific electricity pricing data.' : '此功能需要用户特定的电价数据。'}
                     <br><small>${currentLang === 'en' ? 'Integration coming soon!' : '即将推出！'}</small>
                 </div>
@@ -4807,9 +4892,9 @@
                 // 模拟异常检测（实际应调用后端API）
                 setTimeout(() => {
                     alertsDiv.innerHTML = `
-                        <div class="alert alert-success mb-2">
+                        <div class="intel-alert intel-alert-success mb-2">
                             <i class="bi bi-check-circle"></i> <strong>${currentLang === 'en' ? 'All Systems Normal' : '所有系统正常'}</strong>
-                            <br><small>${currentLang === 'en' ? 'No anomalies detected in the last 24 hours' : '过去24小时未检测到异常'}</small>
+                            <br><small style="color: rgba(72,187,120,0.7);">${currentLang === 'en' ? 'No anomalies detected in the last 24 hours' : '过去24小时未检测到异常'}</small>
                         </div>
                         <div class="small text-muted">
                             ${currentLang === 'en' ? 'Last scan' : '最后扫描'}: ${new Date().toLocaleString(currentLang === 'en' ? 'en-US' : 'zh-CN')}
@@ -4820,7 +4905,7 @@
                 console.log('✅ Anomaly detection completed');
             } catch (error) {
                 console.error('❌ Anomaly detection failed:', error);
-                alertsDiv.innerHTML = '<div class="alert alert-danger">' +
+                alertsDiv.innerHTML = '<div class="intel-alert intel-alert-danger">' +
                     (currentLang === 'en' ? 'Failed to scan for anomalies' : '异常扫描失败') + '</div>';
             }
         }
