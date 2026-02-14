@@ -1,17 +1,24 @@
 <!DOCTYPE html>
-<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}">
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ tr('hashinsight_treasury_management') }}</title>
     
+    <meta name="user-role" content="{{ session.role }}">
+    <meta name="language" content="{{ current_lang }}">
+    
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/animations.css">
+    <link rel="stylesheet" href="/static/css/responsive.css">
     
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+    <script src="/static/js/i18n.js"></script>
     
     <!-- Bootstrap JavaScript Bundle (includes Popper) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -19,66 +26,30 @@
     <!-- Custom Styles -->
     <style>
         :root {
-            --bg-primary: #0d1421;
-            --bg-secondary: #1a2332;
-            --bg-tertiary: #2d3748;
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a2e;
+            --bg-tertiary: #16213e;
+            --bg-gradient: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
             --text-primary: #ffffff;
-            --text-secondary: #a0aec0;
-            --accent-gold: #f39c12;
+            --text-secondary: #b8b8b8;
+            --accent-gold: #f7931a;
             --accent-purple: #764ba2;
             --accent-blue: #667eea;
             --success: #48bb78;
             --warning: #ed8936;
             --danger: #f56565;
             --info: #4299e1;
+            --primary-gold: #f7931a;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --shadow-glow: 0 8px 32px rgba(247, 147, 26, 0.15);
         }
 
         body {
-            background: var(--bg-primary);
+            background: var(--bg-gradient);
+            min-height: 100vh;
             color: var(--text-primary);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-        }
-
-        /* Force all text to be white except disclaimer icon */
-        *, *::before, *::after {
-            color: white !important;
-        }
-        
-        /* Exception for disclaimer icon - must come after global rule */
-        .disclaimer-icon, 
-        .disclaimer-icon::before, 
-        .disclaimer-icon::after {
-            color: #dc3545 !important;
-        }
-        
-
-
-        /* Override specific elements that might have different colors */
-        h1, h2, h3, h4, h5, h6, p, span, div, a, label, li, td, th, 
-        .card-title, .card-text, .metric-label, .text-muted, 
-        .text-secondary, .text-primary, .small, .lead, .navbar-text,
-        .dropdown-item, .form-label, .btn, .badge,
-        .alert, .progress-bar, .list-group-item, .nav-link, 
-        .breadcrumb-item, .card-header, .card-footer, .modal-header,
-        .modal-body, .modal-footer, .table, .form-text, .input-group-text,
-        .text-info, .text-success, .text-warning, .text-danger {
-            color: white !important;
-        }
-
-        /* Input fields with black text */
-        .form-control, input, textarea, select {
-            color: black !important;
-            background-color: white !important;
-        }
-
-        /* Ensure input placeholders are also white */
-        ::placeholder {
-            color: rgba(255, 255, 255, 0.7) !important;
-        }
-
-        /* Override Bootstrap text utility classes */
-        .text-dark, .text-black-50, .text-body {
-            color: white !important;
         }
 
         /* Alert improvements for better visibility */
@@ -148,10 +119,12 @@
 
         /* Navigation Bar */
         .navbar {
-            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+            background: rgba(26, 29, 46, 0.95);
+            backdrop-filter: blur(20px);
             padding: 1rem 1.5rem;
             border-radius: 15px;
             margin-bottom: 2rem;
+            border: 1px solid rgba(247, 147, 26, 0.2);
         }
 
         .navbar-brand {
@@ -162,22 +135,22 @@
 
         /* Cards */
         .card {
-            background: linear-gradient(145deg, var(--bg-secondary), #1e2a3a);
-            border: 1px solid rgba(116, 75, 162, 0.2);
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
             border-radius: 16px;
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
 
         .card:hover {
             transform: translateY(-5px) scale(1.02);
             box-shadow: 0 15px 40px rgba(116, 75, 162, 0.2), 0 5px 20px rgba(0,0,0,0.3);
-            border-color: rgba(116, 75, 162, 0.4);
+            border-color: rgba(247, 147, 26, 0.3);
         }
 
         .card-header {
-            background: linear-gradient(135deg, var(--bg-tertiary), #3a4b5c);
-            border-bottom: 2px solid rgba(243, 156, 18, 0.3);
+            background: rgba(255, 255, 255, 0.05);
             border-bottom: 2px solid var(--accent-gold);
             font-weight: 600;
             padding: 1rem 1.25rem;
@@ -312,7 +285,7 @@
         /* Tabs */
         .nav-tabs {
             border-bottom: 2px solid var(--bg-tertiary);
-            background: linear-gradient(135deg, rgba(116, 75, 162, 0.1), rgba(102, 126, 234, 0.05));
+            background: rgba(255, 255, 255, 0.03);
             border-radius: 12px 12px 0 0;
             padding: 0.5rem;
         }
@@ -487,8 +460,8 @@
 
         /* Form Controls Enhancement */
         .form-control, .form-select {
-            background: rgba(26, 35, 50, 0.8) !important;
-            border: 1px solid rgba(116, 75, 162, 0.3) !important;
+            background: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid var(--card-border) !important;
             color: white !important;
             border-radius: 8px !important;
             transition: all 0.3s ease !important;
@@ -514,23 +487,22 @@
 
         /* Navigation Buttons Enhancement */
         .nav-btn {
-            background: linear-gradient(135deg, rgba(243, 156, 18, 0.9), rgba(230, 126, 34, 0.9)) !important;
-            border: 2px solid rgba(243, 156, 18, 0.6) !important;
-            color: #ffffff !important;
+            background: linear-gradient(135deg, rgba(247, 147, 26, 0.2), rgba(247, 147, 26, 0.05)) !important;
+            border: 1px solid rgba(247, 147, 26, 0.3) !important;
+            color: #f7931a !important;
             font-weight: 600 !important;
             padding: 0.5rem 1rem !important;
             border-radius: 8px !important;
             transition: all 0.3s ease !important;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
-            box-shadow: 0 2px 8px rgba(243, 156, 18, 0.2) !important;
+            box-shadow: none !important;
         }
 
         .nav-btn:hover {
-            background: linear-gradient(135deg, rgba(243, 156, 18, 1), rgba(230, 126, 34, 1)) !important;
-            border-color: rgba(243, 156, 18, 0.8) !important;
-            color: #ffffff !important;
+            background: linear-gradient(135deg, rgba(247, 147, 26, 0.3), rgba(247, 147, 26, 0.1)) !important;
+            border-color: rgba(247, 147, 26, 0.5) !important;
+            color: #f7931a !important;
             transform: translateY(-1px) !important;
-            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3) !important;
+            box-shadow: 0 4px 15px rgba(247, 147, 26, 0.15) !important;
         }
 
         .nav-btn i {
@@ -559,23 +531,27 @@
     </style>
 </head>
 <body>
+    <!-- Global Language Switcher -->
+    <div class="global-lang-switcher" style="position:fixed;top:15px;right:15px;z-index:9999;display:flex;gap:4px;background:rgba(26,29,46,0.95);backdrop-filter:blur(10px);border:1px solid #f7931a;border-radius:25px;padding:4px;box-shadow:0 4px 15px rgba(247,147,26,0.2);">
+        <button type="button" data-lang-switch="zh" data-lang="zh" class="lang-btn lang-switch-btn {{ 'active' if current_lang == 'zh' else 'inactive' }}" style="padding:6px 14px;font-size:0.85rem;font-weight:600;border:none;border-radius:20px;cursor:pointer;transition:all 0.3s ease;{% if current_lang == 'zh' %}background:linear-gradient(135deg,#f7931a 0%,#ffc107 100%);color:#000;{% else %}background:transparent;color:#adb5bd;{% endif %}">中文</button>
+        <button type="button" data-lang-switch="en" data-lang="en" class="lang-btn lang-switch-btn {{ 'active' if current_lang == 'en' else 'inactive' }}" style="padding:6px 14px;font-size:0.85rem;font-weight:600;border:none;border-radius:20px;cursor:pointer;transition:all 0.3s ease;{% if current_lang == 'en' %}background:linear-gradient(135deg,#f7931a 0%,#ffc107 100%);color:#000;{% else %}background:transparent;color:#adb5bd;{% endif %}">EN</button>
+    </div>
+
     <!-- Navigation -->
     <div class="container-fluid px-4">
         <nav class="navbar navbar-expand-lg">
             <div class="container-fluid">
-                <div class="navbar-brand d-flex align-items-center">
+                <div class="navbar-brand d-flex align-items-center" style="color: #f7931a !important;">
                     <i class="bi bi-bank2 me-2"></i>
                     {{ tr('hashinsight_treasury_management') }}
                 </div>
                 
                 <div class="d-flex align-items-center gap-3">
-                    <!-- Last Update Timestamp -->
                     <small class="text-muted">
                         <i class="bi bi-clock-history me-1"></i>
                         <span id="lastUpdateTime">Last update: --</span>
                     </small>
                     
-                    <!-- Alert Indicator -->
                     <div class="position-relative">
                         <button class="btn nav-btn" id="alertsBtn">
                             <i class="bi bi-bell"></i>
@@ -583,30 +559,11 @@
                         </button>
                     </div>
                     
-                    <!-- Language Switcher -->
-                    <div class="dropdown">
-                        <button type="button" class="btn nav-btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="languageDropdown">
-                            <i class="bi bi-globe me-1"></i>
-                            <span id="currentLangDisplay">{{ 'CN' if current_lang == 'zh' else 'EN' }}</span>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown" 
-                            style="background: var(--bg-secondary) !important; border: 1px solid rgba(116, 75, 162, 0.3) !important; z-index: 1050;">
-                            <li>
-                                <a class="dropdown-item" href="#" onclick="switchLanguage('zh')" 
-                                   style="color: white !important; padding: 12px 20px !important; display: block !important;">
-                                    <i class="bi bi-translate me-2"></i>中文
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="#" onclick="switchLanguage('en')" 
-                                   style="color: white !important; padding: 12px 20px !important; display: block !important;">
-                                    <i class="bi bi-translate me-2"></i>English
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
+                    <a href="{{ url_for('analytics_main') }}" class="btn nav-btn">
+                        <i class="bi bi-graph-up-arrow me-1"></i>
+                        {{ 'Analytics' if current_lang == 'en' else '数据分析' }}
+                    </a>
                     
-                    <!-- Back to Main -->
                     <a href="/main" class="btn nav-btn">
                         <i class="bi bi-house-door me-1"></i>
                         {{ '主页' if current_lang == 'zh' else 'Home' }}
