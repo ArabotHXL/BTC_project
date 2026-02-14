@@ -268,6 +268,18 @@ body {
     background: linear-gradient(45deg, #fd7e14, #f39c12);
 }
 
+.treasury-item {
+    background: linear-gradient(135deg, rgba(243, 156, 18, 0.15), rgba(247, 147, 26, 0.1));
+}
+
+.treasury-item::after {
+    background: linear-gradient(45deg, #f39c12, #f7931a, #e67e22);
+}
+
+.treasury-item .card-icon,
+.treasury-item .bi,
+.treasury-item i { color: #f39c12 !important; }
+
 .sla-nft-item {
     background: linear-gradient(135deg, rgba(106, 13, 173, 0.15), rgba(142, 68, 173, 0.1));
 }
@@ -738,6 +750,22 @@ body {
                 </h3>
                 <p class="card-description" data-i18n="analytics_platform_desc">
                     {% if current_lang == 'en' %}Advanced treasury management with 10-module AI trading algorithms and institutional-grade backtesting{% else %}高级资金管理，配备10模块AI交易算法和机构级回测{% endif %}
+                </p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Treasury管理 -->
+        {% if user_has_analytics_access() %}
+        <div class="dashboard-card treasury-item" onclick="location.href='{{ url_for('treasury_dashboard') }}'">
+            <div class="card-stats">BTC Treasury</div>
+            <div class="card-content">
+                <i class="bi bi-bank card-icon"></i>
+                <h3 class="card-title" data-i18n="treasury_management">
+                    {% if current_lang == 'en' %}Treasury Management{% else %}资金管理{% endif %}
+                </h3>
+                <p class="card-description" data-i18n="treasury_management_desc">
+                    {% if current_lang == 'en' %}BTC inventory tracking, cost basis analysis, sell strategy templates, and backtesting{% else %}BTC库存追踪、成本基准分析、卖出策略模板和回测{% endif %}
                 </p>
             </div>
         </div>
