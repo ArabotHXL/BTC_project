@@ -948,34 +948,34 @@
                                 <!-- API状态统计卡片 -->
                                 <div class="row mb-4">
                                     <div class="col-md-3">
-                                        <div class="card">
+                                        <div class="card" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(247,147,26,0.2);">
                                             <div class="card-body text-center">
-                                                <h6 class="card-title">API 状态</h6>
+                                                <h6 class="card-title">{% if current_lang == 'en' %}API Status{% else %}API 状态{% endif %}</h6>
                                                 <div id="deribitApiStatus" class="status-indicator status-online"></div>
-                                                <span id="deribitApiText" style="color: white;">已连接</span>
+                                                <span id="deribitApiText" style="color: white;">{% if current_lang == 'en' %}Connected{% else %}已连接{% endif %}</span>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
-                                        <div class="card">
+                                        <div class="card" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(247,147,26,0.2);">
                                             <div class="card-body text-center">
-                                                <h6 class="card-title">总交易量</h6>
+                                                <h6 class="card-title">{% if current_lang == 'en' %}Total Volume{% else %}总交易量{% endif %}</h6>
                                                 <div class="metric-value" id="deribitTotalTrades" style="color: white;">--</div>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
-                                        <div class="card">
+                                        <div class="card" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(247,147,26,0.2);">
                                             <div class="card-body text-center">
-                                                <h6 class="card-title">平均价格</h6>
+                                                <h6 class="card-title">{% if current_lang == 'en' %}Avg Price{% else %}平均价格{% endif %}</h6>
                                                 <div class="metric-value" id="deribitAvgPrice" style="color: white;">--</div>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
-                                        <div class="card">
+                                        <div class="card" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(247,147,26,0.2);">
                                             <div class="card-body text-center">
-                                                <h6 class="card-title">最新更新</h6>
+                                                <h6 class="card-title">{% if current_lang == 'en' %}Last Updated{% else %}最新更新{% endif %}</h6>
                                                 <div class="small" id="deribitLastUpdate" style="color: white;">--</div>
                                             </div>
                                         </div>
@@ -1817,7 +1817,7 @@
                 data: {
                     labels: [],
                     datasets: [{
-                        label: 'BTC 价格',
+                        label: currentLanguage === 'en' ? 'BTC Price' : 'BTC 价格',
                         data: [],
                         borderColor: '#48bb78',
                         backgroundColor: 'rgba(72, 187, 120, 0.1)',
@@ -2180,6 +2180,12 @@
                 var formattedHashrate = formatNumber(data.network_hashrate, 1);
                 console.log('Setting hashrate:', formattedHashrate);
                 networkHashrateElement.textContent = formattedHashrate;
+            }
+
+            var hashrateStatus = document.getElementById('hashrateStatus');
+            if (hashrateStatus && data.network_hashrate) {
+                hashrateStatus.textContent = getText('在线', 'Online');
+                hashrateStatus.className = 'metric-change price-up';
             }
 
             if (fearGreedIndexElement) {
@@ -3452,11 +3458,11 @@
 
         function getFearGreedLabel(index) {
             if (!index) return '--';
-            if (index <= 25) return '极度恐惧';
-            if (index <= 45) return '恐惧';
-            if (index <= 55) return '中性';
-            if (index <= 75) return '贪婪';
-            return '极度贪婪';
+            if (index <= 25) return getText('极度恐惧', 'Extreme Fear');
+            if (index <= 45) return getText('恐惧', 'Fear');
+            if (index <= 55) return getText('中性', 'Neutral');
+            if (index <= 75) return getText('贪婪', 'Greed');
+            return getText('极度贪婪', 'Extreme Greed');
         }
 
         function getRSISignal(rsi) {
