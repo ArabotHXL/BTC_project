@@ -2666,6 +2666,34 @@ def analytics_dashboard():
                           current_lang=lang,
                           tr=lambda key: get_translation(key, lang))
 
+@app.route('/treasury')
+@login_required
+@log_access_attempt('Treasury管理平台')
+def treasury_dashboard():
+    """HashInsight Treasury Management Platform - 独立资金管理页面"""
+    lang = request.args.get('lang')
+    if not lang:
+        lang = session.get('language', 'zh')
+    if lang not in ['zh', 'en']:
+        lang = 'zh'
+    session['language'] = lang
+    g.language = lang
+    
+    user_role = get_user_role(session.get('email'))
+    
+    if not user_has_analytics_access():
+        if g.language == 'en':
+            flash('Access denied. Treasury Management requires Owner privileges or Pro subscription.', 'danger')
+        else:
+            flash('访问被拒绝。资金管理平台需要拥有者权限或Pro订阅。', 'danger')
+        return redirect(url_for('index'))
+    
+    if not user_role:
+        user_role = 'customer'
+    
+    from translations import get_translation
+    return render_template('analytics_dashboard_new.html', current_lang=lang, user_role=user_role, tr=lambda key: get_translation(key, lang))
+
 # Treasury Management API Endpoints
 @app.route('/api/treasury/overview', methods=['GET'])
 @require_api_auth(required_permissions=['treasury'], allow_session_auth=True)
