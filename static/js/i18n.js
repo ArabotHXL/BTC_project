@@ -120,23 +120,24 @@
                 });
 
                 if (response.ok) {
+                    const i18nElements = document.querySelectorAll('[data-i18n]');
+                    if (i18nElements.length === 0) {
+                        window.location.reload();
+                        return true;
+                    }
+
                     const oldLang = this.currentLang;
                     this.currentLang = lang;
                     
-                    // Reload translations for new language (since API now returns single language)
                     await this.loadTranslations();
                     
-                    // Debug: check if translations are loaded correctly
                     this.debugTranslations();
                     
-                    // 更新页面上的所有翻译元素
                     this.updatePageTranslations();
                     
-                    // 更新HTML lang属性
                     document.documentElement.lang = lang;
                     document.body.dataset.lang = lang;
                     
-                    // 触发语言变化回调
                     this.onLanguageChange.forEach(callback => {
                         try {
                             callback(lang, oldLang);
@@ -145,7 +146,6 @@
                         }
                     });
                     
-                    // 更新语言切换按钮状态
                     this.updateLanguageButtons(lang);
                     
                     console.log('[i18n] Language switched from', oldLang, 'to', lang);

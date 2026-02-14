@@ -2041,7 +2041,7 @@
                         console.log('Updated report findings successfully');
                     } catch (findingsError) {
                         console.error('Error parsing key findings:', findingsError);
-                        reportFindingsElement.innerHTML = '<div class="text-muted">关键发现解析中...</div>';
+                        reportFindingsElement.innerHTML = '<div class="text-muted">' + getText('关键发现解析中...', 'Parsing key findings...') + '</div>';
                     }
                 } else {
                     console.warn('reportFindings element or findings data not available');
@@ -2123,7 +2123,7 @@
                         minute: '2-digit',
                         hour12: true
                     };
-                    reportTimestampElement.textContent = '生成时间: ' + date.toLocaleString(undefined, options);
+                    reportTimestampElement.textContent = getText('生成时间: ', 'Generated: ') + date.toLocaleString(undefined, options);
                     console.log('Updated timestamp successfully');
                 } else if (!reportTimestampElement) {
                     console.log('reportTimestamp element not found in template, skipping timestamp update');
@@ -2216,7 +2216,7 @@
                 if (data.btc_volume_24h && data.btc_volume_24h > 0) {
                     marketVolume.textContent = formatCurrency(data.btc_volume_24h);
                 } else {
-                    marketVolume.textContent = '数据收集中';
+                    marketVolume.textContent = getText('数据收集中', 'Collecting data');
                     marketVolume.className = 'text-muted';
                 }
             }
@@ -2228,7 +2228,7 @@
                     change1h.textContent = formatPercent(data.price_change_1h);
                     change1h.className = data.price_change_1h >= 0 ? 'price-up' : 'price-down';
                 } else {
-                    change1h.textContent = '数据收集中';
+                    change1h.textContent = getText('数据收集中', 'Collecting data');
                     change1h.className = 'text-muted';
                 }
             }
@@ -2239,7 +2239,7 @@
                     change7d.textContent = formatPercent(data.price_change_7d);
                     change7d.className = data.price_change_7d >= 0 ? 'price-up' : 'price-down';
                 } else {
-                    change7d.textContent = '数据收集中';
+                    change7d.textContent = getText('数据收集中', 'Collecting data');
                     change7d.className = 'text-muted';
                 }
             }
@@ -2255,7 +2255,7 @@
                 }
             }
 
-            document.getElementById('lastUpdate').textContent = '更新: ' + new Date().toLocaleTimeString();
+            document.getElementById('lastUpdate').textContent = getText('更新: ', 'Updated: ') + new Date().toLocaleTimeString();
 
             // Update mining decision support modules
             updateMiningDecisionModules(data);
@@ -2350,15 +2350,15 @@
                 }
                 if (expectedPaybackTime) {
                     if (!isFinite(paybackDays) || paybackDays <= 0) {
-                        expectedPaybackTime.textContent = '无收益';
+                        expectedPaybackTime.textContent = getText('无收益', 'No profit');
                     } else if (paybackDays < 365) {
-                        expectedPaybackTime.textContent = Math.round(paybackDays) + ' 天';
+                        expectedPaybackTime.textContent = Math.round(paybackDays) + getText(' 天', ' days');
                     } else {
-                        expectedPaybackTime.textContent = formatNumber(paybackDays / 365, 1) + ' 年';
+                        expectedPaybackTime.textContent = formatNumber(paybackDays / 365, 1) + getText(' 年', ' years');
                     }
                 }
                 if (availableMinerCount) {
-                    availableMinerCount.textContent = formatNumber(minerCount, 0) + ' 台 ' + selectedMiner.replace('Antminer ', '');
+                    availableMinerCount.textContent = formatNumber(minerCount, 0) + getText(' 台 ', ' units ') + selectedMiner.replace('Antminer ', '');
                 }
             }
         }
@@ -2678,8 +2678,8 @@
 
             // 更新UI状态
             generateBtn.disabled = true;
-            generateBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>生成中...';
-            statusDiv.innerHTML = '<i class="bi bi-cpu text-warning"></i> 正在执行5步生成流程...';
+            generateBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>' + getText('生成中...', 'Generating...');
+            statusDiv.innerHTML = '<i class="bi bi-cpu text-warning"></i> ' + getText('正在执行5步生成流程...', 'Executing 5-step generation process...');
 
             // 获取用户选择的输出格式和分发方式
             var outputFormats = [];
@@ -2716,13 +2716,13 @@
                     // 显示成功状态
                     statusDiv.innerHTML = '<div class="text-success">' +
                         '<i class="bi bi-check-circle-fill me-2"></i>' +
-                        '生成成功！' +
+                        getText('生成成功！', 'Generation successful!') +
                         '</div>' +
                         '<div class="small mt-1">' +
-                            '<div>准确度评分: <strong>' + result.summary.accuracy_score + '/100</strong></div>' +
-                            '<div>数据源: ' + result.summary.data_sources_count + '个</div>' +
-                            '<div>生成文件: ' + result.summary.files_generated + '个</div>' +
-                            (result.summary.distributions_sent > 0 ? '<div>已发送: ' + result.summary.distributions_sent + '个通知</div>' : '') +
+                            '<div>' + getText('准确度评分', 'Accuracy score') + ': <strong>' + result.summary.accuracy_score + '/100</strong></div>' +
+                            '<div>' + getText('数据源', 'Data sources') + ': ' + result.summary.data_sources_count + '</div>' +
+                            '<div>' + getText('生成文件', 'Files generated') + ': ' + result.summary.files_generated + '</div>' +
+                            (result.summary.distributions_sent > 0 ? '<div>' + getText('已发送', 'Sent') + ': ' + result.summary.distributions_sent + getText('个通知', ' notifications') + '</div>' : '') +
                         '</div>';
 
                     // 显示下载按钮
@@ -2732,13 +2732,13 @@
 
                     console.log('专业报告生成完成:', result);
                 } else {
-                    throw new Error(result.error || '报告生成失败');
+                    throw new Error(result.error || getText('报告生成失败', 'Report generation failed'));
                 }
                 }).catch(function(error) {
                 console.error('专业报告生成错误:', error);
                 statusDiv.innerHTML = '<div class="text-danger">' +
                     '<i class="bi bi-exclamation-triangle-fill me-2"></i>' +
-                    '生成失败: ' + error.message +
+                    getText('生成失败: ', 'Generation failed: ') + error.message +
                     '</div>';
                 }).finally(function() {
                 // 恢复按钮状态
@@ -2750,7 +2750,7 @@
         // 下载专业报告文件
         function downloadProfessionalReport(fileType) {
             console.log('Starting professional report download for:', fileType);
-            showSuccessMessage('正在生成' + fileType.toUpperCase() + '报告...');
+            showSuccessMessage(getText('正在生成', 'Generating ') + fileType.toUpperCase() + getText('报告...', ' report...'));
             
             fetch('/api/professional-report/download/' + fileType, {
                 method: 'POST',
@@ -2766,7 +2766,7 @@
                 console.log('Download response status:', response.status);
                 if (!response.ok) {
                     return response.text().then(function(text) {
-                        throw new Error('HTTP ' + response.status + ': ' + (text || '服务器错误'));
+                        throw new Error('HTTP ' + response.status + ': ' + (text || getText('服务器错误', 'Server error')));
                     });
                 }
                 
@@ -2801,7 +2801,7 @@
             })
             .catch(function(error) {
                 console.error('文件下载错误:', error);
-                showSuccessMessage('下载失败: ' + error.message);
+                showSuccessMessage(getText('下载失败: ', 'Download failed: ') + error.message);
             });
         }
 
@@ -2810,7 +2810,7 @@
             var originalText = reportButton.innerHTML;
 
             // 显示加载状态
-            reportButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>生成中...';
+            reportButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>' + getText('生成中...', 'Generating...');
             reportButton.disabled = true;
 
             // 调用详细报告API
@@ -2823,22 +2823,22 @@
                 }
             }).then(function(response) {
                 if (!response.ok) {
-                    throw new Error('详细报告生成失败');
+                    throw new Error(getText('详细报告生成失败', 'Detailed report generation failed'));
                 }
                 return response.json();
             }).then(function(data) {
                 if (data.success && data.detailed_report) {
                     showDetailedReportModal(data.detailed_report);
                 } else {
-                    throw new Error(data.error || '详细报告生成失败');
+                    throw new Error(data.error || getText('详细报告生成失败', 'Detailed report generation failed'));
                 }
             }).catch(function(error) {
-                console.error('详细报告生成错误:', error);
-                console.error('错误详情:', error.message);
+                console.error('Detailed report generation error:', error);
+                console.error('Error details:', error.message);
 
-                var errorMessage = '详细报告生成失败，请稍后重试。';
+                var errorMessage = getText('详细报告生成失败，请稍后重试。', 'Detailed report generation failed. Please try again later.');
                 if (error.message) {
-                    errorMessage += '\n错误信息: ' + error.message;
+                    errorMessage += '\n' + getText('错误信息: ', 'Error: ') + error.message;
                 }
                 alert(errorMessage);
             }).finally(function() {
@@ -2944,10 +2944,10 @@
                                         '<div class="mb-2">' +
                                             '<i class="bi bi-cpu fs-1 text-info"></i>' +
                                         '</div>' +
-                                        '<div class="fw-bold text-light mb-1">推荐矿机</div>' +
+                                        '<div class="fw-bold text-light mb-1">' + getText('推荐矿机', 'Recommended Miner') + '</div>' +
                                         '<div class="fs-6 text-info fw-semibold">' + best.miner_model + '</div>' +
                                         '<div class="small text-muted mt-2">' +
-                                            '电价: <span class="text-warning">$' + best.electricity_cost + '</span>/kWh' +
+                                            getText('电价', 'Electricity') + ': <span class="text-warning">$' + best.electricity_cost + '</span>/kWh' +
                                         '</div>' +
                                     '</div>' +
                                 '</div>' +
@@ -2956,12 +2956,12 @@
                                         '<div class="mb-2">' +
                                             '<i class="bi bi-currency-dollar fs-1 text-success"></i>' +
                                         '</div>' +
-                                        '<div class="fw-bold text-light mb-1">收益分析</div>' +
+                                        '<div class="fw-bold text-light mb-1">' + getText('收益分析', 'Profit Analysis') + '</div>' +
                                         '<div class="fs-6 text-success fw-semibold">' +
-                                            '$' + best.monthly_profit.toFixed(0) + '/月' +
+                                            '$' + best.monthly_profit.toFixed(0) + getText('/月', '/mo') +
                                         '</div>' +
                                         '<div class="small text-muted mt-2">' +
-                                            '日收益: <span class="text-success">$' + best.daily_profit.toFixed(2) + '</span>' +
+                                            getText('日收益', 'Daily profit') + ': <span class="text-success">$' + best.daily_profit.toFixed(2) + '</span>' +
                                         '</div>' +
                                     '</div>' +
                                 '</div>' +
@@ -2970,12 +2970,12 @@
                                         '<div class="mb-2">' +
                                             '<i class="bi bi-percent fs-1 text-warning"></i>' +
                                         '</div>' +
-                                        '<div class="fw-bold text-light mb-1">投资回报</div>' +
+                                        '<div class="fw-bold text-light mb-1">' + getText('投资回报', 'ROI') + '</div>' +
                                         '<div class="fs-6 text-warning fw-semibold">' +
-                                            '' + best.annual_roi.toFixed(1) + '% 年化' +
+                                            '' + best.annual_roi.toFixed(1) + getText('% 年化', '% annual') +
                                         '</div>' +
                                         '<div class="small text-muted mt-2">' +
-                                            '回本: <span class="text-info">' + best.roi_months.toFixed(1) + '个月</span>' +
+                                            getText('回本', 'Payback') + ': <span class="text-info">' + best.roi_months.toFixed(1) + getText('个月', ' months') + '</span>' +
                                         '</div>' +
                                     '</div>' +
                                 '</div>' +
@@ -2984,9 +2984,9 @@
                                 '<div class="col-12">' +
                                     '<div class="alert alert-info mb-0 border-info bg-info bg-opacity-10">' +
                                         '<i class="bi bi-lightbulb"></i>' +
-                                        '<strong>盈亏平衡电价:</strong> ' +
+                                        '<strong>' + getText('盈亏平衡电价', 'Breakeven electricity price') + ':</strong> ' +
                                         '<span class="fw-bold text-info">' + best.breakeven_electricity_cost.toFixed(4) + '/kWh</span>' +
-                                        '<span class="small text-muted ms-2">保持盈利的最高电价</span>' +
+                                        '<span class="small text-muted ms-2">' + getText('保持盈利的最高电价', 'Maximum electricity price to stay profitable') + '</span>' +
                                     '</div>' +
                                 '</div>' +
                             '</div>' +
@@ -3042,15 +3042,15 @@
                 alerts.push({
                     type: 'warning',
                     icon: 'exclamation-triangle',
-                    title: '价格警报',
-                    message: 'BTC突破$' + formatNumber(price, 0) + '，接近历史高位，注意回调风险'
+                    title: getText('价格警报', 'Price Alert'),
+                    message: getText('BTC突破$' + formatNumber(price, 0) + '，接近历史高位，注意回调风险', 'BTC surpassed $' + formatNumber(price, 0) + ', near all-time high, watch for pullback risk')
                 });
             } else if (price < 95000) {
                 alerts.push({
                     type: 'info',
                     icon: 'info-circle',
-                    title: '价格机会',
-                    message: 'BTC价格$' + formatNumber(price, 0) + '，可能是较好的入场时机'
+                    title: getText('价格机会', 'Price Opportunity'),
+                    message: getText('BTC价格$' + formatNumber(price, 0) + '，可能是较好的入场时机', 'BTC price $' + formatNumber(price, 0) + ', may be a good entry point')
                 });
             }
 
@@ -3059,15 +3059,15 @@
                 alerts.push({
                     type: 'success',
                     icon: 'check-circle',
-                    title: '网络强劲',
+                    title: getText('网络强劲', 'Strong Network'),
                     message: '{{ t("network_hashrate") }}' + formatNumber(hashrate, 1) + ' EH/s，{{ t("network_security_high") if current_lang == "zh" else "extremely high network security" }}'
                 });
             } else if (hashrate < 600) {
                 alerts.push({
                     type: 'warning',
                     icon: 'exclamation-triangle',
-                    title: '算力警报',
-                    message: '网络算力' + formatNumber(hashrate, 1) + ' EH/s 偏低，请关注网络稳定性'
+                    title: getText('算力警报', 'Hashrate Alert'),
+                    message: getText('网络算力' + formatNumber(hashrate, 1) + ' EH/s 偏低，请关注网络稳定性', 'Network hashrate ' + formatNumber(hashrate, 1) + ' EH/s is low, monitor network stability')
                 });
             }
 
@@ -3076,23 +3076,23 @@
                 alerts.push({
                     type: 'warning',
                     icon: 'exclamation-triangle',
-                    title: '贪婪警告',
-                    message: '恐惧贪婪指数' + fearGreed + '（极度贪婪），市场可能过热'
+                    title: getText('贪婪警告', 'Greed Warning'),
+                    message: getText('恐惧贪婪指数' + fearGreed + '（极度贪婪），市场可能过热', 'Fear & Greed Index ' + fearGreed + ' (Extreme Greed), market may be overheated')
                 });
             } else if (fearGreed < 25) {
                 alerts.push({
                     type: 'info',
                     icon: 'info-circle',
-                    title: '恐惧机会',
-                    message: '恐惧贪婪指数' + fearGreed + '（极度恐惧），可能是投资机会'
+                    title: getText('恐惧机会', 'Fear Opportunity'),
+                    message: getText('恐惧贪婪指数' + fearGreed + '（极度恐惧），可能是投资机会', 'Fear & Greed Index ' + fearGreed + ' (Extreme Fear), may be an investment opportunity')
                 });
             }
 
             return alerts.length > 0 ? alerts : [{
                 type: 'info',
                 icon: 'info-circle',
-                title: '市场稳定',
-                message: '当前市场指标正常，无特殊警报'
+                title: getText('市场稳定', 'Market Stable'),
+                message: getText('当前市场指标正常，无特殊警报', 'Current market indicators are normal, no special alerts')
             }];
         }
 
@@ -3103,9 +3103,9 @@
             // 显示加载状态
             recommendationsContainer.innerHTML = '<div class="loading-spinner text-center">' +
                 '<div class="spinner-border text-primary" role="status">' +
-                    '<span class="visually-hidden">生成专业AI建议...</span>' +
+                    '<span class="visually-hidden">' + getText('生成专业AI建议...', 'Generating professional AI recommendations...') + '</span>' +
                 '</div>' +
-                '<p class="mt-2 text-muted">正在生成专业投资建议...</p>' +
+                '<p class="mt-2 text-muted">' + getText('正在生成专业投资建议...', 'Generating professional investment recommendations...') + '</p>' +
                 '</div>';
 
             generateAIRecommendations(marketData)
@@ -3125,8 +3125,8 @@
             .catch(function(error) {
                 console.error('Error updating AI recommendations:', error);
                 recommendationsContainer.innerHTML = '<div class="text-danger">' +
-                    '<h6><i class="bi bi-exclamation-triangle"></i> 加载失败</h6>' +
-                    '<p class="small">无法生成AI建议，请稍后重试</p>' +
+                    '<h6><i class="bi bi-exclamation-triangle"></i> ' + getText('加载失败', 'Loading failed') + '</h6>' +
+                    '<p class="small">' + getText('无法生成AI建议，请稍后重试', 'Unable to generate AI recommendations, please try again later') + '</p>' +
                     '</div>';
             });
         }
@@ -3154,7 +3154,7 @@
                         recommendations.push({
                             type: 'success',
                             icon: 'arrow-up-circle',
-                            category: '市场机会',
+                            category: getText('市场机会', 'Market Opportunity'),
                             message: message
                         });
                     }
@@ -3167,7 +3167,7 @@
                         recommendations.push({
                             type: 'warning',
                             icon: 'exclamation-circle',
-                            category: '风险提醒',
+                            category: getText('风险提醒', 'Risk Warning'),
                             message: message
                         });
                     }
@@ -3180,7 +3180,7 @@
                         recommendations.push({
                             type: 'info',
                             icon: 'gear',
-                            category: '成本优化',
+                            category: getText('成本优化', 'Cost Optimization'),
                             message: message
                         });
                     }
@@ -3191,8 +3191,8 @@
                     recommendations.push({
                         type: 'info',
                         icon: 'check-circle',
-                        category: '准确度评分',
-                        message: '数据准确度评分: ' + reportData.accuracy_score.toFixed(1) + '/100 (数据一致性 40% + 模型误差 30% + 价格波动 20% + 透明度 10%)'
+                        category: getText('准确度评分', 'Accuracy Score'),
+                        message: getText('数据准确度评分: ' + reportData.accuracy_score.toFixed(1) + '/100 (数据一致性 40% + 模型误差 30% + 价格波动 20% + 透明度 10%)', 'Data accuracy score: ' + reportData.accuracy_score.toFixed(1) + '/100 (Data consistency 40% + Model error 30% + Price volatility 20% + Transparency 10%)')
                     });
                 }
 
@@ -3220,8 +3220,8 @@
                 recommendations.push({
                     type: 'success',
                     icon: 'arrow-up-circle',
-                    category: '市场机会',
-                    message: '当前恐惧贪婪指数' + fearGreed + '，网络算力稳定在' + formatNumber(hashrate, 1) + ' EH/s，建议保持或增加投资运营。'
+                    category: getText('市场机会', 'Market Opportunity'),
+                    message: getText('当前恐惧贪婪指数' + fearGreed + '，网络算力稳定在' + formatNumber(hashrate, 1) + ' EH/s，建议保持或增加投资运营。', 'Current Fear & Greed Index ' + fearGreed + ', network hashrate stable at ' + formatNumber(hashrate, 1) + ' EH/s, recommend maintaining or increasing investment operations.')
                 });
             }
 
@@ -3229,8 +3229,8 @@
                 recommendations.push({
                     type: 'warning',
                     icon: 'exclamation-circle',
-                    category: '风险提醒',
-                    message: 'BTC价格已达$' + formatNumber(price, 0) + '，建议适当控制仓位，分批投资降低风险。'
+                    category: getText('风险提醒', 'Risk Warning'),
+                    message: getText('BTC价格已达$' + formatNumber(price, 0) + '，建议适当控制仓位，分批投资降低风险。', 'BTC price reached $' + formatNumber(price, 0) + ', recommend controlling position size and investing in batches to reduce risk.')
                 });
             }
 
@@ -3365,11 +3365,11 @@
             if (indicator) {
                 // 闪烁效果显示更新
                 indicator.style.backgroundColor = '#28a745';
-                indicator.textContent = '数据更新中...';
+                indicator.textContent = getText('数据更新中...', 'Updating data...');
 
                 setTimeout(function() {
                     indicator.style.backgroundColor = '#198754';
-                    indicator.textContent = '实时更新';
+                    indicator.textContent = getText('实时更新', 'Live update');
                 }, 1000);
             }
 
@@ -3384,13 +3384,13 @@
                     minute: '2-digit',
                     second: '2-digit'
                 };
-                timeElement.textContent = '最后更新: ' + now.toLocaleString('zh-CN', timeOptions);
+                timeElement.textContent = getText('最后更新: ', 'Last updated: ') + now.toLocaleString(currentLanguage === 'zh' ? 'zh-CN' : 'en-US', timeOptions);
             }
         }
 
         function updateSettings() {
             updateRefreshInterval();
-            showSuccessMessage('设置已保存');
+            showSuccessMessage(getText('设置已保存', 'Settings saved'));
         }
 
         // Report page functions
@@ -3481,10 +3481,10 @@
 
             if (isOnline) {
                 indicator.className = 'status-indicator status-online';
-                text.textContent = '实时连接';
+                text.textContent = getText('实时连接', 'Live connection');
             } else {
                 indicator.className = 'status-indicator status-offline';
-                text.textContent = '连接异常';
+                text.textContent = getText('连接异常', 'Connection error');
             }
         }
 
@@ -4498,7 +4498,7 @@
                 console.error('Chart.js未正确加载');
                 // 显示错误信息
                 const errorDiv = document.createElement('div');
-                errorDiv.innerHTML = '<div class="alert alert-warning text-center">Chart.js正在加载中，请稍候...</div>';
+                errorDiv.innerHTML = '<div class="alert alert-warning text-center">' + getText('Chart.js正在加载中，请稍候...', 'Chart.js is loading, please wait...') + '</div>';
                 ctx.parentNode.appendChild(errorDiv);
                 return;
             }
