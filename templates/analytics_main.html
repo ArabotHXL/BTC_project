@@ -4708,7 +4708,7 @@
                             </div>
                             <div>
                                 <small class="text-muted">${currentLang === 'en' ? 'Confidence' : '置信度'}</small>
-                                <h6 class="mb-0">${data.forecasts[0].model_accuracy && data.forecasts[0].model_accuracy.price_rmse ? (100 - data.forecasts[0].model_accuracy.price_rmse).toFixed(0) + '%' : '95%'}</h6>
+                                <h6 class="mb-0">${data.forecasts[0].model_accuracy && data.forecasts[0].model_accuracy.price_rmse && lastPrediction.btc_price_predicted ? Math.max(0, (1 - data.forecasts[0].model_accuracy.price_rmse / lastPrediction.btc_price_predicted) * 100).toFixed(1) + '%' : '95%'}</h6>
                             </div>
                         </div>
                     `;
