@@ -1891,9 +1891,14 @@
                     this.classList.add('active');
                     var tabId = this.getAttribute('data-tab');
                     var targetTab = document.getElementById(tabId);
-                    targetTab.classList.add('active');
-                    targetTab.style.setProperty('display', 'block', 'important');
+                    if (targetTab) {
+                        targetTab.classList.add('active');
+                        targetTab.style.setProperty('display', 'block', 'important');
+                    }
                     
+                    if (typeof showTab === 'function') {
+                        showTab(tabId);
+                    }
                     
                     window.scrollTo(0, 0);
                     document.querySelector('.main-content').scrollTop = 0;
