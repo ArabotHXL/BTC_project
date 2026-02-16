@@ -1,0 +1,84 @@
+你现在是我的全栈工程师（Flask + Bootstrap）。目标：把“BTC Market Intel（市场情报/新闻监控）”完整集成到我现有 Flask 应用里，作为 Analytics 下的一个正式功能页面，让用户用它了解 BTC 市场新闻与趋势。
+
+【输入/现状】
+- 这是一个 Flask 项目，已有 analytics 页面（analytics_main / technical_analysis / deribit_analysis 等）。
+- 当前 workspace 中我已经上传了：hashinsight_market_intel_full_done.zip（如果存在）以及我的原始项目文件。
+- 项目可能存在模板文件不在 templates/ 目录的问题；请自动修复，让 Flask render_template 正常工作。
+
+【必须交付的功能（Definition of Done）】
+1) 新增 UI 页面：GET /analytics/market-intel
+   - 页面为深色风格，支持 window_hours（时间窗口）、关键词 q、标签 tags 筛选
+   - 显示：News list + Story clusters + Trends（热词/标签/来源）+ Bookmarks + Alerts
+2) 新增 API：
+   - GET /api/market-intel/news?window_hours=24&q=etf&tags=mining,regulation&limit=200
+   - GET /api/market-intel/trends?window_hours=24&q=&tags=
+   - GET/POST/DELETE /api/market-intel/bookmarks
+   - GET/POST/DELETE /api/market-intel/alerts
+   - GET /api/market-intel/alerts/matches?window_hours=24
+3) 数据源聚合（服务端执行，禁止把 API Key 暴露给浏览器）：
+   - 默认 RSS：CoinDesk / Cointelegraph / Bitcoin.com
+   - 可选 Finnhub：读取环境变量 FINNHUB_TOKEN 才启用
+   - 可选 GDELT：环境变量 GDELT_ENABLED=1 时启用（默认启用）；支持 GDELT_QUERY / GDELT_MAXRECORDS
+   - 需要：去重、打标签、相关性评分、story 聚合、缓存（TTL 默认 60s）
+4) Bookmarks + Alerts 必须持久化（SQLite），默认 DB 文件 market_intel.db（可通过 MARKET_INTEL_SQLITE_PATH 覆盖）
+5) 在 analytics 主页面/侧边栏/导航中加入 “Market Intel” 入口链接，确保用户能从 Analytics 进入
+6) 能在 Replit 直接运行（0.0.0.0 对外），能打开页面并正常拉到新闻数据
+
+【执行步骤（请按顺序做，不要反复问我确认）】
+A. 集成代码
+- 如果 workspace 有 hashinsight_market_intel_full_done.zip：
+  1) 解压到临时目录
+  2) 把其中新增/修改的文件合并到当前项目（不要覆盖我已有的业务逻辑，除非是模板路径修复/蓝图注册必须改）
+  3) 重点合并这些文件/目录（如果不存在就创建）：
+     - routes/market_intel_routes.py
+     - services/market_intel_service.py
+     - services/market_intel_store.py
+     - templates/market_intel.html
+     - static/js/market-intel.js
+     - static/css/market-intel.css
+     - templates/analytics_main.html（只加入口链接）
+- 若 zip 不存在，则按 README_MarketIntel.md 的规范自行创建以上文件，并严格实现 API 行为。
+
+B. Flask 模板/静态目录修复
+- 确保 Flask 的模板目录为 templates/，静态目录为 static/
+- 把 analytics_main.html / technical_analysis.html / deribit_analysis.html 等模板文件放到 templates/
+- 确保 app.py 的 render_template 都能找到模板，不再报 TemplateNotFound
+
+C. Blueprint 注册
+- 在 app.py 中注册 market_intel_bp（Blueprint 名称：market_intel）
+- 保持现有 auth/login_required/RBAC 兼容：
+  - 如果项目里有 auth.login_required，则沿用
+  - 如果没有，则 market_intel_routes.py 里的 fallback 不应报错
+
+D. 依赖与运行
+- 添加/更新 requirements.txt（或 pyproject）确保可 pip 安装：
+  - Flask
+  - requests
+  - feedparser（建议安装；如果不装也要有 XML fallback）
+- Replit 运行方式：
+  - 推荐：python app.py 或 flask run --host 0.0.0.0 --port 3000（按 Replit 默认端口）
+  - 若项目已有启动脚本，沿用但保证端口/host 可对外
+
+E. 环境变量（用 Replit Secrets）
+- MARKET_INTEL_RSS_URLS（可选，不填用默认）
+- FINNHUB_TOKEN（可选，不填则跳过 Finnhub）
+- GDELT_ENABLED（默认 1；如要关闭设置为 0）
+- GDELT_QUERY（默认 bitcoin OR btc OR cryptocurrency）
+- GDELT_MAXRECORDS（默认 50）
+- MARKET_INTEL_CACHE_TTL_SEC（默认 60）
+- MARKET_INTEL_SQLITE_PATH（默认 market_intel.db）
+
+F. 自测/验收
+- 启动服务后访问：
+  1) /analytics/market-intel 页面能加载（如果需要登录，用现有登录流程登录即可）
+  2) 打开 DevTools Network：/api/market-intel/news 返回 JSON，items 和 stories 非空（允许偶尔为空但不能报错）
+  3) 点击 Bookmark（收藏）后，再 GET bookmarks 能看到
+  4) 创建 Alert 后，再 GET alerts/matches 有返回结构 matches
+  5) tags/q/window_hours 筛选能生效
+
+【输出要求】
+- 给我一个简短的变更总结：
+  - 改了哪些文件、为什么
+  - 如何在 Replit 里启动
+  - 需要配置哪些 Secrets（哪些可选）
+- 不要写长篇解释，不要让我手动补代码；把工程做到可跑可用为止。
