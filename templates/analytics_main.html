@@ -593,7 +593,7 @@
                     <a class="nav-link" href="#market" data-tab="market">
                         <i class="bi bi-graph-up"></i> {% if current_lang == 'en' %}Market Data{% else %}市场数据{% endif %}
                     </a>
-                    <a class="nav-link" href="{{ url_for('market_intel.market_intel_page') }}">
+                    <a class="nav-link" href="#market-intel" data-tab="market-intel">
                         <i class="bi bi-newspaper"></i> {% if current_lang == 'en' %}Market Intel{% else %}市场情报{% endif %}
                     </a>
                     <!-- Technical Analysis - Temporarily hidden
@@ -1660,6 +1660,148 @@
                                         <i class="bi bi-arrow-clockwise"></i> 立即刷新
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Market Intel Tab -->
+                <div id="market-intel" class="analytics-tab">
+                    <h4 class="mb-4">
+                        <i class="bi bi-newspaper"></i> {% if current_lang == 'en' %}BTC Market Intel{% else %}BTC 市场情报{% endif %}
+                    </h4>
+
+                    <!-- Controls -->
+                    <div class="card mb-3" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(247,147,26,0.2);">
+                        <div class="card-body">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-md-3">
+                                    <label class="form-label small text-muted">{% if current_lang == 'en' %}Window{% else %}时间窗口{% endif %}</label>
+                                    <select class="form-select form-select-sm bg-dark text-light" id="miWindowHours" style="border-color: rgba(247,147,26,0.3);">
+                                        <option value="1">1h</option>
+                                        <option value="6">6h</option>
+                                        <option value="24" selected>24h</option>
+                                        <option value="72">72h</option>
+                                        <option value="168">7d</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label small text-muted">{% if current_lang == 'en' %}Search{% else %}搜索{% endif %}</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text bg-dark text-light" style="border-color: rgba(247,147,26,0.3);"><i class="bi bi-search"></i></span>
+                                        <input class="form-control bg-dark text-light" id="miQuery" placeholder="{% if current_lang == 'en' %}Keywords: ETF/difficulty/SEC...{% else %}关键词：ETF/难度/SEC...{% endif %}" style="border-color: rgba(247,147,26,0.3);">
+                                        <button class="btn btn-sm" id="miBtnSearch" style="background: rgba(247,147,26,0.2); border: 1px solid rgba(247,147,26,0.3); color: #f7931a;">{% if current_lang == 'en' %}Apply{% else %}筛选{% endif %}</button>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small text-muted">{% if current_lang == 'en' %}Tags{% else %}标签{% endif %}</label>
+                                    <div class="d-flex flex-wrap gap-1" id="miTagPills"></div>
+                                </div>
+                            </div>
+                            <div class="mt-2 d-flex justify-content-between align-items-center">
+                                <span class="small text-muted" id="miMetaLine">--</span>
+                                <button class="btn btn-sm" id="miBtnRefresh" style="background: rgba(247,147,26,0.2); border: 1px solid rgba(247,147,26,0.3); color: #f7931a;">
+                                    <i class="bi bi-arrow-clockwise"></i> {% if current_lang == 'en' %}Refresh{% else %}刷新{% endif %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <!-- Left: Stories + News -->
+                        <div class="col-lg-8">
+                            <!-- Stories -->
+                            <div class="card mb-3" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(247,147,26,0.2);">
+                                <div class="card-header d-flex justify-content-between align-items-center" style="background: rgba(247,147,26,0.08); border-bottom: 1px solid rgba(247,147,26,0.2);">
+                                    <span><i class="bi bi-layers"></i> {% if current_lang == 'en' %}Story Clusters{% else %}事件簇{% endif %}</span>
+                                    <span class="small text-muted" id="miStoryCount">--</span>
+                                </div>
+                                <div class="card-body">
+                                    <div id="miStories" class="vstack gap-2"></div>
+                                </div>
+                            </div>
+
+                            <!-- Latest News -->
+                            <div class="card" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(247,147,26,0.2);">
+                                <div class="card-header d-flex justify-content-between align-items-center" style="background: rgba(247,147,26,0.08); border-bottom: 1px solid rgba(247,147,26,0.2);">
+                                    <span><i class="bi bi-lightning"></i> {% if current_lang == 'en' %}Latest News{% else %}最新新闻{% endif %}</span>
+                                    <span class="small text-muted" id="miNewsCount">--</span>
+                                </div>
+                                <div class="card-body">
+                                    <div id="miNewsList" class="vstack gap-2"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right: Trends + Bookmarks + Alerts -->
+                        <div class="col-lg-4">
+                            <!-- Trends -->
+                            <div class="card mb-3" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(247,147,26,0.2);">
+                                <div class="card-header" style="background: rgba(247,147,26,0.08); border-bottom: 1px solid rgba(247,147,26,0.2);">
+                                    <i class="bi bi-activity"></i> {% if current_lang == 'en' %}Trends{% else %}热词与分布{% endif %}
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-2">
+                                        <div class="small text-muted">{% if current_lang == 'en' %}Top Tags{% else %}标签分布{% endif %}</div>
+                                        <div id="miTopTags" class="d-flex flex-wrap gap-1 mt-1"></div>
+                                    </div>
+                                    <div>
+                                        <div class="small text-muted">{% if current_lang == 'en' %}Top Keywords{% else %}热词{% endif %}</div>
+                                        <div id="miTopKeywords" class="d-flex flex-wrap gap-1 mt-1"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Bookmarks -->
+                            <div class="card mb-3" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(247,147,26,0.2);">
+                                <div class="card-header d-flex justify-content-between align-items-center" style="background: rgba(247,147,26,0.08); border-bottom: 1px solid rgba(247,147,26,0.2);">
+                                    <span><i class="bi bi-bookmark-star"></i> {% if current_lang == 'en' %}Bookmarks{% else %}收藏{% endif %}</span>
+                                    <button class="btn btn-sm" id="miBtnLoadBookmarks" style="background: rgba(247,147,26,0.15); border: 1px solid rgba(247,147,26,0.3); color: #f7931a;"><i class="bi bi-arrow-repeat"></i></button>
+                                </div>
+                                <div class="card-body">
+                                    <div id="miBookmarkList" class="vstack gap-2 small"></div>
+                                </div>
+                            </div>
+
+                            <!-- Alerts -->
+                            <div class="card mb-3" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(247,147,26,0.2);">
+                                <div class="card-header" style="background: rgba(247,147,26,0.08); border-bottom: 1px solid rgba(247,147,26,0.2);">
+                                    <i class="bi bi-bell"></i> {% if current_lang == 'en' %}Alert Rules{% else %}订阅/告警规则{% endif %}
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-2">
+                                        <div class="input-group input-group-sm">
+                                            <input class="form-control bg-dark text-light" id="miAlertName" placeholder="{% if current_lang == 'en' %}Alert name{% else %}规则名称{% endif %}" style="border-color: rgba(247,147,26,0.3);">
+                                            <button class="btn btn-success btn-sm" id="miBtnAddAlert"><i class="bi bi-plus"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">{% if current_lang == 'en' %}Keywords (comma-separated){% else %}关键词（逗号分隔）{% endif %}</label>
+                                        <input class="form-control form-control-sm bg-dark text-light" id="miAlertKeywords" placeholder="etf, sec, difficulty" style="border-color: rgba(247,147,26,0.3);">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">{% if current_lang == 'en' %}Tags (comma-separated){% else %}标签（逗号分隔）{% endif %}</label>
+                                        <input class="form-control form-control-sm bg-dark text-light" id="miAlertTags" placeholder="mining, regulation, etf" style="border-color: rgba(247,147,26,0.3);">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label small text-muted">{% if current_lang == 'en' %}Min relevance score{% else %}最低相关性分数{% endif %}</label>
+                                        <input type="number" step="0.1" class="form-control form-control-sm bg-dark text-light" id="miAlertMinScore" value="0.8" style="border-color: rgba(247,147,26,0.3);">
+                                    </div>
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <button class="btn btn-sm" id="miBtnLoadAlerts" style="background: rgba(247,147,26,0.15); border: 1px solid rgba(247,147,26,0.3); color: #f7931a;">{% if current_lang == 'en' %}Load Alerts{% else %}加载规则{% endif %}</button>
+                                        <button class="btn btn-sm" id="miBtnCheckAlerts" style="background: rgba(0,229,255,0.15); border: 1px solid rgba(0,229,255,0.3); color: #00e5ff;">{% if current_lang == 'en' %}Check Matches{% else %}检查命中{% endif %}</button>
+                                    </div>
+                                    <div id="miAlertList" class="vstack gap-2 small"></div>
+                                    <div class="mt-2" id="miAlertMatches"></div>
+                                </div>
+                            </div>
+
+                            <div class="small text-muted">
+                                {% if current_lang == 'en' %}
+                                Tip: Default sources are RSS (CoinDesk/Cointelegraph/Bitcoin.com). Optional: Finnhub (set FINNHUB_TOKEN). Optional: GDELT (GDELT_ENABLED=1).
+                                {% else %}
+                                提示：默认数据源包含 RSS（CoinDesk/Cointelegraph/Bitcoin.com），可选 Finnhub（设置 FINNHUB_TOKEN），可选 GDELT（GDELT_ENABLED=1）。
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -4243,6 +4385,8 @@
                 initTechnicalAnalysis();
             } else if (tabName === 'reports') {
                 updateReportsDisplay();
+            } else if (tabName === 'market-intel') {
+                if (typeof initMarketIntel === 'function') initMarketIntel();
             }
         }
         
@@ -4970,6 +5114,350 @@
             </div>
         </div>
     </footer>
+
+    <!-- Market Intel Tab JavaScript -->
+    <script>
+    var _miInitialized = false;
+    function initMarketIntel() {
+        if (_miInitialized) return;
+        _miInitialized = true;
+        console.log('Initializing Market Intel tab...');
+        
+        var LANG = '{{ current_lang }}' || 'en';
+        var el = function(id) { return document.getElementById(id); };
+        var fmtTs = function(ts) { try { return new Date(ts * 1000).toLocaleString(); } catch(e) { return String(ts); } };
+        var t = function(zh, en) { return LANG === 'zh' ? zh : en; };
+        
+        var MI_TAGS = ['btc', 'mining', 'etf', 'regulation', 'macro', 'exchange', 'hack', 'stablecoin', 'energy'];
+        var miState = { selectedTags: new Set(), bookmarks: [], alerts: [] };
+        
+        function renderMiTagPills() {
+            var c = el('miTagPills'); if (!c) return;
+            c.innerHTML = '';
+            MI_TAGS.forEach(function(tag) {
+                var b = document.createElement('button');
+                b.className = 'btn btn-sm ' + (miState.selectedTags.has(tag) ? 'btn-primary' : 'btn-outline-secondary');
+                b.textContent = tag;
+                b.style.cssText = miState.selectedTags.has(tag) ? 'background:#f7931a;border-color:#f7931a;color:#000;' : '';
+                b.addEventListener('click', function() {
+                    if (miState.selectedTags.has(tag)) miState.selectedTags.delete(tag);
+                    else miState.selectedTags.add(tag);
+                    renderMiTagPills();
+                    miRefresh();
+                });
+                c.appendChild(b);
+            });
+        }
+        
+        function miApiGet(path) {
+            return fetch(path, { credentials: 'include' }).then(function(r) {
+                if (!r.ok) throw new Error('API error ' + r.status);
+                return r.json();
+            });
+        }
+        
+        function miApiJson(path, method, body) {
+            return fetch(path, {
+                method: method,
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body || {})
+            }).then(function(r) {
+                if (!r.ok) throw new Error('API error ' + r.status);
+                return r.json();
+            });
+        }
+        
+        function miCurrentQuery() {
+            var wh = parseInt((el('miWindowHours') || {}).value || '24', 10);
+            var q = ((el('miQuery') || {}).value || '').trim();
+            var tags = Array.from(miState.selectedTags.values()).join(',');
+            return { windowHours: wh, q: q, tags: tags };
+        }
+        
+        function miRenderBadges(tags, container) {
+            (tags || []).forEach(function(tag) {
+                var s = document.createElement('span');
+                s.className = 'badge rounded-pill me-1';
+                s.style.cssText = 'background:rgba(247,147,26,0.18);border:1px solid rgba(247,147,26,0.35);color:#fff;';
+                s.textContent = tag;
+                container.appendChild(s);
+            });
+        }
+        
+        function miMakeBookmarkBtn(item) {
+            var btn = document.createElement('button');
+            btn.className = 'btn btn-outline-light btn-sm';
+            btn.innerHTML = '<i class="bi bi-bookmark-plus"></i>';
+            btn.title = t('收藏', 'Bookmark');
+            btn.addEventListener('click', function() {
+                miApiJson('/api/market-intel/bookmarks', 'POST', { item: item })
+                    .then(function() { miLoadBookmarks(); })
+                    .catch(function(e) { alert('Bookmark failed: ' + e.message); });
+            });
+            return btn;
+        }
+        
+        function miRenderStories(stories) {
+            var c = el('miStories'); if (!c) return;
+            c.innerHTML = '';
+            var countEl = el('miStoryCount');
+            if (countEl) countEl.textContent = t('事件簇', 'Clusters') + ': ' + (stories ? stories.length : 0);
+            
+            (stories || []).forEach(function(s) {
+                var card = document.createElement('div');
+                card.style.cssText = 'border:1px solid rgba(247,147,26,0.15);background:rgba(0,0,0,0.12);border-radius:10px;padding:10px;';
+                
+                var title = document.createElement('div');
+                title.style.fontWeight = '600';
+                title.textContent = s.headline || '(no headline)';
+                
+                var meta = document.createElement('div');
+                meta.className = 'small text-muted';
+                meta.textContent = t('来源','Sources') + ': ' + (s.sources||[]).join(', ') + ' · ' + t('条目','Items') + ': ' + (s.items||[]).length + ' · ' + t('评分','Score') + ': ' + Number(s.max_score||0).toFixed(2);
+                
+                card.appendChild(title);
+                card.appendChild(meta);
+                
+                var badgeWrap = document.createElement('div');
+                badgeWrap.className = 'mt-1';
+                miRenderBadges(s.top_tags || [], badgeWrap);
+                card.appendChild(badgeWrap);
+                
+                var ul = document.createElement('div');
+                ul.className = 'mt-2 small';
+                (s.items || []).slice(0, 3).forEach(function(it) {
+                    var row = document.createElement('div');
+                    var a = document.createElement('a');
+                    a.href = it.url; a.target = '_blank'; a.rel = 'noopener';
+                    a.textContent = '• ' + (it.title || it.url);
+                    a.style.color = '#9ecbff';
+                    row.appendChild(a);
+                    ul.appendChild(row);
+                });
+                card.appendChild(ul);
+                
+                if (s.items && s.items.length) {
+                    var bWrap = document.createElement('div');
+                    bWrap.className = 'mt-1';
+                    bWrap.appendChild(miMakeBookmarkBtn(s.items[0]));
+                    card.appendChild(bWrap);
+                }
+                
+                c.appendChild(card);
+            });
+        }
+        
+        function miRenderNews(items) {
+            var c = el('miNewsList'); if (!c) return;
+            c.innerHTML = '';
+            var countEl = el('miNewsCount');
+            if (countEl) countEl.textContent = t('条目','Items') + ': ' + (items ? items.length : 0);
+            
+            (items || []).forEach(function(it) {
+                var card = document.createElement('div');
+                card.style.cssText = 'border:1px solid rgba(247,147,26,0.15);background:rgba(0,0,0,0.12);border-radius:10px;padding:10px;';
+                
+                var a = document.createElement('a');
+                a.href = it.url; a.target = '_blank'; a.rel = 'noopener';
+                a.style.cssText = 'font-weight:600;color:#9ecbff;text-decoration:none;';
+                a.textContent = it.title || it.url;
+                
+                var meta = document.createElement('div');
+                meta.className = 'small text-muted';
+                meta.textContent = (it.source||'unknown') + ' · ' + fmtTs(it.published_at||0) + ' · ' + t('评分','Score') + ': ' + Number(it.score||0).toFixed(2);
+                
+                card.appendChild(a);
+                card.appendChild(meta);
+                
+                var badgeWrap = document.createElement('div');
+                badgeWrap.className = 'mt-1';
+                miRenderBadges(it.tags || [], badgeWrap);
+                card.appendChild(badgeWrap);
+                
+                if (it.summary) {
+                    var summary = document.createElement('div');
+                    summary.className = 'mt-1 small';
+                    summary.style.opacity = '0.85';
+                    summary.textContent = (it.summary || '').slice(0, 200);
+                    card.appendChild(summary);
+                }
+                
+                var bWrap = document.createElement('div');
+                bWrap.className = 'mt-1';
+                bWrap.appendChild(miMakeBookmarkBtn(it));
+                card.appendChild(bWrap);
+                
+                c.appendChild(card);
+            });
+        }
+        
+        function miRenderTrends(tr) {
+            var tagWrap = el('miTopTags');
+            var kwWrap = el('miTopKeywords');
+            if (tagWrap) {
+                tagWrap.innerHTML = '';
+                (tr.top_tags || []).slice(0, 12).forEach(function(x) {
+                    var s = document.createElement('span');
+                    s.className = 'badge rounded-pill me-1';
+                    s.style.cssText = 'background:rgba(102,126,234,0.18);border:1px solid rgba(102,126,234,0.35);color:#fff;';
+                    s.textContent = x.tag + ' (' + x.count + ')';
+                    tagWrap.appendChild(s);
+                });
+            }
+            if (kwWrap) {
+                kwWrap.innerHTML = '';
+                (tr.top_keywords || []).slice(0, 24).forEach(function(x) {
+                    var s = document.createElement('span');
+                    s.className = 'badge rounded-pill me-1';
+                    s.style.cssText = 'background:rgba(118,75,162,0.18);border:1px solid rgba(118,75,162,0.35);color:#fff;';
+                    s.textContent = x.term + ' (' + x.count + ')';
+                    kwWrap.appendChild(s);
+                });
+            }
+        }
+        
+        function miRefresh() {
+            var params = miCurrentQuery();
+            var metaEl = el('miMetaLine');
+            if (metaEl) metaEl.textContent = t('加载中…', 'Loading…');
+            
+            var qp = new URLSearchParams();
+            qp.set('window_hours', String(params.windowHours));
+            if (params.q) qp.set('q', params.q);
+            if (params.tags) qp.set('tags', params.tags);
+            
+            Promise.all([
+                miApiGet('/api/market-intel/news?' + qp.toString()),
+                miApiGet('/api/market-intel/trends?' + qp.toString())
+            ]).then(function(results) {
+                var news = results[0], trends = results[1];
+                miRenderStories(news.stories || []);
+                miRenderNews(news.items || []);
+                miRenderTrends(trends);
+                if (metaEl) metaEl.textContent = t('生成时间','Generated') + ': ' + fmtTs(news.generated_at||0) + ' · ' + t('窗口','Window') + ': ' + news.window_hours + 'h · ' + t('来源','Sources') + ': ' + ((trends.top_sources||[]).length);
+            }).catch(function(e) {
+                console.error('Market Intel refresh failed:', e);
+                if (metaEl) metaEl.textContent = t('加载失败：','Load failed: ') + e.message;
+            });
+        }
+        
+        function miLoadBookmarks() {
+            var c = el('miBookmarkList'); if (!c) return;
+            c.innerHTML = t('加载中…', 'Loading…');
+            miApiGet('/api/market-intel/bookmarks').then(function(data) {
+                miState.bookmarks = data.items || [];
+                c.innerHTML = '';
+                if (!miState.bookmarks.length) { c.textContent = t('暂无收藏','No bookmarks yet'); return; }
+                miState.bookmarks.slice(0, 50).forEach(function(b) {
+                    var row = document.createElement('div');
+                    row.style.cssText = 'border:1px solid rgba(247,147,26,0.15);background:rgba(0,0,0,0.12);border-radius:8px;padding:8px;display:flex;justify-content:space-between;gap:8px;';
+                    var left = document.createElement('div');
+                    var a = document.createElement('a');
+                    a.href = b.url; a.target = '_blank'; a.rel = 'noopener';
+                    a.style.color = '#9ecbff';
+                    a.textContent = b.title || b.url;
+                    var meta = document.createElement('div');
+                    meta.className = 'small text-muted';
+                    meta.textContent = (b.source||'unknown') + ' · ' + fmtTs(b.published_at||0);
+                    left.appendChild(a);
+                    left.appendChild(meta);
+                    var btn = document.createElement('button');
+                    btn.className = 'btn btn-outline-danger btn-sm';
+                    btn.innerHTML = '<i class="bi bi-trash"></i>';
+                    btn.addEventListener('click', function() {
+                        miApiJson('/api/market-intel/bookmarks', 'DELETE', { news_id: b.news_id }).then(function() { miLoadBookmarks(); });
+                    });
+                    row.appendChild(left);
+                    row.appendChild(btn);
+                    c.appendChild(row);
+                });
+            }).catch(function(e) { c.textContent = 'Bookmarks failed: ' + e.message; });
+        }
+        
+        function miLoadAlerts() {
+            var c = el('miAlertList'); if (!c) return;
+            c.innerHTML = t('加载中…', 'Loading…');
+            miApiGet('/api/market-intel/alerts').then(function(data) {
+                miState.alerts = data.items || [];
+                c.innerHTML = '';
+                if (!miState.alerts.length) { c.textContent = t('暂无规则','No alerts yet'); return; }
+                miState.alerts.forEach(function(a) {
+                    var row = document.createElement('div');
+                    row.style.cssText = 'border:1px solid rgba(247,147,26,0.15);background:rgba(0,0,0,0.12);border-radius:8px;padding:8px;';
+                    row.innerHTML = '<div style="display:flex;justify-content:space-between;"><div><div style="font-weight:600;">' + a.name + '</div><div class="small text-muted">' + t('关键词','Keywords') + ': ' + (a.keywords||[]).join(', ') + ' · ' + t('标签','Tags') + ': ' + (a.tags||[]).join(', ') + '</div></div></div>';
+                    var btn = document.createElement('button');
+                    btn.className = 'btn btn-outline-danger btn-sm';
+                    btn.innerHTML = '<i class="bi bi-x"></i>';
+                    btn.addEventListener('click', function() {
+                        miApiJson('/api/market-intel/alerts', 'DELETE', { id: a.id }).then(function() { miLoadAlerts(); });
+                    });
+                    row.querySelector('div').appendChild(btn);
+                    c.appendChild(row);
+                });
+            }).catch(function(e) { c.textContent = 'Alerts failed: ' + e.message; });
+        }
+        
+        function miAddAlert() {
+            var name = ((el('miAlertName')||{}).value||'').trim() || t('新规则','New alert');
+            var keywords = ((el('miAlertKeywords')||{}).value||'').split(',').map(function(x){return x.trim();}).filter(Boolean);
+            var tags = ((el('miAlertTags')||{}).value||'').split(',').map(function(x){return x.trim();}).filter(Boolean);
+            var minScore = parseFloat((el('miAlertMinScore')||{}).value||'0') || 0.0;
+            miApiJson('/api/market-intel/alerts', 'POST', { name: name, keywords: keywords, tags: tags, min_score: minScore })
+                .then(function() { miLoadAlerts(); if(el('miAlertName')) el('miAlertName').value=''; })
+                .catch(function(e) { alert('Add alert failed: ' + e.message); });
+        }
+        
+        function miCheckMatches() {
+            var out = el('miAlertMatches'); if (!out) return;
+            out.innerHTML = t('检查中…','Checking…');
+            var wh = parseInt((el('miWindowHours')||{}).value||'24', 10);
+            miApiGet('/api/market-intel/alerts/matches?window_hours=' + wh).then(function(data) {
+                var matches = data.matches || {};
+                var ids = Object.keys(matches);
+                if (!ids.length) { out.innerHTML = '<div class="small text-muted">' + t('暂无命中','No matches') + '</div>'; return; }
+                var html = '';
+                ids.forEach(function(aid) {
+                    var items = matches[aid] || [];
+                    var alertObj = (miState.alerts||[]).find(function(x){return String(x.id)===String(aid);});
+                    var name = alertObj ? alertObj.name : ('Alert ' + aid);
+                    html += '<div style="border:1px solid rgba(247,147,26,0.15);background:rgba(0,0,0,0.12);border-radius:8px;padding:8px;margin-bottom:8px;"><div style="font-weight:600;">' + name + '</div><div class="small text-muted">' + t('命中','Matches') + ': ' + items.length + '</div>';
+                    items.slice(0, 4).forEach(function(it) {
+                        html += '<div class="small"><a href="' + it.url + '" target="_blank" rel="noopener" style="color:#9ecbff;">• ' + it.title + '</a></div>';
+                    });
+                    html += '</div>';
+                });
+                out.innerHTML = html;
+            }).catch(function(e) { out.innerHTML = 'Match check failed: ' + e.message; });
+        }
+        
+        // Wire up events
+        var refreshBtn = el('miBtnRefresh');
+        if (refreshBtn) refreshBtn.addEventListener('click', miRefresh);
+        var searchBtn = el('miBtnSearch');
+        if (searchBtn) searchBtn.addEventListener('click', miRefresh);
+        var windowSel = el('miWindowHours');
+        if (windowSel) windowSel.addEventListener('change', miRefresh);
+        var queryInput = el('miQuery');
+        if (queryInput) queryInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') miRefresh(); });
+        var loadBmBtn = el('miBtnLoadBookmarks');
+        if (loadBmBtn) loadBmBtn.addEventListener('click', miLoadBookmarks);
+        var loadAlBtn = el('miBtnLoadAlerts');
+        if (loadAlBtn) loadAlBtn.addEventListener('click', miLoadAlerts);
+        var addAlBtn = el('miBtnAddAlert');
+        if (addAlBtn) addAlBtn.addEventListener('click', miAddAlert);
+        var checkAlBtn = el('miBtnCheckAlerts');
+        if (checkAlBtn) checkAlBtn.addEventListener('click', miCheckMatches);
+        
+        // Initial load
+        renderMiTagPills();
+        miRefresh();
+        miLoadBookmarks();
+        miLoadAlerts();
+        
+        console.log('Market Intel tab initialized successfully');
+    }
+    </script>
 
 </body>
 </html>
