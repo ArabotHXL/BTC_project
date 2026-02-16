@@ -134,6 +134,7 @@ class Module(Enum):
     ANALYTICS_NETWORK = "analytics:network"         # 网络分析
     ANALYTICS_TECHNICAL = "analytics:technical"     # 技术指标分析
     ANALYTICS_DERIBIT = "analytics:deribit"         # Deribit高级分析
+    ANALYTICS_MARKET_INTEL = "analytics:market_intel" # 市场情报
     
     # 智能层 (AI Layer)
     AI_BTC_PREDICT = "ai:btc_predict"               # AI预测(BTC价格/难度)
@@ -386,7 +387,15 @@ PERMISSION_MATRIX: Dict[Module, Dict[Role, AccessLevel]] = {
         Role.ADMIN: AccessLevel.FULL,
         Role.MINING_SITE_OWNER: AccessLevel.FULL,
         Role.OPERATOR: AccessLevel.NONE,
-        Role.CLIENT: AccessLevel.READ,  # 需对衍生品分析，可做高级付费层
+        Role.CLIENT: AccessLevel.READ,
+        Role.GUEST: AccessLevel.NONE,
+    },
+    Module.ANALYTICS_MARKET_INTEL: {
+        Role.OWNER: AccessLevel.FULL,
+        Role.ADMIN: AccessLevel.FULL,
+        Role.MINING_SITE_OWNER: AccessLevel.FULL,
+        Role.OPERATOR: AccessLevel.READ,
+        Role.CLIENT: AccessLevel.READ,
         Role.GUEST: AccessLevel.NONE,
     },
     
