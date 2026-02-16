@@ -4993,6 +4993,16 @@ except ImportError as e:
 except Exception as e:
     logging.error(f"Failed to register Problem Registry API: {e}")
 
+# Market Intel Blueprint (news aggregation, bookmarks, alerts)
+try:
+    from routes.market_intel_routes import market_intel_bp
+    app.register_blueprint(market_intel_bp)
+    logging.info("Market Intel Blueprint registered successfully")
+except ImportError as e:
+    logging.warning(f"Market Intel Blueprint not available: {e}")
+except Exception as e:
+    logging.error(f"Failed to register Market Intel Blueprint: {e}")
+
 # Register calculator module blueprint for modular architecture
 try:
     from modules.config import register_modules

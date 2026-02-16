@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% if current_lang == 'zh' %}BTC 市场情报{% else %}BTC Market Intel{% endif %}</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+
+  <link href="/static/css/market-intel.css" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/analytics/main">
+      <i class="bi bi-newspaper"></i>
+      {% if current_lang == 'zh' %}市场情报{% else %}Market Intel{% endif %}
+    </a>
+
+    <div class="d-flex align-items-center gap-2">
+      <a class="btn btn-outline-light btn-sm" href="/analytics/main">
+        <i class="bi bi-arrow-left"></i>
+        {% if current_lang == 'zh' %}返回分析{% else %}Back to Analytics{% endif %}
+      </a>
+      <button class="btn btn-outline-light btn-sm" id="btnRefresh">
+        <i class="bi bi-arrow-clockwise"></i>
+        {% if current_lang == 'zh' %}刷新{% else %}Refresh{% endif %}
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="container-fluid py-3">
+  <div class="row g-3">
+    <!-- Left: Controls + Content -->
+    <div class="col-lg-8">
+      <!-- Controls -->
+      <div class="card bg-panel border-secondary">
+        <div class="card-body">
+          <div class="row g-2 align-items-center">
+            <div class="col-md-3">
+              <label class="form-label small text-muted">{% if current_lang == 'zh' %}时间窗口{% else %}Window{% endif %}</label>
+              <select class="form-select form-select-sm" id="windowHours">
+                <option value="1">1h</option>
+                <option value="6">6h</option>
+                <option value="24" selected>24h</option>
+                <option value="72">72h</option>
+                <option value="168">7d</option>
+              </select>
+            </div>
+
+            <div class="col-md-5">
+              <label class="form-label small text-muted">{% if current_lang == 'zh' %}搜索{% else %}Search{% endif %}</label>
+              <div class="input-group input-group-sm">
+                <span class="input-group-text bg-dark text-light border-secondary"><i class="bi bi-search"></i></span>
+                <input class="form-control bg-dark text-light border-secondary" id="q" placeholder="{% if current_lang == 'zh' %}关键词：ETF/难度/SEC/电价...{% else %}Keywords: ETF/difficulty/SEC/power...{% endif %}">
+                <button class="btn btn-primary" id="btnSearch">{% if current_lang == 'zh' %}筛选{% else %}Apply{% endif %}</button>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label small text-muted">{% if current_lang == 'zh' %}标签{% else %}Tags{% endif %}</label>
+              <div class="d-flex flex-wrap gap-1" id="tagPills">
+                <!-- injected -->
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-2 small text-muted" id="metaLine">--</div>
+        </div>
+      </div>
+
+      <!-- Stories -->
+      <div class="card bg-panel border-secondary mt-3">
+        <div class="card-header bg-panel-header border-secondary">
+          <div class="d-flex align-items-center justify-content-between">
+            <span><i class="bi bi-layers"></i> {% if current_lang == 'zh' %}事件簇{% else %}Story Clusters{% endif %}</span>
+            <span class="small text-muted" id="storyCount">--</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="stories" class="vstack gap-2"></div>
+        </div>
+      </div>
+
+      <!-- Latest -->
+      <div class="card bg-panel border-secondary mt-3">
+        <div class="card-header bg-panel-header border-secondary">
+          <div class="d-flex align-items-center justify-content-between">
+            <span><i class="bi bi-lightning"></i> {% if current_lang == 'zh' %}最新新闻{% else %}Latest News{% endif %}</span>
+            <span class="small text-muted" id="newsCount">--</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="newsList" class="vstack gap-2"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Trends + Bookmarks + Alerts -->
+    <div class="col-lg-4">
+      <!-- Trends -->
+      <div class="card bg-panel border-secondary">
+        <div class="card-header bg-panel-header border-secondary">
+          <i class="bi bi-activity"></i> {% if current_lang == 'zh' %}热词与分布{% else %}Trends{% endif %}
+        </div>
+        <div class="card-body">
+          <div class="mb-2">
+            <div class="small text-muted">{% if current_lang == 'zh' %}标签分布{% else %}Top Tags{% endif %}</div>
+            <div id="topTags" class="d-flex flex-wrap gap-1 mt-1"></div>
+          </div>
+          <div>
+            <div class="small text-muted">{% if current_lang == 'zh' %}热词{% else %}Top Keywords{% endif %}</div>
+            <div id="topKeywords" class="d-flex flex-wrap gap-1 mt-1"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bookmarks -->
+      <div class="card bg-panel border-secondary mt-3">
+        <div class="card-header bg-panel-header border-secondary d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-bookmark-star"></i> {% if current_lang == 'zh' %}收藏{% else %}Bookmarks{% endif %}</span>
+          <button class="btn btn-outline-light btn-sm" id="btnLoadBookmarks"><i class="bi bi-arrow-repeat"></i></button>
+        </div>
+        <div class="card-body">
+          <div id="bookmarkList" class="vstack gap-2 small"></div>
+        </div>
+      </div>
+
+      <!-- Alerts -->
+      <div class="card bg-panel border-secondary mt-3">
+        <div class="card-header bg-panel-header border-secondary">
+          <i class="bi bi-bell"></i> {% if current_lang == 'zh' %}订阅/告警规则{% else %}Alerts{% endif %}
+        </div>
+        <div class="card-body">
+          <div class="mb-2">
+            <div class="input-group input-group-sm">
+              <input class="form-control bg-dark text-light border-secondary" id="alertName" placeholder="{% if current_lang == 'zh' %}规则名称{% else %}Alert name{% endif %}">
+              <button class="btn btn-success" id="btnAddAlert"><i class="bi bi-plus"></i></button>
+            </div>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small text-muted">{% if current_lang == 'zh' %}关键词（逗号分隔）{% else %}Keywords (comma-separated){% endif %}</label>
+            <input class="form-control form-control-sm bg-dark text-light border-secondary" id="alertKeywords" placeholder="etf, sec, difficulty, hashrate">
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small text-muted">{% if current_lang == 'zh' %}标签（逗号分隔）{% else %}Tags (comma-separated){% endif %}</label>
+            <input class="form-control form-control-sm bg-dark text-light border-secondary" id="alertTags" placeholder="mining, regulation, etf">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small text-muted">{% if current_lang == 'zh' %}最低相关性分数{% else %}Min relevance score{% endif %}</label>
+            <input type="number" step="0.1" class="form-control form-control-sm bg-dark text-light border-secondary" id="alertMinScore" value="0.8">
+          </div>
+
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <button class="btn btn-outline-light btn-sm" id="btnLoadAlerts">{% if current_lang == 'zh' %}加载规则{% else %}Load Alerts{% endif %}</button>
+            <button class="btn btn-outline-primary btn-sm" id="btnCheckAlerts">{% if current_lang == 'zh' %}检查命中{% else %}Check Matches{% endif %}</button>
+          </div>
+
+          <div id="alertList" class="vstack gap-2 small"></div>
+          <div class="mt-2" id="alertMatches"></div>
+        </div>
+      </div>
+
+      <div class="small text-muted mt-3">
+        {% if current_lang == 'zh' %}
+        提示：默认数据源包含 RSS（CoinDesk/Cointelegraph/Bitcoin.com），可选 Finnhub（设置 FINNHUB_TOKEN），可选 GDELT（GDELT_ENABLED=1）。
+        {% else %}
+        Tip: default sources are RSS (CoinDesk/Cointelegraph/Bitcoin.com). Optional: Finnhub (set FINNHUB_TOKEN). Optional: GDELT (GDELT_ENABLED=1).
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  window.__LANG__ = "{{ current_lang }}";
+</script>
+<script src="/static/js/market-intel.js"></script>
+</body>
+</html>

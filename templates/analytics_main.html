@@ -593,6 +593,9 @@
                     <a class="nav-link" href="#market" data-tab="market">
                         <i class="bi bi-graph-up"></i> {% if current_lang == 'en' %}Market Data{% else %}市场数据{% endif %}
                     </a>
+                    <a class="nav-link" href="{{ url_for('market_intel.market_intel_page') }}">
+                        <i class="bi bi-newspaper"></i> {% if current_lang == 'en' %}Market Intel{% else %}市场情报{% endif %}
+                    </a>
                     <!-- Technical Analysis - Temporarily hidden
                     <a class="nav-link" href="#technical" data-tab="technical">
                         <i class="bi bi-bar-chart"></i> {% if current_lang == 'en' %}Technical Analysis{% else %}技术分析{% endif %}
@@ -625,11 +628,6 @@
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="intelligence-tab" data-bs-toggle="tab" data-bs-target="#intelligence" type="button" role="tab" aria-controls="intelligence" aria-selected="false">
                                 <i class="bi bi-lightbulb-fill"></i> {% if current_lang == 'en' %}AI Intelligence{% else %}智能分析{% endif %}
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="deribit-tab" data-bs-toggle="tab" data-bs-target="#deribit" type="button" role="tab" aria-controls="deribit" aria-selected="false">
-                                <i class="bi bi-graph-up-arrow"></i> {% if current_lang == 'en' %}Deribit Deep Analysis{% else %}Deribit深度分析{% endif %}
                             </button>
                         </li>
                     </ul>
@@ -935,51 +933,6 @@
                             </div>
                         </div><!-- 关闭智能分析标签页 -->
 
-                        <!-- Deribit深度分析标签页 -->
-                        <div class="tab-pane fade" id="deribit" role="tabpanel" aria-labelledby="deribit-tab">
-                            <div>
-                                <h4 class="mb-4">
-                                    <i class="bi bi-graph-up-arrow"></i> {% if current_lang == 'en' %}Deribit Deep Analysis{% else %}Deribit深度分析{% endif %}
-                                </h4>
-                                
-                                <!-- API状态统计卡片 -->
-                                <div class="row mb-4">
-                                    <div class="col-md-3">
-                                        <div class="card" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(247,147,26,0.2);">
-                                            <div class="card-body text-center">
-                                                <h6 class="card-title">{% if current_lang == 'en' %}API Status{% else %}API 状态{% endif %}</h6>
-                                                <div id="deribitApiStatus" class="status-indicator status-online"></div>
-                                                <span id="deribitApiText" style="color: white;">{% if current_lang == 'en' %}Connected{% else %}已连接{% endif %}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="card" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(247,147,26,0.2);">
-                                            <div class="card-body text-center">
-                                                <h6 class="card-title">{% if current_lang == 'en' %}Total Volume{% else %}总交易量{% endif %}</h6>
-                                                <div class="metric-value" id="deribitTotalTrades" style="color: white;">--</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="card" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(247,147,26,0.2);">
-                                            <div class="card-body text-center">
-                                                <h6 class="card-title">{% if current_lang == 'en' %}Avg Price{% else %}平均价格{% endif %}</h6>
-                                                <div class="metric-value" id="deribitAvgPrice" style="color: white;">--</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="card" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(247,147,26,0.2);">
-                                            <div class="card-body text-center">
-                                                <h6 class="card-title">{% if current_lang == 'en' %}Last Updated{% else %}最新更新{% endif %}</h6>
-                                                <div class="small" id="deribitLastUpdate" style="color: white;">--</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div><!-- 关闭dashboard标签 -->
 
                 <!-- Market Data Tab -->
@@ -4992,62 +4945,6 @@
     <!-- Bootstrap JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Deribit标签页功能 -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Deribit tab functionality loaded!');
-            
-            // 标签页切换事件处理
-            const deribitTab = document.getElementById('deribit-tab');
-            if (deribitTab) {
-                deribitTab.addEventListener('shown.bs.tab', function() {
-                    console.log('📊 Deribit tab activated!');
-                    updateDeribitTabData();
-                });
-            }
-            
-            // 更新Deribit标签页数据
-            function updateDeribitTabData() {
-                console.log('🔄 Updating Deribit tab data...');
-                
-                // 同步主页面的数据到Deribit标签页
-                const totalTrades = document.getElementById('totalTrades');
-                const avgPrice = document.getElementById('avgPrice');
-                const lastUpdateTime = document.getElementById('lastUpdateTime');
-                const exchangeData = document.getElementById('exchangeData');
-                
-                if (totalTrades && document.getElementById('deribitTotalTrades')) {
-                    document.getElementById('deribitTotalTrades').textContent = totalTrades.textContent;
-                }
-                if (avgPrice && document.getElementById('deribitAvgPrice')) {
-                    document.getElementById('deribitAvgPrice').textContent = avgPrice.textContent;
-                }
-                if (lastUpdateTime && document.getElementById('deribitLastUpdate')) {
-                    document.getElementById('deribitLastUpdate').textContent = lastUpdateTime.textContent;
-                }
-                if (exchangeData && document.getElementById('deribitExchangeData')) {
-                    document.getElementById('deribitExchangeData').innerHTML = exchangeData.innerHTML;
-                }
-                
-                console.log('✅ Deribit tab data updated successfully!');
-            }
-            
-            // 确保综合概览标签页在页面加载时激活
-            const overviewTab = document.getElementById('overview-tab');
-            const overviewPane = document.getElementById('overview');
-            if (overviewTab && overviewPane) {
-                overviewTab.classList.add('active');
-                overviewPane.classList.add('show', 'active');
-                console.log('✅ Overview tab activated on page load');
-            }
-            
-            // 初始化数据更新
-            setTimeout(updateDeribitTabData, 1000);
-            
-            // 每30秒自动更新Deribit标签页数据
-            setInterval(updateDeribitTabData, 30000);
-        });
-    </script>
 
 
 
