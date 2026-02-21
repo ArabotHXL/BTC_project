@@ -20,7 +20,7 @@ def seed_demo():
     from db import db
     from models_hi import (HiOrg, HiTenant, HiGroup, HiAuditLog,
                            HiCurtailmentPlan, HiTariff, HiContract,
-                           HiUsageRecord, HiInvoice)
+                           HiUsageRecord, HiInvoice, HiTenantMembership)
     from models import HostingSite, Miner, UserAccess
 
     with app.app_context():
@@ -462,6 +462,51 @@ def seed_demo():
             db.session.commit()
         except Exception as e:
             logger.error(f"Failed to create client users: {e}")
+            db.session.rollback()
+
+        # --- Tenant memberships ---
+        try:
+            membership_configs = []
+            alpha_user = UserAccess.query.filter_by(email='client_alpha@demo.com').first()
+            beta_user = UserAccess.query.filter_by(email='client_beta@demo.com').first()
+
+            if alpha_user and alpha_tenant:
+                membership_configs.append({
+                    'user_id': alpha_user.id,
+                    'tenant_id': alpha_tenant.id,
+                    'member_role': 'tenant_admin',
+                    'is_default': True
+                })
+            if beta_user and beta_tenant:
+                membership_configs.append({
+                    'user_id': beta_user.id,
+                    'tenant_id': beta_tenant.id,
+                    'member_role': 'tenant_admin',
+                    'is_default': True
+                })
+
+            for mc in membership_configs:
+                existing = HiTenantMembership.query.filter_by(
+                    user_id=mc['user_id'], tenant_id=mc['tenant_id']
+                ).first()
+                if not existing:
+                    m = HiTenantMembership(
+                        user_id=mc['user_id'],
+                        tenant_id=mc['tenant_id'],
+                        member_role=mc['member_role'],
+                        is_default=mc['is_default']
+                    )
+                    db.session.add(m)
+                    logger.info(f"Created membership: user_id={mc['user_id']} -> tenant_id={mc['tenant_id']}")
+                else:
+                    if not existing.is_default:
+                        existing.is_default = True
+                    if existing.member_role != mc['member_role']:
+                        existing.member_role = mc['member_role']
+                    logger.info(f"Membership exists: user_id={mc['user_id']} -> tenant_id={mc['tenant_id']}")
+            db.session.commit()
+        except Exception as e:
+            logger.error(f"Failed to create tenant memberships: {e}")
             db.session.rollback()
 
         # --- Usage records ---

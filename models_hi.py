@@ -427,6 +427,37 @@ class HiUsageRecord(db.Model):
         return f'<HiUsageRecord {self.id}: tenant={self.tenant_id} {self.period_start}-{self.period_end}>'
 
 
+class HiTenantMembership(db.Model):
+    __tablename__ = 'hi_tenant_memberships'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=False, index=True)
+    tenant_id = db.Column(db.Integer, db.ForeignKey('hi_tenants.id'), nullable=False, index=True)
+    member_role = db.Column(db.String(30), default='tenant_viewer', nullable=False)
+    is_default = db.Column(db.Boolean, default=False, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    tenant = db.relationship('HiTenant', backref='memberships')
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'tenant_id', name='uq_hi_membership_user_tenant'),
+        db.Index('idx_hi_membership_user_default', 'user_id', 'is_default'),
+    )
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'tenant_id': self.tenant_id,
+            'member_role': self.member_role,
+            'is_default': self.is_default,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+    def __repr__(self):
+        return f'<HiTenantMembership {self.id}: user={self.user_id} tenant={self.tenant_id} role={self.member_role}>'
+
+
 class HiInvoice(db.Model):
     __tablename__ = 'hi_invoices'
 
