@@ -5003,6 +5003,16 @@ except ImportError as e:
 except Exception as e:
     logging.error(f"Failed to register Market Intel Blueprint: {e}")
 
+# AB Integration Blueprint (multi-tenant, curtailment, billing, portal)
+try:
+    from api.ab_api import ab_api_bp
+    app.register_blueprint(ab_api_bp)
+    logging.info("AB Integration API registered successfully")
+except ImportError as e:
+    logging.warning(f"AB Integration API not available: {e}")
+except Exception as e:
+    logging.error(f"Failed to register AB Integration API: {e}")
+
 # Register calculator module blueprint for modular architecture
 try:
     from modules.config import register_modules
