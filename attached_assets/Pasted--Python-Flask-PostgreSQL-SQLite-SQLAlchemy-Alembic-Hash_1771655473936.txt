@@ -1,0 +1,326 @@
+你是资深全栈/平台工程师（Python/Flask + PostgreSQL/SQLite + SQLAlchemy/Alembic 优先）。请在当前仓库中实现 HashInsight 的 “AB结合”（A 自营矿场 + B 托管商多租户）一体化能力：同一套 Core（遥测/指令/能源策略/审计/报表）+ 可选的 Hosting 扩展（多租户隔离、合同、用电分摊、账单、客户门户）。要求：**可在 Replit 直接跑起来**，并提供可验证的 API 与示例数据。
+
+========================
+0) 全局硬约束（必须遵守）
+========================
+1. 不要向我提问；遇到信息缺失做“最合理默认假设”，并写在 README 的 Assumptions 中。
+2. **不破坏现有功能**：已有 API/逻辑不改语义（允许加字段、加默认值、加兼容层）；新增功能尽量以“扩展”方式实现。
+3. 所有新增核心数据表/字段必须支持多租户：所有核心表带 tenant_id（或可映射到 tenant）。
+4. 引入“Self Tenant”概念：系统初始化时创建一个默认 tenant（self），用于自营模式；托管模式在其上添加多个 tenant。
+5. 必须有审计：任何命令下发、策略执行、关键配置变更、登录行为（若已有 auth）都要写 audit_log。
+6. 必须给出：数据库迁移方案、启动脚本、种子数据脚本、最小可用的前端页面（可用简单模板）或至少完整 API + curl 示例。
+7. 尽可能使用已有工程结构（app.py/main.py/config.py/models.py/db.py/routes/…）；若仓库已有 RBAC、security_soc2 等模块，复用并增强。
+
+========================
+1) 先做 Repo 侦测与技术栈适配（自动完成）
+========================
+A. 扫描项目结构，确定：
+- Web 框架（Flask/FastAPI 等）
+- ORM/DB 方式（SQLAlchemy / raw SQL / dataclasses）
+- 是否已有 migration（Alembic）
+- 认证鉴权模块（auth.py / api_auth_middleware.py / common/rbac.py）
+- 遥测数据表（miner_telemetry_live / history）与命令队列（command_queue / outbox）是否存在
+
+B. 适配策略（按优先级）：
+- 若已有 SQLAlchemy：在 models.py 或对应 models/ 目录新增模型；若已有 Alembic：新增 revision；若没有：新增最小 migration runner（scripts/migrate.py）+ 版本表 schema_migrations。
+- 若使用 SQLite：默认可跑；同时支持通过环境变量 DATABASE_URL 切 PostgreSQL（Replit 常用）。
+- 若已有 RBAC：扩展 role/scope，不推翻重写。
+
+========================
+2) 数据模型（AB一体化）——必须落库
+========================
+新增表（最小字段集，允许你根据现有风格补充 created_at/updated_at 等）：
+
+1) orgs
+- id (pk)
+- name
+- type: "self" | "hosting_operator"   （默认 self）
+
+2) tenants
+- id (pk)
+- org_id (fk orgs.id)
+- name
+- tenant_type: "self" | "client"
+- status: "active" | "disabled"
+
+3) users（如果已有就复用；否则新增最小用户表）
+- id, email, password_hash（若已有 auth 则复用）
+- org_id
+- tenant_id（可为空；operator 用户 tenant_id 为空或指向 self）
+- role: "operator_admin" | "operator_ops" | "tenant_admin" | "tenant_viewer"
+
+4) sites（若已有则加 tenant_id 或 org_id 关联）
+- id
+- org_id
+- name
+- location
+- timezone
+
+5) miners（若已有则加 tenant_id/site_id）
+- id
+- site_id
+- tenant_id
+- hostname/ip
+- model
+- nominal_watts（额定功耗，估算用电用）
+- status
+
+6) groups（策略执行与分摊的基本单元）
+- id
+- site_id
+- tenant_id
+- name
+- selector_json（定义包含哪些矿机：按 model/tag/ip range/miner_ids）
+- priority（策略关机顺序）
+
+7) audit_log
+- id
+- org_id
+- tenant_id（可为空：operator 级行为）
+- actor_user_id
+- action_type（LOGIN / COMMAND / CONFIG_CHANGE / CURTAILMENT_EXECUTE / BILLING_GENERATE…）
+- entity_type / entity_id
+- request_id
+- detail_json
+- created_at
+
+8) curtailment_plans
+- id
+- org_id
+- site_id
+- tenant_scope: "site_wide" | "tenant_only"
+- tenant_id（若 tenant_only）
+- name
+- objective: "save_cost" | "keep_profit" | "thermal_protect"
+- inputs_json（电价/阈值/约束）
+- expected_json（预计节省、预计损失）
+- status: "draft" | "ready" | "executing" | "completed" | "aborted"
+- created_by
+
+9) curtailment_actions
+- id
+- plan_id
+- target_type: "group" | "miner"
+- target_id
+- command_type: "power_off" | "throttle" | "reboot" | "resume"
+- command_payload_json
+- status: "queued" | "sent" | "acked" | "failed"
+- ack_json
+- created_at
+
+10) curtailment_results
+- id
+- plan_id
+- before_snapshot_json（功耗/算力等）
+- after_snapshot_json
+- actual_json（实际降载、持续时间、是否达标）
+- created_at
+
+Hosting 扩展（B 才用，但必须建表以支持 AB 合一）：
+
+11) tariffs
+- id
+- org_id
+- name
+- tariff_type: "flat" | "tou" | "realtime_index"
+- params_json（flat_rate, tou_schedule, index_source…）
+- currency
+
+12) contracts
+- id
+- org_id
+- tenant_id（client tenant）
+- site_id
+- tariff_id
+- hosting_fee_type: "per_kw" | "per_miner" | "flat"
+- hosting_fee_params_json
+- curtailment_split_pct（削减收益分成给客户的比例）
+- sla_json（可选：uptime, max_temp, penalties）
+- billing_cycle: "monthly" | "weekly"
+- effective_from, effective_to
+
+13) usage_records（先做估算模式）
+- id
+- org_id
+- site_id
+- tenant_id
+- period_start, period_end
+- kwh_estimated
+- avg_kw_estimated
+- method: "telemetry_watts" | "nominal_watts"
+- evidence_json（统计口径、采样点数、缺失率）
+
+14) invoices
+- id
+- org_id
+- tenant_id
+- contract_id
+- period_start, period_end
+- subtotal, total
+- status: "draft" | "issued" | "paid"
+- line_items_json（电费、托管费、削减抵扣、罚则等）
+- evidence_json（引用 usage_records、curtailment_events）
+
+========================
+3) 迁移与初始化（必须可一键执行）
+========================
+- 新增 scripts/init_db.py：创建表、创建 org/self tenant、创建 operator_admin 用户（默认 admin@local / password: admin123 或从环境变量读取）
+- 新增 scripts/seed_demo.py：创建 1 个站点、1 个 self tenant、2 个 client tenants、若干 miners & groups、生成一些模拟 telemetry（若项目支持）、生成 1 个 contract + invoice demo
+- 若已有 Alembic：生成 revision + upgrade；否则实现 scripts/migrate.py（幂等执行 + schema_migrations 表）
+
+Replit 启动要求：
+- 支持 `python main.py` 或 `python -m flask run` 之一（跟现有一致）
+- 如果仓库有 gunicorn.conf.py，可保留，但 Replit 优先用开发启动
+- requirements.txt / pyproject.toml 必须完整（缺啥补啥）
+
+========================
+4) RBAC 与多租户隔离（必须落地）
+========================
+权限规则（最小实现）：
+- operator_admin/operator_ops：可访问 org 下所有 tenants/sites/miners；可创建 tenant、合同、账单；可执行 site_wide curtailment
+- tenant_admin/tenant_viewer：只能访问自己 tenant 的 miners/groups/usage/invoices；只能执行 tenant_only curtailment（如果允许）
+实现方式：
+- 在 API middleware 中解析当前用户（或 token），写入 request context：current_user.org_id / tenant_id / role
+- 所有查询默认加过滤：org_id 必须匹配；若 role 是 tenant_* 则 tenant_id 必须匹配
+- 所有命令/策略执行写 audit_log（含 actor、目标、payload 摘要、request_id）
+
+========================
+5) API 端点（必须可用 + curl 示例）
+========================
+遵循现有 routes 风格；若无 REST 规范，至少提供以下 JSON API：
+
+Auth（若已有就复用；否则实现最小 token auth）
+- POST /api/login  -> returns token
+- GET  /api/me
+
+Tenants / Sites / Fleet
+- GET  /api/tenants            (operator)
+- POST /api/tenants            (operator)
+- GET  /api/sites
+- POST /api/sites              (operator)
+- GET  /api/miners?site_id=&tenant_id=
+- POST /api/miners             (operator)
+- GET  /api/groups?site_id=&tenant_id=
+- POST /api/groups             (operator or tenant_admin for own tenant)
+
+Telemetry（若已有就加租户过滤）
+- GET /api/telemetry/live?site_id=&tenant_id=
+- GET /api/telemetry/miner/<id>/history?from=&to=
+
+Commands（必须审计）
+- POST /api/commands/miner/<id>      {command_type, payload}
+- POST /api/commands/group/<id>      {command_type, payload}
+- GET  /api/commands/<request_id>    查看状态
+
+Curtailment（核心）
+- POST /api/curtailment/plans
+- POST /api/curtailment/plans/<id>/simulate   （输出 expected_json：预计节省/损失 + 建议 actions）
+- POST /api/curtailment/plans/<id>/execute    （生成 actions -> 入队 -> audit）
+- POST /api/curtailment/plans/<id>/verify     （写 result：before/after snapshot，标记 completed）
+- GET  /api/curtailment/plans?site_id=&tenant_id=
+- GET  /api/curtailment/plans/<id>/report     （JSON + 可选 CSV）
+
+Billing（Hosting 扩展，但必须可跑 demo）
+- POST /api/contracts              (operator)
+- GET  /api/contracts?tenant_id=
+- POST /api/usage/generate         {period_start, period_end, site_id, tenant_id?}  生成 usage_records（估算）
+- POST /api/invoices/generate      {contract_id, period_start, period_end}          生成 draft invoice
+- GET  /api/invoices?tenant_id=
+- GET  /api/invoices/<id>
+- GET  /api/invoices/<id>/export.csv
+
+Client Portal（可用同一前端，按 role 显示）
+- GET /portal  （最简页面：看到自己的 miners 状态、usage、invoices、curtailment 历史）
+
+========================
+6) Curtailment 逻辑（必须实现 v1，可解释、可执行）
+========================
+实现一个 v1 策略引擎（services/curtailment_engine.py）：
+输入：
+- 电价（flat 或实时值）、目标：save_cost/keep_profit/thermal_protect
+- 约束：min_online_pct、protected_groups、max_offline_groups
+- 分组优先级：group.priority（数值越小越先关 or 你定义清楚并写入 README）
+输出：
+- actions：按 group 或 miner 生成 command（默认 power_off；可选 throttle）
+- expected：
+  - expected_kwh_saved（按 watts * duration）
+  - expected_revenue_lost（若仓库已有 ROI/hashprice 计算则复用；否则用简化：hashrate * btc_price proxy，并在 README 标明简化口径）
+执行：
+- 将 actions 写 curtailment_actions，并推入现有 command_queue/outbox（若不存在则实现简单 command_queue 表 + worker stub）
+验证：
+- before_snapshot：执行前站点/tenant 总功耗与算力
+- after_snapshot：执行后（延迟 N 秒可配置），计算 actual delta，写 curtailment_results
+
+========================
+7) 用电估算与分摊（必须实现 v1）
+========================
+usage generator（services/usage_service.py）：
+- 按 period_start/end，聚合每个 miner 的功耗：
+  - 优先：telemetry watts（若有）
+  - 其次：miner.nominal_watts * online_time（若无遥测功耗）
+- 汇总到 tenant_id + site_id 输出 kwh_estimated / avg_kw_estimated
+- evidence_json 写入：采样点、缺失率、估算方法
+
+invoice generator（services/billing_service.py）：
+- 从 contract 取 tariff 与 hosting_fee 参数
+- 计算 line_items：
+  - electricity_cost = kwh_estimated * rate（flat 简化；TOU 可先不做或做最小）
+  - hosting_fee（按 per_kw/per_miner/flat）
+  - curtailment_credit_split（若 period 内有 curtailment_results，可先做 0 或做简单：saved_kwh * rate * split_pct）
+- 输出 invoice（draft）+ export.csv
+
+========================
+8) 最小前端（必须有，极简即可）
+========================
+在 templates/ 或 frontend/ 实现极简页面（不追求美观）：
+- /portal（登录后）
+  - 当前用户信息（role/tenant）
+  - miners 列表（状态、功耗、算力）
+  - 最近 5 条 curtailment plans
+  - usage_records 列表
+  - invoices 列表 + 下载 CSV 链接
+如项目已有前端（React/Vue），则只需补齐 API 并在现有页面入口加一个 “Portal” 简单路由即可。
+
+========================
+9) 测试与验收（必须提供自动化验证）
+========================
+- 新增 tests/（pytest）
+  - test_tenant_isolation.py：tenant 用户不能读写别的 tenant 数据
+  - test_curtailment_flow.py：create->simulate->execute->verify 全流程
+  - test_billing_flow.py：usage_generate->invoice_generate->export
+- 新增 README.md 的 “Quickstart”：
+  1) pip install -r requirements.txt
+  2) python scripts/init_db.py
+  3) python scripts/seed_demo.py
+  4) python main.py
+  5) curl 示例（login、list miners、create plan、execute、generate invoice）
+
+必须给出至少 10 条可复制运行的 curl 示例，覆盖：
+- operator_admin 登录
+- 创建 client tenant
+- 创建 group
+- 创建 & 执行 curtailment plan
+- 生成 usage + invoice + 下载 csv
+- tenant 用户登录后只能看到自己的 invoices
+
+========================
+10) 交付清单（最终必须在 repo 中出现）
+========================
+- 新增/更新的 DB models + migrations
+- scripts/init_db.py / scripts/seed_demo.py / (可选) scripts/migrate.py
+- services/curtailment_engine.py / services/usage_service.py / services/billing_service.py
+- routes/（新增 tenant/site/group/curtailment/billing endpoints）
+- audit_log 全链路写入
+- tests/ + README Quickstart + curl 示例 + Assumptions
+
+========================
+11) 实现顺序（按这个顺序提交）
+========================
+Step1: 迁移 + 初始化（org/self tenant/admin）
+Step2: tenant_id 注入核心表 + RBAC 过滤
+Step3: groups + commands + audit_log
+Step4: curtailment v1（simulate/execute/verify）
+Step5: usage v1 + invoice v1 + client portal
+Step6: tests + README + demo seed
+
+现在开始执行：在仓库中完成以上改造，保证 Replit 可运行且 demo 数据可复现。每一步都要能通过启动与基本 curl 验证；最终所有 tests 通过。
