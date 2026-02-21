@@ -3,37 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AB Integration Portal</title>
+    <title>HashInsight HI Integration Portal</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
             --bg-primary: #1a1d2e;
             --bg-secondary: #232740;
-            --bg-card: #2a2f4a;
+            --bg-card: #252836;
             --gold: #f7931a;
             --gold-hover: #e8850f;
+            --gold-dim: rgba(247, 147, 26, 0.15);
             --text-primary: #ffffff;
             --text-secondary: #a0a3b5;
             --border-color: #3a3f5a;
+            --danger: #dc3545;
+            --success: #198754;
+            --info: #0d6efd;
         }
         body {
             background-color: var(--bg-primary);
             color: var(--text-primary);
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
         }
         .navbar {
             background-color: var(--bg-secondary) !important;
             border-bottom: 2px solid var(--gold);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.3);
         }
         .navbar-brand {
             color: var(--gold) !important;
             font-weight: 700;
+            font-size: 1.2rem;
+        }
+        .user-info-bar {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .badge-role {
+            background-color: var(--gold);
+            color: #000;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        .nav-tabs {
+            border-bottom: 2px solid var(--border-color);
+        }
+        .nav-tabs .nav-link {
+            color: var(--text-secondary);
+            border: none;
+            border-bottom: 3px solid transparent;
+            padding: 12px 24px;
+            font-weight: 600;
+            transition: all 0.2s;
+            border-radius: 0;
+        }
+        .nav-tabs .nav-link:hover {
+            color: var(--gold);
+            border-bottom-color: var(--gold-dim);
+            background: transparent;
+        }
+        .nav-tabs .nav-link.active {
+            color: var(--gold);
+            background-color: transparent;
+            border-bottom-color: var(--gold);
+        }
+        .nav-tabs .nav-link i {
+            margin-right: 6px;
+        }
+        .tab-content {
+            padding-top: 24px;
         }
         .card {
             background-color: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
         .card-header {
             background-color: var(--bg-secondary);
@@ -41,19 +92,29 @@
             color: var(--gold);
             font-weight: 600;
             border-radius: 12px 12px 0 0 !important;
+            padding: 14px 20px;
+        }
+        .section-title {
+            color: var(--gold);
+            font-weight: 700;
+            font-size: 1.05rem;
         }
         .table {
             color: var(--text-primary);
+            margin-bottom: 0;
         }
         .table thead th {
             border-bottom-color: var(--gold);
             color: var(--gold);
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
         }
         .table td {
             border-color: var(--border-color);
             vertical-align: middle;
+            font-size: 0.9rem;
         }
         .table-hover tbody tr:hover {
             background-color: rgba(247, 147, 26, 0.08);
@@ -68,23 +129,21 @@
             background-color: var(--gold-hover);
             color: #000;
         }
-        .badge-role {
+        .btn-outline-gold {
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            background: transparent;
+            font-weight: 500;
+        }
+        .btn-outline-gold:hover {
             background-color: var(--gold);
             color: #000;
-            font-weight: 600;
-            padding: 4px 12px;
-            border-radius: 20px;
         }
-        .user-info-bar {
-            background-color: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 16px 24px;
-        }
-        .section-title {
-            color: var(--gold);
-            font-weight: 700;
-            font-size: 1.1rem;
+        .btn-action {
+            padding: 2px 8px;
+            font-size: 0.75rem;
+            border-radius: 4px;
+            margin-right: 2px;
         }
         .spinner-border {
             color: var(--gold) !important;
@@ -92,13 +151,22 @@
         .status-badge {
             padding: 3px 10px;
             border-radius: 12px;
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             font-weight: 600;
+            display: inline-block;
         }
-        .status-draft { background-color: #6c757d; }
-        .status-executing { background-color: #0d6efd; }
-        .status-completed { background-color: #198754; }
+        .status-draft { background-color: #6c757d; color: #fff; }
+        .status-simulated { background-color: #0dcaf0; color: #000; }
+        .status-executing { background-color: #0d6efd; color: #fff; }
+        .status-completed { background-color: #198754; color: #fff; }
+        .status-verified { background-color: #20c997; color: #000; }
         .status-ready { background-color: #ffc107; color: #000; }
+        .status-active { background-color: #198754; color: #fff; }
+        .status-online { background-color: #198754; color: #fff; }
+        .status-offline { background-color: #6c757d; color: #fff; }
+        .status-paid { background-color: #198754; color: #fff; }
+        .status-pending { background-color: #ffc107; color: #000; }
+        .status-overdue { background-color: #dc3545; color: #fff; }
         a.csv-link {
             color: var(--gold);
             text-decoration: none;
@@ -110,15 +178,56 @@
         .empty-state {
             color: var(--text-secondary);
             text-align: center;
-            padding: 2rem;
+            padding: 2.5rem;
+        }
+        .error-state {
+            color: var(--danger);
+            text-align: center;
+            padding: 1.5rem;
+        }
+        .modal-content {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        .modal-header {
+            border-bottom-color: var(--border-color);
+        }
+        .modal-footer {
+            border-top-color: var(--border-color);
+        }
+        .modal-header .btn-close {
+            filter: invert(1);
+        }
+        .result-pre {
+            background-color: var(--bg-primary);
+            color: #c9d1d9;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        @media (max-width: 768px) {
+            .nav-tabs .nav-link {
+                padding: 10px 14px;
+                font-size: 0.9rem;
+            }
+            .user-info-bar {
+                padding: 10px 16px;
+                font-size: 0.85rem;
+            }
         }
     </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark mb-4">
         <div class="container-fluid">
-            <a class="navbar-brand" href="/api/ab/portal">
-                <i class="fas fa-cube me-2"></i>AB Integration Portal
+            <a class="navbar-brand" href="/api/hi/portal">
+                <i class="fas fa-cube me-2"></i>HashInsight HI Integration
             </a>
             <div class="ms-auto d-flex align-items-center">
                 <span id="nav-user" class="text-white me-3"></span>
@@ -135,34 +244,87 @@
             </div>
         </div>
 
-        <div class="row g-4">
-            <div class="col-lg-6">
-                <div class="card h-100">
-                    <div class="card-header d-flex align-items-center">
-                        <i class="fas fa-microchip me-2"></i>
-                        <span class="section-title">Miners</span>
+        <ul class="nav nav-tabs mb-0" id="portalTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="fleet-tab" data-bs-toggle="tab" data-bs-target="#fleet" type="button" role="tab" aria-selected="true">
+                    <i class="fas fa-server"></i>Fleet
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="curtailment-tab" data-bs-toggle="tab" data-bs-target="#curtailment" type="button" role="tab" aria-selected="false">
+                    <i class="fas fa-bolt"></i>Curtailment
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="billing-tab" data-bs-toggle="tab" data-bs-target="#billing" type="button" role="tab" aria-selected="false">
+                    <i class="fas fa-file-invoice-dollar"></i>Billing
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="audit-tab" data-bs-toggle="tab" data-bs-target="#audit" type="button" role="tab" aria-selected="false">
+                    <i class="fas fa-shield-alt"></i>Audit
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="portalTabContent">
+            <div class="tab-pane fade show active" id="fleet" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-xl-7">
+                        <div class="card">
+                            <div class="card-header d-flex align-items-center">
+                                <i class="fas fa-microchip me-2"></i>
+                                <span class="section-title">Miners</span>
+                            </div>
+                            <div class="card-body p-0">
+                                <div id="miners-loading" class="text-center py-3">
+                                    <div class="spinner-border spinner-border-sm"></div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover" id="miners-table" style="display:none">
+                                        <thead><tr>
+                                            <th>ID</th><th>Miner ID</th><th>Model</th><th>IP</th><th>Status</th><th>Nominal W</th>
+                                        </tr></thead>
+                                        <tbody id="miners-body"></tbody>
+                                    </table>
+                                </div>
+                                <div id="miners-empty" class="empty-state" style="display:none">
+                                    <i class="fas fa-inbox fa-2x mb-2 d-block"></i>No miners found
+                                </div>
+                                <div id="miners-error" class="error-state" style="display:none"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body p-0">
-                        <div id="miners-loading" class="text-center py-3">
-                            <div class="spinner-border spinner-border-sm"></div>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0" id="miners-table" style="display:none">
-                                <thead><tr>
-                                    <th>ID</th><th>Miner ID</th><th>Model</th><th>IP</th><th>Status</th>
-                                </tr></thead>
-                                <tbody id="miners-body"></tbody>
-                            </table>
-                        </div>
-                        <div id="miners-empty" class="empty-state" style="display:none">
-                            <i class="fas fa-inbox fa-2x mb-2 d-block"></i>No miners found
+                    <div class="col-xl-5">
+                        <div class="card">
+                            <div class="card-header d-flex align-items-center">
+                                <i class="fas fa-layer-group me-2"></i>
+                                <span class="section-title">Groups</span>
+                            </div>
+                            <div class="card-body p-0">
+                                <div id="groups-loading" class="text-center py-3">
+                                    <div class="spinner-border spinner-border-sm"></div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover" id="groups-table" style="display:none">
+                                        <thead><tr>
+                                            <th>ID</th><th>Name</th><th>Site</th><th>Tenant</th><th>Priority</th><th>Miners</th>
+                                        </tr></thead>
+                                        <tbody id="groups-body"></tbody>
+                                    </table>
+                                </div>
+                                <div id="groups-empty" class="empty-state" style="display:none">
+                                    <i class="fas fa-inbox fa-2x mb-2 d-block"></i>No groups found
+                                </div>
+                                <div id="groups-error" class="error-state" style="display:none"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-lg-6">
-                <div class="card h-100">
+            <div class="tab-pane fade" id="curtailment" role="tabpanel">
+                <div class="card">
                     <div class="card-header d-flex align-items-center">
                         <i class="fas fa-bolt me-2"></i>
                         <span class="section-title">Curtailment Plans</span>
@@ -172,9 +334,9 @@
                             <div class="spinner-border spinner-border-sm"></div>
                         </div>
                         <div class="table-responsive">
-                            <table class="table table-hover mb-0" id="plans-table" style="display:none">
+                            <table class="table table-hover" id="plans-table" style="display:none">
                                 <thead><tr>
-                                    <th>ID</th><th>Name</th><th>Site</th><th>Objective</th><th>Status</th>
+                                    <th>ID</th><th>Name</th><th>Scope</th><th>Objective</th><th>Status</th><th>Created</th><th>Actions</th>
                                 </tr></thead>
                                 <tbody id="plans-body"></tbody>
                             </table>
@@ -182,57 +344,110 @@
                         <div id="plans-empty" class="empty-state" style="display:none">
                             <i class="fas fa-inbox fa-2x mb-2 d-block"></i>No curtailment plans found
                         </div>
+                        <div id="plans-error" class="error-state" style="display:none"></div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-lg-6">
-                <div class="card h-100">
-                    <div class="card-header d-flex align-items-center">
-                        <i class="fas fa-chart-bar me-2"></i>
-                        <span class="section-title">Usage Records</span>
+            <div class="tab-pane fade" id="billing" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-xl-6">
+                        <div class="card h-100">
+                            <div class="card-header d-flex align-items-center">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                <span class="section-title">Usage Records</span>
+                            </div>
+                            <div class="card-body p-0">
+                                <div id="usage-loading" class="text-center py-3">
+                                    <div class="spinner-border spinner-border-sm"></div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover" id="usage-table" style="display:none">
+                                        <thead><tr>
+                                            <th>ID</th><th>Site</th><th>Tenant</th><th>Period</th><th>kWh</th><th>Avg kW</th><th>Method</th>
+                                        </tr></thead>
+                                        <tbody id="usage-body"></tbody>
+                                    </table>
+                                </div>
+                                <div id="usage-empty" class="empty-state" style="display:none">
+                                    <i class="fas fa-inbox fa-2x mb-2 d-block"></i>No usage records found
+                                </div>
+                                <div id="usage-error" class="error-state" style="display:none"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body p-0">
-                        <div id="usage-loading" class="text-center py-3">
-                            <div class="spinner-border spinner-border-sm"></div>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0" id="usage-table" style="display:none">
-                                <thead><tr>
-                                    <th>ID</th><th>Tenant</th><th>Period</th><th>kWh</th><th>Method</th>
-                                </tr></thead>
-                                <tbody id="usage-body"></tbody>
-                            </table>
-                        </div>
-                        <div id="usage-empty" class="empty-state" style="display:none">
-                            <i class="fas fa-inbox fa-2x mb-2 d-block"></i>No usage records found
+                    <div class="col-xl-6">
+                        <div class="card h-100">
+                            <div class="card-header d-flex align-items-center">
+                                <i class="fas fa-file-invoice-dollar me-2"></i>
+                                <span class="section-title">Invoices</span>
+                            </div>
+                            <div class="card-body p-0">
+                                <div id="invoices-loading" class="text-center py-3">
+                                    <div class="spinner-border spinner-border-sm"></div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover" id="invoices-table" style="display:none">
+                                        <thead><tr>
+                                            <th>ID</th><th>Tenant</th><th>Period</th><th>Subtotal</th><th>Total</th><th>Status</th><th>Actions</th>
+                                        </tr></thead>
+                                        <tbody id="invoices-body"></tbody>
+                                    </table>
+                                </div>
+                                <div id="invoices-empty" class="empty-state" style="display:none">
+                                    <i class="fas fa-inbox fa-2x mb-2 d-block"></i>No invoices found
+                                </div>
+                                <div id="invoices-error" class="error-state" style="display:none"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-lg-6">
-                <div class="card h-100">
+            <div class="tab-pane fade" id="audit" role="tabpanel">
+                <div class="card">
                     <div class="card-header d-flex align-items-center">
-                        <i class="fas fa-file-invoice-dollar me-2"></i>
-                        <span class="section-title">Invoices</span>
+                        <i class="fas fa-shield-alt me-2"></i>
+                        <span class="section-title">Audit Log</span>
                     </div>
                     <div class="card-body p-0">
-                        <div id="invoices-loading" class="text-center py-3">
+                        <div id="audit-loading" class="text-center py-3">
                             <div class="spinner-border spinner-border-sm"></div>
                         </div>
                         <div class="table-responsive">
-                            <table class="table table-hover mb-0" id="invoices-table" style="display:none">
+                            <table class="table table-hover" id="audit-table" style="display:none">
                                 <thead><tr>
-                                    <th>ID</th><th>Tenant</th><th>Period</th><th>Total</th><th>Status</th><th>CSV</th>
+                                    <th>ID</th><th>Action</th><th>Entity</th><th>Actor</th><th>Tenant</th><th>Time</th>
                                 </tr></thead>
-                                <tbody id="invoices-body"></tbody>
+                                <tbody id="audit-body"></tbody>
                             </table>
                         </div>
-                        <div id="invoices-empty" class="empty-state" style="display:none">
-                            <i class="fas fa-inbox fa-2x mb-2 d-block"></i>No invoices found
+                        <div id="audit-empty" class="empty-state" style="display:none">
+                            <i class="fas fa-inbox fa-2x mb-2 d-block"></i>No audit entries found
                         </div>
+                        <div id="audit-error" class="error-state" style="display:none"></div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="resultModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="resultModalTitle">Result</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="resultModalSpinner" class="text-center py-4" style="display:none">
+                        <div class="spinner-border"></div>
+                        <div class="mt-2 text-secondary">Processing...</div>
+                    </div>
+                    <pre class="result-pre" id="resultModalBody"></pre>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-gold" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -240,19 +455,61 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const API = '/api/ab';
+        const API = '/api/hi';
+        const loaded = { fleet: false, curtailment: false, billing: false, audit: false };
 
         function statusBadge(status) {
+            if (!status) return '<span class="status-badge status-draft">-</span>';
+            const s = status.toLowerCase();
             const cls = {
-                draft: 'status-draft', executing: 'status-executing',
-                completed: 'status-completed', ready: 'status-ready'
-            }[status] || 'status-draft';
+                draft: 'status-draft', simulated: 'status-simulated',
+                executing: 'status-executing', completed: 'status-completed',
+                verified: 'status-verified', ready: 'status-ready',
+                active: 'status-active', online: 'status-online',
+                offline: 'status-offline', paid: 'status-paid',
+                pending: 'status-pending', overdue: 'status-overdue'
+            }[s] || 'status-draft';
             return `<span class="status-badge ${cls}">${status}</span>`;
         }
 
         function fmtDate(iso) {
             if (!iso) return '-';
-            return iso.substring(0, 10);
+            try {
+                const d = new Date(iso);
+                if (isNaN(d.getTime())) return iso.substring(0, 10);
+                return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+            } catch { return iso.substring(0, 10); }
+        }
+
+        function fmtDateTime(iso) {
+            if (!iso) return '-';
+            try {
+                const d = new Date(iso);
+                if (isNaN(d.getTime())) return iso.substring(0, 19).replace('T', ' ');
+                return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) +
+                    ' ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            } catch { return iso.substring(0, 19).replace('T', ' '); }
+        }
+
+        function esc(val) {
+            if (val === null || val === undefined) return '-';
+            return String(val).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        function showLoading(id) {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'block';
+        }
+        function hideEl(id) {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        }
+        function showError(id, msg) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${esc(msg)}`;
+                el.style.display = 'block';
+            }
         }
 
         async function loadUser() {
@@ -260,16 +517,16 @@
                 const res = await fetch(`${API}/me`);
                 if (!res.ok) throw new Error('Not authenticated');
                 const u = await res.json();
-                document.getElementById('user-spinner').style.display = 'none';
+                hideEl('user-spinner');
                 document.getElementById('user-details').innerHTML =
                     `<i class="fas fa-user me-2"></i>` +
                     `User #${u.user_id} &nbsp;` +
-                    `<span class="badge-role me-2">${u.role}</span>` +
-                    (u.org_id ? `Org: ${u.org_id} &nbsp;` : '') +
-                    (u.tenant_id ? `Tenant: ${u.tenant_id}` : '<span class="text-secondary">All Tenants</span>');
+                    `<span class="badge-role me-2">${esc(u.role)}</span>` +
+                    (u.org_id ? `<span class="text-secondary me-2">Org:</span>${esc(u.org_id)} &nbsp;` : '') +
+                    (u.tenant_id ? `<span class="text-secondary me-2">Tenant:</span>${esc(u.tenant_id)}` : '<span class="text-secondary">All Tenants</span>');
                 document.getElementById('nav-user').textContent = `User #${u.user_id}`;
             } catch (e) {
-                document.getElementById('user-spinner').style.display = 'none';
+                hideEl('user-spinner');
                 document.getElementById('user-details').innerHTML =
                     '<span class="text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Not authenticated</span>';
             }
@@ -278,91 +535,180 @@
         async function loadMiners() {
             try {
                 const res = await fetch(`${API}/miners`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
-                document.getElementById('miners-loading').style.display = 'none';
-                if (!data.length) {
-                    document.getElementById('miners-empty').style.display = 'block';
-                    return;
-                }
+                hideEl('miners-loading');
+                if (!data.length) { document.getElementById('miners-empty').style.display = 'block'; return; }
                 document.getElementById('miners-table').style.display = 'table';
-                const tbody = document.getElementById('miners-body');
-                tbody.innerHTML = data.map(m =>
-                    `<tr><td>${m.id}</td><td>${m.miner_id}</td><td>${m.model || '-'}</td><td>${m.ip}</td><td>${m.status}</td></tr>`
+                document.getElementById('miners-body').innerHTML = data.map(m =>
+                    `<tr><td>${esc(m.id)}</td><td>${esc(m.miner_id)}</td><td>${esc(m.model)}</td><td>${esc(m.ip)}</td><td>${statusBadge(m.status)}</td><td>${esc(m.nominal_watts)}</td></tr>`
                 ).join('');
             } catch (e) {
-                document.getElementById('miners-loading').innerHTML = '<span class="text-danger">Error loading miners</span>';
+                hideEl('miners-loading');
+                showError('miners-error', 'Error loading miners: ' + e.message);
+            }
+        }
+
+        async function loadGroups() {
+            try {
+                const res = await fetch(`${API}/groups`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                hideEl('groups-loading');
+                if (!data.length) { document.getElementById('groups-empty').style.display = 'block'; return; }
+                document.getElementById('groups-table').style.display = 'table';
+                document.getElementById('groups-body').innerHTML = data.map(g =>
+                    `<tr><td>${esc(g.id)}</td><td>${esc(g.name)}</td><td>${esc(g.site_id)}</td><td>${esc(g.tenant_id)}</td><td>${esc(g.priority)}</td><td>${esc(g.miner_count)}</td></tr>`
+                ).join('');
+            } catch (e) {
+                hideEl('groups-loading');
+                showError('groups-error', 'Error loading groups: ' + e.message);
             }
         }
 
         async function loadPlans() {
             try {
                 const res = await fetch(`${API}/curtailment/plans`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
-                document.getElementById('plans-loading').style.display = 'none';
-                if (!data.length) {
-                    document.getElementById('plans-empty').style.display = 'block';
-                    return;
-                }
+                hideEl('plans-loading');
+                if (!data.length) { document.getElementById('plans-empty').style.display = 'block'; return; }
                 document.getElementById('plans-table').style.display = 'table';
-                const tbody = document.getElementById('plans-body');
-                tbody.innerHTML = data.map(p =>
-                    `<tr><td>${p.id}</td><td>${p.name}</td><td>${p.site_id}</td><td>${p.objective}</td><td>${statusBadge(p.status)}</td></tr>`
+                document.getElementById('plans-body').innerHTML = data.map(p =>
+                    `<tr>` +
+                    `<td>${esc(p.id)}</td><td>${esc(p.name)}</td><td>${esc(p.scope)}</td><td>${esc(p.objective)}</td>` +
+                    `<td>${statusBadge(p.status)}</td><td>${fmtDate(p.created_at)}</td>` +
+                    `<td class="text-nowrap">` +
+                    `<button class="btn btn-outline-gold btn-action" onclick="planAction(${p.id},'simulate')"><i class="fas fa-play me-1"></i>Simulate</button>` +
+                    `<button class="btn btn-outline-gold btn-action" onclick="planAction(${p.id},'execute')"><i class="fas fa-rocket me-1"></i>Execute</button>` +
+                    `<button class="btn btn-outline-gold btn-action" onclick="planAction(${p.id},'verify')"><i class="fas fa-check me-1"></i>Verify</button>` +
+                    `</td></tr>`
                 ).join('');
             } catch (e) {
-                document.getElementById('plans-loading').innerHTML = '<span class="text-danger">Error loading plans</span>';
+                hideEl('plans-loading');
+                showError('plans-error', 'Error loading plans: ' + e.message);
+            }
+        }
+
+        async function planAction(planId, action) {
+            const modal = new bootstrap.Modal(document.getElementById('resultModal'));
+            const titles = { simulate: 'Simulation Result', execute: 'Execution Result', verify: 'Verification Report' };
+            document.getElementById('resultModalTitle').textContent = `${titles[action]} — Plan #${planId}`;
+            document.getElementById('resultModalBody').textContent = '';
+            document.getElementById('resultModalSpinner').style.display = 'block';
+            modal.show();
+            try {
+                const res = await fetch(`${API}/curtailment/plans/${planId}/${action}`, { method: 'POST' });
+                const data = await res.json();
+                document.getElementById('resultModalSpinner').style.display = 'none';
+                document.getElementById('resultModalBody').textContent = JSON.stringify(data, null, 2);
+                if (action === 'execute' || action === 'verify') {
+                    loaded.curtailment = false;
+                    loadPlans();
+                }
+            } catch (e) {
+                document.getElementById('resultModalSpinner').style.display = 'none';
+                document.getElementById('resultModalBody').textContent = 'Error: ' + e.message;
             }
         }
 
         async function loadUsage() {
             try {
-                const res = await fetch(`${API}/invoices`);
-                const invoices = await res.json();
-                document.getElementById('usage-loading').style.display = 'none';
-                const usageBody = document.getElementById('usage-body');
-                if (!invoices.length) {
-                    document.getElementById('usage-empty').style.display = 'block';
-                } else {
-                    document.getElementById('usage-table').style.display = 'table';
-                    usageBody.innerHTML = invoices.map(inv => {
-                        const ev = inv.evidence_json || {};
-                        return `<tr><td>${inv.id}</td><td>${inv.tenant_id}</td>` +
-                            `<td>${fmtDate(inv.period_start)} ~ ${fmtDate(inv.period_end)}</td>` +
-                            `<td>${ev.total_kwh || '-'} kWh</td><td>${ev.tariff_type || '-'}</td></tr>`;
-                    }).join('');
-                }
+                const res = await fetch(`${API}/usage`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                hideEl('usage-loading');
+                if (!data.length) { document.getElementById('usage-empty').style.display = 'block'; return; }
+                document.getElementById('usage-table').style.display = 'table';
+                document.getElementById('usage-body').innerHTML = data.map(u =>
+                    `<tr><td>${esc(u.id)}</td><td>${esc(u.site_id)}</td><td>${esc(u.tenant_id)}</td>` +
+                    `<td>${fmtDate(u.period_start)} ~ ${fmtDate(u.period_end)}</td>` +
+                    `<td>${esc(u.total_kwh)}</td><td>${esc(u.avg_kw)}</td><td>${esc(u.method)}</td></tr>`
+                ).join('');
             } catch (e) {
-                document.getElementById('usage-loading').innerHTML = '<span class="text-danger">Error loading usage</span>';
+                hideEl('usage-loading');
+                showError('usage-error', 'Error loading usage: ' + e.message);
             }
         }
 
         async function loadInvoices() {
             try {
                 const res = await fetch(`${API}/invoices`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
-                document.getElementById('invoices-loading').style.display = 'none';
-                if (!data.length) {
-                    document.getElementById('invoices-empty').style.display = 'block';
-                    return;
-                }
+                hideEl('invoices-loading');
+                if (!data.length) { document.getElementById('invoices-empty').style.display = 'block'; return; }
                 document.getElementById('invoices-table').style.display = 'table';
-                const tbody = document.getElementById('invoices-body');
-                tbody.innerHTML = data.map(inv =>
-                    `<tr><td>${inv.id}</td><td>${inv.tenant_id}</td>` +
+                document.getElementById('invoices-body').innerHTML = data.map(inv =>
+                    `<tr><td>${esc(inv.id)}</td><td>${esc(inv.tenant_id)}</td>` +
                     `<td>${fmtDate(inv.period_start)} ~ ${fmtDate(inv.period_end)}</td>` +
+                    `<td>$${(inv.subtotal || 0).toFixed(2)}</td>` +
                     `<td>$${(inv.total || 0).toFixed(2)}</td>` +
                     `<td>${statusBadge(inv.status)}</td>` +
                     `<td><a href="${API}/invoices/${inv.id}/export.csv" class="csv-link"><i class="fas fa-download me-1"></i>CSV</a></td></tr>`
                 ).join('');
             } catch (e) {
-                document.getElementById('invoices-loading').innerHTML = '<span class="text-danger">Error loading invoices</span>';
+                hideEl('invoices-loading');
+                showError('invoices-error', 'Error loading invoices: ' + e.message);
             }
         }
 
+        async function loadAudit() {
+            try {
+                const res = await fetch(`${API}/audit`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                hideEl('audit-loading');
+                if (!data.length) { document.getElementById('audit-empty').style.display = 'block'; return; }
+                document.getElementById('audit-table').style.display = 'table';
+                document.getElementById('audit-body').innerHTML = data.map(a =>
+                    `<tr><td>${esc(a.id)}</td><td>${esc(a.action)}</td><td>${esc(a.entity_type)}${a.entity_id ? ' #' + esc(a.entity_id) : ''}</td>` +
+                    `<td>${esc(a.actor)}</td><td>${esc(a.tenant_id)}</td><td>${fmtDateTime(a.created_at)}</td></tr>`
+                ).join('');
+            } catch (e) {
+                hideEl('audit-loading');
+                showError('audit-error', 'Error loading audit log: ' + e.message);
+            }
+        }
+
+        function loadFleet() {
+            if (loaded.fleet) return;
+            loaded.fleet = true;
+            loadMiners();
+            loadGroups();
+        }
+
+        function loadCurtailment() {
+            if (loaded.curtailment) return;
+            loaded.curtailment = true;
+            loadPlans();
+        }
+
+        function loadBilling() {
+            if (loaded.billing) return;
+            loaded.billing = true;
+            loadUsage();
+            loadInvoices();
+        }
+
+        function loadAuditTab() {
+            if (loaded.audit) return;
+            loaded.audit = true;
+            loadAudit();
+        }
+
+        document.querySelectorAll('#portalTabs button[data-bs-toggle="tab"]').forEach(tab => {
+            tab.addEventListener('shown.bs.tab', (e) => {
+                const target = e.target.getAttribute('data-bs-target');
+                if (target === '#fleet') loadFleet();
+                else if (target === '#curtailment') loadCurtailment();
+                else if (target === '#billing') loadBilling();
+                else if (target === '#audit') loadAuditTab();
+            });
+        });
+
         loadUser();
-        loadMiners();
-        loadPlans();
-        loadUsage();
-        loadInvoices();
+        loadFleet();
     </script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 """
-Billing Service v1 - AB Integration
+Billing Service v1 - HI Integration
 Generates invoices from contracts, tariffs, and usage records.
 """
 import logging
@@ -7,8 +7,8 @@ import csv
 import io
 from datetime import datetime
 from db import db
-from models_ab import (ABInvoice, ABContract, ABUsageRecord, Tariff,
-                       ABCurtailmentResult, ABCurtailmentPlan, ABAuditLog)
+from models_hi import (HiInvoice, HiContract, HiUsageRecord, HiTariff,
+                       HiCurtailmentResult, HiCurtailmentPlan, HiAuditLog)
 
 logger = logging.getLogger(__name__)
 
@@ -28,26 +28,30 @@ class BillingService:
         
         Returns: dict with invoice data
         """
-        contract = ABContract.query.get(contract_id)
+        contract = HiContract.query.get(contract_id)
         if not contract:
             return {'error': 'Contract not found'}
         
-        tariff = Tariff.query.get(contract.tariff_id) if contract.tariff_id else None
+        tariff = HiTariff.query.get(contract.tariff_id) if contract.tariff_id else None
         
-        # Get usage records
-        usage_records = ABUsageRecord.query.filter_by(
+        usage_records = HiUsageRecord.query.filter_by(
             org_id=contract.org_id,
             site_id=contract.site_id,
             tenant_id=contract.tenant_id
         ).filter(
-            ABUsageRecord.period_start >= period_start,
-            ABUsageRecord.period_end <= period_end
+            HiUsageRecord.period_start >= period_start,
+            HiUsageRecord.period_end <= period_end
         ).all()
         
         total_kwh = sum(u.kwh_estimated for u in usage_records)
-        avg_kw = sum(u.avg_kw_estimated for u in usage_records) / max(len(usage_records), 1)
+        total_duration_hours = 0.0
+        weighted_kw_sum = 0.0
+        for u in usage_records:
+            u_duration = (u.period_end - u.period_start).total_seconds() / 3600.0
+            weighted_kw_sum += u.avg_kw_estimated * u_duration
+            total_duration_hours += u_duration
+        avg_kw = weighted_kw_sum / max(total_duration_hours, 1.0)
         
-        # Determine electricity rate
         if tariff:
             params = tariff.params_json or {}
             rate = params.get('flat_rate', 0.06)
@@ -56,7 +60,6 @@ class BillingService:
         
         line_items = []
         
-        # 1. Electricity cost
         electricity_cost = round(total_kwh * rate, 2)
         line_items.append({
             'type': 'electricity',
@@ -66,7 +69,6 @@ class BillingService:
             'amount': electricity_cost
         })
         
-        # 2. Hosting fee
         fee_params = contract.hosting_fee_params_json or {}
         hosting_fee = 0.0
         if contract.hosting_fee_type == 'per_kw':
@@ -82,7 +84,6 @@ class BillingService:
         elif contract.hosting_fee_type == 'per_miner':
             per_miner_rate = fee_params.get('rate', 100.0)
             miner_count = fee_params.get('miner_count', 0)
-            # Try to get miner count from usage evidence
             for u in usage_records:
                 ev = u.evidence_json or {}
                 if ev.get('total_miners', 0) > miner_count:
@@ -106,16 +107,14 @@ class BillingService:
                 'amount': hosting_fee
             })
         
-        # 3. Curtailment credit (if applicable)
         curtailment_credit = 0.0
         if contract.curtailment_split_pct > 0:
-            # Find completed curtailment plans in this period
-            plans = ABCurtailmentPlan.query.filter(
-                ABCurtailmentPlan.org_id == contract.org_id,
-                ABCurtailmentPlan.site_id == contract.site_id,
-                ABCurtailmentPlan.status == 'completed',
-                ABCurtailmentPlan.created_at >= period_start,
-                ABCurtailmentPlan.created_at <= period_end
+            plans = HiCurtailmentPlan.query.filter(
+                HiCurtailmentPlan.org_id == contract.org_id,
+                HiCurtailmentPlan.site_id == contract.site_id,
+                HiCurtailmentPlan.status == 'completed',
+                HiCurtailmentPlan.created_at >= period_start,
+                HiCurtailmentPlan.created_at <= period_end
             ).all()
             
             for p in plans:
@@ -146,8 +145,7 @@ class BillingService:
             'generated_at': datetime.utcnow().isoformat()
         }
         
-        # Check for existing invoice
-        existing = ABInvoice.query.filter_by(
+        existing = HiInvoice.query.filter_by(
             contract_id=contract.id,
             period_start=period_start,
             period_end=period_end
@@ -160,7 +158,7 @@ class BillingService:
             existing.evidence_json = evidence
             invoice = existing
         else:
-            invoice = ABInvoice(
+            invoice = HiInvoice(
                 org_id=contract.org_id,
                 tenant_id=contract.tenant_id,
                 contract_id=contract.id,
@@ -173,9 +171,8 @@ class BillingService:
             )
             db.session.add(invoice)
         
-        # Audit
         if actor_user_id:
-            audit = ABAuditLog(
+            audit = HiAuditLog(
                 org_id=contract.org_id,
                 tenant_id=contract.tenant_id,
                 actor_user_id=actor_user_id,
@@ -200,7 +197,7 @@ class BillingService:
         Export an invoice as CSV string.
         Returns: CSV string
         """
-        invoice = ABInvoice.query.get(invoice_id)
+        invoice = HiInvoice.query.get(invoice_id)
         if not invoice:
             return None
         

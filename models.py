@@ -1562,6 +1562,9 @@ class HostingSite(db.Model):
     owner_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True, index=True)
     owner = db.relationship('UserAccess', foreign_keys=[owner_id], backref='owned_sites')
     
+    # HI Integration: Organization linkage
+    hi_org_id = db.Column(db.Integer, db.ForeignKey('hi_orgs.id'), nullable=True, index=True)
+    
     # 时间戳
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
@@ -2374,6 +2377,10 @@ class Miner(db.Model):
     # 用户关联
     user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=True, index=True)
     user = db.relationship('User', backref='miners')
+    
+    # HI Integration fields
+    hi_tenant_id = db.Column(db.Integer, db.ForeignKey('hi_tenants.id'), nullable=True, index=True)
+    nominal_watts = db.Column(db.Integer, nullable=True)
     
     # 索引优化
     __table_args__ = (

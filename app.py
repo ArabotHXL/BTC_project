@@ -522,6 +522,7 @@ import models_device_encryption  # noqa: F401
 import models_remote_control  # noqa: F401
 import models_control_plane  # noqa: F401 - Zone/Customer/PricePlan/DemandLedger/CommandApproval/AuditEvent
 import models_ai_closedloop  # noqa: F401 - AIRecommendation/AIRecommendationFeedback/AutoApproveRule
+import models_hi  # noqa: F401 - HI integration models (hi_orgs, hi_tenants, etc.)
 logging.info("Models imported successfully at module level")
 
 # Helper functions that use database models - defined AFTER model imports
@@ -5003,15 +5004,35 @@ except ImportError as e:
 except Exception as e:
     logging.error(f"Failed to register Market Intel Blueprint: {e}")
 
-# AB Integration Blueprint (multi-tenant, curtailment, billing, portal)
+# AB Integration Blueprint (legacy - kept for backward compatibility)
 try:
     from api.ab_api import ab_api_bp
     app.register_blueprint(ab_api_bp)
-    logging.info("AB Integration API registered successfully")
+    logging.info("AB Integration API (legacy) registered successfully")
 except ImportError as e:
-    logging.warning(f"AB Integration API not available: {e}")
+    logging.warning(f"AB Integration API (legacy) not available: {e}")
 except Exception as e:
-    logging.error(f"Failed to register AB Integration API: {e}")
+    logging.error(f"Failed to register AB Integration API (legacy): {e}")
+
+# HI Integration Blueprint (new hi_ prefixed multi-tenant system)
+try:
+    from api.hi_api import hi_api_bp
+    app.register_blueprint(hi_api_bp)
+    logging.info("HI Integration API registered successfully")
+except ImportError as e:
+    logging.warning(f"HI Integration API not available: {e}")
+except Exception as e:
+    logging.error(f"Failed to register HI Integration API: {e}")
+
+# Initialize HI tenant isolation middleware
+try:
+    from common.hi_tenant import init_hi_tenant
+    init_hi_tenant(app)
+    logging.info("HI tenant isolation middleware initialized")
+except ImportError as e:
+    logging.warning(f"HI tenant middleware not available: {e}")
+except Exception as e:
+    logging.error(f"Failed to initialize HI tenant middleware: {e}")
 
 # Register calculator module blueprint for modular architecture
 try:

@@ -1,48 +1,60 @@
 #!/usr/bin/env python3
 """
-AB Integration - Database Initialization
-Creates tables, default org/tenant, and operator admin user.
+HI Integration - Database Initialization
+Runs alembic migrations, creates default org/tenant, and operator admin user.
 Idempotent: safe to run multiple times.
 """
 import os
 import sys
+import subprocess
 import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 def init_db():
+    logger.info("Step 1: Running alembic upgrade head...")
+    try:
+        result = subprocess.run(
+            ['alembic', 'upgrade', 'head'],
+            capture_output=True, text=True, timeout=120,
+            cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        )
+        if result.returncode == 0:
+            logger.info("Alembic migration completed successfully")
+            if result.stdout:
+                logger.info(result.stdout.strip())
+        else:
+            logger.warning(f"Alembic migration returned code {result.returncode}")
+            if result.stderr:
+                logger.warning(result.stderr.strip())
+    except Exception as e:
+        logger.warning(f"Alembic migration failed (continuing): {e}")
+
     from app import app
     from db import db
-    import models_ab  # ensure models are registered
-    
+    import models_hi
+
     with app.app_context():
-        # Create all new tables
-        from models_ab import (Org, Tenant, MinerGroup, ABAuditLog, 
-                               ABCurtailmentPlan, ABCurtailmentAction, ABCurtailmentResult,
-                               Tariff, ABContract, ABUsageRecord, ABInvoice)
-        
-        # Only create tables that don't exist yet
+        from models_hi import HiOrg, HiTenant, HiAuditLog
+
         db.create_all()
-        logger.info("All AB tables created/verified")
-        
-        # Check if self org exists
-        self_org = Org.query.filter_by(org_type='self').first()
+        logger.info("All tables created/verified")
+
+        self_org = HiOrg.query.filter_by(org_type='self').first()
         if not self_org:
-            self_org = Org(name='HashInsight Self-Mining', org_type='self')
+            self_org = HiOrg(name='HashInsight Self-Mining', org_type='self')
             db.session.add(self_org)
             db.session.flush()
             logger.info(f"Created self org: {self_org.name} (id={self_org.id})")
         else:
             logger.info(f"Self org already exists: {self_org.name} (id={self_org.id})")
-        
-        # Check if self tenant exists
-        self_tenant = Tenant.query.filter_by(org_id=self_org.id, tenant_type='self').first()
+
+        self_tenant = HiTenant.query.filter_by(org_id=self_org.id, tenant_type='self').first()
         if not self_tenant:
-            self_tenant = Tenant(
+            self_tenant = HiTenant(
                 org_id=self_org.id,
                 name='Self-Mining Operations',
                 tenant_type='self',
@@ -53,12 +65,11 @@ def init_db():
             logger.info(f"Created self tenant: {self_tenant.name} (id={self_tenant.id})")
         else:
             logger.info(f"Self tenant already exists: {self_tenant.name} (id={self_tenant.id})")
-        
-        # Create operator admin user
+
         from models import UserAccess
         admin_email = os.environ.get('ADMIN_EMAIL', 'admin@local')
         admin_password = os.environ.get('ADMIN_PASSWORD', 'admin123')
-        
+
         admin = UserAccess.query.filter_by(email=admin_email).first()
         if not admin:
             admin = UserAccess(
@@ -75,9 +86,8 @@ def init_db():
             logger.info(f"Created operator admin: {admin_email} (id={admin.id})")
         else:
             logger.info(f"Admin user already exists: {admin_email} (id={admin.id})")
-        
-        # Write audit log
-        audit = ABAuditLog(
+
+        audit = HiAuditLog(
             org_id=self_org.id,
             actor_user_id=admin.id if admin else None,
             action_type='SYSTEM_INIT',
@@ -90,15 +100,16 @@ def init_db():
             }
         )
         db.session.add(audit)
-        
+
         db.session.commit()
         logger.info("Database initialization complete!")
-        
-        return {
+
+        result = {
             'org_id': self_org.id,
             'tenant_id': self_tenant.id,
             'admin_email': admin_email
         }
+        return result
 
 if __name__ == '__main__':
     result = init_db()

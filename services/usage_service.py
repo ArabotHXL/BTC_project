@@ -1,11 +1,11 @@
 """
-Usage Service v1 - AB Integration
+Usage Service v1 - HI Integration
 Estimates power usage per tenant/site for billing.
 """
 import logging
 from datetime import datetime
 from db import db
-from models_ab import ABUsageRecord, Tenant, ABAuditLog
+from models_hi import HiUsageRecord, HiTenant, HiAuditLog, HiGroup
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,8 @@ class UsageService:
         
         Strategy:
         1. Try telemetry data (miner_telemetry_live) if available
-        2. Fallback to nominal_watts * online_hours estimation
+        2. Fallback to miners.nominal_watts sum (via Miner model)
+        3. Last resort: selector_json miner_count * watts_per_miner estimation
         
         Args:
             org_id: Organization ID
@@ -30,14 +31,10 @@ class UsageService:
         
         Returns: dict with usage record data
         """
-        from models_ab import MinerGroup
-        
-        # Calculate period duration
         duration = period_end - period_start
         duration_hours = duration.total_seconds() / 3600.0
         
-        # Get groups for this tenant at this site
-        groups = MinerGroup.query.filter_by(site_id=site_id, tenant_id=tenant_id).all()
+        groups = HiGroup.query.filter_by(site_id=site_id, tenant_id=tenant_id).all()
         
         total_watts = 0
         total_miners = 0
@@ -61,16 +58,20 @@ class UsageService:
                 'total_watts': group_watts
             })
         
-        # Try to get telemetry data
+        fallback_selector_watts = total_watts
+        
         try:
             from sqlalchemy import text
             result = db.session.execute(text("""
-                SELECT AVG(power_consumption) as avg_watts, COUNT(*) as sample_count
-                FROM miner_telemetry_live 
-                WHERE site_id = :site_id 
-                AND recorded_at BETWEEN :start AND :end
+                SELECT AVG(t.power_consumption) as avg_watts, COUNT(*) as sample_count
+                FROM miner_telemetry_live t
+                JOIN miners m ON t.miner_id = m.miner_id
+                WHERE t.site_id = :site_id 
+                AND m.hi_tenant_id = :tenant_id
+                AND t.recorded_at BETWEEN :start AND :end
             """), {
                 'site_id': str(site_id),
+                'tenant_id': tenant_id,
                 'start': period_start,
                 'end': period_end
             }).fetchone()
@@ -80,9 +81,35 @@ class UsageService:
                 method = 'telemetry_watts'
                 logger.info(f"Using telemetry data: {result.sample_count} samples")
         except Exception as e:
-            logger.warning(f"Telemetry query failed, using nominal: {e}")
+            logger.warning(f"Telemetry query failed, trying nominal_watts: {e}")
         
-        # Calculate kWh
+        if method != 'telemetry_watts':
+            try:
+                from models import Miner
+                from sqlalchemy import func, cast, Integer
+                nominal_sum = db.session.query(
+                    func.sum(Miner.nominal_watts),
+                    func.count(Miner.id)
+                ).filter(
+                    cast(Miner.site_id, Integer) == int(site_id),
+                    Miner.hi_tenant_id == tenant_id,
+                    Miner.nominal_watts.isnot(None)
+                ).first()
+                
+                if nominal_sum and nominal_sum[0] and nominal_sum[0] > 0:
+                    total_watts = float(nominal_sum[0])
+                    total_miners = int(nominal_sum[1]) if nominal_sum[1] else total_miners
+                    method = 'nominal_watts'
+                    logger.info(f"Using miners.nominal_watts: {total_watts}W from {total_miners} miners")
+                else:
+                    total_watts = fallback_selector_watts
+                    method = 'nominal_watts'
+                    logger.info("No nominal_watts data found, using selector_json fallback")
+            except Exception as e:
+                logger.warning(f"Miner nominal_watts query failed, using selector fallback: {e}")
+                total_watts = fallback_selector_watts
+                method = 'nominal_watts'
+        
         avg_kw = total_watts / 1000.0
         kwh = avg_kw * duration_hours
         
@@ -96,8 +123,7 @@ class UsageService:
             'generated_at': datetime.utcnow().isoformat()
         }
         
-        # Check for existing record
-        existing = ABUsageRecord.query.filter_by(
+        existing = HiUsageRecord.query.filter_by(
             org_id=org_id, site_id=site_id, tenant_id=tenant_id,
             period_start=period_start, period_end=period_end
         ).first()
@@ -109,7 +135,7 @@ class UsageService:
             existing.evidence_json = evidence
             record = existing
         else:
-            record = ABUsageRecord(
+            record = HiUsageRecord(
                 org_id=org_id,
                 site_id=site_id,
                 tenant_id=tenant_id,
