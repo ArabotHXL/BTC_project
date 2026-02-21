@@ -1,0 +1,140 @@
+【PHASE 3 PROMPT】Usage v1 + Billing v1 + Portal + CSV 导出 + tests
+你是资深 Python/Flask + SQLAlchemy + Alembic 工程师。基于 Phase1/2 的 AB Core 与 tenant 隔离，在当前仓库实现 Phase3：用电估算（usage_records）与账单生成（hi_invoices），并提供极简 /portal 页面与 CSV 导出。要求：不破坏旧 invoices/hosting_bills/hosting_contracts/power_contracts；新增 v2 表（hi_）跑通 demo；API tenant 隔离；提供 pytest。
+
+=====================
+A) DB 迁移（Alembic）
+=====================
+新增表（hi_ 前缀）：
+1) hi_tariffs
+- id, org_id, name, tariff_type['flat','tou','realtime_index'], params_json, currency, created_at
+（Phase3 只要求 flat）
+
+2) hi_contracts
+- id, org_id, tenant_id, site_id, tariff_id,
+  hosting_fee_type['per_kw','per_miner','flat'],
+  hosting_fee_params_json,
+  curtailment_split_pct,
+  billing_cycle['monthly','weekly'],
+  effective_from, effective_to,
+  created_at
+（字段最小可用即可）
+
+3) hi_usage_records
+- id, org_id, site_id, tenant_id,
+  period_start, period_end,
+  kwh_estimated, avg_kw_estimated,
+  method['telemetry_watts','nominal_watts'],
+  evidence_json,
+  created_at
+
+4) hi_invoices
+- id, org_id, tenant_id, contract_id,
+  period_start, period_end,
+  subtotal, total,
+  status['draft','issued','paid'],
+  line_items_json,
+  evidence_json,
+  created_at
+
+=====================
+B) Usage Service（必须新增）
+=====================
+新增 services/usage_service.py：
+- generate_usage(org_id, site_id, period_start, period_end, tenant_id=None):
+  - 选择 miners：
+    - 若 tenant_id 提供：仅该 tenant
+    - 否则：org 下全部 tenant（operator 用）
+  - 估算功耗优先级：
+    1) 若存在 telemetry（例如 miner_telemetry_history / miner_telemetry_live 里有 watts + timestamp）：按采样积分估算 kWh
+    2) 若无：使用 miners.nominal_watts * online_time
+       - online_time：如果无状态历史，则假设 100% 在线并在 evidence_json 标明
+  - 输出聚合到 tenant_id 的 kwh_estimated/avg_kw_estimated
+  - evidence_json 写入：方法、采样点、缺失率、假设
+
+注意：必须能在“无 telemetry 表”的情况下工作（fallback nominal_watts）。
+
+=====================
+C) Billing Service（必须新增）
+=====================
+新增 services/billing_service.py：
+- generate_invoice(contract_id, period_start, period_end):
+  - 读取 contract + tariff（Phase3 只支持 flat_rate：tariff.params_json.flat_rate）
+  - 找到/生成 usage_record（该 tenant/site/period）
+  - line_items：
+    - electricity_cost = kwh_estimated * flat_rate
+    - hosting_fee：
+      - per_kw: avg_kw_estimated * rate_per_kw * duration（或按月固定）——选择最简单且写清楚口径
+      - per_miner: miner_count * rate_per_miner
+      - flat: fixed
+    - curtailment_credit_split（可选 v1 简化）：
+      - period 内若有 hi_curtailment_results（site/tenant 匹配），用 actual_json.saved_kwh * flat_rate * split_pct
+      - 没有则 0
+  - subtotal/total = sum(line_items)
+  - evidence_json 引用 usage_record_id 与 curtailment_result_ids
+  - 生成 hi_invoices(status='draft')
+
+并实现 export_invoice_csv(invoice_id)：
+- 输出列：item_type, description, amount, evidence_ref
+
+=====================
+D) API（Phase3）
+=====================
+新增 endpoints（必须 tenant 隔离正确）：
+- POST /api/contracts                  (operator) {tenant_id, site_id, tariff(flat_rate), hosting_fee...}
+- GET  /api/contracts?tenant_id=
+- POST /api/usage/generate             {site_id, period_start, period_end, tenant_id?}
+- GET  /api/usage?site_id=&tenant_id=&from=&to=
+- POST /api/invoices/generate          {contract_id, period_start, period_end}
+- GET  /api/invoices?tenant_id=&from=&to=
+- GET  /api/invoices/<id>
+- GET  /api/invoices/<id>/export.csv
+
+tenant 用户：
+- 只能看到自己 tenant 的 contracts/usage/invoices
+operator：
+- 可看 org 全部
+
+所有 generate 动作写 hi_audit_log（USAGE_GENERATE / INVOICE_GENERATE / INVOICE_EXPORT）。
+
+=====================
+E) Portal（必须有）
+=====================
+新增 /portal（极简）：
+- 顶部：当前用户 org/tenant/role
+- Tabs/Sections：
+  1) Fleet：miners 列表（tenant 过滤）
+  2) Curtailment：最近 10 个 plans + report 链接
+  3) Billing：usage_records 列表 + invoices 列表 + CSV 下载链接
+实现方式：
+- 若仓库已有 Jinja 模板：直接 templates/portal.html
+- 若仓库是前后端分离：可做一个最小 server-rendered 页面或静态页面 fetch API
+
+=====================
+F) scripts/seed_demo.py 扩展
+=====================
+- 创建 1 个 flat tariff（例如 $0.05/kWh）
+- 为 2 个 client tenants 创建 hi_contracts（hosting_fee 每台/每kW 任意简化）
+- 生成一个月的 usage_records（period_start=当月1号，period_end=当月末，或固定 30 天）
+- 生成 invoices（draft）
+确保 tenant 登录后能在 /portal 看到自己的 invoice 并下载 CSV。
+
+=====================
+G) tests
+=====================
+新增 tests/test_billing_flow.py：
+1) operator_admin 生成 usage -> invoice -> export.csv 成功
+2) tenant_admin 只能看到自己的 invoice；访问别人的 invoice 返回 403/404
+3) invoice.line_items_json 与 total 计算正确（可容忍浮点误差）
+
+=====================
+H) README
+=====================
+追加 Billing Quickstart + 至少 8 条 curl：
+- create tariff/contract
+- generate usage
+- generate invoice
+- list invoices
+- export csv
+- tenant 查看自己的 invoice
+
+按顺序实施：迁移 -> services -> API -> portal -> seed -> tests -> README。保持旧 invoices/contracts 不受影响。

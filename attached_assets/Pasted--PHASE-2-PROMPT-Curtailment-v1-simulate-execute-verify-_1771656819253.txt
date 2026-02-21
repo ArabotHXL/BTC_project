@@ -1,0 +1,146 @@
+【PHASE 2 PROMPT】Curtailment v1（simulate/execute/verify）+ actions/results + 审计 + tests
+你是资深 Python/Flask + SQLAlchemy + Alembic 工程师。基于 Phase1 已实现的 hi_orgs/hi_tenants/hi_groups/hi_audit_log 与 tenant 隔离，在当前仓库实现 Phase2：Curtailment v1 引擎与全链路执行（simulate -> execute -> verify）。要求：不破坏现有 curtailment_plan_service.py（可保留兼容）；新增 hi_* 表承载执行链路；API 必须 tenant 隔离；所有执行写审计；提供 demo seed 扩展与 pytest。
+
+【已知现状】
+- curtailment_plans 表已存在但字段不一致
+- curtailment_plan_service.py 存在（Phase2 不删除，可改为调用新 engine 或保持旧逻辑）
+- command_queue/outbox 可能存在（若无，新增最小 hi_command_queue 实现 stub worker）
+
+=====================
+A) DB 迁移（Alembic）
+=====================
+1) 新增表（hi_ 前缀）：
+- hi_curtailment_actions(
+    id pk,
+    plan_id (引用现有 curtailment_plans.id 或新增 mapping 字段),
+    org_id,
+    site_id,
+    tenant_id nullable,
+    target_type['group','miner'],
+    target_id,
+    command_type['power_off','throttle','reboot','resume'],
+    command_payload_json,
+    status['queued','sent','acked','failed'],
+    ack_json,
+    request_id,
+    created_at
+  )
+- hi_curtailment_results(
+    id pk,
+    plan_id,
+    org_id,
+    site_id,
+    tenant_id nullable,
+    before_snapshot_json,
+    after_snapshot_json,
+    actual_json,
+    created_at
+  )
+
+2) 扩展现有 curtailment_plans（只加字段，不删老字段）：
+- org_id（nullable=False，默认 self org）
+- site_id（若缺则加；否则复用现有字段）
+- tenant_scope: 'site_wide'|'tenant_only'（default site_wide）
+- tenant_id nullable（tenant_only 用）
+- objective: 'save_cost'|'keep_profit'|'thermal_protect'
+- inputs_json
+- expected_json
+- status: 'draft'|'ready'|'executing'|'completed'|'aborted'
+- created_by（user_id）
+并在 upgrade 中回填 org_id/site_id/status 的默认值（不影响旧逻辑）。
+
+3) 如果仓库没有命令队列表：
+- 新增 hi_command_queue(id, org_id, site_id, tenant_id nullable, target_type, target_id, command_type, payload_json, status['queued','sent','acked','failed'], created_at, updated_at, request_id)
+并实现一个“伪执行器”用于 demo：execute 时直接把 status 从 queued 改 sent，再在 verify 时假设 acked（或立即 ack），以便闭环可演示。
+若仓库已有 command_queue/outbox：
+- 在 execute 时写入现有队列（优先），同时写 hi_curtailment_actions（actions 是事实记录）。
+
+=====================
+B) Curtailment Engine（必须新增）
+=====================
+新增 services/curtailment_engine.py，实现 v1：
+输入（来自 curtailment_plans.inputs_json）：
+- duration_minutes（默认 60）
+- power_price（可选）
+- min_online_pct（默认 0.6）
+- protected_group_ids（默认 []）
+- max_offline_groups（默认 null）
+策略：
+- 选择范围：
+  - site_wide：该 site 下所有 groups
+  - tenant_only：该 tenant 下 groups
+- 排序：
+  - 按 group.priority（数值越小越先关）或相反，但必须在 README 写清楚
+- 生成 actions：
+  - 逐个 group 生成 power_off，直到满足 min_online_pct 或达到 max_offline_groups
+- expected_json：
+  - expected_kw_saved = sum(group_selected_miners_nominal_watts)/1000
+  - expected_kwh_saved = expected_kw_saved * duration_hours
+  - expected_revenue_lost：若仓库已有 ROI/hashprice 模块则复用；否则用简化模型：
+      revenue_proxy = online_hashrate_th * hashprice_usd_per_th_day * duration_days
+    其中 hashprice_usd_per_th_day 可从 inputs_json 传入（默认 0 也可以）并在 README 标明简化。
+输出：
+- actions[]（目标、命令、payload）
+- expected_json
+
+Snapshot（before/after）：
+- 汇总站点/tenant 的 miners 数量、online 数、nominal_watts 总和、（若有）telemetry_watts 总和
+写入 results.actual_json：实际降载 kw/kwh（用 nominal 或 telemetry，按可得数据）
+
+=====================
+C) API（Phase2）
+=====================
+新增/补齐以下端点（tenant 隔离必须正确）：
+- POST /api/curtailment/plans
+  body: {site_id, tenant_scope, tenant_id?, objective, inputs_json}
+  returns: plan
+- POST /api/curtailment/plans/<id>/simulate
+  returns: {expected_json, actions_preview}
+- POST /api/curtailment/plans/<id>/execute
+  行为：
+    1) 生成 actions（如果 expected_json 为空可先 simulate）
+    2) 写 hi_curtailment_actions（status=queued）
+    3) 推入命令队列（现有或 hi_command_queue）
+    4) plan.status=executing
+    5) 写 hi_audit_log(action_type='CURTAILMENT_EXECUTE')
+  returns: {request_id, actions_count}
+- POST /api/curtailment/plans/<id>/verify
+  行为：
+    1) 计算 before/after snapshot
+    2) 写 hi_curtailment_results
+    3) plan.status=completed
+    4) 写 hi_audit_log(action_type='CURTAILMENT_VERIFY')
+- GET /api/curtailment/plans?site_id=&tenant_id=
+- GET /api/curtailment/plans/<id>/report
+  returns: {plan, actions, results}
+
+命令状态：
+- GET /api/commands/<request_id>（如果已有命令查询 API 则复用，否则从 hi_command_queue 查询）
+
+=====================
+D) scripts/seed_demo.py 扩展
+=====================
+在 demo 数据里增加：
+- 创建 2 个 curtailment plan：一个 site_wide，一个 tenant_only
+- 写入一些模拟 telemetry（如果系统已有 telemetry 表则插入；没有就跳过）
+- 生成一次 simulate + execute + verify 的演示数据（可在 seed_demo 里直接调用 service）
+
+=====================
+E) tests
+=====================
+新增 tests/test_curtailment_flow.py：
+1) operator_admin：create plan -> simulate -> execute -> verify，检查：
+   - actions 写入
+   - results 写入
+   - plan.status 变 completed
+   - audit_log 有 EXECUTE/VERIFY
+2) tenant_admin：只能对 tenant_only 的 plan 操作；不能执行其他 tenant 的计划
+
+=====================
+F) README
+=====================
+追加 “Curtailment v1” 说明 + 至少 6 条 curl 示例：
+- create plan / simulate / execute / verify / report / commands status
+确保全部可复制运行。
+
+按顺序实施：迁移 -> engine -> API -> seed -> tests -> README。保持旧 curtailment_plan_service.py 可用。

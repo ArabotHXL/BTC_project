@@ -1,0 +1,97 @@
+【PHASE 1 PROMPT】AB 一体化底座（org/tenant/group/unified audit）+ tenant 隔离 + demo + tests
+你是资深 Python/Flask + SQLAlchemy + Alembic 工程师。请在当前仓库实现 “AB 一体化（Self + Hosting）” 的 Phase 1：多租户底座与隔离。要求：不破坏现有功能；以增量方式新增 AB Core 表（使用 hi_ 前缀避免与旧 hosting 表冲突）；在 Replit 可直接运行，并提供 demo seed 与 pytest。
+
+【已知现状（必须利用）】
+- 已有：email auth 系统、RBAC roles/permissions 中间件、Alembic 已配置
+- 已有表：hosting_sites（缺 org_id）、miners（缺 tenant_id/nominal_watts）
+- 已有表：curtailment_plans、invoices/hosting_bills、hosting_contracts/power_contracts、hosting_audit_logs（Phase1 不改这些）
+
+=====================
+A) 数据库与模型（Alembic 迁移）
+=====================
+1) 新建表（全部用 hi_ 前缀）：
+- hi_orgs(id, name, type['self','hosting_operator'], created_at, updated_at)
+- hi_tenants(id, org_id FK->hi_orgs, name, tenant_type['self','client'], status['active','disabled'], created_at, updated_at)
+- hi_groups(id, site_id, tenant_id, name, selector_json, priority, created_at, updated_at)
+- hi_audit_log(id, org_id, tenant_id nullable, actor_user_id, action_type, entity_type, entity_id, request_id, detail_json, created_at)
+
+2) 扩展已有表（最小侵入）：
+- hosting_sites：新增 org_id（nullable=False，默认 self org）
+- miners：新增 tenant_id（nullable=False，默认 self tenant）、新增 nominal_watts（nullable=True）
+
+3) 迁移回填（upgrade 内完成）：
+- 创建 self org + self tenant（若不存在）
+- 回填 hosting_sites.org_id=self org
+- 回填 miners.tenant_id=self tenant
+
+4) 模型位置：
+- 若仓库已有 models.py 或 models/ 目录：新增 SQLAlchemy 模型（hi_*），并给出 __repr__ 与基本索引（org_id/tenant_id/site_id）
+
+=====================
+B) 初始化与种子数据（scripts）
+=====================
+新增：
+- scripts/init_db.py：
+  - alembic upgrade head
+  - 确保 self org/self tenant 存在
+  - 创建 operator_admin 用户（若已有用户创建逻辑则复用）
+  - 默认 admin@local / admin123（从环境变量 ADMIN_EMAIL/ADMIN_PASSWORD 覆盖）
+- scripts/seed_demo.py：
+  - 创建 1 个 site（hosting_sites）
+  - 创建 2 个 client tenants
+  - 插入 20 台 miners：10 self tenant、10 client tenant，填 nominal_watts（可按机型映射：S19=3250, S21=3500 等）
+  - 创建 3 个 groups（每个 tenant 至少 1 个 group）
+  - 写入 20 条 hi_audit_log demo
+
+=====================
+C) RBAC + 多租户隔离（必须落地）
+=====================
+1) 复用现有 auth + RBAC，中间件里将 current_user 的 org_id/tenant_id/role 放入 request context。
+2) Tenant 隔离规则：
+- operator_admin/operator_ops：可访问 org 下所有 tenants/sites/miners/groups/audit
+- tenant_admin/tenant_viewer：只能访问自己 tenant_id 的 miners/groups/audit；tenant 请求里即便传别的 tenant_id 必须过滤或 403
+3) 所有新增 API 写 hi_audit_log：
+- TENANT_LIST/TENANT_CREATE/GROUP_CREATE/AUDIT_LIST/MINER_LIST
+
+=====================
+D) 新增 API（Phase1 最小集合）
+=====================
+按仓库现有 routes 风格新增 JSON API：
+- GET  /api/tenants                     (operator only)
+- POST /api/tenants                     (operator only) {name}
+- GET  /api/miners?site_id=&tenant_id=  (tenant 自动过滤；operator 可用 tenant_id)
+- GET  /api/groups?site_id=&tenant_id=  (tenant 自动过滤)
+- POST /api/groups                      (operator 或 tenant_admin) {site_id, name, selector_json, priority}
+- GET  /api/audit?tenant_id=            (tenant 自动过滤；operator 可用 tenant_id)
+
+统一错误返回：{ "error": { "code": "...", "message": "..."} }
+
+=====================
+E) 最小 Portal（推荐）
+=====================
+如果仓库已有模板系统：新增 /portal（登录后）
+- 当前用户信息（role/tenant）
+- miners 列表（受 tenant 过滤）
+- groups 列表
+- 最近 10 条 audit
+
+=====================
+F) 测试（pytest）
+=====================
+新增 tests/test_tenant_isolation.py：
+1) operator_admin 能列出所有 tenants/miners
+2) tenant_admin 只能看到自己的 miners/groups/audit
+3) tenant_admin 不能创建其他 tenant 的 group（group.tenant_id 必须是自己）
+4) tenant_user 传入 tenant_id=别人的也必须过滤或 403
+
+=====================
+G) README Quickstart
+=====================
+补充：
+1) pip install -r requirements.txt
+2) python scripts/init_db.py
+3) python scripts/seed_demo.py
+4) python main.py
+5) 至少 6 条 curl：operator 登录、列 tenants、创建 tenant、tenant 登录、列 miners、创建 group
+
+按顺序实施：迁移+脚本 -> API+隔离 -> 测试 -> README。确保现有功能不破坏。
