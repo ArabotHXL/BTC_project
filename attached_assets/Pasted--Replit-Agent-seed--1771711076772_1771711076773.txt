@@ -1,0 +1,136 @@
+你是 Replit 上的代码执行/修改 Agent。请在当前仓库内直接完成实现，不要向我提问，不要只给建议；你需要：改代码 + 加迁移 + 更新 seed + 加隔离验证脚本 + 自己运行验证命令并修到通过为止。
+
+# 目标（P0）
+把 HashInsight 的 HI 模块（/api/hi/*）做成“默认安全”：任何 tenant 用户在 hi_tenant_id 未绑定时，必须 403；任何按 id 读取资源（plan/command/invoice/contract 等）必须做 org/tenant scope 过滤；tenant 用户不得通过 query/body 传入 tenant_id 来越权。
+
+# 你必须读/改的文件（按优先级）
+1) common/common/hi_tenant.py
+2) api/api/hi_api.py
+3) models_hi.py
+4) alembic/alembic/versions 新增一个 migration
+5) scripts/scripts/seed_demo.py
+6) scripts/scripts/init_db.py（如需要）
+7) （新增）scripts/scripts/verify_hi_tenant_isolation.py
+
+------------------------------------------------------------
+A) 新增“用户-租户绑定”数据表（必须）
+------------------------------------------------------------
+1) 在 models_hi.py 新增模型（表名建议：hi_tenant_memberships）：
+   - id (PK)
+   - user_id (FK -> user_access.id, NOT NULL, index)
+   - tenant_id (FK -> hi_tenants.id, NOT NULL, index)
+   - member_role (string, default 'tenant_viewer', 允许 tenant_admin/tenant_viewer)
+   - is_default (bool, default false)
+   - created_at
+   - 约束：Unique(user_id, tenant_id)
+   - index： (user_id, is_default)
+
+2) 新增 Alembic migration（命名例如 20260221_0002_hi_tenant_memberships.py）创建该表与索引/约束。
+
+------------------------------------------------------------
+B) 修复 HI 上下文注入 & 装饰器（必须）
+------------------------------------------------------------
+在 common/common/hi_tenant.py：
+
+1) 修正 ROLE_TO_HI_ROLE：
+   - 'operator' 不应映射 tenant_admin。改为 'operator_ops'
+   - 保留 owner/admin/mining_site_owner 为 operator_*；client 为 tenant_viewer
+
+2) 在 init_hi_tenant() 的 tenant 分支里：
+   - 如果 session['hi_tenant_id'] 缺失：用 session['user_id'] 去 hi_tenant_memberships 查一个 active tenant
+     选择规则：is_default desc, tenant_id asc
+   - 找到后：
+     - g.hi_tenant_id = tenant_id
+     - g.hi_org_id = tenant.org_id
+     - 如果 membership.member_role 是 tenant_admin/tenant_viewer，则用它覆盖 g.hi_role（使 client admin 可成为 tenant_admin）
+     - 把 tenant_id 写回 session['hi_tenant_id']（便于后续请求）
+   - 如果查不到 membership：保持 g.hi_tenant_id = None
+
+3) 强化三个装饰器：
+   - hi_require_auth / hi_require_tenant_or_operator：
+     - 如果 g.hi_role 属于 TENANT_ROLES 且 g.hi_tenant_id is None：直接 403
+       返回 code: HI_TENANT_BINDING_REQUIRED
+   - hi_filter_by_tenant：
+     - 对 TENANT_ROLES：若 tenant_id 缺失，必须返回 “空查询”（filter(false)），严禁原样返回 query（避免任何漏数）
+
+------------------------------------------------------------
+C) 修复 HI API 的越权入口（必须）
+------------------------------------------------------------
+在 api/api/hi_api.py 里做如下修改：
+
+0) 新增通用 helper（必须）：
+   - def hi_scoped_query(model): 对 model 应用 hi_filter_by_tenant + 额外规则（比如 HostingSite/Miner 需要自定义）
+   - def hi_get_scoped_or_404(model, id_field_name, id_value): 只能从 scoped query 取一条
+
+1) /miners：
+   - tenant 用户：只允许看到 Miner.hi_tenant_id == g.hi_tenant_id
+   - operator 用户：只允许看到 org 下所有 tenants 的 miners（通过 HiTenant.org_id == g.hi_org_id 获取 tenant_ids）
+   - tenant 用户传 tenant_id 参数：忽略或若不等于 g.hi_tenant_id 则 403
+
+2) /groups：
+   - tenant 用户：强制 tenant_id = g.hi_tenant_id（忽略 query 里的 tenant_id）
+   - operator 用户：仍可按 tenant_id 过滤，但只能过滤到本 org 内 tenant
+
+3) /sites（当前 list_sites 会返回所有 hosting_sites，必须修）：
+   - operator：只返回 hosting_sites.hi_org_id == g.hi_org_id
+   - tenant：只返回“与本 tenant 有资源关联”的站点：
+     方案：从 Miner 取 distinct site_id where hi_tenant_id == g.hi_tenant_id，再查 HostingSite.id in (...) 且 hosting_sites.hi_org_id == g.hi_org_id
+
+4) /contracts、/usage、/invoices：
+   - 所有 list 类接口：tenant 用户不得通过 query 参数 tenant_id 越权（若传了且 != g.hi_tenant_id => 403）
+   - generate_usage：
+     - tenant 用户：忽略 body.tenant_id，强制使用 g.hi_tenant_id
+     - operator：允许传任意 tenant_id，但必须属于 g.hi_org_id
+
+5) Curtailment 相关（simulate/execute/verify/report/command_status）：
+   - 任何通过 plan_id / request_id 获取资源的接口，必须 scoped：
+     - tenant：仅允许 plan.tenant_id == g.hi_tenant_id（不允许 tenant 访问 site_wide plan，避免看见其他租户）
+     - operator：允许 org 内全部
+   - /curtailment/command_status：按 request_id 查询时也必须加 tenant/org scope（tenant 必须 tenant_id == g.hi_tenant_id；operator 必须 org_id == g.hi_org_id）
+
+------------------------------------------------------------
+D) 更新 demo seed（必须）
+------------------------------------------------------------
+在 scripts/scripts/seed_demo.py：
+1) demo 里已经创建了：
+   - client_alpha@demo.com (role=client)
+   - client_beta@demo.com (role=client)
+   以及 Alpha/Beta tenants
+2) 你需要插入 hi_tenant_memberships：
+   - client_alpha -> Alpha tenant, member_role='tenant_admin', is_default=True
+   - client_beta  -> Beta tenant,  member_role='tenant_admin', is_default=True
+3) 保证幂等：已存在则跳过/更新 is_default
+
+------------------------------------------------------------
+E) 新增“隔离验证脚本”（必须）
+------------------------------------------------------------
+新增 scripts/scripts/verify_hi_tenant_isolation.py：
+- 用 Flask app.test_client() + client.session_transaction() 手动写 session：
+  - alpha session：authenticated=True, user_id=alpha_user.id, role='client'
+  - beta session：同理
+  - operator session：authenticated=True, user_id=admin_user.id, role='owner'
+- 依次调用这些 API 并断言：
+  1) alpha 调 /api/hi/me 返回 hi_tenant_id == Alpha tenant
+  2) alpha 调 /api/hi/miners 只能看到 Alpha miners（miner.hi_tenant_id 全等于 alpha tenant）
+  3) alpha 调 /api/hi/contracts 不得出现 beta tenant_id
+  4) alpha 传 tenant_id=beta 的 query/body 必须 403
+  5) alpha 用 beta 的 plan_id/request_id 调 simulate/command_status/report 必须 403/404（以你实现为准，但不能 200）
+  6) operator 调 /api/hi/sites 只返回 hi_org_id==self org 的站点
+- 脚本最后打印 “✅ HI tenant isolation OK” 并 exit(0)，失败则 raise AssertionError
+
+------------------------------------------------------------
+F) 运行验证（必须）
+------------------------------------------------------------
+你需要在 Replit shell 里依次运行并保证通过：
+1) python scripts/scripts/init_db.py
+2) python scripts/scripts/seed_demo.py
+3) python scripts/scripts/verify_hi_tenant_isolation.py
+
+如果中间发现缺失依赖/导入路径问题，你必须在不破坏现有结构的前提下修复（例如补 __init__.py、调整 sys.path 插入、或修正蓝图注册导入），直到验证脚本通过。
+
+------------------------------------------------------------
+交付要求（必须）
+------------------------------------------------------------
+1) 给出你改动的文件清单
+2) 解释每个 P0 漏洞点是如何被封住的（简短但明确）
+3) 我不接受“建议/思路”，必须是已落地的代码改动并可运行通过上述 3 个命令
