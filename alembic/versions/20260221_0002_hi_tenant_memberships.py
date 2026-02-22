@@ -26,7 +26,7 @@ def upgrade() -> None:
         sa.Column('tenant_id', sa.Integer(), sa.ForeignKey('hi_tenants.id'), nullable=False),
         sa.Column('member_role', sa.String(30), server_default='tenant_viewer', nullable=False),
         sa.Column('is_default', sa.Boolean(), server_default=sa.text('false'), nullable=False),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()')),
+        sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP')),
     )
 
     op.create_index('ix_hi_tenant_memberships_user_id', 'hi_tenant_memberships', ['user_id'])

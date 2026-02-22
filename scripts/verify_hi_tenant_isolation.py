@@ -1,17 +1,21 @@
 #!/usr/bin/env python3
 """
-HI Integration Tenant Isolation Verification Script
+HI Integration Tenant Isolation Verification Script (P0 Gate)
 
-Tests cross-tenant isolation:
-1. Membership-based tenant binding
-2. Operator org-scoped access
-3. Tenant users blocked from other tenants' data
-4. Unbound users get 403
+Tests:
+1. HiTenantMembership model + records
+2. Role mapping
+3. API endpoint isolation (tenant_id param override)
+4. Auto-bind (no session hi_tenant_id)
+5. Role persistence (session hi_tenant_id set, tenant_admin must not downgrade)
+6. Cross-ID access (plan/invoice by ID)
+7. Unbound user 403 with error code
+8. Operator scope
 """
 import sys
 import os
-import json
 import logging
+from datetime import datetime
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -42,17 +46,16 @@ def run_verification():
 
     with app.app_context():
         logger.info("=" * 60)
-        logger.info("HI Integration Tenant Isolation Verification")
+        logger.info("HI Integration Tenant Isolation Verification (P0 Gate)")
         logger.info("=" * 60)
 
-        # 1. Check model exists
-        logger.info("\n[1] HiTenantMembership model check")
         from sqlalchemy import inspect
         inspector = inspect(db.engine)
         tables = inspector.get_table_names()
+
+        logger.info("\n[1] HiTenantMembership model check")
         check("hi_tenant_memberships table exists", 'hi_tenant_memberships' in tables)
 
-        # 2. Check memberships exist
         logger.info("\n[2] Membership records")
         memberships = HiTenantMembership.query.all()
         check(f"Memberships count >= 2 (found {len(memberships)})", len(memberships) >= 2)
@@ -76,10 +79,10 @@ def run_verification():
                   beta_mem is not None)
             if beta_mem:
                 check("Beta membership is_default=True", beta_mem.is_default is True)
+                check("Beta membership role=tenant_admin", beta_mem.member_role == 'tenant_admin')
         else:
             check("Beta user exists", False)
 
-        # 3. Test ROLE_TO_HI_ROLE mapping
         logger.info("\n[3] Role mapping verification")
         from common.hi_tenant import ROLE_TO_HI_ROLE
         check("owner -> operator_admin", ROLE_TO_HI_ROLE.get('owner') == 'operator_admin')
@@ -87,125 +90,225 @@ def run_verification():
         check("operator -> operator_ops (not tenant_admin)", ROLE_TO_HI_ROLE.get('operator') == 'operator_ops')
         check("client -> tenant_viewer", ROLE_TO_HI_ROLE.get('client') == 'tenant_viewer')
 
-        # 4. API isolation tests using test client
-        logger.info("\n[4] API endpoint isolation tests")
-
         alpha_tenant = HiTenant.query.filter(HiTenant.name.ilike('%alpha%')).first()
         beta_tenant = HiTenant.query.filter(HiTenant.name.ilike('%beta%')).first()
 
         if not (alpha_tenant and beta_tenant and alpha_user and beta_user):
             logger.info("  ⚠️  Skipping API tests - missing test data")
-        else:
-            client = app.test_client()
+            return FAIL == 0
 
-            # Login as alpha
-            with client.session_transaction() as sess:
-                sess['authenticated'] = True
-                sess['user_id'] = alpha_user.id
-                sess['role'] = 'client'
-                sess['hi_tenant_id'] = alpha_tenant.id
+        client = app.test_client()
 
-            # Alpha should see own tenant data
-            resp = client.get('/api/hi/tenants')
-            check(f"Alpha /tenants returns 200 (got {resp.status_code})", resp.status_code == 200)
-            tenants = resp.get_json()
-            tenant_ids = [t['id'] for t in tenants]
-            check("Alpha only sees own tenant", tenant_ids == [alpha_tenant.id])
+        logger.info("\n[4] API endpoint isolation tests (tenant_id param override)")
+        with client.session_transaction() as sess:
+            sess['authenticated'] = True
+            sess['user_id'] = alpha_user.id
+            sess['role'] = 'client'
+            sess['hi_tenant_id'] = alpha_tenant.id
 
-            # Alpha tries to access beta miners via tenant_id param
-            resp = client.get(f'/api/hi/miners?tenant_id={beta_tenant.id}')
-            check(f"Alpha querying beta miners -> 403 (got {resp.status_code})", resp.status_code == 403)
+        resp = client.get('/api/hi/tenants')
+        check(f"Alpha /tenants returns 200 (got {resp.status_code})", resp.status_code == 200)
+        tenants = resp.get_json()
+        tenant_ids = [t['id'] for t in tenants]
+        check("Alpha only sees own tenant", tenant_ids == [alpha_tenant.id])
 
-            # Alpha tries to access beta groups via tenant_id param
-            resp = client.get(f'/api/hi/groups?tenant_id={beta_tenant.id}')
-            check(f"Alpha querying beta groups -> 403 (got {resp.status_code})", resp.status_code == 403)
+        resp = client.get(f'/api/hi/miners?tenant_id={beta_tenant.id}')
+        check(f"Alpha querying beta miners -> 403 (got {resp.status_code})", resp.status_code == 403)
 
-            # Alpha tries to access beta curtailment plans
-            resp = client.get(f'/api/hi/curtailment/plans?tenant_id={beta_tenant.id}')
-            check(f"Alpha querying beta plans -> 403 (got {resp.status_code})", resp.status_code == 403)
+        resp = client.get(f'/api/hi/groups?tenant_id={beta_tenant.id}')
+        check(f"Alpha querying beta groups -> 403 (got {resp.status_code})", resp.status_code == 403)
 
-            # Alpha tries to access beta usage
-            resp = client.get(f'/api/hi/usage?tenant_id={beta_tenant.id}')
-            check(f"Alpha querying beta usage -> 403 (got {resp.status_code})", resp.status_code == 403)
+        resp = client.get(f'/api/hi/curtailment/plans?tenant_id={beta_tenant.id}')
+        check(f"Alpha querying beta plans -> 403 (got {resp.status_code})", resp.status_code == 403)
 
-            # Alpha tries to access beta invoices
-            resp = client.get(f'/api/hi/invoices?tenant_id={beta_tenant.id}')
-            check(f"Alpha querying beta invoices -> 403 (got {resp.status_code})", resp.status_code == 403)
+        resp = client.get(f'/api/hi/usage?tenant_id={beta_tenant.id}')
+        check(f"Alpha querying beta usage -> 403 (got {resp.status_code})", resp.status_code == 403)
 
-            # Alpha tries to access beta contracts
-            resp = client.get(f'/api/hi/contracts?tenant_id={beta_tenant.id}')
-            check(f"Alpha querying beta contracts -> 403 (got {resp.status_code})", resp.status_code == 403)
+        resp = client.get(f'/api/hi/invoices?tenant_id={beta_tenant.id}')
+        check(f"Alpha querying beta invoices -> 403 (got {resp.status_code})", resp.status_code == 403)
 
-            # 5. Unbound user test
-            logger.info("\n[5] Unbound user isolation test")
-            unbound_user = UserAccess.query.filter_by(email='unbound_test_987654@test.com').first()
-            if not unbound_user:
-                unbound_user = UserAccess(
-                    name='Unbound Test User',
-                    email='unbound_test_987654@test.com',
-                    role='client',
-                    username='unbound_test_user_987654'
+        resp = client.get(f'/api/hi/contracts?tenant_id={beta_tenant.id}')
+        check(f"Alpha querying beta contracts -> 403 (got {resp.status_code})", resp.status_code == 403)
+
+        # ===== NEW P0 TESTS =====
+
+        logger.info("\n[5] Auto-bind test (no session hi_tenant_id)")
+        with client.session_transaction() as sess:
+            sess.clear()
+            sess['authenticated'] = True
+            sess['user_id'] = alpha_user.id
+            sess['role'] = 'client'
+
+        resp = client.get('/api/hi/me')
+        check(f"Alpha auto-bind /me returns 200 (got {resp.status_code})", resp.status_code == 200)
+        if resp.status_code == 200:
+            me = resp.get_json()
+            check(f"Alpha auto-bind hi_tenant_id={me.get('hi_tenant_id')} == {alpha_tenant.id}",
+                  me.get('hi_tenant_id') == alpha_tenant.id)
+            check(f"Alpha auto-bind hi_role={me.get('hi_role')} == tenant_admin",
+                  me.get('hi_role') == 'tenant_admin')
+
+        with client.session_transaction() as sess:
+            sess.clear()
+            sess['authenticated'] = True
+            sess['user_id'] = beta_user.id
+            sess['role'] = 'client'
+
+        resp = client.get('/api/hi/me')
+        check(f"Beta auto-bind /me returns 200 (got {resp.status_code})", resp.status_code == 200)
+        if resp.status_code == 200:
+            me = resp.get_json()
+            check(f"Beta auto-bind hi_tenant_id={me.get('hi_tenant_id')} == {beta_tenant.id}",
+                  me.get('hi_tenant_id') == beta_tenant.id)
+            check(f"Beta auto-bind hi_role={me.get('hi_role')} == tenant_admin",
+                  me.get('hi_role') == 'tenant_admin')
+
+        logger.info("\n[6] Role persistence test (session has hi_tenant_id, role must not downgrade)")
+        with client.session_transaction() as sess:
+            sess.clear()
+            sess['authenticated'] = True
+            sess['user_id'] = alpha_user.id
+            sess['role'] = 'client'
+            sess['hi_tenant_id'] = alpha_tenant.id
+
+        resp = client.get('/api/hi/me')
+        check(f"Alpha with session /me returns 200 (got {resp.status_code})", resp.status_code == 200)
+        if resp.status_code == 200:
+            me = resp.get_json()
+            check(f"Alpha role persistence: hi_role={me.get('hi_role')} == tenant_admin (not tenant_viewer)",
+                  me.get('hi_role') == 'tenant_admin')
+
+        logger.info("\n[7] Cross-ID access test (plan/invoice by ID)")
+        self_org = HiOrg.query.filter_by(org_type='self').first()
+
+        beta_plan = HiCurtailmentPlan.query.filter_by(tenant_id=beta_tenant.id).first()
+        if not beta_plan and self_org:
+            from models import HostingSite
+            demo_site = HostingSite.query.first()
+            if demo_site:
+                beta_plan = HiCurtailmentPlan(
+                    org_id=self_org.id,
+                    site_id=demo_site.id,
+                    tenant_scope='tenant_only',
+                    tenant_id=beta_tenant.id,
+                    name='Beta Test Plan (verify)',
+                    objective='save_cost',
+                    inputs_json={},
+                    status='draft',
+                    created_by=beta_user.id
                 )
-                unbound_user.set_password('test123')
-                unbound_user.is_active = True
-                unbound_user.is_email_verified = True
-                db.session.add(unbound_user)
+                db.session.add(beta_plan)
                 db.session.commit()
 
-            try:
-                with client.session_transaction() as sess:
-                    sess['authenticated'] = True
-                    sess['user_id'] = unbound_user.id
-                    sess['role'] = 'client'
-                    if 'hi_tenant_id' in sess:
-                        del sess['hi_tenant_id']
+        beta_invoice = HiInvoice.query.filter_by(tenant_id=beta_tenant.id).first()
+        if not beta_invoice and self_org:
+            beta_invoice = HiInvoice(
+                org_id=self_org.id,
+                tenant_id=beta_tenant.id,
+                contract_id=None,
+                period_start=datetime(2026, 1, 1),
+                period_end=datetime(2026, 1, 31),
+                total_kwh=1000.0,
+                total_amount=500.0,
+                currency='USD',
+                status='draft',
+                line_items_json=[]
+            )
+            db.session.add(beta_invoice)
+            db.session.commit()
 
-                resp = client.get('/api/hi/tenants')
-                check(f"Unbound user /tenants returns 403 (status={resp.status_code})",
-                      resp.status_code == 403)
+        with client.session_transaction() as sess:
+            sess.clear()
+            sess['authenticated'] = True
+            sess['user_id'] = alpha_user.id
+            sess['role'] = 'client'
+            sess['hi_tenant_id'] = alpha_tenant.id
 
-                resp = client.get('/api/hi/miners')
-                if resp.status_code == 403:
-                    check("Unbound user /miners -> 403", True)
-                elif resp.status_code == 200:
-                    data = resp.get_json()
-                    check("Unbound user /miners -> empty list", data == [])
-                else:
-                    check(f"Unbound user /miners -> unexpected {resp.status_code}", False)
-            finally:
-                db.session.delete(unbound_user)
-                db.session.commit()
+        if beta_plan:
+            resp = client.get(f'/api/hi/curtailment/plans/{beta_plan.id}/report')
+            check(f"Alpha accessing beta plan report -> {resp.status_code} (must be 403/404)",
+                  resp.status_code in (403, 404))
+        else:
+            check("Beta plan exists for cross-ID test", False)
 
-            # 6. Operator test
-            logger.info("\n[6] Operator scope test")
-            admin_user = UserAccess.query.filter_by(role='admin').first()
-            if admin_user:
-                with client.session_transaction() as sess:
-                    sess['authenticated'] = True
-                    sess['user_id'] = admin_user.id
-                    sess['role'] = 'admin'
-                    if 'hi_tenant_id' in sess:
-                        del sess['hi_tenant_id']
+        if beta_invoice:
+            resp = client.get(f'/api/hi/invoices/{beta_invoice.id}')
+            check(f"Alpha accessing beta invoice -> {resp.status_code} (must be 403/404)",
+                  resp.status_code in (403, 404))
 
-                resp = client.get('/api/hi/tenants')
-                check(f"Admin /tenants returns 200 (got {resp.status_code})", resp.status_code == 200)
-                tenants = resp.get_json()
-                check(f"Admin sees multiple tenants ({len(tenants)} found)", len(tenants) >= 2)
+            resp = client.get(f'/api/hi/invoices/{beta_invoice.id}/export.csv')
+            check(f"Alpha accessing beta invoice CSV -> {resp.status_code} (must be 403/404)",
+                  resp.status_code in (403, 404))
+        else:
+            check("Beta invoice exists for cross-ID test", False)
 
-                resp = client.get('/api/hi/me')
-                me = resp.get_json()
-                check(f"Admin hi_role=operator_admin (got {me.get('hi_role')})",
-                      me.get('hi_role') == 'operator_admin')
-                check("Admin hi_tenant_id is None", me.get('hi_tenant_id') is None)
-            else:
-                check("Admin user exists for operator test", False)
+        logger.info("\n[8] Unbound user 403 with error code HI_TENANT_BINDING_REQUIRED")
+        unbound_user = UserAccess.query.filter_by(email='unbound_test_987654@test.com').first()
+        if not unbound_user:
+            unbound_user = UserAccess(
+                name='Unbound Test User',
+                email='unbound_test_987654@test.com',
+                role='client',
+                username='unbound_test_user_987654'
+            )
+            unbound_user.set_password('test123')
+            unbound_user.is_active = True
+            unbound_user.is_email_verified = True
+            db.session.add(unbound_user)
+            db.session.commit()
 
-        # Summary
+        try:
+            with client.session_transaction() as sess:
+                sess.clear()
+                sess['authenticated'] = True
+                sess['user_id'] = unbound_user.id
+                sess['role'] = 'client'
+
+            resp = client.get('/api/hi/miners')
+            check(f"Unbound user /miners -> 403 (got {resp.status_code})", resp.status_code == 403)
+
+            if resp.status_code == 403:
+                data = resp.get_json()
+                error_code = None
+                if isinstance(data, dict):
+                    if 'error' in data and isinstance(data['error'], dict):
+                        error_code = data['error'].get('code')
+                    elif 'code' in data:
+                        error_code = data.get('code')
+                check(f"Unbound 403 code={error_code} == HI_TENANT_BINDING_REQUIRED",
+                      error_code == 'HI_TENANT_BINDING_REQUIRED')
+        finally:
+            HiTenantMembership.query.filter_by(user_id=unbound_user.id).delete()
+            db.session.delete(unbound_user)
+            db.session.commit()
+
+        logger.info("\n[9] Operator scope test")
+        admin_user = UserAccess.query.filter_by(role='admin').first()
+        if admin_user:
+            with client.session_transaction() as sess:
+                sess.clear()
+                sess['authenticated'] = True
+                sess['user_id'] = admin_user.id
+                sess['role'] = 'admin'
+
+            resp = client.get('/api/hi/tenants')
+            check(f"Admin /tenants returns 200 (got {resp.status_code})", resp.status_code == 200)
+            tenants = resp.get_json()
+            check(f"Admin sees multiple tenants ({len(tenants)} found)", len(tenants) >= 2)
+
+            resp = client.get('/api/hi/me')
+            me = resp.get_json()
+            check(f"Admin hi_role=operator_admin (got {me.get('hi_role')})",
+                  me.get('hi_role') == 'operator_admin')
+            check("Admin hi_tenant_id is None", me.get('hi_tenant_id') is None)
+        else:
+            check("Admin user exists for operator test", False)
+
         logger.info("\n" + "=" * 60)
         total = PASS + FAIL
         logger.info(f"Results: {PASS}/{total} passed, {FAIL} failed")
         if FAIL == 0:
-            logger.info("🎉 All isolation checks PASSED!")
+            logger.info("✅ HI tenant isolation OK")
         else:
             logger.info(f"⚠️  {FAIL} check(s) FAILED - review above")
         logger.info("=" * 60)

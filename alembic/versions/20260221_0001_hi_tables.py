@@ -25,8 +25,8 @@ def upgrade() -> None:
         sa.Column('id', sa.Integer(), primary_key=True),
         sa.Column('name', sa.String(200), nullable=False),
         sa.Column('org_type', sa.String(20), server_default='self'),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), index=True),
-        sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()')),
+        sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), index=True),
+        sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP')),
     )
 
     op.create_table(
@@ -36,8 +36,8 @@ def upgrade() -> None:
         sa.Column('name', sa.String(200), nullable=False),
         sa.Column('tenant_type', sa.String(20), server_default='self'),
         sa.Column('status', sa.String(20), server_default='active', index=True),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), index=True),
-        sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()')),
+        sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), index=True),
+        sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP')),
     )
     op.create_index('idx_hi_tenant_org_status', 'hi_tenants', ['org_id', 'status'])
 
@@ -49,8 +49,8 @@ def upgrade() -> None:
         sa.Column('name', sa.String(200), nullable=False),
         sa.Column('selector_json', sa.JSON(), nullable=True),
         sa.Column('priority', sa.Integer(), server_default='100'),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), index=True),
-        sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()')),
+        sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), index=True),
+        sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP')),
     )
     op.create_index('idx_hi_group_site_tenant', 'hi_groups', ['site_id', 'tenant_id'])
 
@@ -65,7 +65,7 @@ def upgrade() -> None:
         sa.Column('entity_id', sa.String(50), nullable=True),
         sa.Column('request_id', sa.String(100), nullable=True),
         sa.Column('detail_json', sa.JSON(), nullable=True),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), index=True),
+        sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), index=True),
     )
     op.create_index('idx_hi_audit_org_action', 'hi_audit_log', ['org_id', 'action_type'])
     op.create_index('idx_hi_audit_entity', 'hi_audit_log', ['entity_type', 'entity_id'])
@@ -83,8 +83,8 @@ def upgrade() -> None:
         sa.Column('expected_json', sa.JSON(), nullable=True),
         sa.Column('status', sa.String(20), server_default='draft', index=True),
         sa.Column('created_by', sa.Integer(), sa.ForeignKey('user_access.id'), nullable=True),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), index=True),
-        sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()')),
+        sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), index=True),
+        sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP')),
     )
     op.create_index('idx_hi_cplan_org_site', 'hi_curtailment_plans', ['org_id', 'site_id'])
     op.create_index('idx_hi_cplan_org_status', 'hi_curtailment_plans', ['org_id', 'status'])
@@ -103,7 +103,7 @@ def upgrade() -> None:
         sa.Column('status', sa.String(20), server_default='queued', index=True),
         sa.Column('ack_json', sa.JSON(), nullable=True),
         sa.Column('request_id', sa.String(100), nullable=True),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), index=True),
+        sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), index=True),
     )
     op.create_index('idx_hi_caction_plan_status', 'hi_curtailment_actions', ['plan_id', 'status'])
     op.create_index('idx_hi_caction_org_site', 'hi_curtailment_actions', ['org_id', 'site_id'])
@@ -118,7 +118,7 @@ def upgrade() -> None:
         sa.Column('before_snapshot_json', sa.JSON(), nullable=True),
         sa.Column('after_snapshot_json', sa.JSON(), nullable=True),
         sa.Column('actual_json', sa.JSON(), nullable=True),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), index=True),
+        sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), index=True),
     )
     op.create_index('idx_hi_cresult_org_site', 'hi_curtailment_results', ['org_id', 'site_id'])
 
@@ -134,8 +134,8 @@ def upgrade() -> None:
         sa.Column('payload_json', sa.JSON(), nullable=True),
         sa.Column('status', sa.String(20), server_default='queued', index=True),
         sa.Column('request_id', sa.String(100), nullable=True),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), index=True),
-        sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()')),
+        sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), index=True),
+        sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP')),
     )
     op.create_index('idx_hi_cmdq_org_site', 'hi_command_queue', ['org_id', 'site_id'])
     op.create_index('idx_hi_cmdq_status', 'hi_command_queue', ['status', 'created_at'])
@@ -148,8 +148,8 @@ def upgrade() -> None:
         sa.Column('tariff_type', sa.String(20), server_default='flat'),
         sa.Column('params_json', sa.JSON(), nullable=True),
         sa.Column('currency', sa.String(10), server_default='USD'),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), index=True),
-        sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()')),
+        sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), index=True),
+        sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP')),
     )
 
     op.create_table(
@@ -165,8 +165,8 @@ def upgrade() -> None:
         sa.Column('billing_cycle', sa.String(20), server_default='monthly'),
         sa.Column('effective_from', sa.DateTime(), nullable=True),
         sa.Column('effective_to', sa.DateTime(), nullable=True),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), index=True),
-        sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()')),
+        sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), index=True),
+        sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP')),
     )
     op.create_index('idx_hi_contract_org_tenant', 'hi_contracts', ['org_id', 'tenant_id'])
     op.create_index('idx_hi_contract_org_site', 'hi_contracts', ['org_id', 'site_id'])
@@ -183,7 +183,7 @@ def upgrade() -> None:
         sa.Column('avg_kw_estimated', sa.Float(), server_default='0.0'),
         sa.Column('method', sa.String(30), server_default='nominal_watts'),
         sa.Column('evidence_json', sa.JSON(), nullable=True),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), index=True),
+        sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), index=True),
     )
     op.create_index('idx_hi_usage_period', 'hi_usage_records', ['tenant_id', 'period_start', 'period_end'])
     op.create_index('idx_hi_usage_org_site', 'hi_usage_records', ['org_id', 'site_id'])
@@ -201,8 +201,8 @@ def upgrade() -> None:
         sa.Column('status', sa.String(20), server_default='draft', index=True),
         sa.Column('line_items_json', sa.JSON(), nullable=True),
         sa.Column('evidence_json', sa.JSON(), nullable=True),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), index=True),
-        sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()')),
+        sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), index=True),
+        sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP')),
     )
     op.create_index('idx_hi_invoice_period', 'hi_invoices', ['tenant_id', 'period_start', 'period_end'])
     op.create_index('idx_hi_invoice_org_tenant', 'hi_invoices', ['org_id', 'tenant_id'])

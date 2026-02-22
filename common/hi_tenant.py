@@ -49,17 +49,16 @@ def init_hi_tenant(app):
             g.hi_tenant_id = None
 
         elif hi_role in TENANT_ROLES:
-            tenant_id = session.get('hi_tenant_id')
-            if tenant_id:
-                g.hi_tenant_id = tenant_id
-                try:
-                    tenant = db.session.get(HiTenant, tenant_id)
-                    if tenant:
-                        g.hi_org_id = tenant.org_id
-                except Exception as e:
-                    logger.error("Error looking up tenant %s: %s", tenant_id, e)
-            else:
-                try:
+            try:
+                candidate_tenant_id = session.get('hi_tenant_id')
+                membership = None
+
+                if candidate_tenant_id:
+                    membership = HiTenantMembership.query.filter_by(
+                        user_id=user_id, tenant_id=candidate_tenant_id
+                    ).first()
+
+                if not membership:
                     membership = HiTenantMembership.query.filter_by(
                         user_id=user_id
                     ).order_by(
@@ -67,27 +66,28 @@ def init_hi_tenant(app):
                         HiTenantMembership.tenant_id.asc()
                     ).first()
 
-                    if membership:
-                        tenant = db.session.get(HiTenant, membership.tenant_id)
-                        if tenant and tenant.status == 'active':
-                            g.hi_tenant_id = tenant.id
-                            g.hi_org_id = tenant.org_id
-                            if membership.member_role in TENANT_ROLES:
-                                g.hi_role = membership.member_role
-                            session['hi_tenant_id'] = tenant.id
-                            logger.debug(
-                                "Membership-based tenant binding: user_id=%s -> tenant_id=%s, role=%s",
-                                user_id, tenant.id, g.hi_role
-                            )
-                        else:
-                            logger.debug("Membership tenant_id=%s not active or not found", membership.tenant_id)
-                    else:
+                if membership:
+                    tenant = db.session.get(HiTenant, membership.tenant_id)
+                    if tenant and tenant.status == 'active':
+                        g.hi_tenant_id = tenant.id
+                        g.hi_org_id = tenant.org_id
+                        g.hi_role = membership.member_role
+                        session['hi_tenant_id'] = tenant.id
                         logger.debug(
-                            "No hi_tenant_membership found for user_id=%s; hi_tenant_id remains None",
-                            user_id
+                            "Membership-based tenant binding: user_id=%s -> tenant_id=%s, role=%s",
+                            user_id, tenant.id, g.hi_role
                         )
-                except Exception as e:
-                    logger.error("Error looking up membership for user_id=%s: %s", user_id, e)
+                    else:
+                        g.hi_tenant_id = None
+                        logger.debug("Membership tenant_id=%s not active or not found", membership.tenant_id)
+                else:
+                    g.hi_tenant_id = None
+                    logger.debug(
+                        "No hi_tenant_membership found for user_id=%s; hi_tenant_id remains None",
+                        user_id
+                    )
+            except Exception as e:
+                logger.error("Error looking up membership for user_id=%s: %s", user_id, e)
 
 
 def hi_require_auth(f):
