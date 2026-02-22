@@ -5821,6 +5821,7 @@ def get_automation_rules():
     try:
         user_role = session.get('role', 'guest')
         user_email = session.get('email', '')
+        user_id = session.get('user_id')
         
         query = AutomationRule.query
         
@@ -8609,6 +8610,7 @@ def get_curtailment_savings():
     try:
         user_role = session.get('role', 'guest')
         user_email = session.get('email', '')
+        user_id = session.get('user_id')
         
         # 时间范围
         days = request.args.get('days', 30, type=int)
