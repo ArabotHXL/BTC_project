@@ -1,0 +1,93 @@
+你是 Replit 上的代码执行/修改 Agent。请在当前仓库内直接改代码并运行验证命令；不要向我提问，不要只给建议；必须把问题修到通过为止。目标是完成 P0 Gate：tenant membership 自动绑定 + tenant_admin 角色稳定 + SQLite 兼容迁移 + 验证脚本覆盖。
+
+========================
+P0 目标（必须全部达成）
+========================
+1) Tenant 用户在没有 session['hi_tenant_id'] 的情况下，也能从 hi_tenant_memberships 自动绑定默认 tenant（is_default=True）。
+2) Tenant 用户即使 session['hi_tenant_id'] 已存在，也必须稳定保持 membership.member_role（tenant_admin/tenant_viewer），不能回落到 ROLE_TO_HI_ROLE['client']=tenant_viewer。
+3) Tenant 用户如果没有任何 membership，访问任何 /api/hi/* 必须 403，错误码 HI_TENANT_BINDING_REQUIRED。
+4) Alembic migration 在 SQLite 下可运行：所有 now() server_default 必须改为 CURRENT_TIMESTAMP（或 SQLite 等价），避免迁移失败。
+5) scripts/verify_hi_tenant_isolation.py 必须验证 auto-bind 和 role persistence，并通过。
+
+========================
+A) 修复 common/hi_tenant.py（核心）
+========================
+在 common/hi_tenant.py（或 common/common/hi_tenant.py，按仓库实际路径）做如下改动：
+
+1) 在 init_hi_tenant() 的 TENANT 分支里，重写 tenant 绑定逻辑，要求：
+   - 获取 user_id（从 session 或 g.current_user，按现有实现）
+   - 确定 tenant_id：
+     a) 若 session['hi_tenant_id'] 存在：用它
+     b) 否则：查询 hi_tenant_memberships，按 (user_id, is_default desc, tenant_id asc) 取一条
+   - 然后用 (user_id, tenant_id) 再查 membership；若查不到且之前 tenant_id 来自 session，则回退到 default membership 再查一次。
+   - 若最终仍无 membership：设置 g.hi_tenant_id=None 并让 tenant 访问走 403（见装饰器）
+   - 若有 membership：
+       * g.hi_tenant_id = membership.tenant_id
+       * g.hi_org_id = membership.tenant.org_id（需要 join tenant 或再查 tenant）
+       * g.hi_role = membership.member_role（强制覆盖，确保 tenant_admin 稳定）
+       * 写回 session['hi_tenant_id'] = membership.tenant_id（保证后续请求一致）
+       * 如果 membership.tenant.status != 'active'，则视为无绑定（403）
+
+2) 强化 hi_filter_by_tenant(query, model)：
+   - 对 TENANT_ROLES：
+       * 若 g.hi_tenant_id is None：必须返回 query.filter(false())（严格空集）
+       * 否则：在 model 存在 hi_tenant_id/tenant_id 字段时强制过滤
+   - 对 OPERATOR：只按 org_id 过滤（若 model 有 org_id/hi_org_id）
+
+3) 强化 hi_require_auth / hi_require_tenant_or_operator：
+   - 如果是 TENANT_ROLES 且 g.hi_tenant_id is None：立即 403，返回：
+     { "error": { "code": "HI_TENANT_BINDING_REQUIRED", "message": "Tenant membership required." } }
+
+========================
+B) 更新验证脚本 scripts/verify_hi_tenant_isolation.py（必须）
+========================
+在 scripts/verify_hi_tenant_isolation.py 增加并确保通过以下断言：
+
+1) Auto-bind 验证：
+   - alpha session：只写 authenticated + user_id + role='client'（不要写 hi_tenant_id）
+   - 调 GET /api/hi/me（或现有等价 endpoint）
+   - 断言响应里 hi_tenant_id == Alpha tenant id，并且 hi_role == 'tenant_admin'（来自 membership）
+   - 同样对 beta 做一次
+
+2) Role persistence 验证：
+   - alpha session：写入 session['hi_tenant_id']=Alpha tenant id
+   - 再调 GET /api/hi/me
+   - 断言 hi_role 仍为 'tenant_admin'（不能掉回 tenant_viewer）
+
+3) 越权 by id 验证：
+   - 用 beta 的 plan_id / contract_id / invoice_id 去访问 alpha session 的 simulate/report/invoice detail/export 等接口
+   - 必须 403 或 404（任选其一，但不能 200）
+
+4) Unbound tenant 验证：
+   - 创建一个 client 用户但不创建 membership（seed 或脚本内临时插入）
+   - 访问 /api/hi/miners 必须 403，错误码 HI_TENANT_BINDING_REQUIRED
+
+脚本最后必须打印：✅ HI tenant isolation OK 并 exit(0)
+
+========================
+C) 修复 Alembic migrations 的 SQLite 兼容（必须）
+========================
+检查你新增的 migration（例如 20260221_0001_hi_tables.py / 0002_hi_tenant_memberships.py）以及任何 hi_* 表的 created_at/updated_at 默认值：
+
+- 把 server_default=sa.text('now()') 统一替换为：
+  server_default=sa.text('CURRENT_TIMESTAMP')
+
+如果某些字段用 func.now() 作为 Python-side default 可以保留，但必须保证 SQLite 迁移不依赖 now()。
+
+========================
+D) 运行验证（必须在 Replit shell 执行并修到通过）
+========================
+你必须依次运行并保证全部成功：
+1) python scripts/init_db.py
+2) python scripts/seed_demo.py
+3) python scripts/verify_hi_tenant_isolation.py
+
+如果遇到导入路径/蓝图注册等问题，你必须在不破坏现有结构的前提下修复（例如补 __init__.py、调整 sys.path、修正蓝图注册、修正 endpoint 路径），直到上面三条命令都通过。
+
+========================
+交付输出（写在最终回复里）
+========================
+1) 修改的文件清单（路径 + 简述）
+2) 说明 tenant_admin 掉级问题是如何修复的（1-2 段）
+3) 说明 SQLite 迁移兼容是如何保证的（1 段）
+4) 粘贴 verify 脚本通过时的关键输出（至少最后的 ✅ 行）
