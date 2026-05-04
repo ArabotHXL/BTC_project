@@ -4,15 +4,31 @@ Run: python tests/test_skills_api.py
 
 Requires the server to be running on port 5000.
 Uses the dev API key for authentication.
+When collected by pytest without a running server, these tests skip cleanly.
 """
 import json
 import sys
 import requests
+import pytest
 
 BASE = "http://localhost:5000"
 HEADERS = {"X-API-Key": "hsi_dev_key_2025", "Content-Type": "application/json"}
 passed = 0
 failed = 0
+
+
+def _server_available() -> bool:
+    try:
+        requests.get(f"{BASE}/api/skills", timeout=1)
+        return True
+    except requests.RequestException:
+        return False
+
+
+pytestmark = pytest.mark.skipif(
+    not _server_available(),
+    reason="Skills API integration tests require a running server on localhost:5000",
+)
 
 def test(name, fn):
     global passed, failed
