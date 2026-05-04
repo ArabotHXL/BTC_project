@@ -5,6 +5,10 @@
 import { CurtailmentService } from '../modules/curtailment_service';
 import { MinerState } from '../common/types';
 
+const expectedBtcPerHour = (hashrateThs: number): number => {
+  return (hashrateThs * 1e12 / (146 * 1e18)) * 6.25 * 6;
+};
+
 describe('Curtailment Service', () => {
   let service: CurtailmentService;
 
@@ -39,7 +43,7 @@ describe('Curtailment Service', () => {
     ];
 
     // High electricity price to trigger curtailment
-    const electricityPrice = 0.15; // USD/kWh
+    const electricityPrice = 0.30; // USD/kWh
     const btcPrice = 30000; // Low BTC price
 
     const plan = await service.calculatePlan(electricityPrice, miners, btcPrice);
@@ -80,8 +84,7 @@ describe('Curtailment Service', () => {
 
     // Calculate expected: abs(revenue_impact) / total_revenue * 100
     const totalRevenue = miners.reduce((sum, m) => {
-      const btcPerHour = (m.hashrate_5m * 1e12 / 146e15) * 6.25;
-      return sum + (btcPerHour * 25000);
+      return sum + (expectedBtcPerHour(m.hashrate_5m) * 25000);
     }, 0);
 
     const expectedImpactPct = (Math.abs(plan.expected_revenue_impact_usd) / totalRevenue) * 100;

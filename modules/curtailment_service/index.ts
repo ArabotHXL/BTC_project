@@ -4,9 +4,13 @@
  */
 
 import * as fs from 'fs';
+import { randomUUID } from 'crypto';
 import { eventLogger } from '../../common/eventLogger';
 import { CurtailmentPlan, CurtailmentAction, CurtailmentConfig, MinerState } from '../../common/types';
-import { v4 as uuidv4 } from 'uuid';
+
+const DEFAULT_NETWORK_HASHRATE_EH = 146;
+const BTC_BLOCKS_PER_HOUR = 6;
+const BTC_BLOCK_REWARD = 6.25;
 
 export class CurtailmentService {
   private config: CurtailmentConfig;
@@ -30,7 +34,7 @@ export class CurtailmentService {
     const minerProfitability = miners.map(miner => {
       const powerKw = miner.power_w / 1000;
       const electricityCost = powerKw * electricityPrice; // USD/hour
-      const btcPerHour = (miner.hashrate_5m * 1e12 / 146e15) * 6.25; // Simplified
+      const btcPerHour = (miner.hashrate_5m * 1e12 / (DEFAULT_NETWORK_HASHRATE_EH * 1e18)) * BTC_BLOCK_REWARD * BTC_BLOCKS_PER_HOUR;
       const revenue = btcPerHour * btcPrice; // USD/hour
       const profit = revenue - electricityCost;
 
@@ -96,7 +100,7 @@ export class CurtailmentService {
     const totalRevenue = minerProfitability.reduce((sum, item) => sum + item.revenue, 0);
     
     const plan: CurtailmentPlan = {
-      id: uuidv4(),
+      id: randomUUID(),
       created_at: new Date().toISOString(),
       electricity_price: electricityPrice,
       actions,

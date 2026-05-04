@@ -3,6 +3,7 @@
  */
 
 import { DataHub } from '../api/datahub';
+import { cacheManager } from '../common/cache';
 import { eventLogger } from '../common/eventLogger';
 import * as coingecko from '../api/datahub/providers/price.coingecko';
 import * as coindesk from '../api/datahub/providers/price.fallback.coindesk';
@@ -15,6 +16,7 @@ describe('DataHub Exception Handling', () => {
   let dataHub: DataHub;
 
   beforeEach(() => {
+    cacheManager.flush();
     dataHub = new DataHub();
     jest.clearAllMocks();
   });

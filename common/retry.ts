@@ -26,22 +26,27 @@ export async function retryWithBackoff<T>(
   let delay = initialDelay;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    let timeoutId: NodeJS.Timeout | undefined;
     try {
       // Add timeout wrapper
       const result = await Promise.race([
         fn(),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Request timeout')), timeout)
-        )
+        new Promise<never>((_, reject) => {
+          timeoutId = setTimeout(() => reject(new Error('Request timeout')), timeout);
+        })
       ]);
       return result;
     } catch (error) {
       lastError = error as Error;
-
-      if (attempt < maxAttempts) {
-        await sleep(delay);
-        delay = Math.min(delay * backoffMultiplier, maxDelay);
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
       }
+    }
+
+    if (attempt < maxAttempts) {
+      await sleep(delay);
+      delay = Math.min(delay * backoffMultiplier, maxDelay);
     }
   }
 

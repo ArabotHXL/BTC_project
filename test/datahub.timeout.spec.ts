@@ -3,6 +3,7 @@
  */
 
 import { DataHub } from '../api/datahub';
+import { cacheManager } from '../common/cache';
 import * as coingecko from '../api/datahub/providers/price.coingecko';
 import * as coindesk from '../api/datahub/providers/price.fallback.coindesk';
 
@@ -13,6 +14,7 @@ describe('DataHub Timeout Handling', () => {
   let dataHub: DataHub;
 
   beforeEach(() => {
+    cacheManager.flush();
     dataHub = new DataHub();
     jest.clearAllMocks();
   });

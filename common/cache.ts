@@ -10,7 +10,7 @@ export class CacheManager {
   constructor(defaultTTL: number = 60) {
     this.cache = new NodeCache({
       stdTTL: defaultTTL,
-      checkperiod: 120,
+      checkperiod: process.env.NODE_ENV === 'test' ? 0 : 120,
       useClones: false
     });
   }

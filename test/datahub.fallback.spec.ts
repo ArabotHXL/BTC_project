@@ -3,6 +3,7 @@
  */
 
 import { DataHub } from '../api/datahub';
+import { cacheManager } from '../common/cache';
 import * as blockchainInfo from '../api/datahub/providers/chain.blockchaininfo';
 import * as mempool from '../api/datahub/providers/chain.fallback.mempool';
 
@@ -13,6 +14,7 @@ describe('DataHub Fallback Mechanism', () => {
   let dataHub: DataHub;
 
   beforeEach(() => {
+    cacheManager.flush();
     dataHub = new DataHub();
     jest.clearAllMocks();
   });
