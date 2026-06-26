@@ -23,6 +23,7 @@ import os
 import json
 import logging
 import hashlib
+import hmac
 import re
 from datetime import datetime, timedelta
 from typing import Dict, Optional, Any, List
@@ -105,9 +106,15 @@ class AuditEvent:
     details: Dict[str, Any]
     
     request_id: Optional[str]
-    
+
     metadata: Dict[str, Any]
-    
+
+    # 防篡改哈希链字段 (tamper-evident hash chain); optional for backward compatibility
+    sequence: Optional[int] = None
+    previous_hash: Optional[str] = None
+    entry_hash: Optional[str] = None
+    signature: Optional[str] = None
+
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         data = asdict(self)
@@ -225,10 +232,70 @@ class AuditLogStorage:
         self.cloudwatch_log_group = os.environ.get('AUDIT_CLOUDWATCH_LOG_GROUP', '/hashinsight/audit')
         
         self.stackdriver_enabled = os.environ.get('AUDIT_STACKDRIVER_ENABLED', 'false').lower() == 'true'
-        
+
         os.makedirs(os.path.dirname(self.log_file), exist_ok=True)
-        
+
+        # 防篡改哈希链状态 (tamper-evident hash chain state)
+        # 侧车文件保存链头, 重启后继续延续链 (sidecar file persists chain head across restarts)
+        self.chain_head_file = os.environ.get(
+            'AUDIT_CHAIN_HEAD_FILE',
+            os.path.join(os.path.dirname(self.log_file) or '.', '.audit_chain_head')
+        )
+        self._chain_lock = threading.Lock()
+        self.prev_hash: Optional[str] = None
+        self.sequence: int = 0
+        self._load_chain_head()
+
         self._init_storage()
+
+    def _load_chain_head(self):
+        """从侧车文件加载链头 (prev_hash + sequence); 失败则从空链开始"""
+        try:
+            if os.path.exists(self.chain_head_file):
+                with open(self.chain_head_file, 'r', encoding='utf-8') as f:
+                    state = json.load(f)
+                self.prev_hash = state.get('prev_hash')
+                self.sequence = int(state.get('sequence', 0))
+            else:
+                self.prev_hash = None
+                self.sequence = 0
+        except Exception as e:
+            # 链头损坏不应阻止审计写入 (fail-open for availability of audit trail)
+            logger.error(f"Failed to load audit chain head, starting fresh chain: {e}")
+            self.prev_hash = None
+            self.sequence = 0
+
+    def _save_chain_head(self):
+        """将当前 prev_hash 与 sequence 持久化到侧车文件"""
+        try:
+            tmp_file = f"{self.chain_head_file}.tmp"
+            with open(tmp_file, 'w', encoding='utf-8') as f:
+                json.dump({'prev_hash': self.prev_hash, 'sequence': self.sequence}, f)
+            os.replace(tmp_file, self.chain_head_file)
+        except Exception as e:
+            logger.error(f"Failed to persist audit chain head: {e}")
+
+    @staticmethod
+    def _canonical_json(event: AuditEvent) -> str:
+        """生成事件的规范化JSON (排序键, 无空白); 排除链字段本身以保证可重算"""
+        data = event.to_dict()
+        for chain_field in ('sequence', 'previous_hash', 'entry_hash', 'signature'):
+            data.pop(chain_field, None)
+        return json.dumps(data, ensure_ascii=False, sort_keys=True, separators=(',', ':'))
+
+    @classmethod
+    def _compute_entry_hash(cls, event: AuditEvent, prev_hash: Optional[str]) -> str:
+        """entry_hash = sha256(prev_hash + canonical_json(event))"""
+        payload = (prev_hash or '') + cls._canonical_json(event)
+        return hashlib.sha256(payload.encode('utf-8')).hexdigest()
+
+    @staticmethod
+    def _compute_signature(entry_hash: str, signing_key: Optional[str]) -> Optional[str]:
+        """若提供签名密钥则计算 HMAC-SHA256, 否则返回 None (仍可通过哈希链防篡改)"""
+        if not signing_key:
+            return None
+        # 永不记录密钥材料本身 (never log key material)
+        return hmac.new(signing_key.encode('utf-8'), entry_hash.encode('utf-8'), hashlib.sha256).hexdigest()
     
     def _init_storage(self):
         """初始化存储"""
@@ -276,13 +343,32 @@ class AuditLogStorage:
             self._write_to_stackdriver(event)
     
     def _write_to_file(self, event: AuditEvent):
-        """写入文件"""
+        """写入文件 (附带防篡改哈希链)"""
         try:
-            self._check_rotation()
-            
-            with open(self.log_file, 'a', encoding='utf-8') as f:
-                f.write(event.to_json() + '\n')
-        
+            with self._chain_lock:
+                self._check_rotation()
+
+                # 计算哈希链元数据; 失败时回退到无链写入以保证审计不丢失
+                # (compute chain metadata; fail-open so the event is never silently dropped)
+                try:
+                    self.sequence += 1
+                    event.sequence = self.sequence
+                    event.previous_hash = self.prev_hash
+                    entry_hash = self._compute_entry_hash(event, self.prev_hash)
+                    event.entry_hash = entry_hash
+                    event.signature = self._compute_signature(
+                        entry_hash, os.environ.get('AUDIT_SIGNING_KEY')
+                    )
+                    self.prev_hash = entry_hash
+                except Exception as chain_err:
+                    logger.error(f"Failed to compute audit hash chain (writing event anyway): {chain_err}")
+
+                with open(self.log_file, 'a', encoding='utf-8') as f:
+                    f.write(event.to_json() + '\n')
+
+                # 每次写入后持久化链头, 重启后可继续延续链
+                self._save_chain_head()
+
         except Exception as e:
             logger.error(f"Failed to write audit log to file: {e}")
     
@@ -322,13 +408,18 @@ class AuditLogStorage:
             if os.path.exists(self.log_file):
                 size = os.path.getsize(self.log_file)
                 if size >= self.rotation_size:
+                    # 轮转前持久化链头, 使哈希链跨轮转文件保持连续
+                    # (persist chain head before rotation so the chain stays continuous across files)
+                    self._save_chain_head()
                     timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
                     rotated_file = f"{self.log_file}.{timestamp}"
                     os.rename(self.log_file, rotated_file)
                     logger.info(f"Rotated audit log: {rotated_file}")
-        
+
         except Exception as e:
             logger.error(f"Failed to rotate audit log: {e}")
+
+    # TODO(security): true WORM storage (e.g. S3 Object Lock / immutable cloud retention) for regulatory-grade tamper resistance
     
     def query(
         self,

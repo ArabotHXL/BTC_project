@@ -11,6 +11,7 @@
 """
 
 import os
+import re
 import json
 import logging
 import hashlib
@@ -64,9 +65,17 @@ class CryptoPaymentService:
         }
         
         # 🔧 CRITICAL FIX: 正确的USDC合约地址映射（防止资金损失）
+        # 从环境变量加载（可覆盖），回退到已知的规范地址。
+        # TODO(security): 生产环境应从受信任的链上注册表/配置服务校验这些地址。
         self.usdc_contract_addresses = {
-            'base_mainnet': '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',  # Base Mainnet USDC
-            'base_sepolia': '0x036CbD53842c5426634e7929541eC2318f3dCF7e'   # Base Sepolia USDC
+            'base_mainnet': os.environ.get(
+                'USDC_BASE_MAINNET_ADDRESS',
+                '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'  # Base Mainnet USDC (canonical)
+            ),
+            'base_sepolia': os.environ.get(
+                'USDC_BASE_SEPOLIA_ADDRESS',
+                '0x036CbD53842c5426634e7929541eC2318f3dCF7e'  # Base Sepolia USDC (canonical)
+            )
         }
         self.usdc_decimals = 6
         
@@ -294,22 +303,84 @@ class CryptoPaymentService:
             加密货币金额
         """
         try:
-            # 这里应该调用实时汇率API
-            # 暂时使用模拟汇率（生产环境需要实际API）
-            rates = {
-                'BTC': 45000.0,  # 1 BTC = 45000 USD
-                'ETH': 3000.0,   # 1 ETH = 3000 USD  
-                'USDC': 1.0      # 1 USDC = 1 USD
-            }
-            
-            if crypto_currency not in rates:
+            if crypto_currency not in ('BTC', 'ETH', 'USDC'):
                 return None
-            
-            crypto_amount = fiat_amount / rates[crypto_currency]
+
+            # 🔒 优先获取实时汇率（fail-closed：拿不到实时价格则报错，绝不静默使用过期硬编码价格）
+            rate = self._get_live_crypto_price(crypto_currency)
+
+            if rate is None:
+                # 仅当显式设置 ALLOW_STATIC_CRYPTO_RATES=true 时才允许回退到静态汇率（仅供开发/测试）
+                if os.environ.get('ALLOW_STATIC_CRYPTO_RATES', '').lower() == 'true':
+                    static_rates = {
+                        'BTC': 45000.0,  # 1 BTC = 45000 USD（过期，仅开发/测试）
+                        'ETH': 3000.0,   # 1 ETH = 3000 USD（过期，仅开发/测试）
+                        'USDC': 1.0      # 1 USDC = 1 USD
+                    }
+                    rate = static_rates.get(crypto_currency)
+                    logger.warning(
+                        "⚠️  ALLOW_STATIC_CRYPTO_RATES 已启用：%s 使用静态硬编码汇率 %s，"
+                        "可能严重错误定价真实发票，切勿在生产环境使用！",
+                        crypto_currency, rate
+                    )
+                else:
+                    # fail-closed：拒绝以未知/过期价格创建真实支付
+                    raise RuntimeError(
+                        f"无法获取 {crypto_currency} 的实时汇率，"
+                        f"为避免错误定价已中止支付（如需开发回退请设置 ALLOW_STATIC_CRYPTO_RATES=true）"
+                    )
+
+            if not rate or rate <= 0:
+                raise RuntimeError(f"{crypto_currency} 汇率无效: {rate}")
+
+            crypto_amount = fiat_amount / rate
             return round(crypto_amount, 8)  # 精确到8位小数
-            
+
         except Exception as e:
             logger.error(f"汇率转换失败: {e}")
+            return None
+
+    def _get_live_crypto_price(self, crypto_currency: str) -> Optional[float]:
+        """
+        获取加密货币的实时美元价格（USD）。
+
+        BTC 复用仓库内已有的价格源（api_client.get_btc_price，自带缓存与备用源）。
+        ETH 通过 CoinGecko 实时获取。USDC 为稳定币，固定锚定 1 USD。
+
+        Returns:
+            实时价格（USD），获取失败时返回 None（由调用方 fail-closed 处理）。
+
+        TODO(security): 生产环境应接入专用价格预言机（如 Chainlink/多源聚合 + 偏差校验），
+                        而非单一第三方 HTTP 接口，以防价格操纵与单点故障。
+        """
+        try:
+            if crypto_currency == 'USDC':
+                # USDC 为美元稳定币，1:1 锚定 USD。
+                return 1.0
+
+            if crypto_currency == 'BTC':
+                # 复用现有价格助手（含 CoinGecko + Blockchain.info 备用源与缓存）
+                from api_client import api_client
+                price = api_client.get_btc_price()
+                if price and price > 0:
+                    return float(price)
+                return None
+
+            if crypto_currency == 'ETH':
+                url = "https://api.coingecko.com/api/v3/simple/price"
+                params = {'ids': 'ethereum', 'vs_currencies': 'usd'}
+                response = requests.get(url, params=params, timeout=10)
+                if response.status_code == 200:
+                    data = response.json()
+                    price = data.get('ethereum', {}).get('usd')
+                    if price and price > 0:
+                        return float(price)
+                return None
+
+            return None
+
+        except Exception as e:
+            logger.error(f"获取 {crypto_currency} 实时价格失败: {e}")
             return None
     
     def _generate_payment_address(self, crypto_currency: str) -> Optional[str]:
@@ -345,11 +416,25 @@ class CryptoPaymentService:
         return networks.get(crypto_currency, 'unknown')
     
     def _get_usdc_contract_address(self, network: str = None) -> str:
-        """获取正确的USDC合约地址"""
+        """
+        获取并校验USDC合约地址。
+
+        - 仅允许已知网络（base_mainnet / base_sepolia），未知网络抛 ValueError；
+        - 地址须匹配 0x[40位十六进制] 格式，否则抛 ValueError；
+        - fail-closed：宁可报错也不返回 None 让上层误用错误/缺失地址。
+        """
         if network is None:
             network = 'base_sepolia' if self.is_testnet else 'base_mainnet'
-        
-        return self.usdc_contract_addresses.get(network)
+
+        allowed_networks = ('base_mainnet', 'base_sepolia')
+        if network not in allowed_networks:
+            raise ValueError(f"不支持的USDC网络: {network}（允许: {allowed_networks}）")
+
+        address = self.usdc_contract_addresses.get(network)
+        if not address or not re.match(r'^0x[a-fA-F0-9]{40}$', address):
+            raise ValueError(f"{network} 的USDC合约地址无效或缺失: {address!r}")
+
+        return address
     
     def _validate_usdc_address(self, address: str, network: str) -> bool:
         """验证USDC合约地址是否正确"""

@@ -323,12 +323,12 @@ contract SLAProofNFT is ERC721, ERC721URIStorage, Ownable, ReentrancyGuard, Paus
     /**
      * @dev Check if user has certificate for specific month
      */
-    function hasMonthlycertificate(address user, uint256 monthYear) 
+    function hasMonthlyCertificate(address user, uint256 monthYear)
         external 
         view 
         returns (bool) 
     {
-        return _hasMonthlyStatement(user, monthYear);
+        return _hasMonthlyCertificate(user, monthYear);
     }
     
     // Administration functions
@@ -411,7 +411,7 @@ contract SLAProofNFT is ERC721, ERC721URIStorage, Ownable, ReentrancyGuard, Paus
     
     // Internal helper functions
     
-    function _hasMonthlyStatement(address user, uint256 monthYear) 
+    function _hasMonthlyCertificate(address user, uint256 monthYear)
         internal 
         view 
         returns (bool) 

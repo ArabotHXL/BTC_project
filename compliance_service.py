@@ -149,13 +149,19 @@ class ComplianceService:
                 if crypto_risk > 0.3:
                     risk_factors.append(f'加密货币风险: {payment.crypto_currency.value}')
             
-            # 5. 外部API检查（如果配置）
+            # 5. 外部API检查（含制裁名单筛查，如果配置）
             if self.compliance_api_key:
                 external_check = self._perform_external_aml_check(user, payment)
                 risk_score += external_check.get('risk_score', 0)
                 if external_check.get('risk_factors'):
                     risk_factors.extend(external_check['risk_factors'])
-            
+            else:
+                # fail-closed 可见性：未配置外部 AML/制裁名单筛查时不静默放行，
+                # 记录缺口并施加轻度风险，使边界用户倾向人工复核而非自动通过。
+                # TODO(security): integrate real AML/sanctions screening (Chainalysis/OFAC API)
+                risk_score += 0.2
+                risk_factors.append('外部AML/制裁名单筛查未配置（未执行）')
+
             # 确定风险等级和状态
             if risk_score >= 0.8:
                 status = ComplianceStatus.BLOCKED
@@ -267,7 +273,13 @@ class ComplianceService:
                 risk_score += external_kyc.get('risk_score', 0)
                 if external_kyc.get('issues'):
                     verification_issues.extend(external_kyc['issues'])
-            
+            else:
+                # fail-closed 可见性：未配置外部 KYC 身份核验时施加轻度风险并标注，
+                # 但不直接判 REVIEW（避免阻断所有正常注册）。
+                # TODO(security): integrate real KYC identity verification (Onfido/Jumio)
+                risk_score += 0.2
+                kyc_details['external_kyc_screening'] = 'unavailable'
+
             # 确定KYC状态
             if missing_fields or risk_score >= 0.7:
                 status = ComplianceStatus.FAILED
@@ -449,7 +461,9 @@ class ComplianceService:
         """执行外部AML API检查"""
         try:
             if not self.compliance_api_key:
-                return {'risk_score': 0, 'risk_factors': []}
+                # fail-closed：不静默返回 0 风险（“干净”），明确标注未筛查并施加轻度风险。
+                # TODO(security): integrate real AML/sanctions screening (Chainalysis/OFAC API)
+                return {'risk_score': 0.2, 'risk_factors': ['外部AML筛查未配置'], 'external_unavailable': True}
             
             # 调用外部合规API
             headers = {
@@ -489,7 +503,9 @@ class ComplianceService:
         """执行外部KYC API检查"""
         try:
             if not self.compliance_api_key:
-                return {'risk_score': 0, 'issues': []}
+                # fail-closed：不静默返回 0 风险，明确标注外部身份核验未配置。
+                # TODO(security): integrate real KYC identity verification (Onfido/Jumio)
+                return {'risk_score': 0.2, 'issues': ['外部KYC身份核验未配置'], 'external_unavailable': True}
             
             # 调用外部KYC API
             headers = {

@@ -5,8 +5,11 @@
 import { CurtailmentService } from '../modules/curtailment_service';
 import { MinerState } from '../common/types';
 
+// NOTE: these constants must mirror the CurtailmentService defaults
+// (DEFAULT_NETWORK_HASHRATE_EH=600, BTC_BLOCK_REWARD=3.125 post-April-2024 halving,
+// BTC_BLOCKS_PER_HOUR=6). Keep them in sync with modules/curtailment_service/index.ts.
 const expectedBtcPerHour = (hashrateThs: number): number => {
-  return (hashrateThs * 1e12 / (146 * 1e18)) * 6.25 * 6;
+  return (hashrateThs * 1e12 / (600 * 1e18)) * 3.125 * 6;
 };
 
 describe('Curtailment Service', () => {

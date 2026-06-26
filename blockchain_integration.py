@@ -30,6 +30,81 @@ from flask import current_app
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
+class KeyProvider:
+    """
+    私钥提供者抽象基类
+
+    🔒 SECURITY: 该抽象将私钥来源与使用解耦，便于未来接入 HSM/KMS。
+    实现必须保证：私钥明文 NEVER 出现在日志或异常 traceback 中。
+    """
+
+    def get_private_key(self) -> str:
+        """返回私钥明文。实现必须确保不记录/不打印该值。"""
+        raise NotImplementedError
+
+    def get_account(self) -> Account:
+        """返回已初始化的 eth_account.Account 对象。"""
+        raise NotImplementedError
+
+
+class EnvKeyProvider(KeyProvider):
+    """
+    从环境变量 BLOCKCHAIN_PRIVATE_KEY 读取私钥的提供者（保持现有默认行为）。
+
+    🔒 SECURITY: 仅在 get_account() 被调用时实例化 Account；
+    任何情况下都不记录私钥明文，仅记录账户地址（地址公开，安全）。
+    """
+
+    ENV_VAR_NAME = "BLOCKCHAIN_PRIVATE_KEY"
+
+    def get_private_key(self) -> str:
+        private_key = os.environ.get(self.ENV_VAR_NAME)
+        if not private_key:
+            # 不包含任何密钥内容
+            raise ValueError(
+                f"{self.ENV_VAR_NAME} 未设置，无法获取私钥"
+            )
+        return private_key
+
+    def get_account(self) -> Account:
+        private_key = self.get_private_key()
+        try:
+            account = Account.from_key(private_key)
+        except Exception:
+            # 🔒 SECURITY: 捕获所有异常并重新抛出安全消息，
+            # 绝不在消息或 traceback 中包含私钥明文。
+            raise ValueError("Invalid private key provided") from None
+        finally:
+            # 尽快清除局部引用，减少明文在内存中的停留
+            private_key = None
+        # 仅记录公开地址，绝不记录私钥
+        logger.info(f"区块链账户已加载: {account.address}")
+        return account
+
+
+class HsmKeyProvider(KeyProvider):
+    """
+    HSM/KMS 私钥提供者占位实现（fail-safe，尚未实现）。
+
+    选择 'kms' 或 'hsm' 作为 BLOCKCHAIN_KEY_PROVIDER 时使用。
+    """
+
+    def get_private_key(self) -> str:
+        # TODO(security): integrate real HSM/KMS provider + implement key rotation
+        raise NotImplementedError(
+            "HSM/KMS key provider 尚未实现；请设置 BLOCKCHAIN_KEY_PROVIDER=env "
+            "或集成真实的 HSM/KMS 后端。"
+        )
+
+    def get_account(self) -> Account:
+        # TODO(security): integrate real HSM/KMS provider + implement key rotation
+        raise NotImplementedError(
+            "HSM/KMS key provider 尚未实现；请设置 BLOCKCHAIN_KEY_PROVIDER=env "
+            "或集成真实的 HSM/KMS 后端。"
+        )
+
+
 class BlockchainIntegration:
     """区块链集成主类"""
     
@@ -38,6 +113,7 @@ class BlockchainIntegration:
         self.w3 = None
         self.contract = None
         self.account = None
+        self.key_provider = None  # 🔒 SECURITY: 私钥提供者抽象（HSM/KMS 就绪）
         self.encryption_key = None
         self.pinata_jwt = None
         self.pinata_api_url = "https://api.pinata.cloud"
@@ -113,12 +189,24 @@ class BlockchainIntegration:
                 logger.error("无法连接到Base L2网络")
                 return
             
-            # 加载私钥
-            private_key = os.environ.get('BLOCKCHAIN_PRIVATE_KEY')
-            if private_key:
-                self.account = Account.from_key(private_key)
-                logger.info(f"区块链账户已加载: {self.account.address}")
-            
+            # 🔒 SECURITY: 通过 KeyProvider 抽象加载账户（HSM/KMS 就绪）
+            # EnvKeyProvider 保持原有行为：从 BLOCKCHAIN_PRIVATE_KEY 读取。
+            # 私钥明文绝不在此处记录或进入异常 traceback。
+            key_provider = self._get_key_provider()
+            try:
+                # 仅当环境中存在私钥时才初始化账户，保持向后兼容的限制模式
+                if isinstance(key_provider, EnvKeyProvider) and not os.environ.get(EnvKeyProvider.ENV_VAR_NAME):
+                    self.account = None
+                else:
+                    self.account = key_provider.get_account()
+            except ValueError as e:
+                # 安全消息（不含密钥内容）已由 provider 保证
+                logger.error(f"账户加载失败: {e}")
+                self.account = None
+            except NotImplementedError as e:
+                logger.error(f"密钥提供者不可用: {e}")
+                self.account = None
+
             # 初始化合约实例
             if self.contract_address and self.contract_abi:
                 self.contract = self.w3.eth.contract(
@@ -131,7 +219,33 @@ class BlockchainIntegration:
             
         except Exception as e:
             logger.error(f"Web3初始化失败: {e}")
-    
+
+    def _get_key_provider(self) -> KeyProvider:
+        """
+        根据 BLOCKCHAIN_KEY_PROVIDER 选择并缓存私钥提供者。
+
+        🔒 SECURITY: fail-safe。未知取值时回退到 EnvKeyProvider（永不 fail-open），
+        'kms'/'hsm' 使用尚未实现的占位 provider（调用时抛 NotImplementedError）。
+        默认 'env' 保持现有行为与向后兼容。
+        """
+        if self.key_provider is not None:
+            return self.key_provider
+
+        provider_name = os.environ.get('BLOCKCHAIN_KEY_PROVIDER', 'env').strip().lower()
+
+        if provider_name == 'env':
+            self.key_provider = EnvKeyProvider()
+        elif provider_name in ('kms', 'hsm'):
+            self.key_provider = HsmKeyProvider()
+        else:
+            logger.warning(
+                f"未知的 BLOCKCHAIN_KEY_PROVIDER 取值 '{provider_name}'，"
+                "回退到环境变量提供者 (env)"
+            )
+            self.key_provider = EnvKeyProvider()
+
+        return self.key_provider
+
     def _initialize_encryption(self):
         """初始化数据加密 - 生产安全版本"""
         try:

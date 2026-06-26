@@ -59,7 +59,7 @@ def require_legacy_device_auth(f):
         if not token:
             return jsonify({'error': 'Device token required', '_deprecated': True}), 401
         
-        device = EdgeDevice.query.filter_by(device_token=token, status='ACTIVE').first()
+        device = EdgeDevice.lookup_by_token(token, active_only=True)
         if not device:
             return jsonify({'error': 'Invalid token', '_deprecated': True}), 401
         

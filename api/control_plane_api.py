@@ -109,10 +109,7 @@ def require_device_auth(f):
             return jsonify({'error': 'Device token required'}), 401
         token = auth_header[7:]
         
-        token_hash = hashlib.sha256(token.encode()).hexdigest()
-        device = EdgeDevice.query.filter_by(token_hash=token_hash, status='ACTIVE').first()
-        if not device:
-            device = EdgeDevice.query.filter_by(device_token=token, status='ACTIVE').first()
+        device = EdgeDevice.lookup_by_token(token, active_only=True)
         if not device:
             return jsonify({'error': 'Invalid or revoked device token'}), 401
         
@@ -139,10 +136,7 @@ def require_edge_auth(f):
             token = auth_header[7:]
         
         if token:
-            token_hash = hashlib.sha256(token.encode()).hexdigest()
-            device = EdgeDevice.query.filter_by(token_hash=token_hash, status='ACTIVE').first()
-            if not device:
-                device = EdgeDevice.query.filter_by(device_token=token, status='ACTIVE').first()
+            device = EdgeDevice.lookup_by_token(token, active_only=True)
             if device:
                 device.last_seen_at = datetime.utcnow()
                 db.session.commit()
@@ -395,7 +389,7 @@ def edge_poll_commands():
         
         if enable_signature and getattr(g, 'device', None):
             device = g.device
-            hmac_secret = device.device_token or device.token_hash
+            hmac_secret = device.get_hmac_secret()
             
             canonical_sig_data = {
                 'command_id': cmd.id,
@@ -504,7 +498,7 @@ def edge_poll_commands():
             
             if enable_signature and getattr(g, 'device', None):
                 device = g.device
-                hmac_secret = device.device_token or device.token_hash
+                hmac_secret = device.get_hmac_secret()
                 
                 canonical_sig_data = {
                     'command_id': cmd.id,

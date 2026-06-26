@@ -49,7 +49,7 @@ def require_auth(f):
         auth_header = request.headers.get('Authorization', '')
         if auth_header.startswith('Bearer '):
             token = auth_header[7:]
-            device = EdgeDevice.query.filter_by(device_token=token, status='ACTIVE').first()
+            device = EdgeDevice.lookup_by_token(token, active_only=True)
             if device:
                 g.auth_type = 'device'
                 g.tenant_id = device.tenant_id
@@ -173,19 +173,21 @@ def register_device():
             return jsonify({'error': 'Device with this name already exists'}), 409
         
         device_token = secrets.token_urlsafe(48)
-        
+
         device = EdgeDevice(
             tenant_id=g.tenant_id,
             site_id=site_id,
             device_name=device_name,
-            device_token=device_token,
             public_key=public_key,
             key_version=1,
             status='ACTIVE',
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
         )
-        
+        # Store hash + encrypted-at-rest copy; plaintext is returned to the
+        # device once below and never persisted in clear text.
+        device.set_device_token(device_token)
+
         db.session.add(device)
         db.session.commit()
         
@@ -874,10 +876,10 @@ def require_device_auth(f):
             return jsonify({'error': 'Device token required'}), 401
         
         token = auth_header[7:]
-        device = EdgeDevice.query.filter_by(device_token=token, status='ACTIVE').first()
+        device = EdgeDevice.lookup_by_token(token, active_only=True)
         if not device:
             return jsonify({'error': 'Invalid or revoked device token'}), 401
-        
+
         g.auth_type = 'device'
         g.tenant_id = device.tenant_id
         g.device_id = device.id

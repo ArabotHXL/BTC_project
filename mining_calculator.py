@@ -505,6 +505,10 @@ def get_real_time_block_reward():
         response = requests.get('https://blockchain.info/q/getblockcount', timeout=10)
         if response.status_code == 200:
             block_height = int(response.text.strip())
+            # Block-height halving schedule (each value is the historically
+            # correct reward for its height range). Post-April-2024 halving
+            # (height >= 840000) is 3.125 BTC; the 6.25 below is the prior
+            # epoch's correct value and must remain unchanged for that range.
             if block_height >= 840000:
                 block_reward = 3.125
             elif block_height >= 630000:

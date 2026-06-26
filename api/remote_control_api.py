@@ -106,7 +106,7 @@ def require_device_auth(f):
             return jsonify({'error': 'Device token required'}), 401
         
         token = auth_header[7:]
-        device = EdgeDevice.query.filter_by(device_token=token, status='ACTIVE').first()
+        device = EdgeDevice.lookup_by_token(token, active_only=True)
         if not device:
             return jsonify({'error': 'Invalid or revoked device token'}), 401
         

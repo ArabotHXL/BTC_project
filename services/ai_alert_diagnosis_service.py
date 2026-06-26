@@ -13,6 +13,7 @@ AI 告警诊断服务
 """
 
 import logging
+import os
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional, Any
 from dataclasses import dataclass, field
@@ -21,6 +22,23 @@ from db import db
 from services.telemetry_service import TelemetryService
 
 logger = logging.getLogger(__name__)
+
+
+def _env_float(name: str, default: float) -> float:
+    """Read a float threshold from env, falling back to default on missing/invalid.
+
+    Parsing happens at instance init (and a module-level singleton is created at
+    import time), so a malformed value must NOT crash startup — we log and use the
+    safe default instead.
+    """
+    raw = os.environ.get(name)
+    if raw is None or raw == '':
+        return float(default)
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        logger.warning("Invalid %s=%r, using default %s", name, raw, default)
+        return float(default)
 
 
 @dataclass
@@ -80,6 +98,8 @@ class AIAlertDiagnosisService:
     输出：Top3 根因假设 + 每个假设的证据 + 建议验证动作
     """
     
+    # 类常量保留为默认值/文档参考；实例属性（self.*_threshold）会覆盖这些值。
+    # 默认值通过环境变量配置，未配置时与历史行为一致。
     HASHRATE_DROP_THRESHOLD = 0.2
     TEMPERATURE_HIGH_THRESHOLD = 75
     TEMPERATURE_CRITICAL_THRESHOLD = 85
@@ -87,9 +107,43 @@ class AIAlertDiagnosisService:
     POOL_LATENCY_HIGH_THRESHOLD = 200
     FAN_SPEED_LOW_THRESHOLD = 2000
     OFFLINE_MINUTES_THRESHOLD = 5
-    
+
     def __init__(self):
         self.telemetry_service = TelemetryService()
+        # 诊断阈值从环境变量加载，未配置时回退到类常量默认值（行为不变）
+        # TODO: 如需统一管理，可改为读取 config 表/中心化配置
+        self.hashrate_drop_threshold = _env_float('AI_HASHRATE_DROP', self.HASHRATE_DROP_THRESHOLD)
+        self.temperature_high_threshold = _env_float('AI_TEMP_HIGH_THRESHOLD', self.TEMPERATURE_HIGH_THRESHOLD)
+        self.temperature_critical_threshold = _env_float('AI_TEMP_CRITICAL_THRESHOLD', self.TEMPERATURE_CRITICAL_THRESHOLD)
+        self.reject_rate_high_threshold = _env_float('AI_REJECT_RATE_HIGH', self.REJECT_RATE_HIGH_THRESHOLD)
+        self.pool_latency_high_threshold = _env_float('AI_POOL_LATENCY_HIGH', self.POOL_LATENCY_HIGH_THRESHOLD)
+        self.fan_speed_low_threshold = _env_float('AI_FAN_SPEED_LOW', self.FAN_SPEED_LOW_THRESHOLD)
+        self.offline_minutes_threshold = _env_float('AI_OFFLINE_MINUTES', self.OFFLINE_MINUTES_THRESHOLD)
+
+    def _resolve_thresholds(self, thresholds: Optional[Dict[str, Any]] = None) -> Dict[str, float]:
+        """合并实例默认阈值与单次调用覆盖值。
+
+        Args:
+            thresholds: 可选覆盖字典，键如 'temperature_high'、'reject_rate_high' 等。
+                        未提供的键回退到实例默认值。
+
+        Returns:
+            合并后的阈值字典。
+        """
+        resolved = {
+            'hashrate_drop': self.hashrate_drop_threshold,
+            'temperature_high': self.temperature_high_threshold,
+            'temperature_critical': self.temperature_critical_threshold,
+            'reject_rate_high': self.reject_rate_high_threshold,
+            'pool_latency_high': self.pool_latency_high_threshold,
+            'fan_speed_low': self.fan_speed_low_threshold,
+            'offline_minutes': self.offline_minutes_threshold,
+        }
+        if thresholds:
+            for key, value in thresholds.items():
+                if key in resolved and value is not None:
+                    resolved[key] = value
+        return resolved
     
     def diagnose_alert(
         self,
@@ -97,33 +151,38 @@ class AIAlertDiagnosisService:
         miner_id: str,
         alert_type: str,
         alert_id: Optional[str] = None,
+        thresholds: Optional[Dict[str, Any]] = None,
     ) -> DiagnosisResult:
         """诊断单个告警
-        
+
         Args:
             site_id: 站点ID
             miner_id: 矿机ID
             alert_type: 告警类型 (offline, hashrate_low, temperature_high, etc.)
             alert_id: 告警ID（可选）
-        
+            thresholds: 可选的单次调用阈值覆盖字典（如 {'temperature_high': 80}），
+                        未提供的键回退到实例默认值/环境变量配置
+
         Returns:
             DiagnosisResult 包含 Top3 根因假设
         """
         now = datetime.utcnow()
-        
+        resolved_thresholds = self._resolve_thresholds(thresholds)
+
         live_data = self._get_live_data(site_id, miner_id)
         history_data = self._get_history_data(site_id, miner_id, hours=24)
         recent_commands = self._get_recent_commands(site_id, miner_id, hours=24)
-        
+
         data_sources = ['miner_telemetry_live', 'telemetry_history_5min']
         if recent_commands:
             data_sources.append('remote_commands')
-        
+
         hypotheses = self._generate_hypotheses(
             alert_type=alert_type,
             live_data=live_data,
             history_data=history_data,
             recent_commands=recent_commands,
+            thresholds=resolved_thresholds,
         )
         
         hypotheses = sorted(hypotheses, key=lambda h: h.confidence, reverse=True)[:3]
@@ -154,21 +213,26 @@ class AIAlertDiagnosisService:
         site_id: int,
         alert_type: str,
         miner_ids: Optional[List[str]] = None,
+        thresholds: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, DiagnosisResult]:
         """批量诊断多台矿机
-        
+
         适用于批量离线等场景
+
+        Args:
+            thresholds: 可选的单次调用阈值覆盖字典，应用于本批次所有矿机
         """
         results = {}
-        
+
         if miner_ids:
             for miner_id in miner_ids:
                 results[miner_id] = self.diagnose_alert(
                     site_id=site_id,
                     miner_id=miner_id,
                     alert_type=alert_type,
+                    thresholds=thresholds,
                 )
-        
+
         return results
     
     def _get_live_data(self, site_id: int, miner_id: str) -> Optional[Dict]:
@@ -228,29 +292,31 @@ class AIAlertDiagnosisService:
         live_data: Optional[Dict],
         history_data: Dict,
         recent_commands: List[Dict],
+        thresholds: Optional[Dict[str, float]] = None,
     ) -> List[RootCauseHypothesis]:
         """生成根因假设"""
         hypotheses = []
         alert_lower = alert_type.lower() if alert_type else ''
-        
+        thresholds = self._resolve_thresholds(thresholds)
+
         if alert_lower in ('miner_offline', 'offline', 'disconnect', 'unreachable'):
-            hypotheses.extend(self._diagnose_offline(live_data, history_data, recent_commands))
-        
+            hypotheses.extend(self._diagnose_offline(live_data, history_data, recent_commands, thresholds))
+
         elif 'hashrate' in alert_lower or 'hash' in alert_lower:
-            hypotheses.extend(self._diagnose_hashrate_issue(live_data, history_data, recent_commands))
-        
+            hypotheses.extend(self._diagnose_hashrate_issue(live_data, history_data, recent_commands, thresholds))
+
         elif 'temp' in alert_lower or 'overheat' in alert_lower or 'thermal' in alert_lower:
-            hypotheses.extend(self._diagnose_temperature_issue(live_data, history_data))
-        
+            hypotheses.extend(self._diagnose_temperature_issue(live_data, history_data, thresholds))
+
         elif 'hardware' in alert_lower or 'board' in alert_lower:
             hypotheses.extend(self._diagnose_hardware_issue(live_data, history_data))
-        
+
         elif 'power' in alert_lower or 'psu' in alert_lower:
-            hypotheses.extend(self._diagnose_offline(live_data, history_data, recent_commands))
-        
+            hypotheses.extend(self._diagnose_offline(live_data, history_data, recent_commands, thresholds))
+
         else:
             hypotheses.extend(self._diagnose_generic(alert_type, live_data, history_data))
-        
+
         return hypotheses
     
     def _diagnose_offline(
@@ -258,9 +324,12 @@ class AIAlertDiagnosisService:
         live_data: Optional[Dict],
         history_data: Dict,
         recent_commands: List[Dict],
+        thresholds: Optional[Dict[str, float]] = None,
     ) -> List[RootCauseHypothesis]:
         """诊断离线问题"""
         hypotheses = []
+        thresholds = self._resolve_thresholds(thresholds)
+        temperature_critical_threshold = thresholds['temperature_critical']
         
         reboot_commands = [c for c in recent_commands if c['type'] in ('REBOOT', 'POWER_OFF', 'reboot', 'power_off')]
         if reboot_commands:
@@ -302,7 +371,7 @@ class AIAlertDiagnosisService:
             series = history_data['series'][0]['data'] if history_data['series'] else []
             if len(series) >= 2:
                 recent_temps = [p['temp_c'] for p in series[-12:] if p.get('temp_c')]
-                if recent_temps and max(recent_temps) > self.TEMPERATURE_CRITICAL_THRESHOLD:
+                if recent_temps and max(recent_temps) > temperature_critical_threshold:
                     hypotheses.append(RootCauseHypothesis(
                         hypothesis_id='thermal_shutdown',
                         cause='Thermal protection shutdown triggered',
@@ -315,7 +384,7 @@ class AIAlertDiagnosisService:
                                 description=f"Temperature reached {max(recent_temps)}°C before offline",
                                 description_zh=f"离线前温度达到 {max(recent_temps)}°C",
                                 value=max(recent_temps),
-                                threshold=self.TEMPERATURE_CRITICAL_THRESHOLD,
+                                threshold=temperature_critical_threshold,
                             ),
                         ],
                         suggested_actions=[
@@ -415,10 +484,15 @@ class AIAlertDiagnosisService:
         live_data: Optional[Dict],
         history_data: Dict,
         recent_commands: List[Dict],
+        thresholds: Optional[Dict[str, float]] = None,
     ) -> List[RootCauseHypothesis]:
         """诊断算力问题"""
         hypotheses = []
-        
+        thresholds = self._resolve_thresholds(thresholds)
+        temperature_high_threshold = thresholds['temperature_high']
+        reject_rate_high_threshold = thresholds['reject_rate_high']
+        pool_latency_high_threshold = thresholds['pool_latency_high']
+
         if live_data:
             current_hashrate = live_data.get('hashrate', {}).get('value', 0)
             expected_hashrate = live_data.get('hashrate', {}).get('expected_ths', 0)
@@ -426,7 +500,7 @@ class AIAlertDiagnosisService:
             reject_rate = live_data.get('shares', {}).get('reject_rate', 0)
             pool_latency = live_data.get('pool', {}).get('latency_ms', 0)
             
-            if temperature and temperature > self.TEMPERATURE_HIGH_THRESHOLD:
+            if temperature and temperature > temperature_high_threshold:
                 drop_pct = (expected_hashrate - current_hashrate) / expected_hashrate * 100 if expected_hashrate > 0 else 0
                 hypotheses.append(RootCauseHypothesis(
                     hypothesis_id='thermal_throttling',
@@ -440,7 +514,7 @@ class AIAlertDiagnosisService:
                             description=f"Max temperature {temperature}°C exceeds threshold",
                             description_zh=f"最高温度 {temperature}°C 超过阈值",
                             value=temperature,
-                            threshold=self.TEMPERATURE_HIGH_THRESHOLD,
+                            threshold=temperature_high_threshold,
                         ),
                         Evidence(
                             metric='hashrate_drop',
@@ -476,7 +550,7 @@ class AIAlertDiagnosisService:
                     ],
                 ))
             
-            if reject_rate and reject_rate > self.REJECT_RATE_HIGH_THRESHOLD:
+            if reject_rate and reject_rate > reject_rate_high_threshold:
                 hypotheses.append(RootCauseHypothesis(
                     hypothesis_id='high_reject_rate',
                     cause='High share rejection rate from pool',
@@ -489,7 +563,7 @@ class AIAlertDiagnosisService:
                             description=f"Reject rate {reject_rate*100:.2f}% exceeds normal",
                             description_zh=f"拒绝率 {reject_rate*100:.2f}% 超过正常值",
                             value=reject_rate,
-                            threshold=self.REJECT_RATE_HIGH_THRESHOLD,
+                            threshold=reject_rate_high_threshold,
                         ),
                     ],
                     suggested_actions=[
@@ -511,7 +585,7 @@ class AIAlertDiagnosisService:
                     ],
                 ))
             
-            if pool_latency and pool_latency > self.POOL_LATENCY_HIGH_THRESHOLD:
+            if pool_latency and pool_latency > pool_latency_high_threshold:
                 hypotheses.append(RootCauseHypothesis(
                     hypothesis_id='pool_connectivity',
                     cause='Pool connectivity issue causing efficiency loss',
@@ -524,7 +598,7 @@ class AIAlertDiagnosisService:
                             description=f"Pool latency {pool_latency}ms is high",
                             description_zh=f"矿池延迟 {pool_latency}ms 偏高",
                             value=pool_latency,
-                            threshold=self.POOL_LATENCY_HIGH_THRESHOLD,
+                            threshold=pool_latency_high_threshold,
                         ),
                     ],
                     suggested_actions=[
@@ -631,10 +705,13 @@ class AIAlertDiagnosisService:
         self,
         live_data: Optional[Dict],
         history_data: Dict,
+        thresholds: Optional[Dict[str, float]] = None,
     ) -> List[RootCauseHypothesis]:
         """诊断温度问题"""
         hypotheses = []
-        
+        thresholds = self._resolve_thresholds(thresholds)
+        temperature_high_threshold = thresholds['temperature_high']
+
         if live_data:
             temp_max = live_data.get('temperature', {}).get('max', 0)
             
@@ -650,7 +727,7 @@ class AIAlertDiagnosisService:
                         description=f"Temperature {temp_max}°C is elevated",
                         description_zh=f"温度 {temp_max}°C 偏高",
                         value=temp_max,
-                        threshold=self.TEMPERATURE_HIGH_THRESHOLD,
+                        threshold=temperature_high_threshold,
                     ),
                 ],
                 suggested_actions=[

@@ -8,9 +8,17 @@ import { randomUUID } from 'crypto';
 import { eventLogger } from '../../common/eventLogger';
 import { CurtailmentPlan, CurtailmentAction, CurtailmentConfig, MinerState } from '../../common/types';
 
-const DEFAULT_NETWORK_HASHRATE_EH = 146;
+// NOTE: These Bitcoin network constants should ideally come from DataHub
+// (a real-time / on-chain source) rather than being hardcoded. They are
+// overridable via environment variables as a stopgap. Defaults reflect
+// current network conditions: block reward 3.125 BTC (post-April-2024 halving).
+const DEFAULT_NETWORK_HASHRATE_EH = process.env.DEFAULT_NETWORK_HASHRATE_EH
+  ? parseFloat(process.env.DEFAULT_NETWORK_HASHRATE_EH)
+  : 600;
 const BTC_BLOCKS_PER_HOUR = 6;
-const BTC_BLOCK_REWARD = 6.25;
+const BTC_BLOCK_REWARD = process.env.BTC_BLOCK_REWARD
+  ? parseFloat(process.env.BTC_BLOCK_REWARD)
+  : 3.125;
 
 export class CurtailmentService {
   private config: CurtailmentConfig;

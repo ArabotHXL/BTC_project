@@ -626,12 +626,31 @@ class FallbackFernetClient(KMSClient):
         """初始化主密钥"""
         try:
             master_key_b64 = self.config.get('master_key') or os.environ.get('FALLBACK_MASTER_KEY')
-            
+
             if not master_key_b64:
-                logger.warning("⚠️ No master key provided for fallback mode, generating new key")
+                # Fail-closed in production: refuse to start without explicit key config
+                is_production = (
+                    os.environ.get('FLASK_ENV') == 'production' or
+                    os.environ.get('ENABLE_PRODUCTION_CHECKS') == '1'
+                )
+
+                if is_production:
+                    # TODO(security): provision FALLBACK_MASTER_KEY via secrets manager in production deployments
+                    raise RuntimeError(
+                        "Production mode requires explicit FALLBACK_MASTER_KEY environment variable. "
+                        "Ephemeral keys are not permitted in production for security."
+                    )
+
+                # Development only: generate an ephemeral key and log ONLY a non-revealing
+                # fingerprint (never the key material itself).
                 master_key_b64 = Fernet.generate_key().decode('utf-8')
-                logger.warning(f"⚠️ GENERATED KEY (SAVE THIS): {master_key_b64}")
-            
+                key_fingerprint = hashlib.sha256(master_key_b64.encode()).hexdigest()[:6]
+                logger.warning(
+                    f"⚠️ No master key provided for fallback mode. "
+                    f"Generated ephemeral key (fingerprint: {key_fingerprint}). "
+                    f"Set FALLBACK_MASTER_KEY environment variable for persistent encryption."
+                )
+
             self.master_key = master_key_b64.encode() if isinstance(master_key_b64, str) else master_key_b64
             self.fernet = Fernet(self.master_key)
             
