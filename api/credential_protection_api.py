@@ -356,16 +356,11 @@ def edge_decrypt_credential():
         return jsonify({'error': 'Device token required'}), 401
     
     device_token = auth_header[7:]
-    
+
     from models_device_encryption import EdgeDevice
-    import hashlib
-    
-    token_hash = hashlib.sha256(device_token.encode()).hexdigest()
-    device = EdgeDevice.query.filter(
-        (EdgeDevice.device_token == device_token) | 
-        (EdgeDevice.token_hash == token_hash)
-    ).first()
-    
+
+    device = EdgeDevice.lookup_by_token(device_token, active_only=False)
+
     if not device or device.status != 'ACTIVE':
         return jsonify({'error': 'Invalid or inactive device'}), 401
     

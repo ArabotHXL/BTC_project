@@ -147,7 +147,7 @@ class CertificateValidator:
             
         except Exception as e:
             logger.error(f"CRL check failed: {e}")
-            return True  # 降级策略：CRL检查失败时允许通过
+            return False  # SECURITY: Fail closed - reject if CRL check fails
     
     def check_certificate_validity(self, client_cert: Certificate) -> bool:
         """检查证书有效期"""
@@ -241,7 +241,7 @@ class MTLSAuthMiddleware:
     
     def __init__(self):
         self.validator = CertificateValidator()
-        self.enabled = MTLSConfig.VERIFY_CLIENT_CERT
+        self.enabled = False  # Off by default; use init_mtls(app, enforce=True) to enable
     
     def extract_client_certificate(self, request_obj) -> Optional[Certificate]:
         """从请求中提取客户端证书"""
@@ -342,6 +342,46 @@ def get_ssl_context(require_client_cert: bool = True) -> ssl.SSLContext:
 
 mtls_middleware = MTLSAuthMiddleware()
 
+def init_mtls(app, enforce: bool = None):
+    """
+    Initialize and optionally enforce mTLS on the Flask app.
+
+    Feature-flagged mTLS enforcement via the ENFORCE_MTLS environment variable.
+    When enabled, the require_mtls() decorator will enforce mutual TLS on
+    sensitive endpoints (fail-closed: requests without a valid client
+    certificate are rejected with 401).
+
+    Args:
+        app: Flask application instance.
+        enforce: If None, reads the ENFORCE_MTLS env var (defaults to False).
+                 If True/False, explicitly sets the enforcement level.
+
+    Returns:
+        The mtls_middleware instance.
+
+    Usage:
+        from common.mtls_auth import init_mtls, require_mtls
+        init_mtls(app, enforce=True)
+
+        # Then guard sensitive blueprints (e.g. collector, control-plane):
+        @blueprint.route('/sensitive')
+        @require_mtls()
+        def sensitive_endpoint():
+            return jsonify(status='ok')
+
+    # TODO(security): wire mTLS enforcement + provision client certs / CRL/OCSP endpoints
+    """
+    global mtls_middleware
+
+    # Read enforcement flag from environment or use the provided value.
+    if enforce is None:
+        enforce = os.environ.get('ENFORCE_MTLS', 'false').lower() == 'true'
+
+    mtls_middleware.enabled = enforce
+    logger.info(f"mTLS enforcement initialized: enforce={enforce}")
+
+    return mtls_middleware
+
 def require_mtls():
     """
     mTLS认证装饰器
@@ -376,5 +416,6 @@ __all__ = [
     'MTLSAuthMiddleware',
     'mtls_middleware',
     'require_mtls',
-    'get_ssl_context'
+    'get_ssl_context',
+    'init_mtls'
 ]

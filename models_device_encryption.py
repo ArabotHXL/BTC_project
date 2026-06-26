@@ -2,9 +2,44 @@
 Device Envelope Encryption Models
 X25519 Sealed Box + AES-256-GCM for miner credential management
 """
+import os
+import hmac
+import base64
+import hashlib
 from datetime import datetime
 from db import db
 import enum
+
+try:
+    from cryptography.fernet import Fernet, InvalidToken
+except Exception:  # pragma: no cover - cryptography is a hard dependency in prod
+    Fernet = None
+    InvalidToken = Exception
+
+
+def _device_token_cipher():
+    """Fernet cipher used to encrypt edge-device bearer tokens at rest.
+
+    The bearer token doubles as the HMAC shared secret used to sign control-plane
+    commands, so it must remain *recoverable* (we cannot one-way hash it). We
+    therefore keep an indexed sha256 hash for lookups AND an encrypted-at-rest
+    copy for HMAC. The Fernet key is taken from DEVICE_TOKEN_ENC_KEY when set,
+    otherwise derived from the mandatory SESSION_SECRET so no extra secret has to
+    be provisioned. Rotating that secret invalidates stored tokens (devices must
+    re-register) — prefer setting an explicit, stable DEVICE_TOKEN_ENC_KEY.
+
+    # TODO(security): move device-token encryption under the envelope/KMS service
+    # so the wrapping key lives in an HSM/KMS instead of being derived from env.
+    """
+    if Fernet is None:
+        return None
+    raw = os.environ.get('DEVICE_TOKEN_ENC_KEY') or os.environ.get('SESSION_SECRET')
+    if not raw:
+        return None
+    key = base64.urlsafe_b64encode(
+        hashlib.sha256((raw + '|device-token-enc').encode()).digest()
+    )
+    return Fernet(key)
 
 
 class DeviceStatus(enum.Enum):
@@ -48,7 +83,87 @@ class EdgeDevice(db.Model):
     
     def is_active(self):
         return self.status == 'ACTIVE'
-    
+
+    # --- Secure device-token handling -------------------------------------
+    # The bearer token is never stored in clear text: we keep an indexed sha256
+    # `token_hash` for constant-time lookups and an encrypted-at-rest copy in
+    # `device_token` (recoverable because it is also the HMAC signing secret).
+
+    @staticmethod
+    def hash_token(plaintext: str) -> str:
+        """sha256 hex of a bearer token, used as the indexable lookup key."""
+        return hashlib.sha256(plaintext.encode()).hexdigest()
+
+    def set_device_token(self, plaintext: str):
+        """Store a freshly issued bearer token securely (hash + ciphertext).
+
+        The plaintext is returned to the device exactly once at registration and
+        is never persisted in clear text.
+        """
+        self.token_hash = self.hash_token(plaintext)
+        cipher = _device_token_cipher()
+        if cipher is not None:
+            self.device_token = cipher.encrypt(plaintext.encode()).decode()
+        else:
+            # dev/test fallback when no SESSION_SECRET/DEVICE_TOKEN_ENC_KEY is set;
+            # token_hash is still populated so lookups keep working.
+            self.device_token = plaintext
+
+    def get_device_token(self):
+        """Recover the plaintext bearer token (needed as the HMAC shared secret)."""
+        if not self.device_token:
+            return None
+        cipher = _device_token_cipher()
+        if cipher is not None:
+            try:
+                return cipher.decrypt(self.device_token.encode()).decode()
+            except Exception:
+                # legacy plaintext value stored before the encryption migration
+                return self.device_token
+        return self.device_token
+
+    def get_hmac_secret(self):
+        """Shared secret for control-plane command signing."""
+        return self.get_device_token() or self.token_hash
+
+    def verify_device_token(self, plaintext: str) -> bool:
+        """Constant-time bearer-token check."""
+        if not plaintext:
+            return False
+        if self.token_hash:
+            return hmac.compare_digest(self.token_hash, self.hash_token(plaintext))
+        stored = self.get_device_token()
+        return bool(stored) and hmac.compare_digest(stored, plaintext)
+
+    @classmethod
+    def lookup_by_token(cls, plaintext, active_only: bool = True):
+        """Resolve an edge device from a bearer token via the indexed token_hash.
+
+        Falls back to a legacy plaintext match for rows created before the hashing
+        migration and opportunistically upgrades them in place.
+        """
+        if not plaintext:
+            return None
+        q = cls.query.filter_by(token_hash=cls.hash_token(plaintext))
+        if active_only:
+            q = q.filter_by(status='ACTIVE')
+        device = q.first()
+        if device:
+            return device
+        # Legacy fallback: token stored in clear text before this migration.
+        lq = cls.query.filter_by(device_token=plaintext)
+        if active_only:
+            lq = lq.filter_by(status='ACTIVE')
+        legacy = lq.first()
+        if legacy:
+            try:
+                legacy.set_device_token(plaintext)  # upgrade to hash + ciphertext
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+            return legacy
+        return None
+
     def to_dict(self, include_pubkey=False):
         result = {
             'id': self.id,

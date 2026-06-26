@@ -81,6 +81,60 @@ class ComplianceCheck:
     timestamp: datetime
     expires_at: Optional[datetime] = None
 
+
+class KYCProvider:
+    """
+    KYC/制裁筛查提供商接口（fail-closed）。
+
+    真实的身份验证 / 制裁名单筛查必须由外部受信提供商完成
+    （如 Onfido、Jumio、IDology、Chainalysis、Refinitiv、OFAC API）。
+    本基类不做任何真实验证——它只定义契约。未配置提供商时，
+    SecurityComplianceService 会返回 NOT_VERIFIED / UNSCREENED（score=0.0），
+    即默认安全失败（fail-closed），绝不返回伪造的“已验证”结果。
+
+    # TODO(security): integrate real KYC/AML provider (Onfido/Jumio/Chainalysis/OFAC API)
+    """
+
+    def verify_identity_document(self, doc_data: Dict[str, Any]) -> Dict[str, Any]:
+        raise NotImplementedError
+
+    def verify_address_proof(self, address_data: Dict[str, Any]) -> Dict[str, Any]:
+        raise NotImplementedError
+
+    def verify_biometric_data(self, bio_data: Dict[str, Any]) -> Dict[str, Any]:
+        raise NotImplementedError
+
+    def check_sanctions_list(self, kyc_data: Dict[str, Any]) -> Dict[str, Any]:
+        raise NotImplementedError
+
+
+def get_kyc_provider() -> Optional[KYCProvider]:
+    """
+    根据环境变量返回已配置的 KYC/制裁筛查提供商，未配置时返回 None。
+
+    通过 os.environ.get('KYC_PROVIDER') / os.environ.get('SANCTIONS_PROVIDER')
+    读取提供商名称（例如 'onfido' / 'jumio' / 'chainalysis' / 'ofac_api'）。
+    当前没有内置任何真实提供商实现——只要这两个变量都未设置，就返回 None，
+    使所有验证 fail-closed。一旦集成真实 SDK，应在此处根据名称构造并返回对应
+    的 KYCProvider 实例。
+
+    # TODO(security): integrate real KYC/AML provider (Onfido/Jumio/Chainalysis/OFAC API)
+    """
+    provider_name = os.environ.get('KYC_PROVIDER') or os.environ.get('SANCTIONS_PROVIDER')
+    if not provider_name:
+        return None
+
+    # TODO(security): 根据 provider_name 构造并返回真实的 KYCProvider 实现。
+    # 例如:  if provider_name.lower() == 'onfido': return OnfidoProvider(...)
+    # 在真实实现接入之前，即便配置了名称也保持 fail-closed（返回 None）。
+    logger.warning(
+        "KYC_PROVIDER/SANCTIONS_PROVIDER 已配置为 '%s'，但尚无对应的真实提供商实现，"
+        "继续 fail-closed。请接入真实 KYC/AML 提供商。",
+        provider_name,
+    )
+    return None
+
+
 class SecurityComplianceService:
     """安全合规服务主类"""
     
@@ -96,6 +150,9 @@ class SecurityComplianceService:
         self.kyc_enabled = os.environ.get('KYC_VERIFICATION_ENABLED', 'true').lower() == 'true'
         self.kyc_api_key = os.environ.get('KYC_API_KEY')
         self.kyc_required_amount = float(os.environ.get('KYC_REQUIRED_AMOUNT', '5000.0'))
+        # KYC/制裁筛查提供商（未配置时为 None -> 所有验证 fail-closed）
+        # TODO(security): integrate real KYC/AML provider (Onfido/Jumio/Chainalysis/OFAC API)
+        self.kyc_provider = get_kyc_provider()
         
         # 审计配置
         self.audit_retention_days = int(os.environ.get('AUDIT_RETENTION_DAYS', '2555'))  # 7年
@@ -309,10 +366,19 @@ class SecurityComplianceService:
         """
         try:
             if not self.kyc_enabled:
+                # Fail-closed: disabling KYC must NOT auto-approve a user. With no
+                # verification performed we cannot vouch for the identity, so we
+                # return a non-granting status that requires explicit manual review.
+                # TODO(security): integrate a real KYC/AML provider so this path
+                # is only used in local dev, never to bypass verification in prod.
+                logger.warning(
+                    "KYC verification is DISABLED (KYC_VERIFICATION_ENABLED=false) — "
+                    "returning PENDING_REVIEW (no auto-approval) for user %s", getattr(user, 'id', '?')
+                )
                 return {
-                    'status': KYCStatus.APPROVED.value,
-                    'risk_level': RiskLevel.LOW.value,
-                    'details': {'message': 'KYC验证已禁用'}
+                    'status': KYCStatus.PENDING_REVIEW.value,
+                    'risk_level': RiskLevel.MEDIUM.value,
+                    'details': {'message': 'KYC验证已禁用，需人工审核（不自动通过）', 'kyc_bypassed': True}
                 }
             
             # 记录KYC验证开始
@@ -348,6 +414,12 @@ class SecurityComplianceService:
             verification_results.append(sanctions_check)
             overall_score += sanctions_check['score'] * 0.1
             
+            # fail-closed：未配置 KYC/制裁提供商时，所有检查 score=0，
+            # overall_score 落在 < 0.5 分支 -> REJECTED；此处显式标注原因。
+            # TODO(security): integrate real KYC/AML provider (Onfido/Jumio/Chainalysis/OFAC API)
+            no_provider = self.kyc_provider is None
+            decision_reason = None
+
             # 确定KYC状态
             if overall_score >= 0.9:
                 kyc_status = KYCStatus.APPROVED
@@ -359,9 +431,16 @@ class SecurityComplianceService:
                 kyc_status = KYCStatus.IN_PROGRESS
                 risk_level = RiskLevel.MEDIUM
             else:
+                # fail-closed: score < 0.5 一律拒绝，绝不默认批准
                 kyc_status = KYCStatus.REJECTED
                 risk_level = RiskLevel.HIGH
-            
+
+            if no_provider:
+                # 没有真实提供商时强制拒绝并给出明确原因，避免伪造“已验证”
+                kyc_status = KYCStatus.REJECTED
+                risk_level = RiskLevel.HIGH
+                decision_reason = 'no KYC/sanctions provider configured'
+
             # 设置过期时间（KYC通常有效期1年）
             expires_at = datetime.utcnow() + timedelta(days=365) if kyc_status == KYCStatus.APPROVED else None
             
@@ -373,15 +452,17 @@ class SecurityComplianceService:
                     'kyc_status': kyc_status.value,
                     'verification_score': overall_score,
                     'checks': verification_results,
+                    'reason': decision_reason,
                     'expires_at': expires_at.isoformat() if expires_at else None
                 }
             )
-            
+
             return {
                 'status': kyc_status.value,
                 'risk_level': risk_level.value,
                 'verification_score': overall_score,
                 'checks': verification_results,
+                'reason': decision_reason,
                 'expires_at': expires_at.isoformat() if expires_at else None,
                 'timestamp': datetime.utcnow().isoformat()
             }
@@ -680,41 +761,56 @@ class SecurityComplianceService:
             return {'check_type': 'payment_patterns', 'status': 'error', 'risk_score': 0.2}
     
     def _verify_identity_document(self, doc_data: Dict[str, Any]) -> Dict[str, Any]:
-        """验证身份文档"""
-        # 简化的文档验证
-        return {
-            'check_type': 'identity_document',
-            'status': 'verified',
-            'score': 0.9,
-            'details': {'document_type': doc_data.get('type', 'unknown')}
-        }
-    
+        """验证身份文档（fail-closed：未配置提供商则不通过）"""
+        # TODO(security): integrate real KYC provider (Onfido/Jumio)
+        if self.kyc_provider is None:
+            return {
+                'check_type': 'identity_document',
+                'status': 'not_verified',
+                'score': 0.0,
+                'reason': 'no KYC provider configured',
+                'details': {'document_type': doc_data.get('type', 'unknown')}
+            }
+        return self.kyc_provider.verify_identity_document(doc_data)
+
     def _verify_address_proof(self, address_data: Dict[str, Any]) -> Dict[str, Any]:
-        """验证地址证明"""
-        return {
-            'check_type': 'address_proof',
-            'status': 'verified',
-            'score': 0.8,
-            'details': {'address_type': address_data.get('type', 'unknown')}
-        }
-    
+        """验证地址证明（fail-closed：未配置提供商则不通过）"""
+        # TODO(security): integrate real KYC provider (Onfido/Jumio)
+        if self.kyc_provider is None:
+            return {
+                'check_type': 'address_proof',
+                'status': 'not_verified',
+                'score': 0.0,
+                'reason': 'no KYC provider configured',
+                'details': {'address_type': address_data.get('type', 'unknown')}
+            }
+        return self.kyc_provider.verify_address_proof(address_data)
+
     def _verify_biometric_data(self, bio_data: Dict[str, Any]) -> Dict[str, Any]:
-        """验证生物识别数据"""
-        return {
-            'check_type': 'biometric_verification',
-            'status': 'verified',
-            'score': 0.95,
-            'details': {'biometric_type': bio_data.get('type', 'unknown')}
-        }
-    
+        """验证生物识别数据（fail-closed：未配置提供商则不通过）"""
+        # TODO(security): integrate real KYC provider (Onfido/Jumio)
+        if self.kyc_provider is None:
+            return {
+                'check_type': 'biometric_verification',
+                'status': 'not_verified',
+                'score': 0.0,
+                'reason': 'no KYC provider configured',
+                'details': {'biometric_type': bio_data.get('type', 'unknown')}
+            }
+        return self.kyc_provider.verify_biometric_data(bio_data)
+
     def _check_sanctions_list(self, kyc_data: Dict[str, Any]) -> Dict[str, Any]:
-        """检查制裁名单"""
-        return {
-            'check_type': 'sanctions_list',
-            'status': 'clear',
-            'score': 1.0,
-            'details': {'databases_checked': ['OFAC', 'EU', 'UN']}
-        }
+        """检查制裁名单（fail-closed：未配置提供商则视为未筛查）"""
+        # TODO(security): integrate real AML/sanctions provider (Chainalysis/OFAC API)
+        if self.kyc_provider is None:
+            return {
+                'check_type': 'sanctions_list',
+                'status': 'unscreened',
+                'score': 0.0,
+                'reason': 'no sanctions provider configured',
+                'details': {'databases_checked': []}
+            }
+        return self.kyc_provider.check_sanctions_list(kyc_data)
     
     def _get_user_risk_score(self, user_id: int) -> float:
         """获取用户风险评分"""
